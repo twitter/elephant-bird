@@ -1,0 +1,14 @@
+com.twitter.data.proto
+com.twitter.data.proto.tutorial
+com.twitter.elephantbird.mapred.input
+com.twitter.elephantbird.mapreduce.input
+com.twitter.elephantbird.mapreduce.io
+com.twitter.elephantbird.mapreduce.output
+com.twitter.elephantbird.pig.load
+com.twitter.elephantbird.pig.piggybank
+com.twitter.elephantbird.pig.store
+com.twitter.elephantbird.pig.util
+com.twitter.elephantbird.proto
+com.twitter.elephantbird.proto.codegen
+com.twitter.elephantbird.proto.util
+com.twitter.elephantbird.util

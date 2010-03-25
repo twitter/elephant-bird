@@ -1,0 +1,3 @@
+address_book:
+  - com.twitter.elephantbird.proto.codegen.LzoProtobufBlockPigletGenerator
+  - com.twitter.elephantbird.proto.codegen.OinkLoadPluginGenerator
