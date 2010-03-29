@@ -103,7 +103,7 @@
   </target>
 
   <target name="debug-jar" description="Build debug and jar" depends="debug,jar"/>
-  <target name="release-jar" description="Build release and jar" depends="release,jar,javadoc"/>
+  <target name="release-jar" description="Build release and jar" depends="release,jar"/>
 
   <target name="clean" description="clean up">
     <!-- Delete the ${build} and ${dist} directory trees -->
