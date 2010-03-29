@@ -35,8 +35,10 @@ public abstract class LzoProtobufB64LinePigStorage<M extends Message> extends Lz
   public void putNext(Tuple f) throws IOException {
     if (f == null) return;
     Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
-    for (int i = 0; i < f.size(); i++) {
-      builder.setField(fieldDescriptors_.get(i), f.get(i));
+    for (int i = 0; i < fieldDescriptors_.size() && i < f.size(); i++) {
+      if (f.get(i) != null) {
+        builder.setField(fieldDescriptors_.get(i), f.get(i));
+      }
     }
     os_.write(base64_.encode(builder.build().toByteArray()));
     os_.write("\n".getBytes("UTF-8"));
