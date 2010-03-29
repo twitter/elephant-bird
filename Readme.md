@@ -1,6 +1,6 @@
 # Elephant Bird #
 
-#### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo) and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://hadoop.apache.org/pig) LoadFuncs, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. ####
+#### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo) and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://hadoop.apache.org/pig) LoadFuncs, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
 
 ### To Use ###
 
@@ -12,6 +12,10 @@
 There are a few simple examples that use the input formats.  Note how the protocol buffer-based
 formats work, and also note that the examples build file uses the custom codegen stuff.  See below for
 more about that.
+
+### License ###
+
+Apache licensed.
 
 ### Contents ###
 
@@ -70,18 +74,24 @@ In protobuf 2.3, Google introduced the notion of a [protocol buffer plugin](http
 lets you hook in to their code generation elegantly, with all the parsed metadata available.  We use this in 
 `com.twitter.elephantbird.proto.HadoopProtoCodeGenerator` to generate code for each protocol buffer.  The 
 `HadoopProtoCodeGenerator` expects as a first argument a yml file consisting of keys and lists of classnames.  For each
-protocol buffer file read in (say from my__file.proto), it looks up the basename (my__file) in the yml file.  
+protocol buffer file read in (say from `my_file.proto`), it looks up the basename (`my_file`) in the yml file.  
 If a corresponding list exists, it expects each element is a classname of a class deriving from `com.twitter.elephantbird.proto.ProtoCodeGenerator`.  These classes implement
 a method to set the filename, and a method to set the generated code contents of the file.  You can add your own by creating
 such a derived class and including it in the list of classnames for the protocol buffer file key.  That is, if you want
 to apply the code generators in `com.twitter.elephantbird.proto.codegen.ProtobufWritableGenerator` and 
 `com.twitter.elephantbird.proto.codegen.LzoProtobufBytesToPigTupleGenerator` to every protobuf in the
-file my__file.proto, then your config file should have a section that looks like
+file `my_file.proto`, then your config file should have a section that looks like
 <code><pre>
-my__file:
+my_file:
   - com.twitter.elephantbird.proto.codegen.ProtobufWritableGenerator
   - com.twitter.elephantbird.proto.codegen.LzoProtobufBytesToPigTupleGenerator
 </pre></code>
+
+There are examples in the examples subdirectory showing how to integrate this code generation into a build, both for generating Java files pre-jar and for generating other types of files from protocol buffer definitions post-compile (there are examples that do this to generate [Pig](http://hadoop.apache.org/pig) loaders for a set of protocol buffers).  
+
+### Commit Back! ###
+
+Bug fixes, features, and documentation improvements are welcome!  Please fork and send me a pull request on github, and I will do my best to keep up.  If you make major changes, add yourself to the contributors list below.
 
 ### Contributors ###
 
