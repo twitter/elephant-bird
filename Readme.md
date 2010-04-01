@@ -9,6 +9,13 @@
 3. check out javadoc, etc.
 4. build examples: cd examples && ant;
 
+Note: for any of the LZO-based code, make sure that the native LZO libraries are on your `java.library.path`.  Generally this is done by setting `JAVA_LIBRARY_PATH` in
+`pig-env.sh` or `hadoop-env.sh`.  You can also add lines like
+<code><pre>
+PIG_OPTS=-Djava.library.path=/path/to/my/libgplcompression/dir
+</pre></code>
+to `pig-env.sh`. See the instructions for [Hadoop-LZO](http://www.github.com/kevinweil/hadoop-lzo) for more details.
+
 There are a few simple examples that use the input formats.  Note how the protocol buffer-based
 formats work, and also note that the examples build file uses the custom codegen stuff.  See below for
 more about that.
