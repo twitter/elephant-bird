@@ -21,8 +21,8 @@ public class OinkLoadPluginGenerator extends ProtoCodeGenerator {
     sb.append("  module Plugins").endl();
     sb.append("    module Load").endl();
     sb.append("      # A class for locating data from the %s table", descriptorProto_.getName()).endl();
-    sb.append("      class %s < DateTemplateBase", descriptorProto_.getName()).endl();
-    sb.append("        def inintialize").endl();
+    sb.append("      class %s < DateTemplateBase", Strings.pluralize(descriptorProto_.getName())).endl();
+    sb.append("        def initialize").endl();
     sb.append("        end").endl();
     sb.endl();
     sb.append("        def template_dir").endl();
