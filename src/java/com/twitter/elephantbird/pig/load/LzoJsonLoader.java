@@ -81,7 +81,7 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
       incrCounter(LzoJsonLoaderCounters.LinesParseError, 1L);
       return null;
     } catch (NumberFormatException e) {
-      LOG.warn("Very big number exceeds the scale of long" + line, e);
+      LOG.warn("Very big number exceeds the scale of long: " + line, e);
       incrCounter(LzoJsonLoaderCounters.LinesParseErrorBadNumber, 1L);
       return null;
     }
