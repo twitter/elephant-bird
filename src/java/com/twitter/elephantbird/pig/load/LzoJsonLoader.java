@@ -31,7 +31,7 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
 
   private final JSONParser jsonParser_ = new JSONParser();
 
-  protected enum LzoJsonLoaderCounters { LinesRead, LinesJsonDecoded }
+  protected enum LzoJsonLoaderCounters { LinesRead, LinesJsonDecoded, LinesParseError, LinesParseErrorBadNumber }
 
   public LzoJsonLoader() {
     LOG.info("LzoJsonLoader creation");
@@ -78,6 +78,11 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
       return tupleFactory_.newTuple(values);
     } catch (ParseException e) {
       LOG.warn("Could not json-decode string: " + line, e);
+      incrCounter(LzoJsonLoaderCounters.LinesParseError, 1L);
+      return null;
+    } catch (NumberFormatException e) {
+      LOG.warn("Very big number exceeds the scale of long" + line, e);
+      incrCounter(LzoJsonLoaderCounters.LinesParseErrorBadNumber, 1L);
       return null;
     }
   }
