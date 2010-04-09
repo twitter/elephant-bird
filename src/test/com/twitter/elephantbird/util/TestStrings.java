@@ -18,7 +18,6 @@ public class TestStrings {
 
   private static final Map<String, String> singularToPlural_ = ImmutableMap.<String, String>builder()
                                                                            .put("search", "searches")
-                                                                           .put("search", "searches")
                                                                            .put("switch", "switches")
                                                                            .put("fix", "fixes")
                                                                            .put("box", "boxes")
@@ -94,7 +93,6 @@ public class TestStrings {
                                                                            .build();
 
   private static final Map<String, String> mixtureToTitleCase_ = ImmutableMap.<String, String>builder()
-                                                                             .put("active_record", "Active Record")
                                                                              .put("active_record", "Active Record")
                                                                              .put("ActiveRecord", "Active Record")
                                                                              .put("action web service", "Action Web Service")

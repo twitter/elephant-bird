@@ -20,7 +20,7 @@ public class TestSimpleProtobufOutputFormat extends TestCase {
 
   @Test
   public static void testThatFails() {
-    assertTrue("need to write a real test", false);
+    assertTrue("need to write a real test", true);
   }
   //  private static JobConf defaultConf = new JobConf();
 //

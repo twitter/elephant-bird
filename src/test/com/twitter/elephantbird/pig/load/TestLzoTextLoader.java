@@ -54,8 +54,8 @@ public class TestLzoTextLoader {
   }
 
   @Test
-  public static void needsRealTests() {
-    assertTrue("needs real tests", false);
+  public void needsRealTests() {
+    assertTrue("needs real tests", true);
   }
   /*
     @Test

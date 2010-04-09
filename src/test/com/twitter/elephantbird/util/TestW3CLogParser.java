@@ -2,6 +2,7 @@ package com.twitter.elephantbird.util;
 
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,16 +16,16 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class TestW3CLogParser {
-  static final String FIELD_FILE = "/com/twitter/elephantbird/util/W3CLogParser.field.txt";
-  static final String VALID_FILE  = "/com/twitter/elephantbird/util/W3CLogParser.valid.txt";
-  static final String INVALID_FILE  = "/com/twitter/elephantbird/util/W3CLogParser.invalid.txt";
+  static final String FIELD_FILE = "src/test/com/twitter/elephantbird/util/W3CLogParser.field.txt";
+  static final String VALID_FILE  = "src/test/com/twitter/elephantbird/util/W3CLogParser.valid.txt";
+  static final String INVALID_FILE  = "src/test/com/twitter/elephantbird/util/W3CLogParser.invalid.txt";
 
   private InputStream is_ = null;
   private W3CLogParser parser_ = null;
 
   @Before
   public void setUp() throws Exception {
-    is_ = TestW3CLogParser.class.getResourceAsStream(FIELD_FILE);
+    is_ =  new FileInputStream(FIELD_FILE);
     parser_ = new W3CLogParser(is_);
   }
 
@@ -44,7 +45,7 @@ public class TestW3CLogParser {
   }
 
   private void verify(String fileName, boolean expected) throws IOException, ExecException, Exception {
-    InputStream inputs = TestW3CLogParser.class.getResourceAsStream(fileName);
+    InputStream inputs = new FileInputStream(fileName);
     BufferedReader reader = new BufferedReader(new InputStreamReader(inputs, "UTF-8"));
     String line = null;
     Map<String, String> map = null;

@@ -128,6 +128,7 @@ public class Strings {
   }
 
   public static String humanize(String word) {
+    word = word.replaceAll("_id", "");
     return capitalize(word.replaceAll("_", " "));
   }
 
