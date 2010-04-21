@@ -9,9 +9,9 @@ import org.apache.pig.data.Tuple;
 import com.google.protobuf.Message;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
+import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
-
 
 /**
  * Serializes Pig Tuples into Base-64 encoded, line-delimited protocol buffers.
@@ -25,22 +25,15 @@ public abstract class LzoProtobufB64LinePigStorage<M extends Message> extends Lz
 
   private TypeRef<M> typeRef_;
   private Base64 base64_ = new Base64();
-  List<FieldDescriptor> fieldDescriptors_;
+  private final PigToProtobuf pigToProto_ = new PigToProtobuf();
 
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
-    fieldDescriptors_ = Protobufs.getMessageDescriptor(typeRef_.getRawClass()).getFields();
   }
 
   public void putNext(Tuple f) throws IOException {
     if (f == null) return;
-    Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
-    for (int i = 0; i < fieldDescriptors_.size() && i < f.size(); i++) {
-      if (f.get(i) != null) {
-        builder.setField(fieldDescriptors_.get(i), f.get(i));
-      }
-    }
-    os_.write(base64_.encode(builder.build().toByteArray()));
+    os_.write(base64_.encode(pigToProto_.tupleToMessage(typeRef_, f).toByteArray()));
     os_.write("\n".getBytes("UTF-8"));
   }
 
