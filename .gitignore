@@ -18,3 +18,4 @@ bin
 dist
 .classpath
 build
+*~
