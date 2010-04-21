@@ -28,9 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class for turning codegen'd protos into Pig Tuples and Schemas
- * for custom Pig LoadFuncs.
- * @author Kevin Weil
+ * A class for turning Pig Tuples into codegen'd protos for custom Pig StoreFuncs.
+ * @author Vikram Oberoi
  */
 public class PigToProtobuf {
   private static final Logger LOG = LoggerFactory.getLogger(PigToProtobuf.class);
@@ -38,12 +37,10 @@ public class PigToProtobuf {
   public PigToProtobuf() {}
 
   /**
-   * Turn a generic message into a Tuple.  Individual fields that are enums
-   * are converted into their string equivalents.  Fields that are not filled
-   * out in the protobuf are set to null, unless there is a default field value in
-   * which case that is used instead.
-   * @param msg the protobuf message
-   * @return a pig tuple representing the message.
+   * Turn a Tuple into a Message with the given type.
+   * @param typeRef a TypeRef for the Message type the tuple will be converted to
+   * @param tuple the tuple
+   * @return a message representing the given tuple
    */
   public Message tupleToMessage(TypeRef typeRef, Tuple tuple) {
 	List<FieldDescriptor> fieldDescriptors = Protobufs.getMessageDescriptor(typeRef.getRawClass()).getFields();
