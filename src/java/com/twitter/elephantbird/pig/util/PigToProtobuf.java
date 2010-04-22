@@ -38,13 +38,12 @@ public class PigToProtobuf {
 
   /**
    * Turn a Tuple into a Message with the given type.
-   * @param typeRef a TypeRef for the Message type the tuple will be converted to
+   * @param builder a builder for the Message type the tuple will be converted to
    * @param tuple the tuple
    * @return a message representing the given tuple
    */
-  public Message tupleToMessage(TypeRef typeRef, Tuple tuple) {
-	List<FieldDescriptor> fieldDescriptors = Protobufs.getMessageDescriptor(typeRef.getRawClass()).getFields();
-	Builder builder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+  public Message tupleToMessage(Builder builder, Tuple tuple) {
+	List<FieldDescriptor> fieldDescriptors = builder.getDescriptorForType().getFields();
 
     if (tuple == null) {
 	  return builder.build();
@@ -64,11 +63,11 @@ public class PigToProtobuf {
 	  if (tupleField != null) {
 		if (fieldDescriptor.isRepeated()) { 
 		  // Repeated fields are set with Lists containing objects of the fields' Java type.
-		  builder.setField(fieldDescriptor, dataBagToProtobufList(fieldDescriptor, (DataBag)tupleField));
+		  builder.setField(fieldDescriptor, dataBagToProtobufList(builder, fieldDescriptor, (DataBag)tupleField));
 		} else {
 		  if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-			throw new IllegalArgumentException("Can't serialize nested messages");
-			//builder.setField(fieldDescriptor, tupleToMessage(?, tupleField));
+			Builder nestedMessageBuilder = builder.newBuilderForField(fieldDescriptor);
+			builder.setField(fieldDescriptor, tupleToMessage((Builder)nestedMessageBuilder, (Tuple)tupleField));
 		  } else {
 			builder.setField(fieldDescriptor, tupleField);
 		  }
@@ -79,15 +78,15 @@ public class PigToProtobuf {
 	return builder.build();
   }
 
-  public List dataBagToProtobufList(FieldDescriptor fieldDescriptor, DataBag bag) {
+  public List dataBagToProtobufList(Builder containingMessageBuilder, FieldDescriptor fieldDescriptor, DataBag bag) {
 	ArrayList bagContents = new ArrayList((int)bag.size());
 	Iterator<Tuple> bagIter = bag.iterator();
 
 	while (bagIter.hasNext()) {
 	  Tuple tuple = bagIter.next();
 	  if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-		throw new IllegalArgumentException("Can't serialize nested messages");
-		//bagContents.add(?, tupleToMessage(tuple));
+		Builder nestedMessageBuilder = containingMessageBuilder.newBuilderForField(fieldDescriptor);
+		bagContents.add(tupleToMessage((Builder)nestedMessageBuilder, tuple));
 	  } else {
 		try {
 		  bagContents.add(tuple.get(0));
