@@ -60,6 +60,12 @@
 	<property name="java.debug" value="false"/>
   </target>
 
+  <target name="noproto" depends="init">
+   <echo message="building without protobuf support" />
+   <property name="noprotobuf" value="yes" />
+   <compile-noprotobuf />
+  </target>
+  
   <target name="init">
     <tstamp/>
     <!-- Create the build directory structure used by compile -->
@@ -68,15 +74,34 @@
     <mkdir dir="${test.build.dir}" />
   </target>
 
-  <target name="compile" depends="init, compile-protobuf" description="compile the source">
+  <macrodef name="compile-noprotobuf">
+   <sequential>
     <!-- Compile the java code from ${src.java} into ${build} -->
-    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${java.debug}" debuglevel="lines,vars,source">
+    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${java.debug}" debuglevel="lines,vars,source" excludes="**/*Protobuf*, **/proto/">
       <classpath>
-        <fileset dir="${lib.dir}">
+        <fileset dir="lib">
           <include name="**/*.jar"/>
         </fileset>
       </classpath>
     </javac>
+   </sequential>
+  </macrodef>
+    
+  <macrodef name="compile-java-protobuf">
+   <sequential>
+    <!-- Compile the java code from ${src.java} into ${build} -->
+    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${java.debug}" debuglevel="lines,vars,source" includes="**/*Protobuf*, **/proto/">
+      <classpath>
+        <fileset dir="lib">
+          <include name="**/*.jar"/>
+        </fileset>
+      </classpath>
+    </javac>
+   </sequential>
+  </macrodef>
+
+  <target name="compile" depends="init, compile-protobuf" description="compile the source">
+   <compile-noprotobuf />
   </target>
     
   <macrodef name="generate-protobuf">
@@ -105,9 +130,10 @@
     </sequential>
   </macrodef>
 
-  <target name="compile-protobuf" depends="init">
+  <target name="compile-protobuf" depends="init" unless="noprotobuf">
     <generate-protobuf />
     <compile-generated-protobuf />
+    <compile-java-protobuf />
   </target>
   
 
