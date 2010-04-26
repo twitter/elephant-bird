@@ -73,10 +73,10 @@ public class PigToProtobuf {
    * @param containingMessageBuilder a Message builder for the Message that contains this repeated field
    * @param fieldDescriptor a FieldDescriptor for this repeated field
    * @param bag the DataBag being serialized
-   * @breturn a protobuf-friendly List of fieldDescriptor-type objects
+   * @return a protobuf-friendly List of fieldDescriptor-type objects
    */
-  public List dataBagToRepeatedField(Builder containingMessageBuilder, FieldDescriptor fieldDescriptor, DataBag bag) {
-    ArrayList bagContents = new ArrayList((int)bag.size());
+  public List<Object> dataBagToRepeatedField(Builder containingMessageBuilder, FieldDescriptor fieldDescriptor, DataBag bag) {
+    ArrayList<Object> bagContents = new ArrayList<Object>((int)bag.size());
     Iterator<Tuple> bagIter = bag.iterator();
 
     while (bagIter.hasNext()) {

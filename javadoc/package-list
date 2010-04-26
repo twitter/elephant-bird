@@ -1,5 +1,11 @@
 com.twitter.data.proto
 com.twitter.data.proto.tutorial
+com.twitter.data.proto.tutorial.mapred.input
+com.twitter.data.proto.tutorial.mapreduce.input
+com.twitter.data.proto.tutorial.mapreduce.io
+com.twitter.data.proto.tutorial.mapreduce.output
+com.twitter.data.proto.tutorial.pig.load
+com.twitter.data.proto.tutorial.pig.piggybank
 com.twitter.elephantbird.mapred.input
 com.twitter.elephantbird.mapreduce.input
 com.twitter.elephantbird.mapreduce.io

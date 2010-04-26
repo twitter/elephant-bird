@@ -95,7 +95,7 @@ LoadFunc {
   /**
    * 
    * @param columnList
-   * @param opts Loader options. Known options:<ul>
+   * @param optString Loader options. Known options:<ul>
    * <li>-loadKey=(true|false)  Load the row key as the first column
    * <li>-gt=minKeyVal
    * <li>-lt=maxKeyVal 
