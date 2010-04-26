@@ -170,8 +170,13 @@
     <delete dir="${dist.dir}"/>
   </target>
 
-  <target name="compile-java-tests" depends="compile" >
-    <delete dir="${test.build.classes}"/>
+  <target name="examples" depends="jar" description="Compile the examples">
+    <ant dir="examples" />
+  </target>
+
+  <target name="compile-java-tests" depends="compile, compile-protobuf, examples" >
+    <echo message="classes dir: ${classes.dir}" /> 
+	<delete dir="${test.build.classes}"/>
     <mkdir dir="${test.build.classes}"/>
     <javac srcdir="${test.src.dir}" destdir="${test.build.classes}" deprecation="on" debug="${java.debug}" debuglevel="lines,vars,source">
       <classpath refid="${test.classpath.id}"/>
