@@ -53,8 +53,7 @@ import com.google.common.collect.Lists;
  * Actual loading is done in {@link HBaseSlice}. Derived from the HbaseStorage implementation
  * in 0.6 Piggybank.
  * <br>
- * TODO: add gte, lte, and so on
- * TODO: row version controls
+ * TODO: row version controls<br>
  * TODO: right now the single-param version doesn't work. Fix that.
  */
 public class HBaseLoader implements Slicer,
@@ -73,8 +72,10 @@ LoadFunc {
 
   private static void populateValidOptions() { 
     validOptions_.addOption("loadKey", false, "Load Key");
-    validOptions_.addOption("gt", true, "Minimum key value (binary, double-slash-escaped)");
-    validOptions_.addOption("lt", true, "Max key value (binary, double-slash-escaped)");   
+    validOptions_.addOption("gt", true, "Records must be greater than this value (binary, double-slash-escaped)");
+    validOptions_.addOption("lt", true, "Records must be less than this value (binary, double-slash-escaped)");   
+    validOptions_.addOption("gte", true, "Records must be greater than or equal to this value");
+    validOptions_.addOption("lte", true, "Records must be less than or equal to this value");
     validOptions_.addOption("caching", true, "Number of rows scanners should cache");
     validOptions_.addOption("limit", true, "Per-region limit");
   }
@@ -99,6 +100,8 @@ LoadFunc {
    * <li>-loadKey=(true|false)  Load the row key as the first column
    * <li>-gt=minKeyVal
    * <li>-lt=maxKeyVal 
+   * <li>-gte=minKeyVal
+   * <li>-lte=maxKeyVal
    * <li>-caching=numRows  number of rows to cache (faster scans, more memory).
    * </ul>
    * @throws ParseException 
@@ -145,9 +148,12 @@ LoadFunc {
       // skip if start key is greater than the lt param
       byte[] endKey = ((i + 1) < startKeys.length) ? startKeys[i + 1] : HConstants.EMPTY_START_ROW;
 
-      if (skipRegion(CompareOp.LESS, startKeys[i], configuredOptions_.getOptionValue("lt"))) continue;
-      if (skipRegion(CompareOp.GREATER, endKey, configuredOptions_.getOptionValue("gt"))) continue;
-
+      if ((skipRegion(CompareOp.LESS, startKeys[i], configuredOptions_.getOptionValue("lt"))) ||
+          (skipRegion(CompareOp.GREATER, endKey, configuredOptions_.getOptionValue("gt"))) ||
+          (skipRegion(CompareOp.GREATER_OR_EQUAL, endKey, configuredOptions_.getOptionValue("gte"))) ||
+          (skipRegion(CompareOp.LESS_OR_EQUAL, endKey, configuredOptions_.getOptionValue("lte")))) {
+        continue;
+      }
       String regionLocation = table_.getRegionLocation(startKeys[i]).getServerAddress().getHostname();
       HBaseSlice slice = new HBaseSlice(table_.getTableName(), startKeys[i],
           endKey, cols_, loadRowKey_, regionLocation);
@@ -155,7 +161,8 @@ LoadFunc {
       if (configuredOptions_.hasOption("limit")) slice.setLimit(configuredOptions_.getOptionValue("limit"));
       if (configuredOptions_.hasOption("gt")) slice.addFilter(CompareOp.GREATER, slashisize(configuredOptions_.getOptionValue("gt")));
       if (configuredOptions_.hasOption("lt")) slice.addFilter(CompareOp.LESS, slashisize(configuredOptions_.getOptionValue("lt")));
-
+      if (configuredOptions_.hasOption("gte")) slice.addFilter(CompareOp.GREATER_OR_EQUAL, slashisize(configuredOptions_.getOptionValue("gte")));
+      if (configuredOptions_.hasOption("lte")) slice.addFilter(CompareOp.LESS_OR_EQUAL, slashisize(configuredOptions_.getOptionValue("lte")));
       slices.add(slice);
     }
 
