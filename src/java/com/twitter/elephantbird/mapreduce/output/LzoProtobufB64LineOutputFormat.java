@@ -39,7 +39,7 @@ public abstract class LzoProtobufB64LineOutputFormat<M extends Message, W extend
     typeRef_ = typeRef;
   }
 
-  public RecordWriter getRecordWriter(TaskAttemptContext job)
+  public RecordWriter<NullWritable, W> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
     Configuration conf = job.getConfiguration();
     LzopCodec codec = new LzopCodec();
