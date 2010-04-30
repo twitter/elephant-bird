@@ -3,6 +3,7 @@ package com.twitter.elephantbird.pig.load;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import com.google.common.base.Function;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.util.Protobufs;
@@ -26,6 +27,7 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LinePigLoader.class);
 
   private TypeRef<M> typeRef_ = null;
+  private Function<byte[], M> protoConverter_ = null;
   private final Base64 base64_ = new Base64();
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
 
@@ -45,6 +47,7 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
    */
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
+    protoConverter_ = Protobufs.getProtoConverter(typeRef.getRawClass());
   }
 
   public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
@@ -72,7 +75,7 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
     Tuple t = null;
     while ((line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
       incrCounter(LzoProtobufB64LinePigLoaderCounts.LinesRead, 1L);
-      M protoValue = Protobufs.parseFrom(typeRef_.getRawClass(), base64_.decode(line.getBytes("UTF-8")));
+      M protoValue = protoConverter_.apply(base64_.decode(line.getBytes("UTF-8")));
       if (protoValue != null) {
         t = protoToPig_.toTuple(protoValue);
         incrCounter(LzoProtobufB64LinePigLoaderCounts.ProtobufsRead, 1L);

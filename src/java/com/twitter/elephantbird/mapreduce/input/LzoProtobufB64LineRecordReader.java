@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.google.common.base.Function;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.Protobufs;
@@ -30,9 +31,11 @@ public class  LzoProtobufB64LineRecordReader<M extends Message, W extends Protob
   private final W value_;
   private final TypeRef<M> typeRef_;
   private final Base64 base64_ = new Base64();
+  private final Function<byte[], M> protoConverter_;
 
   public LzoProtobufB64LineRecordReader(TypeRef<M> typeRef, W protobufWritable) {
     typeRef_ = typeRef;
+    protoConverter_ = Protobufs.getProtoConverter(typeRef_.getRawClass());
     LOG.info("LzoProtobufBlockRecordReader, type args are " + typeRef_.getRawClass());
     value_ = protobufWritable;
   }
@@ -79,7 +82,7 @@ public class  LzoProtobufB64LineRecordReader<M extends Message, W extends Protob
       }
       pos_ = getLzoFilePos();
       byte[] lineBytes = line_.toString().getBytes("UTF-8");
-      M protoValue = Protobufs.<M>parseFrom(typeRef_.getRawClass(), base64_.decode(lineBytes));
+      M protoValue = protoConverter_.apply(base64_.decode(lineBytes));
       if (protoValue == null) {
         continue;
       }

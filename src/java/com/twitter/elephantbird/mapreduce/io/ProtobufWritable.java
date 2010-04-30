@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import com.google.common.base.Function;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -23,15 +24,15 @@ public class ProtobufWritable<M extends Message> implements Writable {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufWritable.class);
 
   private M message_;
-  private TypeRef<M> typeRef_;
-
+  private final Function<byte[], M> protoConverter_;
+  
   public ProtobufWritable(TypeRef<M> typeRef) {
     this(null, typeRef);
   }
 
   public ProtobufWritable(M message, TypeRef<M> typeRef) {
     message_ = message;
-    typeRef_ = typeRef;
+    protoConverter_ = Protobufs.getProtoConverter(typeRef.getRawClass());
     LOG.debug("ProtobufWritable, typeClass is " + typeRef.getRawClass() + " and message is " + message_);
   }
 
@@ -64,7 +65,7 @@ public class ProtobufWritable<M extends Message> implements Writable {
     if (size > 0) {
       byte[] messageBytes = new byte[size];
       in.readFully(messageBytes, 0, size);
-      message_ = Protobufs.<M>parseFrom(typeRef_.getRawClass(), messageBytes);
+      message_ = protoConverter_.apply(messageBytes);
     }
   }
 }
