@@ -1,0 +1,18 @@
+package com.twitter.elephantbird.examples.proto;
+
+message OneOfEach {
+  optional bool im_true              = 1;
+  optional bool im_false             = 2;
+  optional int32 a_bite              = 3;
+  optional int32 integer16           = 4;
+  optional int32 integer32           = 5;
+  optional int64 integer64           = 6;
+  optional double double_precision   = 7;
+  optional string some_characters    = 8;
+  optional string zomg_unicode       = 9;
+  optional bool what_who             = 10;
+  optional bytes base64              = 11;
+  repeated int32 byte_list  = 12;
+  repeated int32 i16_list   = 13;
+  repeated int64 i64_list   = 14;
+};

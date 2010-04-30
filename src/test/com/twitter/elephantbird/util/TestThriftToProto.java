@@ -1,0 +1,38 @@
+package com.twitter.elephantbird.util;
+
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+
+import org.apache.thrift.TException;
+import org.apache.thrift.test.Fixtures;
+import org.junit.Test;
+
+import thrift.test.OneOfEach;
+
+import com.twitter.elephantbird.examples.proto.ThriftFixtures;
+
+public class TestThriftToProto {
+
+  @Test
+  public void testThriftToProto() throws TException, IOException {
+    OneOfEach ooe = Fixtures.oneOfEach;
+    ThriftToProto<OneOfEach, ThriftFixtures.OneOfEach> thriftToProto = 
+      new ThriftToProto<OneOfEach, ThriftFixtures.OneOfEach>(ooe,
+        (ThriftFixtures.OneOfEach) Protobufs.getMessageBuilder(ThriftFixtures.OneOfEach.class).getDefaultInstanceForType());
+    ThriftFixtures.OneOfEach proto = (ThriftFixtures.OneOfEach) thriftToProto.convert(ooe);
+    assertEquals(ooe.im_true, proto.getImTrue());
+    assertEquals(ooe.im_false, proto.getImFalse());
+    assertEquals(ooe.a_bite, proto.getABite());
+    assertEquals(ooe.integer16, proto.getInteger16());
+    assertEquals(ooe.integer32, proto.getInteger32());
+    assertEquals(ooe.integer64, proto.getInteger64());
+    assertEquals(ooe.double_precision, proto.getDoublePrecision(), 0.00001);
+    assertEquals(ooe.some_characters, proto.getSomeCharacters());
+    assertEquals(ooe.zomg_unicode, proto.getZomgUnicode());
+    assertEquals(ooe.what_who, proto.getWhatWho());
+    
+    assertEquals(new String(ooe.base64, "UTF-8"), proto.getBase64().toStringUtf8());
+  }
+  
+}
