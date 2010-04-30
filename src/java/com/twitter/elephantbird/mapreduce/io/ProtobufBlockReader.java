@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapreduce.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.google.common.base.Function;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.BlockStorage.SerializedBlock;
 import com.twitter.elephantbird.util.Protobufs;
@@ -34,9 +35,9 @@ import org.slf4j.LoggerFactory;
 public class ProtobufBlockReader<M extends Message> {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufBlockReader.class);
 
-  private InputStream in_;
-  private StreamSearcher searcher_;
-  private TypeRef<M> typeRef_;
+  private final InputStream in_;
+  private final StreamSearcher searcher_;
+  private final Function<byte[], M> protoConverter_;
   private SerializedBlock curBlock_;
   private int numLeftToReadThisBlock_ = 0;
   private boolean readNewBlocks_ = true;
@@ -44,7 +45,7 @@ public class ProtobufBlockReader<M extends Message> {
   public ProtobufBlockReader(InputStream in, TypeRef<M> typeRef) {
     LOG.info("ProtobufReader, my typeClass is " + typeRef.getRawClass());
     in_ = in;
-    typeRef_ = typeRef;
+    protoConverter_ = Protobufs.getProtoConverter(typeRef.getRawClass());
     searcher_ = new StreamSearcher(Protobufs.KNOWN_GOOD_POSITION_MARKER);
   }
 
@@ -61,7 +62,7 @@ public class ProtobufBlockReader<M extends Message> {
 
     int blobIndex = curBlock_.getProtoBlobsCount() - numLeftToReadThisBlock_;
     byte[] blob = curBlock_.getProtoBlobs(blobIndex).toByteArray();
-    message.set(Protobufs.<M>parseFrom(typeRef_.getRawClass(), blob));
+    message.set(protoConverter_.apply(blob));
     numLeftToReadThisBlock_--;
     return true;
   }
