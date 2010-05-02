@@ -115,6 +115,7 @@ public class Protobufs {
    }
 
 
+  @SuppressWarnings("unchecked")
   public static <M extends Message> M parseFrom(Class<M> protoClass, byte[] messageBytes) {
     try {
       Method parseFrom = protoClass.getMethod("parseFrom", new Class[] { byte[].class });
@@ -140,6 +141,28 @@ public class Protobufs {
     }
 
     return null;
+  }
+  
+  /**
+   * Creates a Function to repeatedly convert byte arrays into Messages. Using such a function
+   * is more efficient than the static <code>parseFrom</code> method, since it avoids some of the
+   * reflection overhead of the static function.
+   */
+  public static <M extends Message> Function<byte[], M> getProtoConverter(final Class<M> protoClass) {
+    return new Function<byte[], M>() {
+      private Message.Builder protoBuilder = Protobufs.getMessageBuilder(protoClass);
+      
+      @SuppressWarnings("unchecked")
+      @Override
+      public M apply(byte[] bytes) {
+        try {
+          return  (M) protoBuilder.clone().mergeFrom(bytes).build();
+        } catch (InvalidProtocolBufferException e) {
+          LOG.error("Invalid Protocol Buffer exception building " + protoClass.getName(), e);
+          return null;
+        }
+      }
+    };
   }
 
   public static Message instantiateFromClassName(String canonicalClassName) {
