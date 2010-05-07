@@ -3,11 +3,6 @@ package com.twitter.elephantbird.pig.load;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import com.google.common.base.Function;
-import com.google.protobuf.Message;
-import com.twitter.elephantbird.pig.util.ProtobufToPig;
-import com.twitter.elephantbird.util.Protobufs;
-import com.twitter.elephantbird.util.TypeRef;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.pig.ExecType;
 import org.apache.pig.backend.datastorage.DataStorage;
@@ -15,6 +10,13 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Function;
+import com.google.protobuf.Message;
+import com.twitter.elephantbird.pig.util.ProtobufToPig;
+import com.twitter.elephantbird.pig.util.ProtobufTuple;
+import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * This is the base class for all base64 encoded, line-oriented protocol buffer based pig loaders.
@@ -77,7 +79,7 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
       incrCounter(LzoProtobufB64LinePigLoaderCounts.LinesRead, 1L);
       M protoValue = protoConverter_.apply(base64_.decode(line.getBytes("UTF-8")));
       if (protoValue != null) {
-        t = protoToPig_.toTuple(protoValue);
+        t = new ProtobufTuple(protoValue);
         incrCounter(LzoProtobufB64LinePigLoaderCounts.ProtobufsRead, 1L);
         break;
       }
