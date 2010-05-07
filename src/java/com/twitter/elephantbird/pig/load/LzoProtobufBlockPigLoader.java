@@ -2,18 +2,20 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
-import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
-import com.twitter.elephantbird.pig.util.ProtobufToPig;
-import com.twitter.elephantbird.util.Protobufs;
-import com.twitter.elephantbird.util.TypeRef;
 import org.apache.pig.ExecType;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.pig.util.ProtobufToPig;
+import com.twitter.elephantbird.pig.util.ProtobufTuple;
+import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.util.TypeRef;
 
 
 public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFunc {
@@ -74,7 +76,7 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
 
     Tuple t = null;
     if (reader_.readProtobuf(value_)) {
-      t = protoToPig_.toTuple(value_.get());
+      t = new ProtobufTuple(value_.get());
       incrCounter(LzoProtobufBlockPigLoaderCounters.ProtobufsRead, 1L);
     }
     return t;

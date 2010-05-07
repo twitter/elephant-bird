@@ -89,7 +89,7 @@ public class ProtobufToPig {
    * @return the object representing fieldValue in Pig -- either a bag or a tuple.
    */
   @SuppressWarnings("unchecked")
-  private Object messageToTuple(FieldDescriptor fieldDescriptor, Object fieldValue) {
+  protected Object messageToTuple(FieldDescriptor fieldDescriptor, Object fieldValue) {
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToTuple called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {
@@ -111,12 +111,12 @@ public class ProtobufToPig {
       } else {
         DataBag bag = bagFactory_.newDefaultBag();
         for (Message m : messageList) {
-          bag.add(toTuple(m));
+          bag.add(new ProtobufTuple(m));
         }
         return bag;
       }
     } else {
-      return toTuple((Message)fieldValue);
+      return new ProtobufTuple((Message)fieldValue);
     }
   }
 
@@ -129,7 +129,7 @@ public class ProtobufToPig {
    * @throws ExecException if Pig decides to.  Shouldn't happen because we won't walk off the end of a tuple's field set.
    */
   @SuppressWarnings("unchecked")
-  private Object singleFieldToTuple(FieldDescriptor fieldDescriptor, Object fieldValue) throws ExecException {
+  protected Object singleFieldToTuple(FieldDescriptor fieldDescriptor, Object fieldValue) throws ExecException {
     assert fieldDescriptor.getType() != FieldDescriptor.Type.MESSAGE : "messageToFieldSchema called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {
@@ -176,7 +176,7 @@ public class ProtobufToPig {
    * @param fieldDescriptor the descriptor object for the given field.
    * @return the value of the field, or null if none can be assigned.
    */
-  private Object getFieldValue(Message msg, FieldDescriptor fieldDescriptor) {
+  protected Object getFieldValue(Message msg, FieldDescriptor fieldDescriptor) {
     Object o = null;
     Map<FieldDescriptor, Object> setFields = msg.getAllFields();
     if (setFields.containsKey(fieldDescriptor)) {

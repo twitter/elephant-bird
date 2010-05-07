@@ -10,6 +10,7 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 import com.google.common.base.Function;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
+import com.twitter.elephantbird.pig.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -40,7 +41,7 @@ public abstract class ProtobufBytesToTuple<M extends Message> extends EvalFunc<T
     try {
       DataByteArray bytes = (DataByteArray) input.get(0);
       M value_ = protoConverter_.apply(bytes.get());
-      return protoToPig_.toTuple(value_);
+      return new ProtobufTuple(value_);
     } catch (IOException e) {
       return null;
     }
