@@ -20,15 +20,13 @@ There are a few simple examples that use the input formats.  Note how the protoc
 formats work, and also note that the examples build file uses the custom codegen stuff.  See below for
 more about that.
 
-##### Building Without Protocol Buffers #####
+#### Building Without Protocol Buffers ####
 
 If you don't want to build elephant-bird with protobuf support or you don't have protobuf >= 2.3 available 
 (fedora for instance only provides 2.2), you can have ant exclude all classes that rely on protobuf by using ant noproto target
 
 for the default target this would be:
-<code><pre>
-ant noproto release-jar
-</pre></code>
+<code><pre>ant noproto release-jar</pre></code>
 
 ### License ###
 
