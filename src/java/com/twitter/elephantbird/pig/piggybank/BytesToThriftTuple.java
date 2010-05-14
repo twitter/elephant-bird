@@ -15,7 +15,7 @@ import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * This is an abstract UDF for converting serialized Thrift objects into Pig tuples.
- * To create a converter for your Thrift class <code>MyThriftClass</code>, you simply need to extend 
+ * To create a converter for your Thrift class <code>MyThriftClass</code>, you simply need to extend
  * <code>BytesToThriftTuple</code> with something like this:
  *<pre>
  * {@code
@@ -30,8 +30,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public abstract class BytesToThriftTuple<T extends TBase<?>> extends EvalFunc<Tuple> {
 
   private final TDeserializer deserializer_ = new TDeserializer(new TBinaryProtocol.Factory());
-  private final ThriftToPigProtocol toPigProtocol_ = new ThriftToPigProtocol(new TMemoryBuffer(1));
-
+private final ThriftToTuple<T> thriftToTuple_ = new ThriftToTuple<T>();
   private TypeRef<T> typeRef_;
   private T thriftObj_ = null;
 
@@ -54,8 +53,7 @@ public abstract class BytesToThriftTuple<T extends TBase<?>> extends EvalFunc<Tu
       }
       DataByteArray dbarr = (DataByteArray) input.get(0);
       deserializer_.deserialize(thriftObj_, dbarr.get());
-      thriftObj_.write(toPigProtocol_);
-      return toPigProtocol_.getPigTuple();
+      return thriftToTuple_.convert(thriftObj_);
     } catch (IOException e) {
       log.warn("Caught exception "+e.getMessage());
       return null;

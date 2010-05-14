@@ -21,6 +21,18 @@ import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.transport.TTransport;
 
+/**
+ * Turns out this is not such a great idea, as the protocol does not get hit when
+ * a Thrift object field is missing -- it's simply silently dropped. This means for
+ * objects where an optional field is not set, all of the following fields will get
+ * shifted in terms of field order, as we can't use the protocol to insert an empty field.
+ * <p>
+ * Look out for a proper Thrift2Pig conversion using metadata introspection.
+ * For now, only use this when you know you don't have missing fields.
+ *
+ * @author dmitriy
+ *
+ */
 public class ThriftToPigProtocol extends TProtocol {
 
   private static BagFactory bagFactory_ = BagFactory.getInstance();
@@ -35,10 +47,10 @@ public class ThriftToPigProtocol extends TProtocol {
 
   // We want something that provides a generic interface for populating
   // Pig Tuples, Bags, and Maps. This does the trick.
-  
+
   // TODO: factor this out into a general util to assist with conversions from Avro
   // and other formats.
-  
+
   private abstract class PigContainer {
     public abstract Object getContents();
     public abstract void add(Object o) throws TException;
@@ -62,7 +74,7 @@ public class ThriftToPigProtocol extends TProtocol {
     }
 
     public Object getContents() { return t; }
-    
+
     public void add(Object o) throws TException {
       if (curIdx == t.size()) {
         t.append(o);
@@ -88,7 +100,13 @@ public class ThriftToPigProtocol extends TProtocol {
     @Override
     public void add(Object o) throws TException {
       try {
-        b.add((Tuple) o);
+        // Pig bags contain tuples of objects, so we must wrap a tuple around
+        // everything we get.
+        if (o instanceof Tuple) {
+          b.add((Tuple) o);
+        } else {
+          b.add(tupleFactory_.newTuple(o));
+        }
       } catch (ClassCastException e) {
         throw new TException(e);
       }
@@ -123,6 +141,7 @@ public class ThriftToPigProtocol extends TProtocol {
         }
       } else {
         map.put(currKey, o);
+        currKey = null;
       }
     }
 
@@ -135,7 +154,7 @@ public class ThriftToPigProtocol extends TProtocol {
 
   private void pushContainer(PigContainer c) {
     containerStack_.add(c);
-    currContainer_ = c; 
+    currContainer_ = c;
   }
 
   private PigContainer popContainer() throws TException {
@@ -151,11 +170,11 @@ public class ThriftToPigProtocol extends TProtocol {
     public TProtocol getProtocol(TTransport trans) {
       return new ThriftToPigProtocol(trans);
     }
-  } 
+  }
 
   public ThriftToPigProtocol(TTransport trans) {
     super(trans);
-  } 
+  }
 
   @Override
   public void writeBinary(byte[] bin) throws TException {
@@ -182,7 +201,7 @@ public class ThriftToPigProtocol extends TProtocol {
   }
 
   @Override
-  public void writeFieldEnd() throws TException {    
+  public void writeFieldEnd() throws TException {
   }
 
   @Override
@@ -283,121 +302,101 @@ public class ThriftToPigProtocol extends TProtocol {
 
   @Override
   public byte[] readBinary() throws TException {
-    // TODO Auto-generated method stub
-    return null;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public boolean readBool() throws TException {
-    // TODO Auto-generated method stub
-    return false;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public byte readByte() throws TException {
-    // TODO Auto-generated method stub
-    return 0;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public double readDouble() throws TException {
-    // TODO Auto-generated method stub
-    return 0;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public TField readFieldBegin() throws TException {
-    // TODO Auto-generated method stub
-    return null;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public void readFieldEnd() throws TException {
-    // TODO Auto-generated method stub
-
+    throw new TException("method not implemented.");
   }
 
   @Override
   public short readI16() throws TException {
-    // TODO Auto-generated method stub
-    return 0;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public int readI32() throws TException {
-    // TODO Auto-generated method stub
-    return 0;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public long readI64() throws TException {
-    // TODO Auto-generated method stub
-    return 0;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public TList readListBegin() throws TException {
-    // TODO Auto-generated method stub
-    return null;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public void readListEnd() throws TException {
-    // TODO Auto-generated method stub
-
+    throw new TException("method not implemented.");
   }
 
   @Override
   public TMap readMapBegin() throws TException {
-    // TODO Auto-generated method stub
-    return null;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public void readMapEnd() throws TException {
-    // TODO Auto-generated method stub
-
+    throw new TException("method not implemented.");
   }
 
   @Override
   public TMessage readMessageBegin() throws TException {
-    // TODO Auto-generated method stub
-    return null;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public void readMessageEnd() throws TException {
-    // TODO Auto-generated method stub
-
+    throw new TException("method not implemented.");
   }
 
   @Override
   public TSet readSetBegin() throws TException {
-    // TODO Auto-generated method stub
-    return null;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public void readSetEnd() throws TException {
-    // TODO Auto-generated method stub
-
+    throw new TException("method not implemented.");
   }
 
   @Override
   public String readString() throws TException {
-    // TODO Auto-generated method stub
-    return null;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public TStruct readStructBegin() throws TException {
-    // TODO Auto-generated method stub
-    return null;
+    throw new TException("method not implemented.");
   }
 
   @Override
   public void readStructEnd() throws TException {
-    // TODO Auto-generated method stub
-
+    throw new TException("method not implemented.");
   }
 }
