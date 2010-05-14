@@ -27,17 +27,17 @@ public class TestThriftToPig {
 
     ooe.write(proto);
     assertEquals(
-       "1-0-35-27000-16777216-6000000000-3.141592653589793-JSON THIS! \"-"+ooe.zomg_unicode+"-0-base64-(1,2,3)-(1,2,3)-(1L,2L,3L)", 
+       "1-0-35-27000-16777216-6000000000-3.141592653589793-JSON THIS! \"-"+ooe.zomg_unicode+"-0-base64-(1,2,3)-(1,2,3)-(1L,2L,3L)",
         proto.getPigTuple().toDelimitedString("-"));
 
     n.write(proto);
-    assertEquals("(31337,I am a bonk... xor!)-(1,0,35,27000,16777216,6000000000L,3.141592653589793,JSON THIS! \","+n.my_ooe.zomg_unicode+",0,base64,(1,2,3),(1,2,3),(1L,2L,3L))", 
+    assertEquals("(31337,I am a bonk... xor!)-(1,0,35,27000,16777216,6000000000L,3.141592653589793,JSON THIS! \","+n.my_ooe.zomg_unicode+",0,base64,(1,2,3),(1,2,3),(1L,2L,3L))",
         proto.getPigTuple().toDelimitedString("-"));
 
     hm.write(proto);
-    assertEquals("((1,0,34,27000,16777216,6000000000L,3.141592653589793,JSON THIS! \"," + ooe.zomg_unicode + 
+    assertEquals("((1,0,34,27000,16777216,6000000000L,3.141592653589793,JSON THIS! \"," + ooe.zomg_unicode +
         ",0,base64,(1,2,3),(1,2,3),(1L,2L,3L)),(1,0,35,27000,16777216,6000000000L,3.141592653589793,JSON THIS! \"," +
-        ooe.zomg_unicode + ",0,base64,(1,2,3),(1,2,3),(1L,2L,3L)))-{(),(then a one, two,three!,FOUR!!),(and a one,and a two)}-{two=()}", 
+        ooe.zomg_unicode + ",0,base64,(1,2,3),(1,2,3),(1L,2L,3L)))-{(),(then a one, two,three!,FOUR!!),(and a one,and a two)}-{zero=(), three=(), two=((1,Wait.),(2,What?))}",
         (proto.getPigTuple().toDelimitedString("-")));
 
     assertTrue(true);
