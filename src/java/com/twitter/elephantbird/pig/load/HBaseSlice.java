@@ -120,7 +120,6 @@ public class HBaseSlice implements Slice {
     bigStart_ = bytesToPositiveBigInt(startRow);
     bigEnd_ = bytesToPositiveBigInt(endRow);
     bigRange_ = new BigDecimal(bigEnd_.subtract(bigStart_));
-                                                                                                                                                                                        counterHelper_ = new PigCounterHelper();
   }
 
   public void addFilter(CompareFilter.CompareOp compareOp, String filterValue) {
