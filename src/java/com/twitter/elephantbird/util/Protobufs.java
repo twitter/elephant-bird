@@ -14,6 +14,7 @@ import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.UninitializedMessageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,6 +139,8 @@ public class Protobufs {
       return DynamicMessage.parseFrom(getMessageDescriptor(protoClass), messageBytes);
     } catch (InvalidProtocolBufferException e) {
       LOG.error("Protocol buffer parsing error in parseDynamicFrom", e);
+    } catch(UninitializedMessageException ume) {
+      LOG.error("Uninitialized Message error in parseDynamicFrom " + protoClass.getName(), ume);
     }
 
     return null;
@@ -160,6 +163,9 @@ public class Protobufs {
         } catch (InvalidProtocolBufferException e) {
           LOG.error("Invalid Protocol Buffer exception building " + protoClass.getName(), e);
           return null;
+        } catch(UninitializedMessageException ume) {
+	  LOG.error("Uninitialized Message Exception in building " + protoClass.getName(), ume);
+	  return null;
         }
       }
     };
