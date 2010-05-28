@@ -68,14 +68,14 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     // Creates input stream and also reads the file header
     createInputReader(codec.createInputStream(fileIn_), job);
 
+    LOG.info("Seeking to split start at pos " + start_);
     if (start_ != 0) {
-      LOG.info("Seeking to split start at pos " + start_);
       fileIn_.seek(start_);
-      skipToNextSyncPoint(true);
+      skipToNextSyncPoint(false);
       start_ = fileIn_.getPos();
       LOG.info("Start is now " + start_);
     } else {
-      skipToNextSyncPoint(false);
+      skipToNextSyncPoint(true);
     }
     pos_ = start_;
   }

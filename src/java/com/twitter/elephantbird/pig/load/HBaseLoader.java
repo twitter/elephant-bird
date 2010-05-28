@@ -54,7 +54,6 @@ import com.google.common.collect.Lists;
  * in 0.6 Piggybank.
  * <br>
  * TODO: row version controls<br>
- * TODO: right now the single-param version doesn't work. Fix that.
  */
 public class HBaseLoader implements Slicer,
 LoadFunc {
@@ -145,13 +144,14 @@ LoadFunc {
     // one region one slice
     List<HBaseSlice> slices = Lists.newArrayList();
     for (int i = 0; i < startKeys.length; i++) {
-      // skip if start key is greater than the lt param
-      byte[] endKey = ((i + 1) < startKeys.length) ? startKeys[i + 1] : HConstants.EMPTY_START_ROW;
-
+      
+      byte[] endKey = ((i + 1) < startKeys.length) ? startKeys[i + 1] : HConstants.LAST_ROW;
+      
+      // skip if the region doesn't satisfy configured options
       if ((skipRegion(CompareOp.LESS, startKeys[i], configuredOptions_.getOptionValue("lt"))) ||
           (skipRegion(CompareOp.GREATER, endKey, configuredOptions_.getOptionValue("gt"))) ||
-          (skipRegion(CompareOp.GREATER_OR_EQUAL, endKey, configuredOptions_.getOptionValue("gte"))) ||
-          (skipRegion(CompareOp.LESS_OR_EQUAL, endKey, configuredOptions_.getOptionValue("lte")))) {
+          (skipRegion(CompareOp.GREATER, endKey, configuredOptions_.getOptionValue("gte"))) ||
+          (skipRegion(CompareOp.LESS_OR_EQUAL, startKeys[i], configuredOptions_.getOptionValue("lte")))) {
         continue;
       }
       String regionLocation = table_.getRegionLocation(startKeys[i]).getServerAddress().getHostname();
