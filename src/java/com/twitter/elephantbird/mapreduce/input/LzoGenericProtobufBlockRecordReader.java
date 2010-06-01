@@ -3,14 +3,16 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
-import com.twitter.elephantbird.util.TypeRef;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.protobuf.AbstractMessage;
+import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
+import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * Similar to the LzoProtobufBlockReader classes, but instead of returning serialized
@@ -23,7 +25,7 @@ public class LzoGenericProtobufBlockRecordReader extends LzoRecordReader<LongWri
   private final LongWritable key_;
   private final BytesWritable value_;
 
-  private ProtobufBlockReader<Message> reader_;
+  private ProtobufBlockReader<AbstractMessage> reader_;
 
   public LzoGenericProtobufBlockRecordReader() {
     LOG.info("LzoProtobufRecordReader constructor");
@@ -50,7 +52,7 @@ public class LzoGenericProtobufBlockRecordReader extends LzoRecordReader<LongWri
 
   @Override
   protected void createInputReader(InputStream input, Configuration conf) throws IOException {
-    reader_ = new ProtobufBlockReader<Message>(input, new TypeRef<Message>(){});
+    reader_ = new ProtobufBlockReader<AbstractMessage>(input, new TypeRef<AbstractMessage>(){});
   }
 
   @Override

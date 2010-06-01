@@ -51,19 +51,24 @@ public class Protobufs {
 
   public static Message.Builder getMessageBuilder(Class<? extends Message> protoClass) {
     try {
-      Method newBuilder = protoClass.getMethod("newBuilder", new Class[] {});
-      return (Message.Builder)newBuilder.invoke(null, new Object[] {});
-    } catch (NoSuchMethodException e) {
-      LOG.error("Could not find method newBuilder in class " + protoClass, e);
-      throw new IllegalArgumentException(e);
+      try {
+        Method newBuilder = protoClass.getMethod("newBuilder", new Class[] {});
+        return (Message.Builder)newBuilder.invoke(null, new Object[] {});
+      } catch (NoSuchMethodException e) {
+        LOG.warn("Could not find method newBuilder in class " + protoClass, e);
+        LOG.warn("Defaulting to toBuilder() method on empty message");
+        return protoClass.newInstance().toBuilder();
+      }
     } catch (IllegalAccessException e) {
       LOG.error("Could not access method newBuilder in class " + protoClass, e);
       throw new IllegalArgumentException(e);
     } catch (InvocationTargetException e) {
       LOG.error("Error invoking method newBuilder in class " + protoClass, e);
+      throw new IllegalArgumentException(e);
+    } catch (InstantiationException e) {
+      LOG.error("Unable to instantiate class " + protoClass, e);
+      throw new IllegalArgumentException(e);
     }
-
-    return null;
   }
 
   public static Descriptor getMessageDescriptor(Class<? extends Message> protoClass) {
