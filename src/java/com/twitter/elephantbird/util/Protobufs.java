@@ -51,22 +51,16 @@ public class Protobufs {
 
   public static Message.Builder getMessageBuilder(Class<? extends Message> protoClass) {
     try {
-      try {
-        Method newBuilder = protoClass.getMethod("newBuilder", new Class[] {});
-        return (Message.Builder)newBuilder.invoke(null, new Object[] {});
-      } catch (NoSuchMethodException e) {
-        LOG.warn("Could not find method newBuilder in class " + protoClass, e);
-        LOG.warn("Defaulting to toBuilder() method on empty message");
-        return protoClass.newInstance().toBuilder();
-      }
+      Method newBuilder = protoClass.getMethod("newBuilder", new Class[] {});
+      return (Message.Builder) newBuilder.invoke(null, new Object[] {});
+    } catch (NoSuchMethodException e) {
+      LOG.error("Could not find method newBuilder in class " + protoClass, e);
+      throw new IllegalArgumentException(e);
     } catch (IllegalAccessException e) {
       LOG.error("Could not access method newBuilder in class " + protoClass, e);
       throw new IllegalArgumentException(e);
     } catch (InvocationTargetException e) {
       LOG.error("Error invoking method newBuilder in class " + protoClass, e);
-      throw new IllegalArgumentException(e);
-    } catch (InstantiationException e) {
-      LOG.error("Unable to instantiate class " + protoClass, e);
       throw new IllegalArgumentException(e);
     }
   }
@@ -155,12 +149,15 @@ public class Protobufs {
    */
   public static <M extends Message> Function<byte[], M> getProtoConverter(final Class<M> protoClass) {
     return new Function<byte[], M>() {
-      private Message.Builder protoBuilder = Protobufs.getMessageBuilder(protoClass);
+      private Message.Builder protoBuilder = null; 
       
       @SuppressWarnings("unchecked")
       @Override
       public M apply(byte[] bytes) {
         try {
+          if (protoBuilder == null) {
+            protoBuilder = Protobufs.getMessageBuilder(protoClass);
+          }
           return  (M) protoBuilder.clone().mergeFrom(bytes).build();
         } catch (InvalidProtocolBufferException e) {
           LOG.error("Invalid Protocol Buffer exception building " + protoClass.getName(), e);

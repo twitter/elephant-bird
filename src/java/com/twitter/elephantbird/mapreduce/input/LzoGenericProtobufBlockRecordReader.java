@@ -9,7 +9,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
 import com.twitter.elephantbird.util.TypeRef;
@@ -25,7 +24,7 @@ public class LzoGenericProtobufBlockRecordReader extends LzoRecordReader<LongWri
   private final LongWritable key_;
   private final BytesWritable value_;
 
-  private ProtobufBlockReader<AbstractMessage> reader_;
+  private ProtobufBlockReader<Message> reader_;
 
   public LzoGenericProtobufBlockRecordReader() {
     LOG.info("LzoProtobufRecordReader constructor");
@@ -52,7 +51,7 @@ public class LzoGenericProtobufBlockRecordReader extends LzoRecordReader<LongWri
 
   @Override
   protected void createInputReader(InputStream input, Configuration conf) throws IOException {
-    reader_ = new ProtobufBlockReader<AbstractMessage>(input, new TypeRef<AbstractMessage>(){});
+    reader_ = new ProtobufBlockReader<Message>(input, new TypeRef<Message>(){});
   }
 
   @Override
