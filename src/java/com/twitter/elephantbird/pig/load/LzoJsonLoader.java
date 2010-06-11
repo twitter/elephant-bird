@@ -84,6 +84,10 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
       LOG.warn("Very big number exceeds the scale of long: " + line, e);
       incrCounter(LzoJsonLoaderCounters.LinesParseErrorBadNumber, 1L);
       return null;
+    } catch (ClassCastException e) {
+      LOG.warn("Could not convert to Json Object: " + line, e);
+      incrCounter(LzoJsonLoaderCounters.LinesParseError, 1L);
+      return null;
     }
   }
 }
