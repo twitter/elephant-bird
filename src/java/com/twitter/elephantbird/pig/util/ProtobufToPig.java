@@ -8,11 +8,13 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.Misc.CountedMap;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
+import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
@@ -164,6 +166,9 @@ public class ProtobufToPig {
     } else if (fieldDescriptor.getType() == FieldDescriptor.Type.BOOL && fieldValue != null) {
       Boolean boolValue = (Boolean)fieldValue;
       return new Integer(boolValue ? 1 : 0);
+    } else if (fieldDescriptor.getType() == FieldDescriptor.Type.BYTES && fieldValue != null) {
+      ByteString bsValue = (ByteString)fieldValue;
+      return new DataByteArray(bsValue.toByteArray());
     }
     return fieldValue;
   }
@@ -271,12 +276,16 @@ public class ProtobufToPig {
   private byte getPigDataType(FieldDescriptor fieldDescriptor) {
     switch (fieldDescriptor.getType()) {
       case INT32:
+      case UINT32:
       case SINT32:
+      case FIXED32:
       case SFIXED32:
       case BOOL: // We convert booleans to ints for pig output.
         return DataType.INTEGER;
       case INT64:
+      case UINT64:
       case SINT64:
+      case FIXED64:
       case SFIXED64:
         return DataType.LONG;
       case FLOAT:
@@ -286,6 +295,8 @@ public class ProtobufToPig {
       case STRING:
       case ENUM: // We convert enums to strings for pig output.
         return DataType.CHARARRAY;
+      case BYTES:
+        return DataType.BYTEARRAY;
       case MESSAGE:
         throw new IllegalArgumentException("getPigDataType called on field " + fieldDescriptor.getFullName() + " of type message.");
       default:
@@ -403,12 +414,16 @@ public class ProtobufToPig {
   private String getPigScriptDataType(FieldDescriptor fieldDescriptor) {
     switch (fieldDescriptor.getType()) {
       case INT32:
+      case UINT32:
       case SINT32:
+      case FIXED32:
       case SFIXED32:
       case BOOL: // We convert booleans to ints for pig output.
         return "int";
       case INT64:
+      case UINT64:
       case SINT64:
+      case FIXED64:
       case SFIXED64:
         return "long";
       case FLOAT:
@@ -418,6 +433,8 @@ public class ProtobufToPig {
       case STRING:
       case ENUM: // We convert enums to strings for pig output.
         return "chararray";
+      case BYTES:
+        return "bytearray";
       case MESSAGE:
         throw new IllegalArgumentException("getPigScriptDataType called on field " + fieldDescriptor.getFullName() + " of type message.");
       default:
