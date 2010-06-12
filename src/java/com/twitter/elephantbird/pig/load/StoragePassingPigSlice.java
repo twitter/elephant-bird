@@ -66,6 +66,8 @@ public class StoragePassingPigSlice extends PigSlice {
   public String[] getLocations() {
     return new String[] { file };
   }
+
+  @SuppressWarnings("unchecked")
   @Override
   public void init(DataStorage base) throws IOException {
     if (getParser() == null) {

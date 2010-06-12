@@ -3,8 +3,10 @@ package com.twitter.elephantbird.pig.load;
 import java.io.IOException;
 
 import org.apache.pig.ExecType;
+import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

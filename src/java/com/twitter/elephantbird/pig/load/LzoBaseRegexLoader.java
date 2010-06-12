@@ -5,9 +5,11 @@ import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.pig.LoadFunc;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,5 +94,10 @@ public abstract class LzoBaseRegexLoader extends LzoBaseLoadFunc {
     }
 
     return t;
+  }
+  
+  @Override
+  public LoadFunc.RequiredFieldResponse fieldsToRead(LoadFunc.RequiredFieldList requiredFieldList) throws FrontendException {
+      return new LoadFunc.RequiredFieldResponse(false);
   }
 }

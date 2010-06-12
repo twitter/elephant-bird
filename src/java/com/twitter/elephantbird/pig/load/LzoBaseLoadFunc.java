@@ -7,10 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
-import com.hadoop.compression.lzo.LzoIndex;
-import com.hadoop.compression.lzo.LzopCodec;
-import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -29,9 +25,15 @@ import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.builtin.Utf8StorageConverter;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.io.BufferedPositionedInputStream;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
+import com.hadoop.compression.lzo.LzoIndex;
+import com.hadoop.compression.lzo.LzopCodec;
+import com.twitter.elephantbird.pig.util.PigCounterHelper;
 
 /**
  * This class handles LZO-decoding and slicing input LZO files.  It expects the
@@ -310,6 +312,11 @@ public abstract class LzoBaseLoadFunc extends Utf8StorageConverter implements Lo
     is_.skip(bytesToSkip);
     skipToNextSyncPoint(getPosition() == 0 && this.beginsAtHeader_);
     return getPosition() - startPos;
+  }
+
+  @Override
+  public LoadFunc.RequiredFieldResponse fieldsToRead(LoadFunc.RequiredFieldList requiredFieldList) throws FrontendException {
+      return new LoadFunc.RequiredFieldResponse(false);
   }
 
 }
