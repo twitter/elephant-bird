@@ -2,6 +2,8 @@ package com.twitter.elephantbird.pig.load;
 
 import java.util.regex.Pattern;
 
+import org.apache.pig.LoadFunc;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

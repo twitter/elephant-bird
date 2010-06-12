@@ -37,15 +37,17 @@ public class Invoker<T>  {
     private Class<?> selfClass_;
     private Type returnType_;
 
-    public Invoker(String fullName, String paramSpecsStr) throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
+    public Invoker(String fullName, String paramSpecsStr) 
+    throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
         this(fullName, paramSpecsStr, "true");
     }
 
-    public Invoker(String fullName, String paramSpecsStr, String isStatic) throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
+    public Invoker(String fullName, String paramSpecsStr, String isStatic) 
+    throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
         String className = fullName.substring(0, fullName.lastIndexOf('.'));
         String methodName = fullName.substring(fullName.lastIndexOf('.')+1);
         Class<?> klazz = Class.forName(className);
-        String[] paramSpecs = paramSpecsStr.split(" ");
+        String[] paramSpecs = "".equals(paramSpecsStr) ? new String[0] : paramSpecsStr.split(" ");
         isStatic_ = "static".equalsIgnoreCase(isStatic) || "true".equals(isStatic);
         paramClasses_ = new Class<?>[paramSpecs.length];
         for (int i = 0; i < paramSpecs.length; i++) {
@@ -59,7 +61,7 @@ public class Invoker<T>  {
     }
 
     public Type getReturnType() {
-        return returnType_;
+        return unPrimitivize((Class) returnType_);
     }
 
     private static Class<?>[] dropFirstClass(Class<?>[] original) {
@@ -90,7 +92,7 @@ public class Invoker<T>  {
         } else if ("long".equalsIgnoreCase(klass)) {
             return Long.TYPE;
         } else { 
-            throw new FrontendException("unable to find mathing class for " + klass);
+            throw new FrontendException("unable to find matching class for " + klass);
         }
 
     }
@@ -110,14 +112,15 @@ public class Invoker<T>  {
     }
 
     private Object[] tupleToArgs(Tuple t) throws ExecException {
-        if ( (t == null && paramClasses_ != null) || (t != null && t.size() != paramClasses_.length)) {
+      if ( (t == null && (paramClasses_ != null || paramClasses_.length != 0)) 
+            || (t != null && t.size() < paramClasses_.length)) {
             throw new ExecException("unable to match function arguments to declared signature.");
         }
         if (t == null) {
             return null;
         }
-        Object[] args = new Object[t.size()];
-        for (int i = 0; i < t.size(); i++) {
+        Object[] args = new Object[paramClasses_.length];
+        for (int i = 0; i < paramClasses_.length; i++) {
             args[i] =  unPrimitivize(paramClasses_[i]).cast(t.get(i));
         }
         return args;

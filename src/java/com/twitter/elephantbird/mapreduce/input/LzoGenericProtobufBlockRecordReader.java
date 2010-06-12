@@ -3,14 +3,15 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
-import com.twitter.elephantbird.util.TypeRef;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
+import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * Similar to the LzoProtobufBlockReader classes, but instead of returning serialized

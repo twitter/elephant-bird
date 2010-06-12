@@ -44,6 +44,7 @@ import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.io.BufferedPositionedInputStream;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import com.google.common.collect.Lists;
@@ -251,8 +252,8 @@ LoadFunc {
   }
 
   @Override
-  public void fieldsToRead(Schema schema) {
-
+  public LoadFunc.RequiredFieldResponse fieldsToRead(LoadFunc.RequiredFieldList requiredFieldList) throws FrontendException {
+      return new LoadFunc.RequiredFieldResponse(false);
   }
 
   @Override
