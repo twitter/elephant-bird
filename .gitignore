@@ -19,3 +19,5 @@ dist
 .classpath
 build
 *~
+.settings
+src/gen-piglet*

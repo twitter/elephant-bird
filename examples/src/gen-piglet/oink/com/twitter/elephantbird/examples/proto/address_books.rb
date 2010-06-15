@@ -4,8 +4,8 @@ module Oink
   module Plugins
     module Load
       # A class for locating data from the AddressBook table
-      class AddressBook < DateTemplateBase
-        def inintialize
+      class AddressBooks < DateTemplateBase
+        def initialize
         end
 
         def template_dir

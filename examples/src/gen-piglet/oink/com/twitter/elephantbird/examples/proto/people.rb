@@ -4,8 +4,8 @@ module Oink
   module Plugins
     module Load
       # A class for locating data from the Person table
-      class Person < DateTemplateBase
-        def inintialize
+      class People < DateTemplateBase
+        def initialize
         end
 
         def template_dir

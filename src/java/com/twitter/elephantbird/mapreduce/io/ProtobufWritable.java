@@ -4,23 +4,21 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.WritableComparable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Function;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
-import org.apache.hadoop.io.Writable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A Hadoop Writable wrapper around a protocol buffer of type M.
- *
- * TODO: Implement WritableComparable so it can be used as a key.  Could just
- * use BytesWritable's comparator against the raw protobuf bytes to avoid the need
- * to even serialize objects during comparisons.
  */
 
-public class ProtobufWritable<M extends Message> implements Writable {
+public class ProtobufWritable<M extends Message> implements WritableComparable<ProtobufWritable<M>> {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufWritable.class);
 
   private M message_;
@@ -67,5 +65,12 @@ public class ProtobufWritable<M extends Message> implements Writable {
       in.readFully(messageBytes, 0, size);
       message_ = protoConverter_.apply(messageBytes);
     }
+  }
+
+	@Override
+  public int compareTo(ProtobufWritable<M> other) {
+	  byte[] bytes = message_.toByteArray();
+	  byte[] otherBytes = other.get().toByteArray();
+	  return BytesWritable.Comparator.compareBytes(bytes, 0, bytes.length, otherBytes, 0, otherBytes.length);
   }
 }

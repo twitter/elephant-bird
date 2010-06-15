@@ -114,3 +114,4 @@ Bug fixes, features, and documentation improvements are welcome!  Please fork an
 * Dmitriy Ryaboy ([@squarecog](http://twitter.com/squarecog))
 * Chuang Liu ([@chuangl4](http://twitter.com/chuangl4))
 * Florian Liebert ([@floliebert](http://twitter.com/floliebert))
+* Ning Liang ([@ningliang](http://twitter.com/ningliang))
