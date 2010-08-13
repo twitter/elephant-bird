@@ -117,8 +117,25 @@ public class HBaseSlice implements Slice {
     inputColumns_ = inputColumns;
     regionLocation_ = location;
     loadRowKey_ = loadRowKey;
-    bigStart_ = bytesToPositiveBigInt(startRow);
-    bigEnd_ = bytesToPositiveBigInt(endRow);
+
+    // We have to deal with different byte lengths of keys producing very different
+    // BigIntegers (bigendianness is great this way). The code is mostly cribbed
+    // from HBase's Bytes class.
+    byte [] startPadded;
+    byte [] endPadded;
+    if (startRow.length < endRow.length) {
+      startPadded = Bytes.padTail(startRow, endRow.length - startRow.length);
+      endPadded = endRow;
+    } else if (endRow.length < startRow.length) {
+      startPadded = startRow;
+      endPadded = Bytes.padTail(endRow, startRow.length - endRow.length);
+    } else {
+      startPadded = startRow;
+      endPadded = endRow;
+    }
+    byte [] prependHeader = {1, 0};
+    bigStart_ = new BigInteger(Bytes.add(prependHeader, startPadded));
+    bigEnd_ = new BigInteger(Bytes.add(prependHeader, endPadded));
     bigRange_ = new BigDecimal(bigEnd_.subtract(bigStart_));
   }
 
@@ -182,10 +199,16 @@ public class HBaseSlice implements Slice {
     // No way to know max.. just return 0. Sorry, reporting on the last slice is janky.
     // So is reporting on the first slice, by the way -- it will start out too high, possibly at 100%.
     if (endRow_.length==0) return 0;
-
-    BigInteger bigLastRow = bytesToPositiveBigInt(m_lastRow_);
+    byte[] lastPadded = m_lastRow_;
+    if (m_lastRow_.length < endRow_.length) {
+      lastPadded = Bytes.padTail(m_lastRow_, endRow_.length - m_lastRow_.length);
+    }
+    if (m_lastRow_.length < startRow_.length) {
+      lastPadded = Bytes.padTail(m_lastRow_, startRow_.length - m_lastRow_.length);
+    }
+    byte [] prependHeader = {1, 0};
+    BigInteger bigLastRow = new BigInteger(Bytes.add(prependHeader, lastPadded));
     BigDecimal processed = new BigDecimal(bigLastRow.subtract(bigStart_));
-
     try {
       BigDecimal progress = processed.setScale(3).divide(bigRange_, BigDecimal.ROUND_HALF_DOWN);
       return progress.floatValue();
@@ -308,11 +331,6 @@ public class HBaseSlice implements Slice {
   public String toString() {
     return regionLocation_ + ":" + Bytes.toString(startRow_) + ","
     + Bytes.toString(endRow_);
-  }
-
-  private BigInteger bytesToPositiveBigInt(byte[] bytes) {
-    return (bytes.length == 0) ? new BigInteger(new byte[] {0}) :
-      new BigInteger(bytes).shiftRight(1).clearBit(bytes.length-1);
   }
 
   public void setLimit(String limit) {
