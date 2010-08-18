@@ -6,6 +6,7 @@ com.twitter.data.proto.tutorial.mapreduce.io
 com.twitter.data.proto.tutorial.mapreduce.output
 com.twitter.data.proto.tutorial.pig.load
 com.twitter.data.proto.tutorial.pig.piggybank
+com.twitter.elephantbird.examples.proto
 com.twitter.elephantbird.mapred.input
 com.twitter.elephantbird.mapreduce.input
 com.twitter.elephantbird.mapreduce.io
