@@ -26,6 +26,7 @@ import java.io.IOException;
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.junit.Test;
 
 /** need more tests -- non-String funcs and especially the full path through the pig interpreter. 
@@ -61,6 +62,11 @@ public class TestInvoker {
         assertEquals("foobar", is.exec(t));
     }
 
+    @Test
+    public void testNoArgInvoker() throws SecurityException, ClassNotFoundException, NoSuchMethodException, IOException {
+      InvokeForInt id = new InvokeForInt(TestInvoker.class.getName() + ".simpleStaticFunction");
+      assertEquals(Integer.valueOf(1), id.exec(tf_.newTuple()));
+    }
     @Test
     public void testLongInvoker() throws SecurityException, ClassNotFoundException, NoSuchMethodException, NumberFormatException, IOException {
         InvokeForLong il = new InvokeForLong("java.lang.Long.valueOf", "String");
@@ -101,6 +107,10 @@ public class TestInvoker {
         return str1.concat(str2);
     }
 
+    public static int simpleStaticFunction() {
+      return 1;
+    }
+    
     @Test
     public void testSpeed() throws IOException, SecurityException, ClassNotFoundException, NoSuchMethodException {
         EvalFunc<Double> log = new Log();

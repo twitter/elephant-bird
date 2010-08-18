@@ -27,6 +27,10 @@ public class InvokeForFloat extends GenericInvoker<Float> {
 
      public InvokeForFloat() {}
 
+     public InvokeForFloat(String fullName) throws FrontendException, SecurityException, ClassNotFoundException, NoSuchMethodException {
+       super(fullName);
+     }
+     
      public InvokeForFloat(String fullName, String paramSpecsStr) throws FrontendException, SecurityException, ClassNotFoundException, NoSuchMethodException {
          super(fullName, paramSpecsStr);
      }

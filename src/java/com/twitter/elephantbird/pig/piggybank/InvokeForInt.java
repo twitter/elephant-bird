@@ -30,6 +30,10 @@ public class InvokeForInt extends GenericInvoker<Integer> {
         super(fullName, paramSpecsStr);
     }
 
+    public InvokeForInt(String fullName) throws FrontendException, SecurityException, ClassNotFoundException, NoSuchMethodException {
+      super(fullName);
+    }
+    
     public InvokeForInt(String fullName, String paramSpecsStr, String isStatic)
     throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
         super(fullName, paramSpecsStr, isStatic);

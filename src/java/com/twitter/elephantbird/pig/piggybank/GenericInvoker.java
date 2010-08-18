@@ -65,6 +65,11 @@ public abstract class GenericInvoker<T> extends EvalFunc<T> {
 
     public GenericInvoker() {}
 
+    public GenericInvoker(String fullName) 
+    throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
+      invoker_ = new Invoker<T>(fullName, "");
+    }
+
     public GenericInvoker(String fullName, String paramSpecsStr)
     throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
         invoker_ = new Invoker<T>(fullName, paramSpecsStr);

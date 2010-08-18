@@ -26,6 +26,10 @@ public class InvokeForDouble extends GenericInvoker<Double> {
 
      public InvokeForDouble() {}
 
+     public InvokeForDouble(String fullName) throws FrontendException, SecurityException, ClassNotFoundException, NoSuchMethodException {
+       super(fullName);
+     }
+     
      public InvokeForDouble(String fullName, String paramSpecsStr) throws FrontendException, SecurityException, ClassNotFoundException, NoSuchMethodException {
          super(fullName, paramSpecsStr);
      }
@@ -34,4 +38,6 @@ public class InvokeForDouble extends GenericInvoker<Double> {
      throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
          super(fullName, paramSpecsStr, isStatic);
      }
+
+
  }

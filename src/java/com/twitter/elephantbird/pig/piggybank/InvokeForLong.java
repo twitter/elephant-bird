@@ -26,6 +26,10 @@ public class InvokeForLong extends GenericInvoker<Long> {
 
     public InvokeForLong() {}
 
+    public InvokeForLong(String fullName) throws FrontendException, SecurityException, ClassNotFoundException, NoSuchMethodException {
+      super(fullName);
+    }
+    
     public InvokeForLong(String fullName, String paramSpecsStr) throws FrontendException, SecurityException, ClassNotFoundException, NoSuchMethodException {
         super(fullName, paramSpecsStr);
     }
