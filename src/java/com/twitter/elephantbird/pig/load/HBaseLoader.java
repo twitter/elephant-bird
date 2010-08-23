@@ -35,12 +35,15 @@ import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.pig.ExecType;
 import org.apache.pig.LoadFunc;
-import org.apache.pig.Slice;
-import org.apache.pig.Slicer;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.backend.executionengine.ExecException;
+import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.io.BufferedPositionedInputStream;
@@ -48,6 +51,10 @@ import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import com.google.common.collect.Lists;
+import com.hirohanin.elephantbird.Slice;
+import com.hirohanin.elephantbird.Slicer;
+import com.twitter.elephantbird.mapreduce.input.LzoLineRecordReader;
+import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
 
 /**
  * A <code>Slicer</code> that splits the hbase table into {@link HBaseSlice}s.
@@ -56,8 +63,8 @@ import com.google.common.collect.Lists;
  * <br>
  * TODO: row version controls<br>
  */
-public class HBaseLoader implements Slicer,
-LoadFunc {
+public class HBaseLoader extends LoadFunc implements Slicer
+ {
 
   private static final Log LOG = LogFactory.getLog(HBaseLoader.class);
 
@@ -126,7 +133,7 @@ LoadFunc {
     conf_ = new HBaseConfiguration();
   }
 
-  @Override
+  
   public Slice[] slice(DataStorage store, String tablename)
   throws IOException {
     validate(store, tablename);
@@ -188,7 +195,7 @@ LoadFunc {
     return str.replace("\\\\", "\\");
   }
 
-  @Override
+  
   public void validate(DataStorage store, String tablename)
   throws IOException {
     ensureTable(tablename);
@@ -238,36 +245,33 @@ LoadFunc {
   // HBase LoadFunc
   // Most of the action happens in the Slice class.
 
-  @Override
+  
   public void bindTo(String fileName, BufferedPositionedInputStream is,
       long offset, long end) throws IOException {
     // do nothing
   }
 
-  @Override
+  
   public Schema determineSchema(String fileName, ExecType execType,
       DataStorage storage) throws IOException {
     // do nothing
     return null;
   }
 
-  @Override
-  public LoadFunc.RequiredFieldResponse fieldsToRead(LoadFunc.RequiredFieldList requiredFieldList) throws FrontendException {
-      return new LoadFunc.RequiredFieldResponse(false);
-  }
 
-  @Override
+
+  
   public Tuple getNext() throws IOException {
     // do nothing
     return null;
   }
 
-  @Override
+  
   public String bytesToCharArray(byte[] b) throws IOException {
     return Bytes.toString(b);    
   }
 
-  @Override
+  
   public Double bytesToDouble(byte[] b) throws IOException {
     if (Bytes.SIZEOF_DOUBLE > b.length){ 
       return Bytes.toDouble(Bytes.padHead(b, Bytes.SIZEOF_DOUBLE - b.length));
@@ -276,7 +280,7 @@ LoadFunc {
     }
   }
 
-  @Override
+  
   public Float bytesToFloat(byte[] b) throws IOException {
     if (Bytes.SIZEOF_FLOAT > b.length){ 
       return Bytes.toFloat(Bytes.padHead(b, Bytes.SIZEOF_FLOAT - b.length));
@@ -285,7 +289,7 @@ LoadFunc {
     }
   }
 
-  @Override
+  
   public Integer bytesToInteger(byte[] b) throws IOException {
     if (Bytes.SIZEOF_INT > b.length){ 
       return Bytes.toInt(Bytes.padHead(b, Bytes.SIZEOF_INT - b.length));
@@ -294,7 +298,7 @@ LoadFunc {
     }
   }
 
-  @Override
+  
   public Long bytesToLong(byte[] b) throws IOException {
     if (Bytes.SIZEOF_LONG > b.length){ 
       return Bytes.toLong(Bytes.padHead(b, Bytes.SIZEOF_LONG - b.length));
@@ -306,7 +310,7 @@ LoadFunc {
   /**
    * NOT IMPLEMENTED
    */
-   @Override
+   
    public Map<String, Object> bytesToMap(byte[] b) throws IOException {
      throw new ExecException("can't generate a Map from byte[]");
    }
@@ -314,7 +318,7 @@ LoadFunc {
    /**
     * NOT IMPLEMENTED
     */
-   @Override
+   
    public Tuple bytesToTuple(byte[] b) throws IOException {
      throw new ExecException("can't generate a Tuple from byte[]");
    }
@@ -322,8 +326,18 @@ LoadFunc {
    /**
     * NOT IMPLEMENTED
     */
-   @Override
+   
    public DataBag bytesToBag(byte[] b) throws IOException {
      throw new ExecException("can't generate DataBags from byte[]");
+   }
+   public void setLocation(String location, Job job)
+   throws IOException {
+ 	  FileInputFormat.setInputPaths(job, location);
+   }
+   public InputFormat getInputFormat() {
+       return null;
+   }
+
+   public void prepareToRead(RecordReader reader, PigSplit split) {
    }
 }

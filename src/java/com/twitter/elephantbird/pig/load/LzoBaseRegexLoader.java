@@ -5,13 +5,20 @@ import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.pig.LoadFunc;
-import org.apache.pig.data.DataByteArray;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.pig.PigException;
+import org.apache.pig.backend.executionengine.ExecException;
+import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.twitter.elephantbird.mapreduce.input.LzoLineRecordReader;
+import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
 
 /**
  * Serves as the base class for all regex-based lzo loading functions.  Each deriving
@@ -24,7 +31,6 @@ public abstract class LzoBaseRegexLoader extends LzoBaseLoadFunc {
   protected static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
   protected static final Charset UTF8 = Charset.forName("UTF-8");
   protected static final byte RECORD_DELIMITER = (byte)'\n';
-
   // This loader tracks the number of matched and unmatched lines as Hadoop counters.
   protected enum LzoBaseRegexLoaderCounters { MatchedRegexLines, UnmatchedRegexLines }
 
@@ -50,54 +56,69 @@ public abstract class LzoBaseRegexLoader extends LzoBaseLoadFunc {
    * based on the regex match groups.
    */
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
-      return null;
-    }
+	  if (!verifyStream()) {
+		  return null;
+	  }
 
-    Pattern pattern = getPattern();
-    Matcher matcher = pattern.matcher("");
-    String line;
-    Tuple t = null;
-    // Read lines until a match is found, making sure there's no reading past the
-    // end of the assigned byte range.
-    while (true) {
-      line = is_.readLine(UTF8, RECORD_DELIMITER);
+	  Pattern pattern = getPattern();
+	  Matcher matcher = pattern.matcher("");
+	  Object lineObj;
+	  String line;
+	  Tuple t = null;
+	  // Read lines until a match is found, making sure there's no reading past the
+	  // end of the assigned byte range.
+	  try {
+		  while (is_.nextKeyValue()) {
 
-      if (line == null) {
-        break;
-      }
+			  lineObj = is_.getCurrentValue();
 
-      matcher = matcher.reset(line);
-      // Increment counters for the number of matched and unmatched lines.
-      if (matcher.find()) {
+			  if (lineObj == null) {
+				  break;
+			  }
+			  line = lineObj.toString();
+			  matcher = matcher.reset(line);
+			  // Increment counters for the number of matched and unmatched lines.
+			  if (matcher.find()) {
 
-        incrCounter(LzoBaseRegexLoaderCounters.MatchedRegexLines, 1L);
-        t = tupleFactory_.newTuple(matcher.groupCount());
-        for (int i = 1; i <= matcher.groupCount(); i++) {
-          if(matcher.group(i) != null) {
-            t.set(i - 1, matcher.group(i));
-          } else {
-            t.set(i - 1, "");
-          }
-        }
-        break;
-      } else {
-        incrCounter(LzoBaseRegexLoaderCounters.UnmatchedRegexLines, 1L);
-        // TODO: stop doing this, as it can slow down the job.
-        LOG.debug("No match for line " + line);
-      }
+				  incrCounter(LzoBaseRegexLoaderCounters.MatchedRegexLines, 1L);
+				  t = tupleFactory_.newTuple(matcher.groupCount());
+				  for (int i = 1; i <= matcher.groupCount(); i++) {
+					  if(matcher.group(i) != null) {
+						  t.set(i - 1, matcher.group(i));
+					  } else {
+						  t.set(i - 1, "");
+					  }
+				  }
+				  break;
+			  } else {
+				  incrCounter(LzoBaseRegexLoaderCounters.UnmatchedRegexLines, 1L);
+				  // TODO: stop doing this, as it can slow down the job.
+				  LOG.debug("No match for line " + line);
+			  }
 
-      // If the read has walked beyond the end of the split, move on.
-      if (is_.getPosition() > end_) {
-        break;
-      }
-    }
+			  // If the read has walked beyond the end of the split, move on.
 
-    return t;
+		  }
+	  } catch (InterruptedException e) {
+		  int errCode = 6018;
+		  String errMsg = "Error while reading input";
+		  throw new ExecException(errMsg, errCode,
+				  PigException.REMOTE_ENVIRONMENT, e);
+	  }
+
+	  return t;
   }
-  
-  @Override
-  public LoadFunc.RequiredFieldResponse fieldsToRead(LoadFunc.RequiredFieldList requiredFieldList) throws FrontendException {
-      return new LoadFunc.RequiredFieldResponse(false);
+  public void setLocation(String location, Job job)
+  throws IOException {
+	  FileInputFormat.setInputPaths(job, location);
+  }
+  public InputFormat getInputFormat() {
+      return new LzoTextInputFormat();
+  }
+
+  public void prepareToRead(RecordReader reader, PigSplit split) {
+	  is_ = (LzoLineRecordReader)reader;
+      
+      
   }
 }

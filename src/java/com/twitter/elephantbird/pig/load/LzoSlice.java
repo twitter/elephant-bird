@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.twitter.elephantbird.pig.util.LzoBufferedPositionedInputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
@@ -15,7 +14,6 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.pig.FuncSpec;
-import org.apache.pig.Slice;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.backend.datastorage.SeekableInputStream;
 import org.apache.pig.backend.datastorage.SeekableInputStream.FLAGS;
@@ -23,6 +21,9 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.PigContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hirohanin.elephantbird.Slice;
+import com.twitter.elephantbird.pig.util.LzoBufferedPositionedInputStream;
 
 /**
  * This class implements the Pig Slice interface, meaning it both represents an input split

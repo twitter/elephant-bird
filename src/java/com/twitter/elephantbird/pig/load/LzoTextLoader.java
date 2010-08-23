@@ -1,28 +1,33 @@
 package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.pig.PigException;
+import org.apache.pig.backend.executionengine.ExecException;
+import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.mapreduce.input.LzoLineRecordReader;
+import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
+
 /**
  * Load the LZO file line by line, passing each line as a single-field Tuple to Pig.
  */
 public class LzoTextLoader extends LzoBaseLoadFunc {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoJsonLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LzoTextLoader.class);
 
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-  private static final byte RECORD_DELIMITER = (byte)'\n';
-
   protected enum LzoTextLoaderCounters { LinesRead }
 
   public LzoTextLoader() {
-    LOG.info("LzoTextLoader creation");
   }
 
   public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
@@ -37,17 +42,34 @@ public class LzoTextLoader extends LzoBaseLoadFunc {
    * Return every non-null line as a single-element tuple to Pig.
    */
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
-      return null;
-    }
+	  if (!verifyStream()) {
+		  return null;
+	  }
+	  Tuple t = null;
+	  try {
+		  Object line = is_.getCurrentValue();
+		  if (line != null) {
+			  incrCounter(LzoTextLoaderCounters.LinesRead, 1L);
+			  t = tupleFactory_.newTuple(new DataByteArray(line.toString().getBytes()));
+		  }
+	  } catch (InterruptedException e) {
+		  int errCode = 6018;
+		  String errMsg = "Error while reading input";
+		  throw new ExecException(errMsg, errCode,
+				  PigException.REMOTE_ENVIRONMENT, e);
+	  }
+	  return t;
+  }
+  public void setLocation(String location, Job job)
+  throws IOException {
+	  FileInputFormat.setInputPaths(job, location);
+  }
+  public InputFormat getInputFormat() {
+	  return new LzoTextInputFormat();
+  }
 
-    String line = is_.readLine(UTF8, RECORD_DELIMITER);
-    Tuple t = null;
-    if (line != null) {
-      incrCounter(LzoTextLoaderCounters.LinesRead, 1L);
-      t = tupleFactory_.newTuple(new DataByteArray(line.getBytes()));
-    }
-
-    return t;
+  public void prepareToRead(RecordReader reader, PigSplit split)  throws IOException{
+	  is_ = (LzoLineRecordReader)reader;
+	  
   }
 }

@@ -3,10 +3,6 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import com.google.protobuf.Message;
-import com.hadoop.compression.lzo.LzopCodec;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
-import com.twitter.elephantbird.util.TypeRef;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -17,6 +13,12 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.protobuf.Message;
+import com.hadoop.compression.lzo.LzoCodec;
+import com.hadoop.compression.lzo.LzopCodec;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * This is the base class for all base64 encoded, line-oriented protocol buffer based output formats.
@@ -42,8 +44,8 @@ public abstract class LzoProtobufB64LineOutputFormat<M extends Message, W extend
   public RecordWriter<NullWritable, W> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
     Configuration conf = job.getConfiguration();
-    LzopCodec codec = new LzopCodec();
-    codec.setConf(conf);
+    LzoCodec codec = new LzopCodec();
+		codec.setConf(conf);
 
     Path file = getDefaultWorkFile(job, codec.getDefaultExtension());
     FileSystem fs = file.getFileSystem(conf);

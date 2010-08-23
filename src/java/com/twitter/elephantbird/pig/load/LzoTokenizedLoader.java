@@ -4,21 +4,30 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.twitter.elephantbird.pig.util.PigTokenHelper;
-import org.apache.pig.SamplableLoader;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.pig.PigException;
+import org.apache.pig.backend.executionengine.ExecException;
+import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.mapreduce.input.LzoLineRecordReader;
+import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
+import com.twitter.elephantbird.pig.load.LzoTextLoader.LzoTextLoaderCounters;
+import com.twitter.elephantbird.pig.util.PigTokenHelper;
+
 /**
  * A load function that parses a line of input into fields using a delimiter to set the fields. The
  * delimiter is given as a single character, \t, or \x___ or slash u___.
  */
-public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoader {
+public class LzoTokenizedLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoTokenizedLoader.class);
-
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
 
   private ByteArrayOutputStream buffer_ = new ByteArrayOutputStream(4096);
@@ -61,24 +70,39 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoad
 
     Tuple t = null;
     buffer_.reset();
-    while (true) {
-      // BufferedPositionedInputStream is buffered, so no need to buffer.
-      int b = is_.read();
-      prevByte_ = (byte)b;
-      if (prevByte_ == fieldDel_) {
-        readField();
-      } else if (prevByte_ == recordDel_) {
-        readField();
-        t =  tupleFactory_.newTupleNoCopy(protoTuple_);
-        protoTuple_ = null;
-        break;
-      } else if (b == -1) {
-        // hit end of file
-        break;
-      } else {
-        buffer_.write(b);
-      }
-    }
+    byte[] theByteArray = null;
+    try {
+		  Object line = is_.getCurrentValue();
+
+		  if (line != null) {
+			  theByteArray = line.toString().getBytes();
+			  int len = theByteArray.length;
+			  for (int i= 0;i<theByteArray.length;i++) {
+			      // BufferedPositionedInputStream is buffered, so no need to buffer.
+			      int b = theByteArray[0];
+			      prevByte_ = (byte)b;
+			      if (prevByte_ == fieldDel_) {
+			        readField();
+			      } else if (prevByte_ == recordDel_) {
+			        readField();
+			        t =  tupleFactory_.newTupleNoCopy(protoTuple_);
+			        protoTuple_ = null;
+			        break;
+			      } else if (b == -1) {
+			        // hit end of file
+			        break;
+			      } else {
+			        buffer_.write(b);
+			      }
+			    }
+		  }
+	  } catch (InterruptedException e) {
+		  int errCode = 6018;
+		  String errMsg = "Error while reading input";
+		  throw new ExecException(errMsg, errCode,
+				  PigException.REMOTE_ENVIRONMENT, e);
+	  }
+    
 
     if (t != null) {
       // Increment the per-tuple-size counters.
@@ -88,28 +112,9 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoad
     return t;
   }
 
-  /**
-   * For SamplableLoader, return the stream position.
-   */
-  public long getPosition() throws IOException {
-    return is_.getPosition();
-  }
 
-  /**
-   * For SamplableLoader.  Skip almost all the way, see if we're at the end, then skip the last byte.
-   */
-  public long skip(long n) throws IOException {
-    long skipped = is_.skip(n - 1);
-    prevByte_ = (byte)is_.read();
-    if(prevByte_ == -1) // End of stream.
-      return skipped;
-    else
-      return skipped + 1;
-  }
 
-  /**
-   * For SamplableLoader, return a tuple at the given position.
-   */
+
   public Tuple getSampledTuple() throws IOException {
     if(prevByte_ == null || prevByte_ == recordDel_) {
       // prevByte = null when this is called for the first time, in that case bindTo would have already
@@ -164,5 +169,18 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoad
       return fieldDel_ == other.fieldDel_;
     }
     return false;
+  }
+  public void setLocation(String location, Job job)
+  throws IOException {
+	  FileInputFormat.setInputPaths(job, location);
+  }
+  public InputFormat getInputFormat() {
+      return new LzoTextInputFormat();
+  }
+
+  public void prepareToRead(RecordReader reader, PigSplit split) {
+	  is_ = (LzoLineRecordReader)reader;
+      
+      
   }
 }

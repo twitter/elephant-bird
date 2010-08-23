@@ -1,29 +1,32 @@
 package com.twitter.elephantbird.pig.store;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import com.hadoop.compression.lzo.LzopCodec;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.compress.CompressionOutputStream;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.BZip2Codec;
+import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordWriter;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.pig.StoreFunc;
+
+import com.hadoop.compression.lzo.LzopCodec;
 
 /**
  * This class serves as the base class for any functions storing output via lzo.
  * It implements the common functions it can, and wraps the given output stream in an lzop
  * output stream.
  */
-public abstract class LzoBaseStoreFunc implements StoreFunc {
-  protected CompressionOutputStream os_;
+public abstract class LzoBaseStoreFunc extends StoreFunc {
+  
+  protected RecordWriter writer = null;
+  private static final int BUFFER_SIZE = 4096;
+  protected ByteArrayOutputStream os_ = new ByteArrayOutputStream(BUFFER_SIZE);
 
-  /**
-   * Wrap the given output stream in an LzopOutputStream.
-   */
-  public void bindTo(OutputStream os) throws IOException {
-    LzopCodec codec = new LzopCodec();
-    codec.setConf(new Configuration());
-    os_ = codec.createOutputStream(os);
-  }
+
+
 
   /**
    * Clean up resources.
@@ -39,5 +42,25 @@ public abstract class LzoBaseStoreFunc implements StoreFunc {
    */
   public Class<?> getStorePreparationClass() throws IOException {
     return null;
+  }
+
+  public void prepareToWrite(RecordWriter writer) {
+      this.writer = writer;
+  }
+
+  public void setStoreLocation(String location, Job job) throws IOException {
+      job.getConfiguration().set("mapred.textoutputformat.separator", "");
+      FileOutputFormat.setOutputPath(job, new Path(location));
+
+          FileOutputFormat.setCompressOutput(job, true);
+          FileOutputFormat.setOutputCompressorClass(job, LzopCodec.class);
+  }
+
+
+
+  /**
+   * Wrap the given output stream in an LzopOutputStream.
+   */
+  public void bindTo(OutputStream os) throws IOException {
   }
 }

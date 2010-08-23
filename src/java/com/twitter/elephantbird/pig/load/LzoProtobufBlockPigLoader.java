@@ -2,16 +2,22 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.pig.ExecType;
-import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.datastorage.DataStorage;
+import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.input.LzoLineRecordReader;
+import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockInputFormat;
+import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockRecordReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
@@ -27,7 +33,7 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
   private ProtobufWritable<M> value_ = null;
   private TypeRef<M> typeRef_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
-
+  private LzoProtobufBlockRecordReader is_ = null;
   protected enum LzoProtobufBlockPigLoaderCounters { ProtobufsRead }
 
   public LzoProtobufBlockPigLoader() {
@@ -44,10 +50,10 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
     value_ = new ProtobufWritable<M>(typeRef_);
   }
 
-  @Override
+ /* @Override
   public void postBind() throws IOException {
-    reader_ = new ProtobufBlockReader<M>(is_, typeRef_);
-  }
+    reader_ = new LzoProtobufBlockRecordReader(typeRef, protobufWritable)<M>(is_, typeRef_);
+  }*/
 
   @Override
   public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
@@ -72,9 +78,9 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
     // If we are past the end of the file split, tell the reader not to read any more new blocks.
     // Then continue reading until the last of the reader's already-parsed values are used up.
     // The next split will start at the next sync point and no records will be missed.
-    if (is_.getPosition() > end_) {
+    /*if (is_.getPosition() > end_) {
       reader_.markNoMoreNewBlocks();
-    }
+    }*/
 
     Tuple t = null;
     if (reader_.readProtobuf(value_)) {
@@ -87,5 +93,19 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
   @Override
   public Schema determineSchema(String filename, ExecType execType, DataStorage store) throws IOException {
     return protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass()));
+  }
+  public void setLocation(String location, Job job)
+  throws IOException {
+	  FileInputFormat.setInputPaths(job, location);
+  }
+  public InputFormat getInputFormat() {
+      return new LzoProtobufBlockInputFormat() {
+	};
+  }
+
+  public void prepareToRead(RecordReader reader, PigSplit split) {
+	  is_ = (LzoProtobufBlockRecordReader)reader;
+      
+      
   }
 }

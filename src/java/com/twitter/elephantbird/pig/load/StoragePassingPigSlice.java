@@ -18,7 +18,6 @@ import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.backend.datastorage.SeekableInputStream;
 import org.apache.pig.backend.datastorage.SeekableInputStream.FLAGS;
 import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.backend.executionengine.PigSlice;
 import org.apache.pig.backend.hadoop.datastorage.HDataStorage;
 import org.apache.pig.builtin.PigStorage;
 import org.apache.pig.data.Tuple;
@@ -28,6 +27,8 @@ import org.apache.pig.impl.io.BufferedPositionedInputStream;
 import org.apache.pig.impl.io.FileSpec;
 import org.apache.pig.impl.util.ObjectSerializer;
 import org.apache.pig.impl.util.Pair;
+
+import com.hirohanin.elephantbird.PigSlice;
 
 /*
  * This is a truly terrible thing.
@@ -101,8 +102,8 @@ public class StoragePassingPigSlice extends PigSlice {
     // This line is the reason we need a special class here.
     ((LzoSampleLoader)loader).setStorage(base);
 
-    loader.bindTo(file.toString(), new BufferedPositionedInputStream(is,
-        getStart()), getStart(), end);
+    //loader.bindTo(file.toString(), new BufferedPositionedInputStream(is,
+        //getStart()), getStart(), end);
   }
 
   public boolean next(Tuple value) throws IOException {

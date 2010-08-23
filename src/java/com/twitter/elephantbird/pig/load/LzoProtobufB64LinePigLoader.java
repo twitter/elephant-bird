@@ -6,7 +6,10 @@ import java.nio.charset.Charset;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.pig.ExecType;
 import org.apache.pig.LoadFunc;
+import org.apache.pig.PigException;
 import org.apache.pig.backend.datastorage.DataStorage;
+import org.apache.pig.backend.executionengine.ExecException;
+import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
@@ -15,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.pig.load.LzoTextLoader.LzoTextLoaderCounters;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
@@ -77,15 +81,27 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
 
     String line;
     Tuple t = null;
-    while ((line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
-      incrCounter(LzoProtobufB64LinePigLoaderCounts.LinesRead, 1L);
-      M protoValue = protoConverter_.apply(base64_.decode(line.getBytes("UTF-8")));
-      if (protoValue != null) {
-        t = new ProtobufTuple(protoValue);
-        incrCounter(LzoProtobufB64LinePigLoaderCounts.ProtobufsRead, 1L);
-        break;
-      }
-    }
+    
+    try {
+    	while(is_.nextKeyValue()){
+		  Object lineObj = is_.getCurrentValue();
+		  line = lineObj.toString();
+		  if (line != null) {
+		      incrCounter(LzoProtobufB64LinePigLoaderCounts.LinesRead, 1L);
+		      M protoValue = protoConverter_.apply(base64_.decode(line.getBytes("UTF-8")));
+		      if (protoValue != null) {
+		        t = new ProtobufTuple(protoValue);
+		        incrCounter(LzoProtobufB64LinePigLoaderCounts.ProtobufsRead, 1L);
+		        break;
+		      }
+		  }
+    	}
+	  } catch (InterruptedException e) {
+		  int errCode = 6018;
+		  String errMsg = "Error while reading input";
+		  throw new ExecException(errMsg, errCode,
+				  PigException.REMOTE_ENVIRONMENT, e);
+	  }
 
     return t;
   }

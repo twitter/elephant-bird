@@ -36,13 +36,13 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.pig.Slice;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 
 import com.google.common.collect.Maps;
+import com.hirohanin.elephantbird.Slice;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 
 /**

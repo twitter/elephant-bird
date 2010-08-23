@@ -2,7 +2,6 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
-import com.twitter.elephantbird.pig.util.LzoBufferedPositionedInputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -10,9 +9,7 @@ import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.pig.ExecType;
 import org.apache.pig.FuncSpec;
-import org.apache.pig.SamplableLoader;
-import org.apache.pig.Slice;
-import org.apache.pig.Slicer;
+import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.backend.datastorage.SeekableInputStream;
 import org.apache.pig.backend.datastorage.SeekableInputStream.FLAGS;
@@ -23,6 +20,10 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hirohanin.elephantbird.Slice;
+import com.hirohanin.elephantbird.Slicer;
+import com.twitter.elephantbird.pig.util.LzoBufferedPositionedInputStream;
+
 public class LzoSampleLoader extends RandomSampleLoader implements Slicer {
   private static final Logger LOG = LoggerFactory.getLogger(LzoSampleLoader.class);
   private final String innerFuncSpec;
@@ -31,12 +32,12 @@ public class LzoSampleLoader extends RandomSampleLoader implements Slicer {
   public LzoSampleLoader(String funcSpec, String ns) {
     super(funcSpec, ns);
     innerFuncSpec = funcSpec;
-    loader = (SamplableLoader)PigContext.instantiateFuncFromSpec(funcSpec);
+    loader = (LoadFunc)PigContext.instantiateFuncFromSpec(funcSpec);
   }
 
   public void bindTo(String fileName, BufferedPositionedInputStream is,
       long offset, long end) throws IOException {
-    skipInterval = (end - offset)/numSamples;
+   //skipInterval = (end - offset)/numSamples;
     SeekableInputStream fsis = store_.asElement(store_.getActiveContainer(), fileName).sopen();
 
     CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(new Configuration());
@@ -59,7 +60,7 @@ public class LzoSampleLoader extends RandomSampleLoader implements Slicer {
     ((LzoBaseLoadFunc) loader).setBeginsAtHeader(beginsAtHeader);
     // Wrap Pig's BufferedPositionedInputStream with our own, which gives positions based on the number
     // of compressed bytes read rather than the number of uncompressed bytes read.
-    loader.bindTo(fileName, new LzoBufferedPositionedInputStream(is_, offset), offset, offset + length);
+    //loader.bindTo(fileName, new LzoBufferedPositionedInputStream(is_, offset), offset, offset + length);
   }
 
   public Slice[] slice(DataStorage store, String location) throws IOException {
@@ -81,12 +82,6 @@ public class LzoSampleLoader extends RandomSampleLoader implements Slicer {
     ((LzoBaseLoadFunc) loader).validate(store, location);
   }
 
-  @Override
-  public Schema determineSchema(String fileName, ExecType execType,
-      DataStorage storage) throws IOException {
-    store_ = storage;
-    return super.determineSchema(fileName, execType, storage);
-  }
 
   public void setStorage(DataStorage base) {
     store_ = base;

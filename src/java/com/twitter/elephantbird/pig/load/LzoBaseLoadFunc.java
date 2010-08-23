@@ -10,22 +10,17 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.pig.ExecType;
 import org.apache.pig.FuncSpec;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.PigException;
-import org.apache.pig.SamplableLoader;
-import org.apache.pig.Slice;
-import org.apache.pig.Slicer;
 import org.apache.pig.backend.datastorage.ContainerDescriptor;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.backend.datastorage.ElementDescriptor;
 import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.builtin.Utf8StorageConverter;
-import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.io.BufferedPositionedInputStream;
-import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzopCodec;
+import com.hirohanin.elephantbird.Slice;
+import com.hirohanin.elephantbird.Slicer;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 
 /**
@@ -40,13 +37,14 @@ import com.twitter.elephantbird.pig.util.PigCounterHelper;
  * filenames to end in .lzo, otherwise it assumes they are not compressed and skips them.
  * TODO: Improve the logic to accept a mixture of lzo and non-lzo files.
  */
-public abstract class LzoBaseLoadFunc extends Utf8StorageConverter implements LoadFunc, Slicer, SamplableLoader {
+public abstract class LzoBaseLoadFunc extends LoadFunc implements  Slicer {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseLoadFunc.class);
 
   protected final String LZO_EXTENSION = new LzopCodec().getDefaultExtension();
 
   // This input stream will be our wrapped LZO-decoding stream.
-  protected BufferedPositionedInputStream is_;
+  //protected BufferedPositionedInputStream is_;
+  protected RecordReader is_;
   protected long end_;
   // The load func spec is the load function name (with classpath) plus the arguments.
   protected FuncSpec loadFuncSpec_;
@@ -121,7 +119,7 @@ public abstract class LzoBaseLoadFunc extends Utf8StorageConverter implements Lo
    * @param end the end offset of the input split.
    */
   public void bindTo(String filename, BufferedPositionedInputStream is, long offset, long end) throws IOException {
-    LOG.info("LzoBaseLoadFunc::bindTo, filename = " + filename + ", offset = " + offset + ", and end = " + end);
+  /*LOG.info("LzoBaseLoadFunc::bindTo, filename = " + filename + ", offset = " + offset + ", and end = " + end);
     LOG.debug("InputStream position is: "+is.getPosition());
     is_ = is;
     end_ = end;
@@ -131,7 +129,7 @@ public abstract class LzoBaseLoadFunc extends Utf8StorageConverter implements Lo
     // Override to do any special syncing for moving to the right point of a new input split.
     skipToNextSyncPoint(beginsAtHeader_);
 
-    LOG.debug("InputStream position after skip is: "+is.getPosition());
+    LOG.debug("InputStream position after skip is: "+is.getPosition());*/
   }
 
   /**
@@ -197,7 +195,15 @@ public abstract class LzoBaseLoadFunc extends Utf8StorageConverter implements Lo
    * @return true if the input stream is valid and has not yet read past the last byte of the current split.
    */
   protected boolean verifyStream() throws IOException {
-    return is_ != null && is_.getPosition() <= end_;
+	  try {
+		  return is_ != null && is_.nextKeyValue();
+	  } catch (InterruptedException e) {
+		  int errCode = 6018;
+		  String errMsg = "Error while reading input";
+		  throw new ExecException(errMsg, errCode,
+              PigException.REMOTE_ENVIRONMENT, e);
+	  }
+
   }
 
   /**
@@ -296,27 +302,6 @@ public abstract class LzoBaseLoadFunc extends Utf8StorageConverter implements Lo
     return slices;
   }
 
-  public long getPosition() throws IOException {
-    return is_.getPosition();
-  }
 
-  public Tuple getSampledTuple() throws IOException {
-    if (getPosition() > end_ ) {
-      return null;
-    }
-    return getNext();
-  }
-
-  public long skip(long bytesToSkip) throws IOException {
-    long startPos = getPosition();
-    is_.skip(bytesToSkip);
-    skipToNextSyncPoint(getPosition() == 0 && this.beginsAtHeader_);
-    return getPosition() - startPos;
-  }
-
-  @Override
-  public LoadFunc.RequiredFieldResponse fieldsToRead(LoadFunc.RequiredFieldList requiredFieldList) throws FrontendException {
-      return new LoadFunc.RequiredFieldResponse(false);
-  }
 
 }

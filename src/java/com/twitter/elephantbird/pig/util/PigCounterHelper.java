@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigHadoopLogger;
 import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
@@ -20,7 +21,7 @@ public class PigCounterHelper {
 
   private Map<Pair<String, String>, Long> counterStringMap_ = Maps.newHashMap();
   private Map<Enum<?>, Long> counterEnumMap_ = Maps.newHashMap();
-  private Reporter reporter_ = null;
+  private TaskInputOutputContext tioc;
 
   /**
    * Mocks the Reporter.incrCounter, but adds buffering.
@@ -31,9 +32,9 @@ public class PigCounterHelper {
     Long currentValue = counterStringMap_.get(key);
     counterStringMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
 
-    if (getReporter() != null) {
+    if (getTIOC() != null) {
       for (Map.Entry<Pair<String, String>, Long> entry : counterStringMap_.entrySet()) {
-        getReporter().incrCounter(entry.getKey().first, entry.getKey().second, entry.getValue());
+    	  tioc.getCounter(entry.getKey().first, entry.getKey().second).increment(entry.getValue());
       }
       counterStringMap_.clear();
     }
@@ -47,9 +48,9 @@ public class PigCounterHelper {
     Long currentValue = counterEnumMap_.get(key);
     counterEnumMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
 
-    if (getReporter() != null) {
+    if (getTIOC() != null) {
       for (Map.Entry<Enum<?>, Long> entry : counterEnumMap_.entrySet()) {
-        getReporter().incrCounter(entry.getKey(), entry.getValue());
+        getTIOC().getCounter(entry.getKey()).increment(entry.getValue());
       }
       counterEnumMap_.clear();
     }
@@ -59,10 +60,10 @@ public class PigCounterHelper {
    * Try for the Reporter object if it hasn't been initialized yet, otherwise just return it.
    * @return the job's reporter object, or null if it isn't retrievable yet.
    */
-  private Reporter getReporter() {
-    if (reporter_ == null) {
-      reporter_ = PigHadoopLogger.getInstance().getReporter();
+  private TaskInputOutputContext getTIOC() {
+    if (tioc == null) {
+    	tioc = PigHadoopLogger.getInstance().getTaskIOContext();
     }
-    return reporter_;
+    return tioc;
   }
 }

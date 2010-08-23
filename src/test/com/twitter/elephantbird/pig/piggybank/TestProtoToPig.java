@@ -15,7 +15,7 @@ import org.junit.Test;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
-import com.twitter.data.proto.tutorial.pig.piggybank.AddressBookProtobufBytesToTuple;
+import com.twitter.elephantbird.examples.proto.pig.piggybank.AddressBookProtobufBytesToTuple;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
 
 public class TestProtoToPig {
