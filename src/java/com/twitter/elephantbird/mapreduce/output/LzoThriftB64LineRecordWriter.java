@@ -3,8 +3,9 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import com.twitter.elephantbird.util.TypeRef;
 import com.twitter.elephantbird.mapreduce.io.ThriftB64LineWritable;
+import com.twitter.elephantbird.util.TypeRef;
+
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;

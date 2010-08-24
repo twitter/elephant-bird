@@ -51,8 +51,6 @@ import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import com.google.common.collect.Lists;
-import com.hirohanin.elephantbird.Slice;
-import com.hirohanin.elephantbird.Slicer;
 import com.twitter.elephantbird.mapreduce.input.LzoLineRecordReader;
 import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
 
@@ -63,7 +61,7 @@ import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
  * <br>
  * TODO: row version controls<br>
  */
-public class HBaseLoader extends LoadFunc implements Slicer
+public class HBaseLoader extends LoadFunc 
  {
 
   private static final Log LOG = LogFactory.getLog(HBaseLoader.class);
@@ -134,48 +132,6 @@ public class HBaseLoader extends LoadFunc implements Slicer
   }
 
   
-  public Slice[] slice(DataStorage store, String tablename)
-  throws IOException {
-    validate(store, tablename);
-    if (configuredOptions_.hasOption("caching")) {
-      table_.setScannerCaching(Integer.valueOf(configuredOptions_.getOptionValue("caching")));
-    }
-    
-    byte[][] startKeys = table_.getStartKeys();
-    if (startKeys == null || startKeys.length == 0) {
-      throw new IOException("Expecting at least one region");
-    }
-    if (cols_ == null || cols_.length == 0) {
-      throw new IOException("Expecting at least one column");
-    }
-
-    // one region one slice
-    List<HBaseSlice> slices = Lists.newArrayList();
-    for (int i = 0; i < startKeys.length; i++) {
-      
-      byte[] endKey = ((i + 1) < startKeys.length) ? startKeys[i + 1] : HConstants.LAST_ROW;
-      
-      // skip if the region doesn't satisfy configured options
-      if ((skipRegion(CompareOp.LESS, startKeys[i], configuredOptions_.getOptionValue("lt"))) ||
-          (skipRegion(CompareOp.GREATER, endKey, configuredOptions_.getOptionValue("gt"))) ||
-          (skipRegion(CompareOp.GREATER, endKey, configuredOptions_.getOptionValue("gte"))) ||
-          (skipRegion(CompareOp.LESS_OR_EQUAL, startKeys[i], configuredOptions_.getOptionValue("lte")))) {
-        continue;
-      }
-      String regionLocation = table_.getRegionLocation(startKeys[i]).getServerAddress().getHostname();
-      HBaseSlice slice = new HBaseSlice(table_.getTableName(), startKeys[i],
-          endKey, cols_, loadRowKey_, regionLocation);
-
-      if (configuredOptions_.hasOption("limit")) slice.setLimit(configuredOptions_.getOptionValue("limit"));
-      if (configuredOptions_.hasOption("gt")) slice.addFilter(CompareOp.GREATER, slashisize(configuredOptions_.getOptionValue("gt")));
-      if (configuredOptions_.hasOption("lt")) slice.addFilter(CompareOp.LESS, slashisize(configuredOptions_.getOptionValue("lt")));
-      if (configuredOptions_.hasOption("gte")) slice.addFilter(CompareOp.GREATER_OR_EQUAL, slashisize(configuredOptions_.getOptionValue("gte")));
-      if (configuredOptions_.hasOption("lte")) slice.addFilter(CompareOp.LESS_OR_EQUAL, slashisize(configuredOptions_.getOptionValue("lte")));
-      slices.add(slice);
-    }
-
-    return slices.toArray(new HBaseSlice[] {});
-  }
 
   private boolean skipRegion(CompareOp op, byte[] key, String option ) {
     if (option == null) return false;

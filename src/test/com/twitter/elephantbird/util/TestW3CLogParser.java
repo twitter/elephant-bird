@@ -13,6 +13,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.twitter.elephantbird.util.W3CLogParser;
+
 import static org.junit.Assert.assertEquals;
 
 public class TestW3CLogParser {

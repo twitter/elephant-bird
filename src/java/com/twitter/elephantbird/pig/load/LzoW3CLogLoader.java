@@ -10,6 +10,7 @@ import com.twitter.elephantbird.mapreduce.input.LzoW3CLogInputFormat;
 import com.twitter.elephantbird.mapreduce.input.LzoW3CLogRecordReader;
 import com.twitter.elephantbird.pig.load.LzoJsonLoader.LzoJsonLoaderCounters;
 import com.twitter.elephantbird.util.W3CLogParser;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;

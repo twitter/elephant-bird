@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
-import com.twitter.elephantbird.util.TypeRef;
 import com.twitter.elephantbird.mapreduce.io.ThriftB64LineWritable;
+import com.twitter.elephantbird.util.TypeRef;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;

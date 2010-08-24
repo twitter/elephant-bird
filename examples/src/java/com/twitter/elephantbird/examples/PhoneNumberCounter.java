@@ -6,6 +6,7 @@ import com.twitter.elephantbird.examples.proto.AddressBookProtos.Person;
 import com.twitter.elephantbird.examples.proto.AddressBookProtos.Person.PhoneNumber;
 import com.twitter.elephantbird.examples.proto.mapreduce.input.LzoPersonProtobufBlockInputFormat;
 import com.twitter.elephantbird.examples.proto.mapreduce.io.ProtobufPersonWritable;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;

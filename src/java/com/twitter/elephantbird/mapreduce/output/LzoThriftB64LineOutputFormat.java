@@ -4,8 +4,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.hadoop.compression.lzo.LzopCodec;
-import com.twitter.elephantbird.util.TypeRef;
 import com.twitter.elephantbird.mapreduce.io.ThriftB64LineWritable;
+import com.twitter.elephantbird.util.TypeRef;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;

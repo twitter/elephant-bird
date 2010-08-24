@@ -10,6 +10,8 @@ import java.util.Random;
 import com.hadoop.compression.lzo.GPLNativeCodeLoader;
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzopCodec;
+import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
+
 import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

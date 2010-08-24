@@ -16,6 +16,7 @@ import com.google.protobuf.compiler.Plugin.CodeGeneratorResponse;
 import com.google.protobuf.compiler.Plugin.CodeGeneratorResponse.File;
 import com.twitter.elephantbird.proto.codegen.ProtoCodeGenerator;
 import com.twitter.elephantbird.proto.util.ProtogenHelper;
+
 import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
 

@@ -1,1 +1,1 @@
-/usr/bin/java -cp ../lib/*:../dist/elephant-bird-1.0.jar com.twitter.elephantbird.proto.HadoopProtoCodeGenerator config-twadoop.yml -
+/usr/bin/java -cp ../lib/*:../dist/elephant-bird-1.0.jar com.twitter.elephantbird.inmobi.proto.HadoopProtoCodeGenerator config-twadoop.yml -

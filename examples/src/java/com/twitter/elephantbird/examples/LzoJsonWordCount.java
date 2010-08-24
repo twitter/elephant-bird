@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.twitter.elephantbird.mapreduce.input.LzoJsonInputFormat;
+
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;

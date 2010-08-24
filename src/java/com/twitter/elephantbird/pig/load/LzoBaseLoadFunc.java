@@ -28,8 +28,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzopCodec;
-import com.hirohanin.elephantbird.Slice;
-import com.hirohanin.elephantbird.Slicer;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 
 /**
@@ -37,7 +35,7 @@ import com.twitter.elephantbird.pig.util.PigCounterHelper;
  * filenames to end in .lzo, otherwise it assumes they are not compressed and skips them.
  * TODO: Improve the logic to accept a mixture of lzo and non-lzo files.
  */
-public abstract class LzoBaseLoadFunc extends LoadFunc implements  Slicer {
+public abstract class LzoBaseLoadFunc extends LoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseLoadFunc.class);
 
   protected final String LZO_EXTENSION = new LzopCodec().getDefaultExtension();
@@ -73,36 +71,6 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements  Slicer {
     beginsAtHeader_ = beginsAtHeader;
   }
 
-  /**
-   * The important part of the loader -- given a storage object and a location to load, actually
-   * compute the splits.  Walks through each LZO file under the given path and attempts to use the
-   * .lzo.index file to slice it.
-   *
-   * @param store the data storage object.
-   * @param location the given location to load, e.g. '/tables/statuses/20090815.lzo' when invoked as
-   * a = LOAD '/tables/statuses/20090815.lzo' USING ... AS ...;
-   */
-  public Slice[] slice(DataStorage store, String location) throws IOException {
-    LOG.info("LzoBaseLoadFunc::slice, location = " + location);
-    List<LzoSlice> slices = Lists.newArrayList();
-    // Compute the set of LZO files matching the given pattern.
-    List<ElementDescriptor> globbedFiles = globFiles(store, location);
-
-    for (ElementDescriptor file : globbedFiles) {
-      // Make sure to slice according to the per-file split characteristics.
-      Map<String, Object> fileStats = file.getStatistics();
-      long blockSize = (Long)fileStats.get(ElementDescriptor.BLOCK_SIZE_KEY);
-      long fileSize = (Long)fileStats.get(ElementDescriptor.LENGTH_KEY);
-
-      LOG.debug("Slicing LZO file at path " + file + ": block size " + blockSize + " and file size " + fileSize);
-      slices.addAll(sliceFile(file.toString(), blockSize, fileSize));
-    }
-    if (slices.size() == 0) {
-      throw new PigException("no files found a path "+location);
-    }
-    LOG.info("Got " + slices.size() + " LZO slices in total.");
-    return slices.toArray(new Slice[slices.size()]);
-  }
 
   /**
    * Nothing to do here, since location can be an unexpanded glob.

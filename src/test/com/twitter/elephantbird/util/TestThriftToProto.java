@@ -11,6 +11,8 @@ import org.junit.Test;
 import thrift.test.OneOfEach;
 
 import com.twitter.elephantbird.examples.proto.ThriftFixtures;
+import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.util.ThriftToProto;
 
 public class TestThriftToProto {
 
