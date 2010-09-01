@@ -62,10 +62,10 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
       throw new IOException("No codec for file " + file + " not found, cannot run");
     }
 
-    // open the file and seek to the start of the split
+    // Open the file and seek to the start of the split.
     fileIn_ = fs.open(split.getPath());
 
-    // Creates input stream and also reads the file header
+    // Creates input stream and also reads the file header.
     createInputReader(codec.createInputStream(fileIn_), job);
 
     LOG.info("Seeking to split start at pos " + start_);

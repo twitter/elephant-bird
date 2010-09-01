@@ -52,7 +52,7 @@ public class LzoLineRecordReader extends LzoRecordReader<LongWritable, Text> {
   public boolean nextKeyValue() throws IOException, InterruptedException {
     // Since the lzop codec reads everything in lzo blocks, we can't stop if pos == end.
     // Instead we wait for the next block to be read in, when pos will be > end.
-    while (pos_ <= end_) {
+    if (pos_ <= end_) {
       key_.set(pos_);
 
       int newSize = in_.readLine(value_);
