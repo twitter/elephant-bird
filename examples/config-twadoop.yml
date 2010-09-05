@@ -6,5 +6,6 @@ address_book:
   - com.twitter.elephantbird.proto.codegen.LzoProtobufBlockInputFormatGenerator
   - com.twitter.elephantbird.proto.codegen.LzoProtobufBlockOutputFormatGenerator
   - com.twitter.elephantbird.proto.codegen.LzoProtobufBlockPigLoaderGenerator
+  - com.twitter.elephantbird.proto.codegen.LzoProtobufBlockHiveSerdeGenerator  
   - com.twitter.elephantbird.proto.codegen.ProtobufWritableGenerator
   - com.twitter.elephantbird.proto.codegen.ProtobufBytesToPigTupleGenerator
