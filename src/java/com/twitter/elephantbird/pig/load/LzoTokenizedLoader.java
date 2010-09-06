@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.input.LzoLineRecordReader;
 import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
-import com.twitter.elephantbird.pig.load.LzoTextLoader.LzoTextLoaderCounters;
 import com.twitter.elephantbird.pig.util.PigTokenHelper;
 
 /**
@@ -70,16 +69,13 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc {
 
     Tuple t = null;
     buffer_.reset();
-    byte[] theByteArray = null;
     try {
 		  Object line = is_.getCurrentValue();
-
 		  if (line != null) {
-			  theByteArray = line.toString().getBytes();
-			  int len = theByteArray.length;
-			  for (int i= 0;i<theByteArray.length;i++) {
-			      // BufferedPositionedInputStream is buffered, so no need to buffer.
-			      int b = theByteArray[0];
+			  String lineStr = line.toString();
+			  int len = lineStr.length();
+			  for (int i= 0;i<len;i++) {
+			      int b = lineStr.charAt(i);
 			      prevByte_ = (byte)b;
 			      if (prevByte_ == fieldDel_) {
 			        readField();
