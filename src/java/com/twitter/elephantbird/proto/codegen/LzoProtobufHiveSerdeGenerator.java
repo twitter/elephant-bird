@@ -1,13 +1,13 @@
 package com.twitter.elephantbird.proto.codegen;
 
-import com.twitter.elephantbird.hive.serde.LzoProtobufBlockHiveSerde;
+import com.twitter.elephantbird.hive.serde.LzoProtobufHiveSerde;
 import com.twitter.elephantbird.proto.util.FormattingStringBuffer;
 
-public class LzoProtobufBlockHiveSerdeGenerator extends ProtoCodeGenerator {
+public class LzoProtobufHiveSerdeGenerator extends ProtoCodeGenerator {
 
   @Override
   public String getFilename() {
-    return String.format("%s/hive/serde/Lzo%sProtobufBlockHiveSerde.java",
+    return String.format("%s/hive/serde/Lzo%sProtobufHiveSerde.java",
         packageName_.replaceAll("\\.", "/"), descriptorProto_.getName());
   }
 
@@ -24,9 +24,9 @@ public class LzoProtobufBlockHiveSerdeGenerator extends ProtoCodeGenerator {
     sb.append("import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;").endl();
     sb.append("import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory.ObjectInspectorOptions;").endl();
     sb.append("import org.apache.hadoop.io.Writable;").endl();
-    sb.append("import %s;", LzoProtobufBlockHiveSerde.class.getName()).endl().endl();
+    sb.append("import %s;", LzoProtobufHiveSerde.class.getName()).endl().endl();
 
-    sb.append("public class Lzo%sProtobufBlockHiveSerde extends LzoProtobufBlockHiveSerde {", descriptorProto_.getName()).endl();
+    sb.append("public class Lzo%sProtobufHiveSerde extends LzoProtobufHiveSerde {", descriptorProto_.getName()).endl();
     
     sb.append("  public ObjectInspector getObjectInspector() throws SerDeException {").endl();
     sb.append("    return ObjectInspectorFactory.getReflectionObjectInspector(%s.class, ObjectInspectorOptions.PROTOCOL_BUFFERS);", descriptorProto_.getName()).endl();

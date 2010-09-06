@@ -8,7 +8,7 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.io.Writable;
 
-public abstract class LzoProtobufBlockHiveSerde implements SerDe {
+public abstract class LzoProtobufHiveSerde implements SerDe {
   
   @Override
   public void initialize(Configuration conf, Properties props) throws SerDeException {
