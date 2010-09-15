@@ -73,7 +73,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     FileSystem fs = FileSystem.get(job.getConfiguration());
 
     for (InputSplit genericSplit : defaultSplits) {
-      // load the index
+      // Load the index.
       FileSplit fileSplit = (FileSplit)genericSplit;
       Path file = fileSplit.getPath();
       LzoIndex index = indexes_.get(file);

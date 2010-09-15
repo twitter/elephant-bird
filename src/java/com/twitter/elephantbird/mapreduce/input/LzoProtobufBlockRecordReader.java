@@ -70,7 +70,7 @@ public class LzoProtobufBlockRecordReader<M extends Message, W extends ProtobufW
     if (pos_ > end_) {
       reader_.markNoMoreNewBlocks();
     }
-    while (reader_.readProtobuf(value_)) {
+    if (reader_.readProtobuf(value_)) {
       key_.set(pos_);
       pos_ = getLzoFilePos();
       return true;
