@@ -32,10 +32,6 @@ public abstract class LzoProtobufBlockPigStorage<M extends Message> extends LzoB
   protected ProtobufBlockWriter writer_ = null;
 	private int numRecordsPerBlock_ = 10000;
 	
-	public LzoProtobufBlockPigStorage(int numRecordsPerBlock) {
-		numRecordsPerBlock_ = numRecordsPerBlock;
-	}
-	
   @Override
   public void bindTo(OutputStream os) throws IOException {
 		super.bindTo(os);
