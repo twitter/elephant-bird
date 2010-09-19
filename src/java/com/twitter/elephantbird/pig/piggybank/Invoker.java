@@ -44,7 +44,7 @@ public class Invoker<T>  {
     private static final Class<?> INT_ARRAY_CLASS = new int[0].getClass();
     private static final Class<?> FLOAT_ARRAY_CLASS = new float[0].getClass();
     private static final Class<?> STRING_ARRAY_CLASS = new String[0].getClass();
-    private static final Class<?> LONG_ARRAY_CLASS = new String[0].getClass();
+    private static final Class<?> LONG_ARRAY_CLASS = new long[0].getClass();
 
     @SuppressWarnings("unchecked")
     private static final Set<Class<?>> ARRAY_CLASSES = Sets.newHashSet(
@@ -58,12 +58,12 @@ public class Invoker<T>  {
     private Class<?> selfClass_;
     private Type returnType_;
 
-    public Invoker(String fullName, String paramSpecsStr) 
+    public Invoker(String fullName, String paramSpecsStr)
     throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
         this(fullName, paramSpecsStr, "true");
     }
 
-    public Invoker(String fullName, String paramSpecsStr, String isStatic) 
+    public Invoker(String fullName, String paramSpecsStr, String isStatic)
     throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
         String className = fullName.substring(0, fullName.lastIndexOf('.'));
         String methodName = fullName.substring(fullName.lastIndexOf('.')+1);
@@ -99,7 +99,7 @@ public class Invoker<T>  {
             return new Object[0];
         } else {
             return Arrays.copyOfRange(original, 1, original.length-1);
-        } 
+        }
     }
 
     private static Class<?> stringToClass(String klass) throws FrontendException {
@@ -123,7 +123,7 @@ public class Invoker<T>  {
           return FLOAT_ARRAY_CLASS;
         } else if ("string[]".equalsIgnoreCase(klass)) {
           return STRING_ARRAY_CLASS;
-        } else { 
+        } else {
             throw new FrontendException("unable to find matching class for " + klass);
         }
 
@@ -205,7 +205,7 @@ public class Invoker<T>  {
     }
 
     private Object[] tupleToArgs(Tuple t) throws ExecException {
-      if ( (t == null && (paramClasses_ != null || paramClasses_.length != 0)) 
+      if ( (t == null && (paramClasses_ != null || paramClasses_.length != 0))
             || (t != null && t.size() < paramClasses_.length)) {
             throw new ExecException("unable to match function arguments to declared signature.");
         }
