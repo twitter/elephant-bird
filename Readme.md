@@ -1,6 +1,6 @@
 # Elephant Bird #
 
-#### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo) and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://hadoop.apache.org/pig) LoadFuncs, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
+#### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo) and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://hadoop.apache.org/pig) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
 
 ### To Use ###
 
