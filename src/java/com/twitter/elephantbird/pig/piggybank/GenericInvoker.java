@@ -32,9 +32,18 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
  * Class-specific non-generic extensions of this class are needed for Pig to know what type
  * of return to expect from exec, and to find the appropriate classes through reflection.
  * All they have to do is implement the constructors that call into super(). Note that the 
- * no-parameter constructor is <b>required</b>, if nonsensical, for Pig to do its work.
+ * no-parameter constructor is <b>required</b>, if seemingly nonsensical, for Pig to do its work.
  * <p>
- * 
+ * The Invoker family of udfs understand the following class names (all case-independent):
+ * <li>String
+ * <li>Long
+ * <li>Float
+ * <li>Double
+ * <li>Int
+ * <p>
+ * Invokers can also work with array arguments, represented in Pig as DataBags of single-tuple
+ * elements. Simply refer to <code>string[]</code>, for example.
+ * <p>
  * This UDF allows one to dynamically invoke Java methods that return a <code>T</code>
  * <p>
  * Usage of the Invoker family of UDFs (adjust as appropriate):
@@ -54,6 +63,7 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
  * The first argument to the constructor is the full path to desired method.<br>
  * The second argument is a list of classes of the method parameters.<br>
  * If the method is not static, the first element in this list is the object to invoke the method on.<br>
+ * The second argument is optional (a no-argument static method is assumed if it is not supplied).<br>
  * The third argument is the keyword "static" (or "true") to signify that the method is static. <br>
  * The third argument is optional, and true by default.<br>
  * <p>
@@ -64,6 +74,11 @@ public abstract class GenericInvoker<T> extends EvalFunc<T> {
     private Invoker<T> invoker_;
 
     public GenericInvoker() {}
+
+    public GenericInvoker(String fullName) 
+    throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
+      invoker_ = new Invoker<T>(fullName, "");
+    }
 
     public GenericInvoker(String fullName, String paramSpecsStr)
     throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {

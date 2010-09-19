@@ -31,6 +31,10 @@ public class InvokeForString extends GenericInvoker<String> {
         super(fullName, paramSpecsStr);
     }
 
+    public InvokeForString(String fullName) throws FrontendException, SecurityException, ClassNotFoundException, NoSuchMethodException {
+      super(fullName);
+    }
+    
     public InvokeForString(String fullName, String paramSpecsStr, String isStatic)
     throws ClassNotFoundException, FrontendException, SecurityException, NoSuchMethodException {
         super(fullName, paramSpecsStr, isStatic);
