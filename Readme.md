@@ -20,6 +20,14 @@ There are a few simple examples that use the input formats.  Note how the protoc
 formats work, and also note that the examples build file uses the custom codegen stuff.  See below for
 more about that.
 
+### Version compatibility ###
+
+1. Protocol Buffers 2.3
+2. Pig 0.6 (not compatible with 0.7+)
+3. HBase 0.20.6
+4. Hive 0.7 (with HIVE-1616)
+
+
 #### Building Without Protocol Buffers ####
 
 If you don't want to build elephant-bird with protobuf support or you don't have protobuf >= 2.3 available 
@@ -115,3 +123,4 @@ Bug fixes, features, and documentation improvements are welcome!  Please fork an
 * Chuang Liu ([@chuangl4](http://twitter.com/chuangl4))
 * Florian Liebert ([@floliebert](http://twitter.com/floliebert))
 * Ning Liang ([@ningliang](http://twitter.com/ningliang))
+* Johan Oskarsson ([@skr](http://twitter.com/skr))
