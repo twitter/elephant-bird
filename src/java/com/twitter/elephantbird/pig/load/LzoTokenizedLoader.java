@@ -91,6 +91,9 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc {
 			        buffer_.write(b);
 			      }
 			    }
+			  	readField();
+		        t =  tupleFactory_.newTupleNoCopy(protoTuple_);
+		        protoTuple_ = null;
 		  }
 	  } catch (InterruptedException e) {
 		  int errCode = 6018;
