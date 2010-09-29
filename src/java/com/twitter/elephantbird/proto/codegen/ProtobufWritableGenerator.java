@@ -22,10 +22,17 @@ public class ProtobufWritableGenerator extends ProtoCodeGenerator {
     sb.append("import %s;", ProtobufWritable.class.getName()).endl();
     sb.append("import %s;", TypeRef.class.getName()).endl().endl();
 
-    sb.append("public class Protobuf%sWritable extends ProtobufWritable<%s> {", descriptorProto_.getName(), descriptorProto_.getName(), descriptorProto_.getName()).endl();
+    sb.append("public class Protobuf%sWritable extends ProtobufWritable<%s> {",
+        descriptorProto_.getName(), descriptorProto_.getName(), descriptorProto_.getName()).endl();
     sb.append("  public Protobuf%sWritable() {", descriptorProto_.getName()).endl();
     sb.append("    super(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
     sb.append("  }").endl();
+
+    sb.append("  public Protobuf%sWritable(%s m) {",
+        descriptorProto_.getName(), descriptorProto_.getName()).endl();
+    sb.append("    super(m, new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
+    sb.append("  }").endl();
+
     sb.append("}").endl();
     sb.endl();
 
