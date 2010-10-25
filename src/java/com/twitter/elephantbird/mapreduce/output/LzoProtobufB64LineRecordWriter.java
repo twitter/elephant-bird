@@ -6,6 +6,7 @@ import java.io.IOException;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;

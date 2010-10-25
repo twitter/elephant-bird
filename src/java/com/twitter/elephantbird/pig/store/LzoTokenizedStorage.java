@@ -5,7 +5,10 @@ import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.twitter.elephantbird.pig.util.PigTokenHelper;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
@@ -14,6 +17,8 @@ import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.twitter.elephantbird.pig.util.PigTokenHelper;
 
 /**
  * A storage class to store the ouput of each tuple in a delimited file
@@ -42,6 +47,8 @@ public class LzoTokenizedStorage extends LzoBaseStoreFunc {
    * Write the tuple out by writing its fields one at a time, separated by the delimiter.
    * @param tuple the tuple to write.
    */
+
+  @Override
   public void putNext(Tuple tuple) throws IOException {
     // Must convert integer fields to string, and then to bytes.
     // Otherwise a DataOutputStream will convert directly from integer to bytes, rather
@@ -64,6 +71,14 @@ public class LzoTokenizedStorage extends LzoBaseStoreFunc {
         os_.write(fieldDel_);
       }
     }
+    Text text = new Text(os_.toByteArray());
+    try {
+        writer.write(null, text);
+        os_.reset();
+    } catch (InterruptedException e) {
+        throw new IOException(e);
+    }
+
   }
 
   /**
@@ -175,5 +190,12 @@ public class LzoTokenizedStorage extends LzoBaseStoreFunc {
     }
     return false;
   }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public OutputFormat getOutputFormat() {
+      return new TextOutputFormat<WritableComparable, Text>();
+  }
+
 }
 

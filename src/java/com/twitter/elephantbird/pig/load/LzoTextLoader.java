@@ -1,53 +1,57 @@
 package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.pig.PigException;
+import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
+
 /**
  * Load the LZO file line by line, passing each line as a single-field Tuple to Pig.
  */
 public class LzoTextLoader extends LzoBaseLoadFunc {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoJsonLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LzoTextLoader.class);
 
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-  private static final byte RECORD_DELIMITER = (byte)'\n';
-
   protected enum LzoTextLoaderCounters { LinesRead }
 
   public LzoTextLoader() {
-    LOG.info("LzoTextLoader creation");
-  }
-
-  public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
-    // Since we are not block aligned we throw away the first record of each split and count on a different
-    // instance to read it.  The only split this doesn't work for is the first.
-    if (!atFirstRecord) {
-      getNext();
-    }
   }
 
   /**
    * Return every non-null line as a single-element tuple to Pig.
    */
+  @Override
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
-      return null;
-    }
-
-    String line = is_.readLine(UTF8, RECORD_DELIMITER);
-    Tuple t = null;
-    if (line != null) {
-      incrCounter(LzoTextLoaderCounters.LinesRead, 1L);
-      t = tupleFactory_.newTuple(new DataByteArray(line.getBytes()));
-    }
-
-    return t;
+	  if (reader_ == null) {
+		  return null;
+	  }
+	  Tuple t = null;
+	  try {
+		  Object line = reader_.getCurrentValue();
+		  if (line != null) {
+			  incrCounter(LzoTextLoaderCounters.LinesRead, 1L);
+			  t = tupleFactory_.newTuple(new DataByteArray(line.toString().getBytes()));
+		  }
+	  } catch (InterruptedException e) {
+		  int errCode = 6018;
+		  String errMsg = "Error while reading input";
+		  throw new ExecException(errMsg, errCode,
+				  PigException.REMOTE_ENVIRONMENT, e);
+	  }
+	  return t;
   }
+
+  @Override
+  public InputFormat getInputFormat() {
+	  return new LzoTextInputFormat();
+  }
+
 }

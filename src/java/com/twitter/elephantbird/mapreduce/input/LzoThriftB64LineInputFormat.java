@@ -3,8 +3,9 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 
 import com.twitter.elephantbird.mapreduce.input.LzoInputFormat;
-import com.twitter.elephantbird.util.TypeRef;
 import com.twitter.elephantbird.mapreduce.io.ThriftB64LineWritable;
+import com.twitter.elephantbird.util.TypeRef;
+
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;

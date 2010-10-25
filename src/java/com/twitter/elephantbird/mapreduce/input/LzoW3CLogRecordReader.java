@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.Map;
 
 import com.twitter.elephantbird.util.W3CLogParser;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -30,6 +31,9 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
   private final Text currentLine_ = new Text();
   private final MapWritable value_ = new MapWritable();
   protected W3CLogParser w3cLogParser_ = null;
+
+  // Used to hold the number of unparseable records seen between successfull readings.
+  private int badRecordsSkipped_ = 0;
 
   @Override
   public synchronized void close() throws IOException {
@@ -66,12 +70,16 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
     }
   }
 
+  public long getBadRecordsSkipped() {
+    return badRecordsSkipped_;
+  }
+
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
     // Since the lzop codec reads everything in lzo blocks, we can't stop if pos == end.
     // Instead we wait for the next block to be read in, when pos will be > end.
     value_.clear();
-
+    badRecordsSkipped_ = 0;
     while (pos_ <= end_) {
       key_.set(pos_);
 
@@ -83,6 +91,7 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
       pos_ = getLzoFilePos();
 
       if (!decodeLine()) {
+        badRecordsSkipped_ += 1;
         continue;
       }
 
@@ -101,7 +110,8 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
       }
       return true;
     } catch (IOException e) {
-      LOG.warn("Could not w3c-decode string: " + currentLine_, e);
+      // Commented out to reduce log spam.
+      // LOG.warn("Could not w3c-decode string: " + currentLine_, e);
       return false;
     }
   }

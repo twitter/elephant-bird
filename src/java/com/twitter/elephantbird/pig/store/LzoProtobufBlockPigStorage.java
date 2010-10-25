@@ -1,20 +1,15 @@
 package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
-import java.util.List;
-
-import org.apache.commons.codec.binary.Base64;
 import org.apache.pig.data.Tuple;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockWriter;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
-import java.io.OutputStream;
-import org.apache.hadoop.io.compress.CompressionOutputStream;
+import org.apache.hadoop.mapreduce.RecordWriter;
 
 
 /**
@@ -30,26 +25,28 @@ public abstract class LzoProtobufBlockPigStorage<M extends Message> extends LzoB
   private TypeRef<M> typeRef_;
   private final PigToProtobuf pigToProto_ = new PigToProtobuf();
   protected ProtobufBlockWriter writer_ = null;
-	private int numRecordsPerBlock_ = 10000;
-	
+  private final int numRecordsPerBlock_ = 10000;
+
   @Override
-  public void bindTo(OutputStream os) throws IOException {
-		super.bindTo(os);
-		writer_ = new ProtobufBlockWriter(os_, typeRef_.getRawClass(), numRecordsPerBlock_); 
+  public void prepareToWrite(RecordWriter writer) {
+    writer_ = new ProtobufBlockWriter(os_, typeRef_.getRawClass(), numRecordsPerBlock_);
   }
 
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
   }
 
+  @Override
   public void putNext(Tuple f) throws IOException {
-    if (f == null) return;
-	  Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
-	  writer_.write(pigToProto_.tupleToMessage(builder, f));
+    if (f == null) {
+      return;
+    }
+    Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
+    writer_.write(pigToProto_.tupleToMessage(builder, f));
   }
 
-	@Override
-	public void finish() throws IOException {
+  @Override
+  public void finish() throws IOException {
     if (writer_ != null) {
       writer_.close();
     }

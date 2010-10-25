@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.pig.data.Tuple;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -21,7 +25,7 @@ public class LzoJsonStorage extends LzoBaseStoreFunc {
 
   // If null, keep all keys.
   private final Set<String> keysToKeep_;
-  private JSONObject json = new JSONObject();
+  private final JSONObject json = new JSONObject();
 
   public LzoJsonStorage() {
     keysToKeep_ = null;
@@ -38,6 +42,7 @@ public class LzoJsonStorage extends LzoBaseStoreFunc {
    * The first element is expected to be a map, or null. Anything else causes an error.
    * @param tuple the tuple to write.
    */
+  @Override
   @SuppressWarnings("unchecked")
   public void putNext(Tuple tuple) throws IOException {
     json.clear();
@@ -56,6 +61,12 @@ public class LzoJsonStorage extends LzoBaseStoreFunc {
     os_.write(json.toString().getBytes("UTF-8"));
     os_.write('\n');
   }
+
+  @Override
+  public OutputFormat getOutputFormat() {
+    return new TextOutputFormat<WritableComparable, Text>();
+  }
+
 
 }
 

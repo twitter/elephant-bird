@@ -7,6 +7,7 @@ import com.google.protobuf.Message;
 import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;

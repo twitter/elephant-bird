@@ -2,12 +2,12 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
-import org.apache.pig.ExecType;
-import org.apache.pig.LoadFunc;
-import org.apache.pig.backend.datastorage.DataStorage;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.pig.Expression;
+import org.apache.pig.LoadMetadata;
+import org.apache.pig.ResourceSchema;
+import org.apache.pig.ResourceStatistics;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,18 +20,16 @@ import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 
-public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFunc {
+public abstract class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFunc implements LoadMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufBlockPigLoader.class);
 
-  private ProtobufBlockReader<M> reader_ = null;
-  private ProtobufWritable<M> value_ = null;
+  private final ProtobufBlockReader<M> reader_ = null;
   private TypeRef<M> typeRef_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
-
+  private ProtobufWritable<M> value_;
   protected enum LzoProtobufBlockPigLoaderCounters { ProtobufsRead }
 
   public LzoProtobufBlockPigLoader() {
-    LOG.info("LzoProtobufBlockLoader zero-parameter creation");
   }
 
   /**
@@ -44,36 +42,13 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
     value_ = new ProtobufWritable<M>(typeRef_);
   }
 
-  @Override
-  public void postBind() throws IOException {
-    reader_ = new ProtobufBlockReader<M>(is_, typeRef_);
-  }
-
-  @Override
-  public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
-    // We want to explicitly not do any special syncing here, because the reader_
-    // handles this automatically.
-  }
-
-  @Override
-  protected boolean verifyStream() throws IOException {
-    return is_ != null;
-  }
-
-
   /**
    * Return every non-null line as a single-element tuple to Pig.
    */
+  @Override
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
+    if (reader_ == null) {
       return null;
-    }
-
-    // If we are past the end of the file split, tell the reader not to read any more new blocks.
-    // Then continue reading until the last of the reader's already-parsed values are used up.
-    // The next split will start at the next sync point and no records will be missed.
-    if (is_.getPosition() > end_) {
-      reader_.markNoMoreNewBlocks();
     }
 
     Tuple t = null;
@@ -84,8 +59,31 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
     return t;
   }
 
+  /**
+   * NOT IMPLEMENTED
+   */
   @Override
-  public Schema determineSchema(String filename, ExecType execType, DataStorage store) throws IOException {
-    return protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass()));
+  public String[] getPartitionKeys(String arg0, Job arg1) throws IOException {
+    return null;
+  }
+
+  @Override
+  public ResourceSchema getSchema(String arg0, Job arg1) throws IOException {
+    return new ResourceSchema(protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass())));
+  }
+
+  /**
+   * NOT IMPLEMENTED
+   */
+  @Override
+  public ResourceStatistics getStatistics(String arg0, Job arg1) throws IOException {
+    return null;
+  }
+
+  /**
+   * NOT IMPLEMENTED
+   */
+  @Override
+  public void setPartitionFilter(Expression arg0) throws IOException {
   }
 }

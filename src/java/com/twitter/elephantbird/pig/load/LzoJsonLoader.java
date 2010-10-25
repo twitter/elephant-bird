@@ -1,20 +1,21 @@
 package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Map;
 
-import com.google.common.collect.Maps;
-
-import org.apache.pig.LoadFunc;
+import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.pig.PigException;
+import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Maps;
+import com.twitter.elephantbird.mapreduce.input.LzoJsonInputFormat;
 
 /**
  * Load the LZO file line by line, decoding each line as JSON and passing the
@@ -29,73 +30,67 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoJsonLoader.class);
 
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-  private static final byte RECORD_DELIMITER = (byte)'\n';
-
-  private final JSONParser jsonParser_ = new JSONParser();
-
   protected enum LzoJsonLoaderCounters { LinesRead, LinesJsonDecoded, LinesParseError, LinesParseErrorBadNumber }
 
-  public LzoJsonLoader() {
-    LOG.info("LzoJsonLoader creation");
-  }
-
-  public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
-    // Since we are not block aligned we throw away the first record of each split and count on a different
-    // instance to read it.  The only split this doesn't work for is the first.
-    if (!atFirstRecord) {
-      getNext();
-    }
-  }
+  public LzoJsonLoader() {}
 
   /**
    * Return every non-null line as a single-element tuple to Pig.
    */
+  @Override
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
-      return null;
-    }
+	  if (reader_ == null) {
+		  return null;
+	  }
+	  try {
 
-    String line;
-    while ((line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
-      incrCounter(LzoJsonLoaderCounters.LinesRead, 1L);
+		  MapWritable value_ = (MapWritable)reader_.getCurrentValue();
+		  incrCounter(LzoJsonLoaderCounters.LinesRead, 1L);
 
-      Tuple t = parseStringToTuple(line);
-      if (t != null) {
-        incrCounter(LzoJsonLoaderCounters.LinesJsonDecoded, 1L);
-        return t;
-      }
-    }
+		  Tuple t = parseStringToTuple(value_);
+		  if (t != null) {
+			  incrCounter(LzoJsonLoaderCounters.LinesJsonDecoded, 1L);
+			  return t;
+		  }
+	  } catch (InterruptedException e) {
+		  int errCode = 6018;
+		  String errMsg = "Error while reading input";
+		  throw new ExecException(errMsg, errCode,
+				  PigException.REMOTE_ENVIRONMENT, e);
+	  }
 
-    return null;
+	  return null;
   }
 
-  protected Tuple parseStringToTuple(String line) {
+  protected Tuple parseStringToTuple(MapWritable value_) {
     try {
       Map<String, String> values = Maps.newHashMap();
-      JSONObject jsonObj = (JSONObject)jsonParser_.parse(line);
-      for (Object key: jsonObj.keySet()) {
-        Object value = jsonObj.get(key);
+
+      for (Object key: value_.keySet()) {
+        Object value = value_.get(key);
         values.put(key.toString(), value != null ? value.toString() : null);
       }
       return tupleFactory_.newTuple(values);
-    } catch (ParseException e) {
-      LOG.warn("Could not json-decode string: " + line, e);
-      incrCounter(LzoJsonLoaderCounters.LinesParseError, 1L);
-      return null;
-    } catch (NumberFormatException e) {
-      LOG.warn("Very big number exceeds the scale of long: " + line, e);
+    }catch (NumberFormatException e) {
+      LOG.warn("Very big number exceeds the scale of long: " + value_.toString(), e);
       incrCounter(LzoJsonLoaderCounters.LinesParseErrorBadNumber, 1L);
       return null;
     } catch (ClassCastException e) {
-      LOG.warn("Could not convert to Json Object: " + line, e);
+      LOG.warn("Could not convert to Json Object: " + value_.toString(), e);
       incrCounter(LzoJsonLoaderCounters.LinesParseError, 1L);
       return null;
     }
   }
-  
+
   @Override
-  public LoadFunc.RequiredFieldResponse fieldsToRead(LoadFunc.RequiredFieldList requiredFieldList) throws FrontendException {
-      return new LoadFunc.RequiredFieldResponse(false);
+  public void setLocation(String location, Job job)
+  throws IOException {
+	  FileInputFormat.setInputPaths(job, location);
   }
+
+  @Override
+  public InputFormat getInputFormat() {
+      return new LzoJsonInputFormat();
+  }
+
 }
