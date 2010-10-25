@@ -20,10 +20,12 @@ There are a few simple examples that use the input formats.  Note how the protoc
 formats work, and also note that the examples build file uses the custom codegen stuff.  See below for
 more about that.
 
+NOTE: This is an experimental branch for working with Pig 0.8. It may not work. Caveat emptor.
+
 ### Version compatibility ###
 
 1. Protocol Buffers 2.3
-2. Pig 0.6 (not compatible with 0.7+)
+2. Pig 0.8 (not compatible with 0.7 and below)
 3. HBase 0.20.6
 4. Hive 0.7 (with HIVE-1616)
 
