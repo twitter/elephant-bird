@@ -30,11 +30,19 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
   private static final TField TYPE_FIELD_DESC = new TField("type", TType.I32, (short)2);
 
   public String number;
-  public int type;
+  /**
+   * 
+   * @see PhoneType
+   */
+  public PhoneType type;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
     NUMBER((short)1, "number"),
+    /**
+     * 
+     * @see PhoneType
+     */
     TYPE((short)2, "type");
 
     private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
@@ -89,14 +97,12 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
   }
 
   // isset id assignments
-  private static final int __TYPE_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
     put(_Fields.NUMBER, new FieldMetaData("number", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
     put(_Fields.TYPE, new FieldMetaData("type", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I32)));
+        new EnumMetaData(TType.ENUM, PhoneType.class)));
   }});
 
   static {
@@ -104,8 +110,6 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
   }
 
   public PhoneNumber() {
-    this.type = 1;
-
   }
 
   public PhoneNumber(
@@ -119,12 +123,12 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
    * Performs a deep copy on <i>other</i>.
    */
   public PhoneNumber(PhoneNumber other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetNumber()) {
       this.number = other.number;
     }
-    this.type = other.type;
+    if (other.isSetType()) {
+      this.type = other.type;
+    }
   }
 
   public PhoneNumber deepCopy() {
@@ -160,27 +164,36 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
     }
   }
 
-  public int getType() {
+  /**
+   * 
+   * @see PhoneType
+   */
+  public PhoneType getType() {
     return this.type;
   }
 
-  public PhoneNumber setType(int type) {
+  /**
+   * 
+   * @see PhoneType
+   */
+  public PhoneNumber setType(PhoneType type) {
     this.type = type;
-    setTypeIsSet(true);
     return this;
   }
 
   public void unsetType() {
-    __isset_bit_vector.clear(__TYPE_ISSET_ID);
+    this.type = null;
   }
 
   /** Returns true if field type is set (has been asigned a value) and false otherwise */
   public boolean isSetType() {
-    return __isset_bit_vector.get(__TYPE_ISSET_ID);
+    return this.type != null;
   }
 
   public void setTypeIsSet(boolean value) {
-    __isset_bit_vector.set(__TYPE_ISSET_ID, value);
+    if (!value) {
+      this.type = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -197,7 +210,7 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
       if (value == null) {
         unsetType();
       } else {
-        setType((Integer)value);
+        setType((PhoneType)value);
       }
       break;
 
@@ -214,7 +227,7 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
       return getNumber();
 
     case TYPE:
-      return new Integer(getType());
+      return getType();
 
     }
     throw new IllegalStateException();
@@ -266,7 +279,7 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
     if (this_present_type || that_present_type) {
       if (!(this_present_type && that_present_type))
         return false;
-      if (this.type != that.type)
+      if (!this.type.equals(that.type))
         return false;
     }
 
@@ -328,8 +341,7 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
             break;
           case TYPE:
             if (field.type == TType.I32) {
-              this.type = iprot.readI32();
-              setTypeIsSet(true);
+              this.type = PhoneType.findByValue(iprot.readI32());
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -353,10 +365,12 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
       oprot.writeString(this.number);
       oprot.writeFieldEnd();
     }
-    if (isSetType()) {
-      oprot.writeFieldBegin(TYPE_FIELD_DESC);
-      oprot.writeI32(this.type);
-      oprot.writeFieldEnd();
+    if (this.type != null) {
+      if (isSetType()) {
+        oprot.writeFieldBegin(TYPE_FIELD_DESC);
+        oprot.writeI32(this.type.getValue());
+        oprot.writeFieldEnd();
+      }
     }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -377,7 +391,19 @@ public class PhoneNumber implements TBase<PhoneNumber._Fields>, java.io.Serializ
     if (isSetType()) {
       if (!first) sb.append(", ");
       sb.append("type:");
-      sb.append(this.type);
+      if (this.type == null) {
+        sb.append("null");
+      } else {
+        String type_name = type.name();
+        if (type_name != null) {
+          sb.append(type_name);
+          sb.append(" (");
+        }
+        sb.append(this.type);
+        if (type_name != null) {
+          sb.append(")");
+        }
+      }
       first = false;
     }
     sb.append(")");

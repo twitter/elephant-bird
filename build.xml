@@ -12,6 +12,7 @@
   <property name="src.dir" location="src" />
   <property name="src.java.dir" location="${src.dir}/java" />
   <property name="src.proto.dir" location="${src.dir}/proto" />
+  <property name="src.thrift.dir" location="${src.dir}/thrift" />
   <property name="test.src.dir" location="${src.dir}/test" />  
 
   <property name="src.gen.java.dir" location="${build.dir}/gen-java" /> 
@@ -117,6 +118,20 @@
       </sequential>
     </macrodef>
 
+  <macrodef name="generate-thrift">
+      <sequential>   
+        <mkdir dir="${src.gen.java.dir}" />
+        <apply executable="thrift" failonerror="true" skipemptyfilesets="true" verbose="true">
+          <env key="PATH" path="${env.PATH}:." />
+          <arg value="--gen" />
+          <arg value="java" />
+          <arg value="-o" />
+          <arg value="${src.gen.java.dir}/.." />
+          <fileset dir="${src.thrift.dir}" includes="**/*.thrift" />
+        </apply>
+      </sequential>
+    </macrodef>
+
   <macrodef name="compile-generated-protobuf">
     <sequential>
       <javac srcdir="${src.gen.java.dir}" destdir="${classes.dir}" deprecation="on">
@@ -131,6 +146,7 @@
   </macrodef>
 
   <target name="compile-protobuf" depends="init" unless="noprotobuf">
+    <generate-thrift />
     <generate-protobuf />
     <compile-generated-protobuf />
     <compile-java-protobuf />

@@ -8,15 +8,26 @@ import org.apache.thrift.TSerializer;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class ThriftConverter<M extends TBase<?>> implements BinaryProtoConverter<M> {
-  
+
   private TypeRef<M> typeRef;
   private TSerializer serializer;
   private TDeserializer deserializer;
-  
+
+  /**
+   * Returns a ThriftConverter for a given Thrift class.
+   */
+  public static <M extends TBase<?>> ThriftConverter<M> newInstance(Class<M> tClass) {
+    return new ThriftConverter<M>(new TypeRef<M>(tClass){});
+  }
+
+  public static <M extends TBase<?>> ThriftConverter<M> newInstance(TypeRef<M> typeRef) {
+    return new ThriftConverter<M>(typeRef);
+  }
+
   public ThriftConverter(TypeRef<M> typeRef) {
     this.typeRef = typeRef;
   }
-      
+
   @Override
   public M fromBytes(byte[] messageBuffer) {
     if (deserializer == null)
@@ -28,7 +39,7 @@ public class ThriftConverter<M extends TBase<?>> implements BinaryProtoConverter
     } catch (TException e) {
       // print a warning?
       return null;
-    } 
+    }
   }
 
   @Override

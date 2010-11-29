@@ -1,4 +1,4 @@
-namespace java com.twitter.elephantbird.examples.thrift
+namespace java com.twitter.data.proto.tutorial.thrift 
 
 enum PhoneType {
   MOBILE = 0,
