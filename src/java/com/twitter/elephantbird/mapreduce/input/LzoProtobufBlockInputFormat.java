@@ -9,8 +9,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is the base class for all blocked protocol buffer based input formats.  That is, if you use
@@ -24,7 +22,6 @@ import org.slf4j.LoggerFactory;
  */
 
 public abstract class LzoProtobufBlockInputFormat<M extends Message, W extends ProtobufWritable<M>> extends LzoInputFormat<LongWritable, W> {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufBlockInputFormat.class);
 
   private TypeRef<M> typeRef_;
   private W protobufWritable_;

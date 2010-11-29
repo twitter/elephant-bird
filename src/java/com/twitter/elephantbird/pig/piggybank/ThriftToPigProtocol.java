@@ -22,17 +22,9 @@ import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.transport.TTransport;
 
 /**
- * Turns out this is not such a great idea, as the protocol does not get hit when
- * a Thrift object field is missing -- it's simply silently dropped. This means for
- * objects where an optional field is not set, all of the following fields will get
- * shifted in terms of field order, as we can't use the protocol to insert an empty field.
- * <p>
- * Look out for a proper Thrift2Pig conversion using metadata introspection.
- * For now, only use this when you know you don't have missing fields.
- *
- * @author dmitriy
- *
+ * TODO:
  */
+
 public class ThriftToPigProtocol extends TProtocol {
 
   private static BagFactory bagFactory_ = BagFactory.getInstance();
