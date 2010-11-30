@@ -36,7 +36,7 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFu
   private static final Charset UTF8 = Charset.forName("UTF-8");
   private static final byte RECORD_DELIMITER = (byte)'\n';
 
-  protected enum Counts { LinesRead, ThriftStructsRead }
+  protected enum Counters { LinesRead, ThriftStructsRead }
 
   public LzoThriftB64LinePigLoader(String thriftClassName) {
     typeRef_ = ThriftUtils.getTypeRef(thriftClassName);
@@ -69,12 +69,12 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFu
     String line;
     Tuple t = null;
     while ((line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
-      incrCounter(Counts.LinesRead, 1L);
+      incrCounter(Counters.LinesRead, 1L);
       M protoValue = protoConverter_.fromBytes(base64_.decode(line.getBytes("UTF-8")));
       if (protoValue != null) {
         try {
           t = thriftToPig_.getPigTuple(protoValue);
-          incrCounter(Counts.ThriftStructsRead, 1L);
+          incrCounter(Counters.ThriftStructsRead, 1L);
           break;
         } catch (TException e) {
           LOG.warn("ThriftToTuple error :", e); // may be struct mismatch

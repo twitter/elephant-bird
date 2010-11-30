@@ -36,7 +36,6 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
     // To help split the files at LZO boundaries, walk the list of lzo files and, if they
     // have an associated index file, save that for later.
-    FileSystem fs = FileSystem.get(job.getConfiguration());
     String fileExtension = new LzopCodec().getDefaultExtension();
 
     Iterator<FileStatus> it = files.iterator();
@@ -49,7 +48,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
         it.remove();
       } else {
         // Read the index file.
-        LzoIndex index = LzoIndex.readIndex(fs, file);
+        LzoIndex index = LzoIndex.readIndex(file.getFileSystem(job.getConfiguration()), file);
         indexes_.put(file, index);
       }
     }
