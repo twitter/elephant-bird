@@ -19,7 +19,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
 
   private M message;
   private BinaryConverter<M> converter;
-  
+
   protected BinaryWritable(M message, BinaryConverter<M> converter) {
     this.message = message;
     this.converter = converter;
@@ -69,20 +69,23 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     byte[] otherBytes = converter.toBytes(other.get());
     return BytesWritable.Comparator.compareBytes(bytes, 0, bytes.length, otherBytes, 0, otherBytes.length);
   }
-  
+
   @Override
   public boolean equals(Object obj) {
     if (obj == null)
       return false;
-    if (!(obj instanceof BinaryWritable<?>))
+
+    BinaryWritable<?> other;
+    try {
+      other = (BinaryWritable<?>)obj;
+    } catch (ClassCastException e) {
       return false;
-    
-    BinaryWritable<?> other = (BinaryWritable<?>)obj;
+    }
     if (message != null)
       return message.equals(other.message);
     if (other.message == null) // contained objects in both writables are null.
       return converter.equals(other.converter);
-    
+
     return false;
   }
 }

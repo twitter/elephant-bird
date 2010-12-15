@@ -57,10 +57,10 @@ public class ThriftConverter<M extends TBase<?>> implements BinaryConverter<M> {
   public boolean equals(Object obj) {
     if (this == obj)
       return true;
-   
-    if (!(obj instanceof ThriftConverter<?>))
+    try {
+      return typeRef.getType().equals(((ThriftConverter<?>)obj).typeRef.getType());
+    } catch (ClassCastException e) {
       return false;
-    
-    return typeRef.getType().equals(((ThriftConverter<?>)obj).typeRef.getType());
+    }
   }
 }

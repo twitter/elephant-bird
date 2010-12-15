@@ -14,15 +14,15 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class ProtobufConverter<M extends Message> implements BinaryConverter<M> {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufConverter.class);
-  
-  private Message.Builder protoBuilder; 
+
+  private Message.Builder protoBuilder;
   private TypeRef<M> typeRef;
-  
+
   public ProtobufConverter(TypeRef<M> typeRef) {
     this.typeRef = typeRef;
   }
-  
-  @SuppressWarnings("unchecked") 
+
+  @SuppressWarnings("unchecked")
   @Override
   public M fromBytes(byte[] messageBuffer) {
     try {
@@ -42,15 +42,15 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   public byte[] toBytes(M message) {
     return message.toByteArray();
   }
-  
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj)
       return true;
-   
-    if (!(obj instanceof ProtobufConverter<?>))
+    try {
+      return typeRef.getType().equals(((ProtobufConverter<?>)obj).typeRef.getType());
+    } catch (ClassCastException e) {
       return false;
-    
-    return typeRef.getType().equals(((ProtobufConverter<?>)obj).typeRef.getType());
+    }
   }
 }
