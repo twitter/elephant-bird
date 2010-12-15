@@ -3,11 +3,10 @@ package com.twitter.elephantbird.pig.load;
 import java.io.IOException;
 
 import org.apache.pig.ExecType;
-import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +27,8 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
   private TypeRef<M> typeRef_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
 
-  protected enum LzoProtobufBlockPigLoaderCounters { ProtobufsRead }
+  private Pair<String, String> protobufsRead;
+  private Pair<String, String> protobufErrors;
 
   public LzoProtobufBlockPigLoader() {
     LOG.info("LzoProtobufBlockLoader zero-parameter creation");
@@ -42,6 +42,9 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
     value_ = new ProtobufWritable<M>(typeRef_);
+    String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
+    protobufsRead = new Pair<String, String>(group, "Protobufs Read");
+    protobufErrors = new Pair<String, String>(group, "Errors");
   }
 
   @Override
@@ -78,8 +81,11 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
 
     Tuple t = null;
     if (reader_.readProtobuf(value_)) {
+      if (value_.get() == null) {
+        incrCounter(protobufErrors, 1);
+      }
       t = new ProtobufTuple(value_.get());
-      incrCounter(LzoProtobufBlockPigLoaderCounters.ProtobufsRead, 1L);
+      incrCounter(protobufsRead, 1L);
     }
     return t;
   }

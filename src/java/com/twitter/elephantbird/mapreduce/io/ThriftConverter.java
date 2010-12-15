@@ -7,7 +7,7 @@ import org.apache.thrift.TSerializer;
 
 import com.twitter.elephantbird.util.TypeRef;
 
-public class ThriftConverter<M extends TBase<?>> implements BinaryProtoConverter<M> {
+public class ThriftConverter<M extends TBase<?>> implements BinaryConverter<M> {
 
   private TypeRef<M> typeRef;
   private TSerializer serializer;
@@ -51,5 +51,16 @@ public class ThriftConverter<M extends TBase<?>> implements BinaryProtoConverter
     } catch (TException e) {
       return null;
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+   
+    if (!(obj instanceof ThriftConverter<?>))
+      return false;
+    
+    return typeRef.getType().equals(((ThriftConverter<?>)obj).typeRef.getType());
   }
 }

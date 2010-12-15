@@ -17,11 +17,11 @@ public abstract class BinaryBlockWriter<M> {
   private final OutputStream out_;
   private final int numRecordsPerBlock_;
   private final Class<M> protobufClass_;
-  private final BinaryProtoConverter<M> protoConverter_;
+  private final BinaryConverter<M> protoConverter_;
   private int numRecordsWritten_ = 0;
   private SerializedBlock.Builder builder_;
 
-  protected BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryProtoConverter<M> protoConverter, int numRecordsPerBlock) {
+  protected BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> protoConverter, int numRecordsPerBlock) {
     out_ = out;
     numRecordsPerBlock_ = numRecordsPerBlock;
     protobufClass_ = protoClass;

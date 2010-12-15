@@ -12,7 +12,7 @@ public class  LzoThriftB64LineRecordReader<M extends TBase<?>> extends LzoBinary
   private static final Logger LOG = LoggerFactory.getLogger(LzoThriftB64LineRecordReader.class);
 
   public LzoThriftB64LineRecordReader(TypeRef<M> typeRef) {
-    super(new ThriftWritable<M>(typeRef), new ThriftConverter<M>(typeRef));
+    super(typeRef, new ThriftWritable<M>(typeRef), new ThriftConverter<M>(typeRef));
     LOG.info("LzoTProtoB64LineRecordReader, type is " + typeRef.getRawClass());
   }
 }

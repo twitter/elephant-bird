@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * {@link BinaryProtoWritable} for Thrift 
+ * {@link BinaryWritable} for Thrift 
  */
-public class ThriftWritable<M extends TBase<?>> extends BinaryProtoWritable<M> {
+public class ThriftWritable<M extends TBase<?>> extends BinaryWritable<M> {
   private static final Logger LOG = LoggerFactory.getLogger(ThriftWritable.class);
   
   /**

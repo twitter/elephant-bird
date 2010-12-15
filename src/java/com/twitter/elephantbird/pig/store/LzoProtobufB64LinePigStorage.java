@@ -1,13 +1,11 @@
 package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.pig.data.Tuple;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.util.Protobufs;

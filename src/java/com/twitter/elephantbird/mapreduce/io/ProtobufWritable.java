@@ -10,7 +10,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * A Hadoop Writable wrapper around a protocol buffer of type M.
  */
 
-public class ProtobufWritable<M extends Message> extends BinaryProtoWritable<M> {
+public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufWritable.class);
 
   public ProtobufWritable(TypeRef<M> typeRef) {

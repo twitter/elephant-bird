@@ -3,7 +3,8 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.IOException;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockWriter;
-import com.twitter.elephantbird.mapreduce.io.BinaryProtoWritable;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -12,7 +13,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * A writer for LZO-encoded blocks of protobuf or Thrift objects, generally read by
  * a ProtobufBlockWriter or similar.
  */
-public class LzoBinaryBlockRecordWriter<M, W extends BinaryProtoWritable<M>>
+public class LzoBinaryBlockRecordWriter<M, W extends BinaryWritable<M>>
     extends RecordWriter<NullWritable, W> {
  
   private BinaryBlockWriter<M> writer_;
@@ -24,6 +25,7 @@ public class LzoBinaryBlockRecordWriter<M, W extends BinaryProtoWritable<M>>
   public void write(NullWritable nullWritable, W protoWritable)
       throws IOException, InterruptedException {
     writer_.write(protoWritable.get());
+    // the counters are not accessible
   }
 
   public void close(TaskAttemptContext taskAttemptContext)

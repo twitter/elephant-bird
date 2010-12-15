@@ -69,7 +69,6 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
     // Find new starts and ends of the file splits that align with the lzo blocks.
     List<InputSplit> result = new ArrayList<InputSplit>();
-    FileSystem fs = FileSystem.get(job.getConfiguration());
 
     for (InputSplit genericSplit : defaultSplits) {
       // Load the index.
@@ -91,7 +90,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       long end = start + fileSplit.getLength();
 
       long lzoStart = index.alignSliceStartToIndex(start, end);
-      long lzoEnd = index.alignSliceEndToIndex(end, fs.getFileStatus(file).getLen());
+      long lzoEnd = index.alignSliceEndToIndex(end, file.getFileSystem(job.getConfiguration()).getFileStatus(file).getLen());
 
       if (lzoStart != LzoIndex.NOT_FOUND  && lzoEnd != LzoIndex.NOT_FOUND) {
         result.add(new FileSplit(file, lzoStart, lzoEnd - lzoStart, fileSplit.getLocations()));

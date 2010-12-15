@@ -5,11 +5,10 @@ import java.nio.charset.Charset;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.pig.ExecType;
-import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +37,9 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
   private static final Charset UTF8 = Charset.forName("UTF-8");
   private static final byte RECORD_DELIMITER = (byte)'\n';
 
-  protected enum LzoProtobufB64LinePigLoaderCounts { LinesRead, ProtobufsRead }
+  private Pair<String, String> linesRead;
+  private Pair<String, String> protobufsRead;
+  private Pair<String, String> protobufErrors;
 
   public LzoProtobufB64LinePigLoader() {
     LOG.info("LzoProtobufB64LineLoader zero-parameter creation");
@@ -52,6 +53,10 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
     protoConverter_ = Protobufs.getProtoConverter(typeRef.getRawClass());
+    String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
+    linesRead = new Pair<String, String>(group, "Lines Read");
+    protobufsRead = new Pair<String, String>(group, "Protobufs Read");
+    protobufErrors = new Pair<String, String>(group, "Errors");
   }
 
   public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
@@ -78,12 +83,14 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
     String line;
     Tuple t = null;
     while ((line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
-      incrCounter(LzoProtobufB64LinePigLoaderCounts.LinesRead, 1L);
+      incrCounter(linesRead, 1L);
       M protoValue = protoConverter_.apply(base64_.decode(line.getBytes("UTF-8")));
       if (protoValue != null) {
         t = new ProtobufTuple(protoValue);
-        incrCounter(LzoProtobufB64LinePigLoaderCounts.ProtobufsRead, 1L);
+        incrCounter(protobufsRead, 1L);
         break;
+      } else {
+        incrCounter(protobufErrors, 1L);
       }
     }
 

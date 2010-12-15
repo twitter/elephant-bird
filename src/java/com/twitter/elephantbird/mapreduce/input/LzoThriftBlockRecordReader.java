@@ -17,7 +17,7 @@ public class LzoThriftBlockRecordReader<M extends TBase<?>> extends LzoBinaryBlo
 
   public LzoThriftBlockRecordReader(TypeRef<M> typeRef) {
     // input stream for the reader will be set by LzoBinaryBlockRecordReader
-    super(new ThriftBlockReader<M>(null, typeRef), new ThriftWritable<M>(typeRef));
+    super(typeRef, new ThriftBlockReader<M>(null, typeRef), new ThriftWritable<M>(typeRef));
     LOG.info("LzoThriftBlockRecordReader, type args are " + typeRef.getRawClass());
   }
 }

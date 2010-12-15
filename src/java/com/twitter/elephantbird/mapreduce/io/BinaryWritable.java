@@ -14,15 +14,15 @@ import org.slf4j.LoggerFactory;
 /**
  * A Hadoop Writable wrapper around a serialized messages like Protocol buffers.
  */
-public abstract class BinaryProtoWritable<M> implements WritableComparable<BinaryProtoWritable<M>> {
-  private static final Logger LOG = LoggerFactory.getLogger(BinaryProtoWritable.class);
+public abstract class BinaryWritable<M> implements WritableComparable<BinaryWritable<M>> {
+  private static final Logger LOG = LoggerFactory.getLogger(BinaryWritable.class);
 
   private M message;
-  private BinaryProtoConverter<M> protoConverter;
+  private BinaryConverter<M> converter;
   
-  protected BinaryProtoWritable(M message, BinaryProtoConverter<M> protoConverter) {
+  protected BinaryWritable(M message, BinaryConverter<M> converter) {
     this.message = message;
-    this.protoConverter = protoConverter;
+    this.converter = converter;
   }
 
   public M get() {
@@ -40,8 +40,9 @@ public abstract class BinaryProtoWritable<M> implements WritableComparable<Binar
   public void write(DataOutput out) throws IOException {
     byte[] bytes = null;
     if (message != null) {
-      bytes = protoConverter.toBytes(message);
+      bytes = converter.toBytes(message);
       if (bytes == null) {
+        // should we throw an IOException instead?
         LOG.warn("Could not serialize " + message.getClass());
       }
     }
@@ -58,14 +59,30 @@ public abstract class BinaryProtoWritable<M> implements WritableComparable<Binar
     if (size > 0) {
       byte[] messageBytes = new byte[size];
       in.readFully(messageBytes, 0, size);
-      message = protoConverter.fromBytes(messageBytes);
+      message = converter.fromBytes(messageBytes);
     }
   }
 
   @Override
-  public int compareTo(BinaryProtoWritable<M> other) {
-    byte[] bytes = protoConverter.toBytes(message);
-    byte[] otherBytes = protoConverter.toBytes(other.get());
+  public int compareTo(BinaryWritable<M> other) {
+    byte[] bytes = converter.toBytes(message);
+    byte[] otherBytes = converter.toBytes(other.get());
     return BytesWritable.Comparator.compareBytes(bytes, 0, bytes.length, otherBytes, 0, otherBytes.length);
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null)
+      return false;
+    if (!(obj instanceof BinaryWritable<?>))
+      return false;
+    
+    BinaryWritable<?> other = (BinaryWritable<?>)obj;
+    if (message != null)
+      return message.equals(other.message);
+    if (other.message == null) // contained objects in both writables are null.
+      return converter.equals(other.converter);
+    
+    return false;
   }
 }

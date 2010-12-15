@@ -3,12 +3,11 @@ package com.twitter.elephantbird.mapreduce.io;
 /**
  * A simple interface to serialize and deserialize objects
  */
-public interface BinaryProtoConverter<M> {
+public interface BinaryConverter<M> {
   /* TODO : What about exceptions?
-   * The contract could explicit state that these return null
-   * in case of errors?
    */
 
+  /** Returns deserialized object. A return of null normally implies an error. */ 
   M fromBytes(byte[] messageBuffer);
   
   byte[] toBytes(M message);

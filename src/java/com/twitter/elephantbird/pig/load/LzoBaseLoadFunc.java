@@ -27,6 +27,7 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.io.BufferedPositionedInputStream;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,7 +182,12 @@ public abstract class LzoBaseLoadFunc extends Utf8StorageConverter implements Lo
   protected void incrCounter(String group, String counter, long incr) {
     counterHelper_.incrCounter(group, counter, incr);
   }
-
+  
+  /** same as incrCounter(pair.first, pair.second, incr). */
+  protected void incrCounter(Pair<String, String> groupCounterPair, long incr) {
+    counterHelper_.incrCounter(groupCounterPair.first, groupCounterPair.second, incr);
+  }
+  
   /**
    * A convenience function for working with Hadoop counter objects from load functions.  The Hadoop
    * reporter object isn't always set up at first, so this class provides brief buffering to ensure

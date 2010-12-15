@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
  * stored counters each time it does.
  */
 public class PigCounterHelper {
-  private static final Logger LOG = LoggerFactory.getLogger(PigCounterHelper.class);
-
   private Map<Pair<String, String>, Long> counterStringMap_ = Maps.newHashMap();
   private Map<Enum<?>, Long> counterEnumMap_ = Maps.newHashMap();
   private Reporter reporter_ = null;
@@ -27,15 +25,18 @@ public class PigCounterHelper {
    * See org.apache.hadoop.mapred.Reporter's incrCounter.
    */
   public void incrCounter(String group, String counter, long incr) {
-    Pair<String, String> key = new Pair<String, String>(group, counter);
-    Long currentValue = counterStringMap_.get(key);
-    counterStringMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
-
-    if (getReporter() != null) {
-      for (Map.Entry<Pair<String, String>, Long> entry : counterStringMap_.entrySet()) {
-        getReporter().incrCounter(entry.getKey().first, entry.getKey().second, entry.getValue());
+    if (getReporter() != null) { // common case
+      getReporter().incrCounter(group, counter, incr);
+      if (counterStringMap_.size() > 0) {
+        for (Map.Entry<Pair<String, String>, Long> entry : counterStringMap_.entrySet()) {
+          getReporter().incrCounter(entry.getKey().first, entry.getKey().second, entry.getValue());
+        }
+        counterStringMap_.clear();
       }
-      counterStringMap_.clear();
+    } else { // buffer the increments.
+      Pair<String, String> key = new Pair<String, String>(group, counter);
+      Long currentValue = counterStringMap_.get(key);
+      counterStringMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
     }
   }
 
@@ -44,14 +45,17 @@ public class PigCounterHelper {
    * See org.apache.hadoop.mapred.Reporter's incrCounter.
    */
   public void incrCounter(Enum<?> key, long incr) {
-    Long currentValue = counterEnumMap_.get(key);
-    counterEnumMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
-
     if (getReporter() != null) {
-      for (Map.Entry<Enum<?>, Long> entry : counterEnumMap_.entrySet()) {
-        getReporter().incrCounter(entry.getKey(), entry.getValue());
+      getReporter().incrCounter(key, incr);
+      if (counterEnumMap_.size() > 0) {
+        for (Map.Entry<Enum<?>, Long> entry : counterEnumMap_.entrySet()) {
+          getReporter().incrCounter(entry.getKey(), entry.getValue());
+        }
+        counterEnumMap_.clear();
       }
-      counterEnumMap_.clear();
+    } else { // buffer the increments
+      Long currentValue = counterEnumMap_.get(key);
+      counterEnumMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
     }
   }
 

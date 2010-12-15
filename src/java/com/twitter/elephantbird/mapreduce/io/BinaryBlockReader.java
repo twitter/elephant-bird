@@ -23,12 +23,12 @@ public abstract class BinaryBlockReader<M> {
   
   private InputStream in_;
   private final StreamSearcher searcher_;
-  private final BinaryProtoConverter<M> protoConverter_;
+  private final BinaryConverter<M> protoConverter_;
   private SerializedBlock curBlock_;
   private int numLeftToReadThisBlock_ = 0;
   private boolean readNewBlocks_ = true;
 
-  protected BinaryBlockReader(InputStream in, BinaryProtoConverter<M> protoConverter) {
+  protected BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
     in_ = in;
     protoConverter_ = protoConverter;
     searcher_ = new StreamSearcher(Protobufs.KNOWN_GOOD_POSITION_MARKER);
@@ -59,7 +59,7 @@ public abstract class BinaryBlockReader<M> {
   /**
    * Returns true if new proto object was read into writable, false other wise.
    */
-  public boolean readNext(BinaryProtoWritable<M> writable) throws IOException {
+  public boolean readNext(BinaryWritable<M> writable) throws IOException {
     byte[] blob = readNextProtoBytes();
     if (blob != null) {
       writable.set(protoConverter_.fromBytes(blob));

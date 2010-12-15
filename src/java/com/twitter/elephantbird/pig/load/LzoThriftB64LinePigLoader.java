@@ -8,6 +8,7 @@ import org.apache.pig.ExecType;
 import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.util.Pair;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -18,30 +19,31 @@ import com.twitter.elephantbird.pig.piggybank.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-/**
- * This is the base class for all base64 encoded, line-oriented protocol buffer based pig loaders.
- * Data is expected to be one base64 encoded serialized protocol buffer per line. The specific
- * protocol buffer is a template parameter, generally specified by a codegen'd derived class.
- * See com.twitter.elephantbird.proto.HadoopProtoCodeGenerator.
- */
-
 public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoThriftB64LinePigLoader.class);
 
   private final TypeRef<M> typeRef_;
-  private final ThriftConverter<M> protoConverter_;
+  private final ThriftConverter<M> converter_;
   private final Base64 base64_ = new Base64();
   private final ThriftToPig<M> thriftToPig_;
 
   private static final Charset UTF8 = Charset.forName("UTF-8");
   private static final byte RECORD_DELIMITER = (byte)'\n';
 
-  protected enum Counters { LinesRead, ThriftStructsRead }
+  private Pair<String, String> linesRead;
+  private Pair<String, String> thriftStructsRead;
+  private Pair<String, String> thriftErrors;
 
   public LzoThriftB64LinePigLoader(String thriftClassName) {
     typeRef_ = ThriftUtils.getTypeRef(thriftClassName);
-    protoConverter_ = ThriftConverter.newInstance(typeRef_);
+    converter_ = ThriftConverter.newInstance(typeRef_);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
+
+    String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
+    linesRead = new Pair<String, String>(group, "Lines Read");
+    thriftStructsRead = new Pair<String, String>(group, "Thrift Structs");
+    thriftErrors = new Pair<String, String>(group, "Errors");
+
     setLoaderSpec(getClass(), new String[]{thriftClassName});
   }
 
@@ -69,14 +71,15 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFu
     String line;
     Tuple t = null;
     while ((line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
-      incrCounter(Counters.LinesRead, 1L);
-      M protoValue = protoConverter_.fromBytes(base64_.decode(line.getBytes("UTF-8")));
-      if (protoValue != null) {
+      incrCounter(linesRead, 1L);
+      M value = converter_.fromBytes(base64_.decode(line.getBytes("UTF-8")));
+      if (value != null) {
         try {
-          t = thriftToPig_.getPigTuple(protoValue);
-          incrCounter(Counters.ThriftStructsRead, 1L);
+          t = thriftToPig_.getPigTuple(value);
+          incrCounter(thriftStructsRead, 1L);
           break;
         } catch (TException e) {
+          incrCounter(thriftErrors, 1L);
           LOG.warn("ThriftToTuple error :", e); // may be struct mismatch
         }
       }

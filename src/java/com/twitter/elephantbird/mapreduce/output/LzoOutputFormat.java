@@ -4,7 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.hadoop.compression.lzo.LzopCodec;
-import com.twitter.elephantbird.mapreduce.io.BinaryProtoWritable;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -17,7 +17,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  * Base class for Lzo outputformats.
  * provides an helper method to create lzo output stream.
  */
-public abstract class LzoOutputFormat<M, W extends BinaryProtoWritable<M>>
+public abstract class LzoOutputFormat<M, W extends BinaryWritable<M>>
     extends FileOutputFormat<NullWritable, W> {
   
   /**

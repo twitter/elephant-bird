@@ -14,21 +14,21 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.thrift.TBase;
 
 /**
- * Reads Thrift objects written in blocks using LzoThriftBlockOutputFormat 
+ * Reads Thrift objects written in blocks using LzoThriftBlockOutputFormat
  * <br><br>
- * 
- * Do not use LzoThriftBlockInputFormat.class directly for setting 
+ *
+ * Do not use LzoThriftBlockInputFormat.class directly for setting
  * InputFormat class for a job. Use getInputFormatClass() instead.
  */
-public class LzoThriftBlockInputFormat<M extends TBase<?>>  
+public class LzoThriftBlockInputFormat<M extends TBase<?>>
                 extends LzoInputFormat<LongWritable, ThriftWritable<M>> {
-  // implementation is exactly same as LzoB64Line
-  
+  // implementation is exactly same as LzoThriftB64LineINputFormat
+
   public LzoThriftBlockInputFormat() {}
-  
+
   /**
    * Returns {@link LzoThriftBlockInputFormat} class for setting up a job.
-   * Sets an internal configuration in jobConf so that Task instantiates 
+   * Sets an internal configuration in jobConf so that Task instantiates
    * appropriate object for this generic class based on thriftClass
    */
   @SuppressWarnings("unchecked")
@@ -37,13 +37,13 @@ public class LzoThriftBlockInputFormat<M extends TBase<?>>
     ThriftUtils.setClassConf(jobConf, LzoThriftBlockInputFormat.class, thriftClass);
     return LzoThriftBlockInputFormat.class;
   }
-  
+
   @Override
   public RecordReader<LongWritable, ThriftWritable<M>> createRecordReader(InputSplit split,
       TaskAttemptContext taskAttempt) throws IOException, InterruptedException {
-    
-    TypeRef<M> typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftBlockInputFormat.class); 
+
+    TypeRef<M> typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftBlockInputFormat.class);
     return new LzoThriftBlockRecordReader<M>(typeRef);
   }
-  
+
 }

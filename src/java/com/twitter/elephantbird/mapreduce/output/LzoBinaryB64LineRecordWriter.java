@@ -3,8 +3,9 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import com.twitter.elephantbird.mapreduce.io.BinaryProtoConverter;
-import com.twitter.elephantbird.mapreduce.io.BinaryProtoWritable;
+import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -15,14 +16,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * Writes data as base64 encoded serialized protocol buffers, one per line.
  */
 
-public class LzoBinaryB64LineRecordWriter<M, W extends BinaryProtoWritable<M>>
+public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
     extends RecordWriter<NullWritable, W> {
 
-  private final BinaryProtoConverter<M> protoConverter_;
+  private final BinaryConverter<M> protoConverter_;
   private final DataOutputStream out_;
   private final Base64 base64_;
   
-  public LzoBinaryB64LineRecordWriter(BinaryProtoConverter<M> converter, DataOutputStream out) {
+  public LzoBinaryB64LineRecordWriter(BinaryConverter<M> converter, DataOutputStream out) {
     protoConverter_ = converter;
     out_ = out;
     base64_ = new Base64();

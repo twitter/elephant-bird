@@ -16,7 +16,7 @@ public class LzoProtobufBlockRecordReader<M extends Message, W extends ProtobufW
 
   public LzoProtobufBlockRecordReader(TypeRef<M> typeRef, W protobufWritable) {
     // input stream for the reader will be set by LzoBinaryBlockRecordReader
-    super(new ProtobufBlockReader<M>(null, typeRef), protobufWritable);
+    super(typeRef, new ProtobufBlockReader<M>(null, typeRef), protobufWritable);
     LOG.info("LzoProtobufBlockRecordReader, type args are " + typeRef.getRawClass());
   }
 }
