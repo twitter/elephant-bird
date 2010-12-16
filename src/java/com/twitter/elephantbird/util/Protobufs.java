@@ -151,6 +151,7 @@ public class Protobufs {
    * reflection overhead of the static function.
    */
   public static <M extends Message> Function<byte[], M> getProtoConverter(final Class<M> protoClass) {
+    //XXX Remove this.
     return new Function<byte[], M>() {
       private Message.Builder protoBuilder = null; 
       

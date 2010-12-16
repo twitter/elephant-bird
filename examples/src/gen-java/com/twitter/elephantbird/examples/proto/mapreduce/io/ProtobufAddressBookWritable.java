@@ -8,5 +8,8 @@ public class ProtobufAddressBookWritable extends ProtobufWritable<AddressBook> {
   public ProtobufAddressBookWritable() {
     super(new TypeRef<AddressBook>(){});
   }
+  public ProtobufAddressBookWritable(AddressBook m) {
+    super(m, new TypeRef<AddressBook>(){});
+  }
 }
 

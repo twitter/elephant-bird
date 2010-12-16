@@ -1,6 +1,6 @@
 # Elephant Bird #
 
-#### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo) and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://hadoop.apache.org/pig) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
+#### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
 
 ### To Use ###
 
@@ -26,6 +26,7 @@ more about that.
 2. Pig 0.6 (not compatible with 0.7+)
 3. HBase 0.20.6
 4. Hive 0.7 (with HIVE-1616)
+5. Thrift 0.2
 
 
 #### Building Without Protocol Buffers ####
@@ -50,6 +51,8 @@ Apache licensed.
     * Block-based (via codegen, see below; also available in deprecated 0.18 format)
     * Block-based, into generic bytes.
     * Line-based, base64 encoded (via codegen, see below)
+* Same as protocol buffers, but Thrift.
+
     
 ##### LZO-based Hadoop Writables #####
 * Protocol buffer writables (via codegen, see below)
@@ -112,6 +115,10 @@ my_file:
 
 There are examples in the examples subdirectory showing how to integrate this code generation into a build, both for generating Java files pre-jar and for generating other types of files from protocol buffer definitions post-compile (there are examples that do this to generate [Pig](http://hadoop.apache.org/pig) loaders for a set of protocol buffers).  
 
+### No, really, Protobuf codegen? ###
+
+Raghu Angadi recently revisited all the stuff described above and found ways to get rid of most of the extra code generation. We haven't written up the docs yet, read the code.
+
 ### Commit Back! ###
 
 Bug fixes, features, and documentation improvements are welcome!  Please fork and send me a pull request on github, and I will do my best to keep up.  If you make major changes, add yourself to the contributors list below.
@@ -124,3 +131,4 @@ Bug fixes, features, and documentation improvements are welcome!  Please fork an
 * Florian Liebert ([@floliebert](http://twitter.com/floliebert))
 * Ning Liang ([@ningliang](http://twitter.com/ningliang))
 * Johan Oskarsson ([@skr](http://twitter.com/skr))
+* Raghu Angadi ([@raghuangadi](http://twitter.com/raghuangadi))
