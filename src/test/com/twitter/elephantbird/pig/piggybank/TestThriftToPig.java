@@ -9,7 +9,7 @@ import org.apache.thrift.test.Fixtures;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.junit.Test;
 
-import com.twitter.elephantbird.pig.piggybank.ThriftToPigProtocol;
+import com.twitter.elephantbird.pig8.piggybank.ThriftToPigProtocol;
 
 import thrift.test.HolyMoley;
 import thrift.test.Nesting;

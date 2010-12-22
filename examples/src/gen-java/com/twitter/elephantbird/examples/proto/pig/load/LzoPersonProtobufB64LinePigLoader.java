@@ -11,7 +11,7 @@ import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import com.twitter.elephantbird.examples.proto.AddressBookProtos.Person;
 import com.twitter.elephantbird.examples.proto.mapreduce.input.LzoPersonProtobufB64LineInputFormat;
 import com.twitter.elephantbird.mapreduce.input.LzoLineRecordReader;
-import com.twitter.elephantbird.pig.load.LzoProtobufB64LinePigLoader;
+import com.twitter.elephantbird.pig8.load.LzoProtobufB64LinePigLoader;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class LzoPersonProtobufB64LinePigLoader extends LzoProtobufB64LinePigLoader<Person> {

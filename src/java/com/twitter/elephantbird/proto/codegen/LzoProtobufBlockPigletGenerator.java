@@ -1,7 +1,7 @@
 package com.twitter.elephantbird.proto.codegen;
 
 import com.google.protobuf.Descriptors.Descriptor;
-import com.twitter.elephantbird.pig.util.ProtobufToPig;
+import com.twitter.elephantbird.pig8.util.ProtobufToPig;
 import com.twitter.elephantbird.proto.util.FormattingStringBuffer;
 import com.twitter.elephantbird.proto.util.ProtogenHelper;
 import com.twitter.elephantbird.util.Protobufs;
