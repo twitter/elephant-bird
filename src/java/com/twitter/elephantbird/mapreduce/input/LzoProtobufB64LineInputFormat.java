@@ -10,8 +10,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is the base class for all base64 encoded, line-oriented protocol buffer based input formats.
@@ -25,7 +23,6 @@ import org.slf4j.LoggerFactory;
  */
 
 public abstract class LzoProtobufB64LineInputFormat<M extends Message, W extends ProtobufWritable<M>> extends LzoInputFormat<LongWritable, W> {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LineInputFormat.class);
 
   private TypeRef<M> typeRef_;
   private W protobufWritable_;

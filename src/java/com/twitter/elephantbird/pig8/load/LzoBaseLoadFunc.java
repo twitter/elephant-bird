@@ -1,12 +1,14 @@
 package com.twitter.elephantbird.pig8.load;
 
 import java.io.IOException;
+
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.pig.FuncSpec;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +66,11 @@ public abstract class LzoBaseLoadFunc extends LoadFunc {
    */
   protected void incrCounter(Enum<?> key, long incr) {
     counterHelper_.incrCounter(key, incr);
+  }
+
+  /** same as incrCounter(pair.first, pair.second, incr). */
+  protected void incrCounter(Pair<String, String> groupCounterPair, long incr) {
+    counterHelper_.incrCounter(groupCounterPair.first, groupCounterPair.second, incr);
   }
 
   @Override

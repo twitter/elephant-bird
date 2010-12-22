@@ -9,8 +9,8 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.TMemoryBuffer;
 
+import com.twitter.elephantbird.pig.piggybank.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -30,9 +30,8 @@ import com.twitter.elephantbird.util.TypeRef;
 public abstract class BytesToThriftTuple<T extends TBase<?>> extends EvalFunc<Tuple> {
 
   private final TDeserializer deserializer_ = new TDeserializer(new TBinaryProtocol.Factory());
-private final ThriftToTuple<T> thriftToTuple_ = new ThriftToTuple<T>();
+  private ThriftToPig<T> thriftToTuple_;
   private TypeRef<T> typeRef_;
-  private T thriftObj_ = null;
 
   /**
    * Set the type parameter so it doesn't get erased by Java.  Must be called by the constructor!
@@ -41,19 +40,20 @@ private final ThriftToTuple<T> thriftToTuple_ = new ThriftToTuple<T>();
    */
   public void setTypeRef(TypeRef<T> typeRef) {
     typeRef_ = typeRef;
+    thriftToTuple_ = ThriftToPig.newInstance(typeRef);
   }
 
 
   @Override
   public Tuple exec(org.apache.pig.data.Tuple input) throws IOException {
-    if (input == null || input.size() < 1) return null;
+    if (input == null || input.size() < 1) {
+      return null;
+    }
     try {
-      if (thriftObj_ == null) {
-        thriftObj_ = typeRef_.safeNewInstance();
-      }
+      T tObj = typeRef_.safeNewInstance();
       DataByteArray dbarr = (DataByteArray) input.get(0);
-      deserializer_.deserialize(thriftObj_, dbarr.get());
-      return thriftToTuple_.convert(thriftObj_);
+      deserializer_.deserialize(tObj, dbarr.get());
+      return thriftToTuple_.getPigTuple(tObj);
     } catch (IOException e) {
       log.warn("Caught exception "+e.getMessage());
       return null;

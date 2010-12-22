@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
  */
 
 public class LzoGenericProtobufBlockInputFormat extends LzoInputFormat<LongWritable, BytesWritable> {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoGenericProtobufBlockInputFormat.class);
 
   public LzoGenericProtobufBlockInputFormat() {
   }

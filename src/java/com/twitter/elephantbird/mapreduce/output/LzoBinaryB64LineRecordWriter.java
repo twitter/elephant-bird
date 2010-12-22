@@ -3,43 +3,41 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
-import com.twitter.elephantbird.util.TypeRef;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 
 /**
  * A RecordWriter-derived class for use with the LzoProtobufB64LineOutputFormat.
  * Writes data as base64 encoded serialized protocol buffers, one per line.
  */
 
-public class LzoProtobufB64LineRecordWriter<M extends Message, W extends ProtobufWritable<M>>
+public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
     extends RecordWriter<NullWritable, W> {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LineRecordWriter.class);
 
-  protected final TypeRef typeRef_;
-  protected final DataOutputStream out_;
-  protected final Base64 base64_;
+  private final BinaryConverter<M> protoConverter_;
+  private final DataOutputStream out_;
+  private final Base64 base64_;
 
-  public LzoProtobufB64LineRecordWriter(TypeRef<M> typeRef, DataOutputStream out) {
-    base64_ = new Base64();
-    typeRef_ = typeRef;
+  public LzoBinaryB64LineRecordWriter(BinaryConverter<M> converter, DataOutputStream out) {
+    protoConverter_ = converter;
     out_ = out;
+    base64_ = new Base64();
   }
 
+  @Override
   public void write(NullWritable nullWritable, W protobufWritable)
       throws IOException, InterruptedException {
-    byte[] b64Bytes = base64_.encode(protobufWritable.get().toByteArray());
+    byte[] b64Bytes = base64_.encode(protoConverter_.toBytes(protobufWritable.get()));
     out_.write(b64Bytes);
     out_.write("\n".getBytes("UTF-8"));
   }
 
+  @Override
   public void close(TaskAttemptContext taskAttemptContext)
       throws IOException, InterruptedException {
     out_.close();

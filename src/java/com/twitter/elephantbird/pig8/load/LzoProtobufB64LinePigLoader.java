@@ -1,6 +1,8 @@
 package com.twitter.elephantbird.pig8.load;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.Expression;
@@ -10,6 +12,7 @@ import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +38,12 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
   private final Base64 base64_ = new Base64();
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
 
-  protected enum LzoProtobufB64LinePigLoaderCounts { LinesRead, ProtobufsRead }
+  private static final Charset UTF8 = Charset.forName("UTF-8");
+  private static final byte RECORD_DELIMITER = (byte)'\n';
+
+  private Pair<String, String> linesRead;
+  private Pair<String, String> protobufsRead;
+  private Pair<String, String> protobufErrors;
 
   public LzoProtobufB64LinePigLoader() {
     LOG.info("LzoProtobufB64LineLoader zero-parameter creation");
@@ -49,6 +57,10 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
     protoConverter_ = Protobufs.getProtoConverter(typeRef.getRawClass());
+    String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
+    linesRead = new Pair<String, String>(group, "Lines Read");
+    protobufsRead = new Pair<String, String>(group, "Protobufs Read");
+    protobufErrors = new Pair<String, String>(group, "Errors");
   }
 
   /**
@@ -62,13 +74,12 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
 
     String line;
     Tuple t = null;
-
     try {
     	while(reader_.nextKeyValue()){
     	  M protoValue = (M) reader_.getCurrentValue();
     	  if (protoValue != null) {
     	    t = new ProtobufTuple(protoValue);
-    	    incrCounter(LzoProtobufB64LinePigLoaderCounts.ProtobufsRead, 1L);
+    	    incrCounter(protobufsRead, 1L);
     	    break;
     	  }
     	}
@@ -78,7 +89,6 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
 		  throw new ExecException(errMsg, errCode,
 				  PigException.REMOTE_ENVIRONMENT, e);
 	  }
-
     return t;
   }
 
