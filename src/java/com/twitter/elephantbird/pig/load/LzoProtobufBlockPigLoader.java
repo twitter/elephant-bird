@@ -34,6 +34,12 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
     LOG.info("LzoProtobufBlockLoader zero-parameter creation");
   }
 
+  public LzoProtobufBlockPigLoader(String protoClassName) {
+    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    setTypeRef(typeRef);
+    setLoaderSpec(getClass(), new String[]{protoClassName});
+  }
+
   /**
    * Set the type parameter so it doesn't get erased by Java.  Must be called before getNext!
    *
