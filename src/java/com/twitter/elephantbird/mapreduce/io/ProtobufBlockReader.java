@@ -32,16 +32,16 @@ public class ProtobufBlockReader<M extends Message> extends BinaryBlockReader<M>
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufBlockReader.class);
 
   public ProtobufBlockReader(InputStream in, TypeRef<M> typeRef) {
-    super(in, new ProtobufConverter<M>(typeRef));
+    super(in, ProtobufConverter.newInstance(typeRef));
     LOG.info("ProtobufReader, my typeClass is " + typeRef.getRawClass());
   }
-  
+
   // for backward compatibility :
-  
+
   public boolean readProtobuf(ProtobufWritable<M> message) throws IOException {
     return readNext(message);
   }
-  
+
   public boolean readProtobufBytes(BytesWritable message) throws IOException {
     return readNextProtoBytes(message);
   }

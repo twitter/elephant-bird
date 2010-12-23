@@ -15,27 +15,27 @@ import org.apache.thrift.TBase;
 
 /**
  * Data is written as one base64 encoded serialized thrift per line. <br><br>
- * 
- * Do not use LzoThriftB64LineOutputFormat.class directly for setting 
+ *
+ * Do not use LzoThriftB64LineOutputFormat.class directly for setting
  * OutputFormat class for a job. Use getOutputFormatClass() instead.
  */
 public class LzoThriftBlockOutputFormat<M extends TBase<?>>
-    extends LzoOutputFormat<M, ThriftWritable<M>> {  
-  
+    extends LzoOutputFormat<M, ThriftWritable<M>> {
+
   public LzoThriftBlockOutputFormat() {}
-  
+
   @SuppressWarnings("unchecked")
   public static <M extends TBase<?>> Class<LzoThriftBlockOutputFormat>
      getOutputFormatClass(Class<M> thriftClass, Configuration jobConf) {
-    
+
     ThriftUtils.setClassConf(jobConf, LzoThriftBlockOutputFormat.class, thriftClass);
     return LzoThriftBlockOutputFormat.class;
   }
-  
+
   public RecordWriter<NullWritable, ThriftWritable<M>> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
-    
-    TypeRef<M> typeRef = ThriftUtils.getTypeRef(job.getConfiguration(), LzoThriftBlockOutputFormat.class);  
+
+    TypeRef<M> typeRef = ThriftUtils.getTypeRef(job.getConfiguration(), LzoThriftBlockOutputFormat.class);
     return new LzoBinaryBlockRecordWriter<M, ThriftWritable<M>>(
         new ThriftBlockWriter<M>(getOutputStream(job), typeRef.getRawClass()));
   }
