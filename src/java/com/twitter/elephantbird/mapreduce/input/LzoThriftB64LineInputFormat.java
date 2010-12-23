@@ -24,7 +24,13 @@ import com.twitter.elephantbird.util.TypeRef;
 public class LzoThriftB64LineInputFormat<M extends TBase<?>>
                 extends LzoInputFormat<LongWritable, ThriftWritable<M>> {
 
+  TypeRef<M> typeRef_ = null;
+
   public LzoThriftB64LineInputFormat() {}
+
+  public LzoThriftB64LineInputFormat(TypeRef<M> typeRef) {
+    typeRef_ = typeRef;
+  }
 
   /**
    * Returns {@link LzoThriftB64LineInputFormat} class for setting up a job.
@@ -38,12 +44,17 @@ public class LzoThriftB64LineInputFormat<M extends TBase<?>>
     return LzoThriftB64LineInputFormat.class;
   }
 
+  public static<M extends TBase<?>> LzoThriftB64LineInputFormat<M> newInstance(TypeRef<M> typeRef) {
+    return new LzoThriftB64LineInputFormat<M>(typeRef);
+  }
+
   @Override
   public RecordReader<LongWritable, ThriftWritable<M>> createRecordReader(InputSplit split,
       TaskAttemptContext taskAttempt) throws IOException, InterruptedException {
-
-    TypeRef<M> typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftB64LineInputFormat.class);
-    return new LzoThriftB64LineRecordReader<M>(typeRef);
+    if (typeRef_ == null) {
+      typeRef_ = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftB64LineInputFormat.class);
+    }
+    return new LzoThriftB64LineRecordReader<M>(typeRef_);
   }
 
 }

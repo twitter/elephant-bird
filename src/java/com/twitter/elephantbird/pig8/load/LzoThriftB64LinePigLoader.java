@@ -26,8 +26,6 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFu
   private final TypeRef<M> typeRef_;
   private final ThriftToPig<M> thriftToPig_;
 
-
-  private final Pair<String, String> thriftStructsRead;
   private final Pair<String, String> thriftErrors;
 
   public LzoThriftB64LinePigLoader(String thriftClassName) {
@@ -35,7 +33,6 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFu
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
 
     String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
-    thriftStructsRead = new Pair<String, String>(group, "Thrift Structs");
     thriftErrors = new Pair<String, String>(group, "Errors");
 
     setLoaderSpec(getClass(), new String[]{thriftClassName});
@@ -50,26 +47,22 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFu
       return null;
     }
 
-    Tuple t = null;
     try {
       while (reader_.nextKeyValue()) {
         M value = (M) reader_.getCurrentValue();
-        if (value != null) {
-          try {
-            t = thriftToPig_.getPigTuple(value);
-            incrCounter(thriftStructsRead, 1L);
-            break;
-          } catch (TException e) {
-            incrCounter(thriftErrors, 1L);
-            LOG.warn("ThriftToTuple error :", e); // may be struct mismatch
-          }
+        try {
+          return thriftToPig_.getPigTuple(value);
+        } catch (TException e) {
+          incrCounter(thriftErrors, 1L);
+          LOG.warn("ThriftToTuple error :", e); // may be struct mismatch
         }
       }
     } catch (InterruptedException e) {
-      return null;
+      LOG.error("InterruptedException encountered, bailing.", e);
+      throw new IOException(e);
     }
 
-    return t;
+    return null;
   }
 
   @Override
@@ -78,22 +71,9 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFu
   }
 
 
-  /**
-   * TODO
-   * DOES NOT WORK - needs to get a jobconf
-   */
   @Override
   public InputFormat getInputFormat() throws IOException {
-    try {
-      return LzoThriftB64LineInputFormat.getInputFormatClass(typeRef_.getRawClass(), null).newInstance();
-    } catch (InstantiationException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (IllegalAccessException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    return null;
+      return LzoThriftB64LineInputFormat.newInstance(typeRef_);
   }
 
   /**

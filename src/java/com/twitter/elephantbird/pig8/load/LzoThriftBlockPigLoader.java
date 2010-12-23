@@ -27,8 +27,6 @@ public class LzoThriftBlockPigLoader<M extends TBase<?>> extends LzoBaseLoadFunc
 
   private final TypeRef<M> typeRef_;
   private final ThriftToPig<M> thriftToPig_;
-
-  private final Pair<String, String> thriftStructsRead;
   private final Pair<String, String> thriftErrors;
 
   public LzoThriftBlockPigLoader(String thriftClassName) {
@@ -36,7 +34,6 @@ public class LzoThriftBlockPigLoader<M extends TBase<?>> extends LzoBaseLoadFunc
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
 
     String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
-    thriftStructsRead = new Pair<String, String>(group, "Thrift Structs Read");
     thriftErrors = new Pair<String, String>(group, "Errors");
 
     setLoaderSpec(getClass(), new String[]{thriftClassName});
@@ -45,6 +42,7 @@ public class LzoThriftBlockPigLoader<M extends TBase<?>> extends LzoBaseLoadFunc
   /**
    * Return every non-null line as a single-element tuple to Pig.
    */
+  @SuppressWarnings("unchecked")
   @Override
   public Tuple getNext() throws IOException {
     if (reader_ == null) {
@@ -54,10 +52,9 @@ public class LzoThriftBlockPigLoader<M extends TBase<?>> extends LzoBaseLoadFunc
     M value;
     try {
       while (reader_.nextKeyValue()) {
+        value = (M) reader_.getCurrentValue();
         try {
-          value = (M) reader_.getCurrentValue();
           Tuple t = thriftToPig_.getPigTuple(value);
-          incrCounter(thriftStructsRead, 1L);
           return t;
         } catch (TException e) {
           incrCounter(thriftErrors, 1L);
@@ -66,8 +63,8 @@ public class LzoThriftBlockPigLoader<M extends TBase<?>> extends LzoBaseLoadFunc
         }
       }
     } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.error("InterruptedException encountered, bailing.", e);
+      throw new IOException(e);
     }
     return null;
   }
@@ -77,23 +74,10 @@ public class LzoThriftBlockPigLoader<M extends TBase<?>> extends LzoBaseLoadFunc
     return new ResourceSchema(ThriftToPig.toSchema(typeRef_.getRawClass()));
   }
 
-
-  /**
-   * TODO
-   * DOES NOT WORK - needs to get a jobconf
-   */
+  @SuppressWarnings("rawtypes")
   @Override
   public InputFormat getInputFormat() throws IOException {
-    try {
-      return LzoThriftB64LineInputFormat.getInputFormatClass(typeRef_.getRawClass(), null).newInstance();
-    } catch (InstantiationException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (IllegalAccessException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    return null;
+      return LzoThriftB64LineInputFormat.newInstance(typeRef_);
   }
 
   /**
