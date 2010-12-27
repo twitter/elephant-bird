@@ -34,10 +34,10 @@ import com.twitter.elephantbird.util.TypeRef;
 public class ProtobufBlockWriter<M extends Message> extends BinaryBlockWriter<M> {
 
   public ProtobufBlockWriter(OutputStream out, Class<M> protoClass) {
-    super(out, protoClass, new ProtobufConverter<M>(new TypeRef<M>(protoClass){}), DEFAULT_NUM_RECORDS_PER_BLOCK);
+    super(out, protoClass, ProtobufConverter.newInstance(protoClass), DEFAULT_NUM_RECORDS_PER_BLOCK);
   }
 
   public ProtobufBlockWriter(OutputStream out, Class<M> protoClass, int numRecordsPerBlock) {
-    super(out, protoClass, new ProtobufConverter<M>(new TypeRef<M>(protoClass){}), numRecordsPerBlock);
+    super(out, protoClass, ProtobufConverter.newInstance(protoClass), numRecordsPerBlock);
   }
 }

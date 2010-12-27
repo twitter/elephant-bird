@@ -7,8 +7,8 @@ import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 
-import com.google.common.base.Function;
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.pig8.util.ProtobufToPig;
 import com.twitter.elephantbird.pig8.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
@@ -22,7 +22,7 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public abstract class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
   private TypeRef<M> typeRef_ = null;
-  private Function<byte[], M> protoConverter_ = null;
+  private ProtobufConverter<M> protoConverter_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
 
   /**
@@ -32,15 +32,17 @@ public abstract class ProtobufBytesToTuple<M extends Message> extends EvalFunc<T
    */
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
-    protoConverter_ = Protobufs.getProtoConverter(typeRef.getRawClass());
+    protoConverter_ = ProtobufConverter.newInstance(typeRef);
   }
 
   @Override
   public Tuple exec(Tuple input) throws IOException {
-    if (input == null || input.size() < 1) return null;
+    if (input == null || input.size() < 1) {
+      return null;
+    }
     try {
       DataByteArray bytes = (DataByteArray) input.get(0);
-      M value_ = protoConverter_.apply(bytes.get());
+      M value_ = protoConverter_.fromBytes(bytes.get());
       return new ProtobufTuple(value_);
     } catch (IOException e) {
       return null;

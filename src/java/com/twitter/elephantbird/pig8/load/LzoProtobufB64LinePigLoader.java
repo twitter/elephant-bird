@@ -1,9 +1,7 @@
 package com.twitter.elephantbird.pig8.load;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-
-import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.Expression;
 import org.apache.pig.LoadMetadata;
@@ -16,8 +14,8 @@ import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Function;
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.input.LzoProtobufB64LineInputFormat;
 import com.twitter.elephantbird.pig8.util.ProtobufToPig;
 import com.twitter.elephantbird.pig8.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
@@ -26,27 +24,30 @@ import com.twitter.elephantbird.util.TypeRef;
 /**
  * This is the base class for all base64 encoded, line-oriented protocol buffer based pig loaders.
  * Data is expected to be one base64 encoded serialized protocol buffer per line. The specific
- * protocol buffer is a template parameter, generally specified by a codegen'd derived class.
- * See com.twitter.elephantbird.proto.HadoopProtoCodeGenerator.
+ * protocol buffer is a template parameter.<br>
+ * Initialize with a String argument that represents the full classpath of the protocol buffer class to be loaded.<br>
+ * The no-arg constructor will not work and is only there for internal Pig reasons.
  */
-
-public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadFunc implements LoadMetadata {
+public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadFunc implements LoadMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LinePigLoader.class);
 
   private TypeRef<M> typeRef_ = null;
-  private Function<byte[], M> protoConverter_ = null;
-  private final Base64 base64_ = new Base64();
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
 
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-  private static final byte RECORD_DELIMITER = (byte)'\n';
-
-  private Pair<String, String> linesRead;
   private Pair<String, String> protobufsRead;
-  private Pair<String, String> protobufErrors;
 
   public LzoProtobufB64LinePigLoader() {
     LOG.info("LzoProtobufB64LineLoader zero-parameter creation");
+  }
+
+  /**
+  *
+  * @param protoClassName full classpath to the generated Protocol Buffer to be loaded.
+  */
+  public LzoProtobufB64LinePigLoader(String protoClassName) {
+    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    setTypeRef(typeRef);
+    setLoaderSpec(getClass(), new String[]{protoClassName});
   }
 
   /**
@@ -56,11 +57,8 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
    */
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
-    protoConverter_ = Protobufs.getProtoConverter(typeRef.getRawClass());
     String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
-    linesRead = new Pair<String, String>(group, "Lines Read");
     protobufsRead = new Pair<String, String>(group, "Protobufs Read");
-    protobufErrors = new Pair<String, String>(group, "Errors");
   }
 
   /**
@@ -72,11 +70,11 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
       return null;
     }
 
-    String line;
     Tuple t = null;
     try {
     	while(reader_.nextKeyValue()){
-    	  M protoValue = (M) reader_.getCurrentValue();
+    	  @SuppressWarnings("unchecked")
+        M protoValue = (M) reader_.getCurrentValue();
     	  if (protoValue != null) {
     	    t = new ProtobufTuple(protoValue);
     	    incrCounter(protobufsRead, 1L);
@@ -92,6 +90,13 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
     return t;
   }
 
+  /**
+   * NOT IMPLEMENTED
+   * @param arg0
+   * @param arg1
+   * @return
+   * @throws IOException
+   */
   @Override
   public String[] getPartitionKeys(String arg0, Job arg1) throws IOException {
     // TODO Auto-generated method stub
@@ -118,6 +123,16 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
   @Override
   public void setPartitionFilter(Expression arg0) throws IOException {
 
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public InputFormat getInputFormat() throws IOException {
+    if (typeRef_ == null) {
+      LOG.error("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
+      throw new IllegalArgumentException("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
+    }
+    return LzoProtobufB64LineInputFormat.newInstance(typeRef_);
   }
 
 }

@@ -13,11 +13,11 @@ import com.twitter.elephantbird.util.TypeRef;
  * deserializes that into the templatized protobuf object.
  * Returns <position, protobuf> pairs.
  */
-public class  LzoProtobufB64LineRecordReader<M extends Message, W extends ProtobufWritable<M>> extends LzoBinaryB64LineRecordReader<M, W> {
+public class  LzoProtobufB64LineRecordReader<M extends Message> extends LzoBinaryB64LineRecordReader<M, ProtobufWritable<M>> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LineRecordReader.class);
 
-  public LzoProtobufB64LineRecordReader(TypeRef<M> typeRef, W protobufWritable) {
-    super(typeRef, protobufWritable, new ProtobufConverter<M>(typeRef));
+  public LzoProtobufB64LineRecordReader(TypeRef<M> typeRef) {
+    super(typeRef, new ProtobufWritable<M>(typeRef), ProtobufConverter.newInstance(typeRef));
     LOG.info("LzoProtobufB64LineRecordReader, type args are " + typeRef.getRawClass());
   }
 }

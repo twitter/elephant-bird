@@ -15,6 +15,8 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
+
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +29,33 @@ public class Protobufs {
                                                                          (byte)0xbd, (byte)0xff };
 
   public static final String IGNORE_KEY = "IGNORE";
+
+  private static final String CLASS_CONF_PREFIX = "elephantbird.protobuf.class.for.";
+
+  /**
+   * Returns Protobuf class. The class name could be either normal name or
+   * its canonical name (canonical name does not have a $ for inner classes).
+   */
+  public static Class<? extends Message> getProtobufClass(String protoClassName) {
+    return getProtobufClass(null, protoClassName);
+  }
+
+  private static Class<? extends Message> getProtobufClass(Configuration conf, String protoClassName) {
+    // Try both normal name and canonical name of the class.
+    Class<?> protoClass = null;
+    try {
+      if (conf == null) {
+        protoClass = Class.forName(protoClassName);
+      } else {
+        protoClass = conf.getClassByName(protoClassName);
+      }
+    } catch (ClassNotFoundException e) {
+      // the class name might be canonical name.
+      protoClass = getInnerProtobufClass(protoClassName);
+    }
+
+    return protoClass.asSubclass(Message.class);
+  }
 
   public static Class<? extends Message> getInnerProtobufClass(String canonicalClassName) {
     // is an inner class and is not visible from the outside.  We have to instantiate
@@ -144,35 +173,6 @@ public class Protobufs {
 
     return null;
   }
-  
-  /**
-   * Creates a Function to repeatedly convert byte arrays into Messages. Using such a function
-   * is more efficient than the static <code>parseFrom</code> method, since it avoids some of the
-   * reflection overhead of the static function.
-   */
-  public static <M extends Message> Function<byte[], M> getProtoConverter(final Class<M> protoClass) {
-    //XXX Remove this.
-    return new Function<byte[], M>() {
-      private Message.Builder protoBuilder = null; 
-      
-      @SuppressWarnings("unchecked")
-      @Override
-      public M apply(byte[] bytes) {
-        try {
-          if (protoBuilder == null) {
-            protoBuilder = Protobufs.getMessageBuilder(protoClass);
-          }
-          return  (M) protoBuilder.clone().mergeFrom(bytes).build();
-        } catch (InvalidProtocolBufferException e) {
-          LOG.error("Invalid Protocol Buffer exception building " + protoClass.getName(), e);
-          return null;
-        } catch(UninitializedMessageException ume) {
-	  LOG.error("Uninitialized Message Exception in building " + protoClass.getName(), ume);
-	  return null;
-        }
-      }
-    };
-  }
 
   public static Message instantiateFromClassName(String canonicalClassName) {
     Class<? extends Message> protoClass = getInnerProtobufClass(canonicalClassName);
@@ -213,5 +213,28 @@ public class Protobufs {
 
   public static Type getTypeByName(Message message, String name) {
     return message.getDescriptorForType().findFieldByName(name).getType();
+  }
+
+  /**
+   * Returns typeref for a Protobuf class
+   */
+  public static<M extends Message> TypeRef<M> getTypeRef(String protoClassName) {
+    return new TypeRef<M>(getProtobufClass(protoClassName)){};
+  }
+
+  /**
+   * Returns TypeRef for the Protobuf class that was set using setClass(jobConf);
+   */
+  public static<M extends Message> TypeRef<M> getTypeRef(Configuration jobConf, Class<?> genericClass) {
+    String className = jobConf.get(CLASS_CONF_PREFIX + genericClass.getName());
+    if (className == null) {
+      throw new RuntimeException(CLASS_CONF_PREFIX + genericClass.getName() + " is not set");
+    }
+    return new TypeRef<M>(getProtobufClass(jobConf, className)){};
+  }
+
+  public static void setClassConf(Configuration jobConf, Class<?> genericClass,
+      Class<? extends Message> protoClass) {
+    jobConf.set(CLASS_CONF_PREFIX + genericClass.getName(), protoClass.getName());
   }
 }

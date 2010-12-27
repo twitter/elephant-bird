@@ -2,28 +2,26 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.IOException;
 
-import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufBlockWriter;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
-import com.twitter.elephantbird.util.TypeRef;
-
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.io.ProtobufBlockWriter;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.util.TypeRef;
+
 /**
- * This is the base class for all blocked protocol buffer based output formats.  See
- * the ProtobufBlockWriter class for the on-disk format. It has two template
- * parameters, the protobuf and the writable for that protobuf.  This class cannot be instantiated
- * directly as an input format because Hadoop works via reflection, and Java type erasure makes it
- * impossible to instantiate a templatized class via reflection with the correct template parameter.
- * Instead, we codegen derived output format classes for any given protobuf which instantiate the
- * template parameter directly, as well as set the typeRef argument so that the template
- * parameter can be remembered.  See com.twitter.elephantbird.proto.HadoopProtoCodeGenerator.
+ * Class for all blocked protocol buffer based output formats.  See
+ * the ProtobufBlockWriter class for the on-disk format. <br><br>
+ *
+ * Do not use LzoProtobufBlockOutputFormat.class directly for setting
+ * OutputFormat class for a job. Use getOutputFormatClass() or getInstance() instead.
  */
 
-public abstract class LzoProtobufBlockOutputFormat<M extends Message, W extends ProtobufWritable<M>>
-    extends LzoOutputFormat<M, W> {
+public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFormat<M, ProtobufWritable<M>> {
 
   protected TypeRef<M> typeRef_;
 
@@ -31,10 +29,37 @@ public abstract class LzoProtobufBlockOutputFormat<M extends Message, W extends 
     typeRef_ = typeRef;
   }
 
+  public LzoProtobufBlockOutputFormat() {}
+
+  public LzoProtobufBlockOutputFormat(TypeRef<M> typeRef) {
+    this.typeRef_ = typeRef;
+  }
+
+  /**
+   * Returns {@link LzoProtobufB64LineOutputFormat} class.
+   * Sets an internal configuration in jobConf so that remote Tasks
+   * instantiate appropriate object for this generic class based on protoClass
+   */
+  @SuppressWarnings("rawtypes")
+  public static <M extends Message> Class<LzoProtobufBlockOutputFormat>
+  getOutputFormatClass(Class<M> protoClass, Configuration jobConf) {
+
+    Protobufs.setClassConf(jobConf, LzoProtobufBlockOutputFormat.class, protoClass);
+    return LzoProtobufBlockOutputFormat.class;
+  }
+
+  public static<M extends Message> LzoProtobufBlockOutputFormat<M> newInstance(TypeRef<M> typeRef) {
+    return new LzoProtobufBlockOutputFormat<M>(typeRef);
+  }
+
   @Override
-  public RecordWriter<NullWritable, W> getRecordWriter(TaskAttemptContext job)
-      throws IOException, InterruptedException {
-    return new LzoBinaryBlockRecordWriter<M, W>(
+  public RecordWriter<NullWritable, ProtobufWritable<M>> getRecordWriter(TaskAttemptContext job)
+  throws IOException, InterruptedException {
+    if (typeRef_ == null) { // i.e. if not set by a subclass
+      typeRef_ = Protobufs.getTypeRef(job.getConfiguration(), LzoProtobufBlockOutputFormat.class);
+    }
+
+    return new LzoBinaryBlockRecordWriter<M, ProtobufWritable<M>>(
         new ProtobufBlockWriter<M>(getOutputStream(job), typeRef_.getRawClass()));
   }
 }

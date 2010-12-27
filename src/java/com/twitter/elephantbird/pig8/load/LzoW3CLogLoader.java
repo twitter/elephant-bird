@@ -1,21 +1,12 @@
 package com.twitter.elephantbird.pig8.load;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 import java.util.Map;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.pig.Expression;
 import org.apache.pig.LoadMetadata;
@@ -34,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Maps;
 import com.twitter.elephantbird.mapreduce.input.LzoW3CLogInputFormat;
 import com.twitter.elephantbird.mapreduce.input.LzoW3CLogRecordReader;
-import com.twitter.elephantbird.util.W3CLogParser;
 
 
 /**
@@ -44,16 +34,17 @@ public class LzoW3CLogLoader extends LzoBaseLoadFunc implements LoadMetadata {
   protected static final Logger LOG = LoggerFactory.getLogger(LzoW3CLogLoader.class);
 
   protected static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
-  protected W3CLogParser w3cParser_ = null;
+  protected final String fileURI;
   protected enum LzoW3CLogLoaderCounters { LinesW3CDecoded, UnparseableLines};
 
+  /**
+   * Constructor.
+   * @param fileURI path to HDFS file that contains the CRC to column list mappings, one per line.
+   * @throws IOException
+   */
   public LzoW3CLogLoader(String fileURI) throws IOException {
-    LOG.info("Initialize LzoW3CLogLoader from " + fileURI);
-    Configuration conf = new Configuration();
-    FileSystem fs = FileSystem.get(URI.create(fileURI), conf);
-    InputStream fieldDefIs = fs.open(new Path(fileURI));
-    w3cParser_ = new W3CLogParser(fieldDefIs);
-    fieldDefIs.close();
+    LOG.debug("Initialize LzoW3CLogLoader from " + fileURI);
+    this.fileURI = fileURI;
   }
 
   /**
@@ -77,7 +68,6 @@ public class LzoW3CLogLoader extends LzoBaseLoadFunc implements LoadMetadata {
           incrCounter(LzoW3CLogLoaderCounters.LinesW3CDecoded, 1L);
           incrCounter(LzoW3CLogLoaderCounters.UnparseableLines, reader.getBadRecordsSkipped());
           return tupleFactory_.newTuple(values);
-
       }
     } catch (InterruptedException e) {
       int errCode = 6018;
@@ -93,25 +83,11 @@ public class LzoW3CLogLoader extends LzoBaseLoadFunc implements LoadMetadata {
   throws IOException {
     FileInputFormat.setInputPaths(job, location);
   }
+
+  @SuppressWarnings("rawtypes")
   @Override
   public InputFormat getInputFormat() {
-    return new LzoW3CLogInputFormat() {
-
-      @Override
-      public RecordReader<LongWritable, MapWritable> createRecordReader(
-          InputSplit arg0, TaskAttemptContext arg1) throws IOException,
-          InterruptedException {
-        // TODO Auto-generated method stub
-        return new LzoW3CLogRecordReader() {
-
-          @Override
-          protected String getFieldDefinitionFile() {
-            // TODO Auto-generated method stub
-            return null;
-          }
-        };
-      }
-    };
+    return LzoW3CLogInputFormat.newInstance(fileURI);
   }
 
   /**

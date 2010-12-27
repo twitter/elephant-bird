@@ -119,7 +119,7 @@ There are examples in the examples subdirectory showing how to integrate this co
 
 ### No, really, Protobuf codegen? ###
 
-Raghu Angadi recently revisited all the stuff described above and found ways to get rid of most of the extra code generation. We haven't written up the docs yet, read the code.
+We recently revisited all the stuff described above and found ways to get around the codegen issue. We haven't written up the docs yet, but look at `ProtobufMRExample.java`, `ThriftMRExample.java`, `people_phone_number_count.pig`, `people_phone_number_count_thrift.pig` under `examples` directory for usage. It is not very different from using the specific code-generated classes.
 
 ### Commit Back! ###
 

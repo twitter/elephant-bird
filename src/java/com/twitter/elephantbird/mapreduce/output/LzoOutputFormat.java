@@ -19,7 +19,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  */
 public abstract class LzoOutputFormat<M, W extends BinaryWritable<M>>
     extends FileOutputFormat<NullWritable, W> {
-  
+
   /**
    * Helper method to create lzo output file needed to create RecordWriter
    */
@@ -32,6 +32,6 @@ public abstract class LzoOutputFormat<M, W extends BinaryWritable<M>>
     Path file = getDefaultWorkFile(job, codec.getDefaultExtension());
     FileSystem fs = file.getFileSystem(conf);
     FSDataOutputStream fileOut = fs.create(file, false);
-    return new DataOutputStream(codec.createOutputStream(fileOut)); 
+    return new DataOutputStream(codec.createOutputStream(fileOut));
   }
 }
