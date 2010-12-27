@@ -21,4 +21,12 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
     super(message, new ProtobufConverter<M>(typeRef));
     LOG.debug("ProtobufWritable, typeClass is " + typeRef.getRawClass());
   }
+
+  /**
+   * Returns a ThriftWritable for a given Thrift class.
+   */
+  public static <M extends Message> ProtobufWritable<M> newInstance(Class<M> tClass) {
+    return new ProtobufWritable<M>(new TypeRef<M>(tClass){});
+  }
+
 }

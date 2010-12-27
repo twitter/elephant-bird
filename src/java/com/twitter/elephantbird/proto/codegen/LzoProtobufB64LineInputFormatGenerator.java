@@ -20,13 +20,11 @@ public class LzoProtobufB64LineInputFormatGenerator extends ProtoCodeGenerator {
 
     sb.append("import %s.%s.%s;", packageName_, protoFilename_, descriptorProto_.getName()).endl();
     sb.append("import %s;", LzoProtobufB64LineInputFormat.class.getName()).endl();
-    sb.append("import %s.mapreduce.io.Protobuf%sWritable;", packageName_, descriptorProto_.getName()).endl();
     sb.append("import %s;", TypeRef.class.getName()).endl().endl();
 
-    sb.append("public class Lzo%sProtobufB64LineInputFormat extends LzoProtobufB64LineInputFormat<%s, Protobuf%sWritable> {", descriptorProto_.getName(), descriptorProto_.getName(), descriptorProto_.getName()).endl();
+    sb.append("public class Lzo%sProtobufB64LineInputFormat extends LzoProtobufB64LineInputFormat<%s> {", descriptorProto_.getName(), descriptorProto_.getName()).endl();
     sb.append("  public Lzo%sProtobufB64LineInputFormat() {", descriptorProto_.getName()).endl();
     sb.append("    setTypeRef(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
-    sb.append("    setProtobufWritable(new Protobuf%sWritable());", descriptorProto_.getName()).endl();
     sb.append("  }").endl();
     sb.append("}").endl();
     sb.endl();

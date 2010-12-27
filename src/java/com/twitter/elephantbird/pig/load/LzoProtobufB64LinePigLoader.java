@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
@@ -26,11 +27,11 @@ import com.twitter.elephantbird.util.TypeRef;
  * See com.twitter.elephantbird.proto.HadoopProtoCodeGenerator.
  */
 
-public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadFunc {
+public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LinePigLoader.class);
 
   private TypeRef<M> typeRef_ = null;
-  private Function<byte[], M> protoConverter_ = null;
+  private ProtobufConverter<M> protoConverter_ = null;
   private final Base64 base64_ = new Base64();
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
 
@@ -45,6 +46,12 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
     LOG.info("LzoProtobufB64LineLoader zero-parameter creation");
   }
 
+  public LzoProtobufB64LinePigLoader(String protoClassName) {
+    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    setTypeRef(typeRef);
+    setLoaderSpec(getClass(), new String[]{protoClassName});
+  }
+
   /**
    * Set the type parameter so it doesn't get erased by Java.  Must be called before getNext!
    *
@@ -52,7 +59,7 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
    */
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
-    protoConverter_ = Protobufs.getProtoConverter(typeRef.getRawClass());
+    protoConverter_ = ProtobufConverter.newInstance(typeRef);
     String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
     linesRead = new Pair<String, String>(group, "Lines Read");
     protobufsRead = new Pair<String, String>(group, "Protobufs Read");
@@ -84,7 +91,7 @@ public abstract class LzoProtobufB64LinePigLoader<M extends Message> extends Lzo
     Tuple t = null;
     while ((line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
       incrCounter(linesRead, 1L);
-      M protoValue = protoConverter_.apply(base64_.decode(line.getBytes("UTF-8")));
+      M protoValue = protoConverter_.fromBytes(base64_.decode(line.getBytes("UTF-8")));
       if (protoValue != null) {
         t = new ProtobufTuple(protoValue);
         incrCounter(protobufsRead, 1L);
