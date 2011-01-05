@@ -18,7 +18,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
   private static final Logger LOG = LoggerFactory.getLogger(BinaryWritable.class);
 
   private M message;
-  private BinaryConverter<M> converter;
+  private final BinaryConverter<M> converter;
 
   protected BinaryWritable(M message, BinaryConverter<M> converter) {
     this.message = message;
@@ -37,6 +37,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     this.message = message;
   }
 
+  @Override
   public void write(DataOutput out) throws IOException {
     byte[] bytes = null;
     if (message != null) {
@@ -54,6 +55,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     }
   }
 
+  @Override
   public void readFields(DataInput in) throws IOException {
     int size = in.readInt();
     if (size > 0) {
@@ -72,8 +74,9 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
 
   @Override
   public boolean equals(Object obj) {
-    if (obj == null)
+    if (obj == null) {
       return false;
+    }
 
     BinaryWritable<?> other;
     try {
@@ -81,20 +84,19 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     } catch (ClassCastException e) {
       return false;
     }
-    if (message != null)
+    if (message != null) {
       return message.equals(other.message);
-    if (other.message == null) // contained objects in both writables are null.
+    }
+    if (other.message == null) {
       return converter.equals(other.converter);
+    }
 
     return false;
   }
-  
+
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((message == null) ? 0 : message.hashCode());
-    return result;
+    return 31 + ((message == null) ? 0 : message.hashCode());
   }
-  
+
 }
