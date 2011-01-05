@@ -88,4 +88,13 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
 
     return false;
   }
+  
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((message == null) ? 0 : message.hashCode());
+    return result;
+  }
+  
 }
