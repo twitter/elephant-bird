@@ -19,7 +19,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * <br><br>
  *
  * Do not use LzoProtobufB64LineInputFormat.class directly for setting
- * InputFormat class for a job. Use getInputFormatClass() instead.
+ * InputFormat class for a job. Use getInputFormatClass() or newInstance(typeRef) instead.
  */
 
 public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFormat<LongWritable, ProtobufWritable<M>> {
@@ -27,6 +27,11 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFo
   private TypeRef<M> typeRef_;
 
   public LzoProtobufB64LineInputFormat() {
+  }
+
+  public LzoProtobufB64LineInputFormat(TypeRef<M> typeRef) {
+    super();
+    this.typeRef_ = typeRef;
   }
 
   // should remove this.
@@ -39,11 +44,15 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFo
    * Sets an internal configuration in jobConf so that remote Tasks
    * instantiate appropriate object based on protoClass.
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   public static <M extends Message> Class<LzoProtobufB64LineInputFormat>
      getInputFormatClass(Class<M> protoClass, Configuration jobConf) {
     Protobufs.setClassConf(jobConf, LzoProtobufB64LineInputFormat.class, protoClass);
     return LzoProtobufB64LineInputFormat.class;
+  }
+
+  public static<M extends Message> LzoProtobufB64LineInputFormat<M> newInstance(TypeRef<M> typeRef) {
+    return new LzoProtobufB64LineInputFormat<M>(typeRef);
   }
 
   @Override
