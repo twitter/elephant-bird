@@ -8,7 +8,7 @@ import com.google.protobuf.Message;
 import com.twitter.data.proto.BlockStorage.SerializedBlock;
 import com.twitter.elephantbird.util.Protobufs;
 
-/** 
+/**
  * A class to write blocks of serialized objects.
  */
 public abstract class BinaryBlockWriter<M> {
@@ -16,17 +16,17 @@ public abstract class BinaryBlockWriter<M> {
 
   private final OutputStream out_;
   private final int numRecordsPerBlock_;
-  private final Class<M> protobufClass_;
-  private final BinaryConverter<M> protoConverter_;
+  protected final Class<M> innerClass_;
+  private final BinaryConverter<M> binaryConverter_;
   private int numRecordsWritten_ = 0;
   private SerializedBlock.Builder builder_;
 
-  protected BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> protoConverter, int numRecordsPerBlock) {
+  protected BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> binaryConverter, int numRecordsPerBlock) {
     out_ = out;
     numRecordsPerBlock_ = numRecordsPerBlock;
-    protobufClass_ = protoClass;
-    protoConverter_ = protoConverter;
-    
+    innerClass_ = protoClass;
+    binaryConverter_ = binaryConverter;
+
     builder_ = reinitializeBlockBuilder();
   }
 
@@ -35,9 +35,9 @@ public abstract class BinaryBlockWriter<M> {
       //a small hack to avoid extra copy, since we need a ByteString anyway.
       builder_.addProtoBlobs(((Message)message).toByteString());
     } else {
-      builder_.addProtoBlobs(ByteString.copyFrom(protoConverter_.toBytes(message)));
+      builder_.addProtoBlobs(ByteString.copyFrom(binaryConverter_.toBytes(message)));
     }
-    
+
     numRecordsWritten_++;
 
     if (builder_.getProtoBlobsCount() == numRecordsPerBlock_) {
@@ -49,7 +49,7 @@ public abstract class BinaryBlockWriter<M> {
   public SerializedBlock.Builder reinitializeBlockBuilder() {
     return SerializedBlock.newBuilder()
                           .setVersion(1)
-                          .setProtoClassName(protobufClass_.getCanonicalName());
+                          .setProtoClassName(innerClass_.getCanonicalName());
   }
 
 
