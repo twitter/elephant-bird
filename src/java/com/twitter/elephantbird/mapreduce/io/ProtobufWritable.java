@@ -13,6 +13,8 @@ import com.twitter.elephantbird.util.TypeRef;
 public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufWritable.class);
 
+  public ProtobufWritable() {}
+
   public ProtobufWritable(TypeRef<M> typeRef) {
     this(null, typeRef);
   }
