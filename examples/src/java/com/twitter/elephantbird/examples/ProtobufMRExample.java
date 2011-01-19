@@ -10,6 +10,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -81,12 +82,11 @@ public class ProtobufMRExample {
     @Override
     protected void map(LongWritable key, ProtobufWritable<Age> value, Context context) throws IOException, InterruptedException {
       Age age = value.get();
-      System.err.println("XXXXXXXXX got here!!");
       context.write(null, new Text(age.getName() + "\t" + age.getAge()));
     }
   }
 
-  public int runLzoToText(String[] args, Configuration conf) throws Exception {
+  int runLzoToText(String[] args, Configuration conf) throws Exception {
     Job job = new Job(conf);
     job.setJobName("Protobuf Example : LzoB64Line to Text");
 
@@ -99,6 +99,61 @@ public class ProtobufMRExample {
     } else {
       job.setInputFormatClass(LzoProtobufB64LineInputFormat.getInputFormatClass(Age.class, job.getConfiguration()));
     }
+    job.setOutputFormatClass(TextOutputFormat.class);
+
+    FileInputFormat.setInputPaths(job, new Path(args[0]));
+    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+    return job.waitForCompletion(true) ? 0 : 1;
+  }
+
+  public static class SortMapper extends Mapper<LongWritable, Text, Text, ProtobufWritable<Age>> {
+    ProtobufWritable<Age> protoWritable = ProtobufWritable.newInstance(Age.class);
+
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+      StringTokenizer line = new StringTokenizer(value.toString(), "\t\r\n");
+      String name;
+
+      if (line.hasMoreTokens()
+          && (name = line.nextToken()) != null
+          && line.hasMoreTokens()) {
+          protoWritable.set(Age.newBuilder()
+                              .setName(name)
+                              .setAge(Integer.parseInt(line.nextToken()))
+                              .build());
+          context.write(new Text(name), protoWritable);
+      }
+    }
+  }
+
+  public static class SortReducer extends Reducer<Text, ProtobufWritable<Age>, Text, Text> {
+    @Override
+    protected void reduce(Text key, Iterable<ProtobufWritable<Age>> values, Context context) throws IOException, InterruptedException {
+      for(ProtobufWritable<Age> value : values) {
+        /* setConverter() before get() is required since 'value' object was
+         * created by MR with default ProtobufWritable's default constructor,
+         * as result object does not know its runtime Protobuf class.
+         */
+        value.setConverter(Age.class);
+        context.write(null, new Text(value.get().getName() + "\t" + value.get().getAge()));
+      }
+    }
+  }
+
+  int runSorter(String[] args, Configuration conf) throws Exception {
+    Job job = new Job(conf);
+    job.setJobName("Protobuf Example : ProtobufWritable as Map output class");
+
+    job.setJarByClass(getClass());
+    job.setMapperClass(SortMapper.class);
+    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputValueClass(ProtobufWritable.class);
+
+    job.setReducerClass(SortReducer.class);
+    job.setNumReduceTasks(1);
+
+    job.setInputFormatClass(TextInputFormat.class);
     job.setOutputFormatClass(TextOutputFormat.class);
 
     FileInputFormat.setInputPaths(job, new Path(args[0]));
@@ -123,5 +178,7 @@ public class ProtobufMRExample {
       System.exit(runner.runLzoToText(args, conf));
     if (test.equals("lzoOut"))
       System.exit(runner.runTextToLzo(args, conf));
+    if (test.equals("sort"))
+      System.exit(runner.runSorter(args, conf));
   }
 }
