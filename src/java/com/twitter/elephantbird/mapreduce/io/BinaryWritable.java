@@ -98,5 +98,13 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
   public int hashCode() {
     return 31 + ((message == null) ? 0 : message.hashCode());
   }
+  
+  @Override
+  public String toString() {
+    if (message == null) {
+      return super.toString();
+    }
+    return message.toString();
+  }
 
 }
