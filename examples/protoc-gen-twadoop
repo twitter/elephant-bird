@@ -1,1 +1,2 @@
-/usr/bin/java -cp ../lib/*:../dist/elephant-bird-1.0.jar com.twitter.elephantbird.proto.HadoopProtoCodeGenerator config-twadoop.yml -
+for f in ../dist/elephant-bird-*.jar; do JAR=$f; done
+/usr/bin/java -cp ../lib/*:$JAR com.twitter.elephantbird.proto.HadoopProtoCodeGenerator config-twadoop.yml -
