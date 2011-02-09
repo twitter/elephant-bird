@@ -13,6 +13,9 @@ import thrift.test.HolyMoley;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
 
+import com.google.common.collect.Lists;
+import com.twitter.data.proto.tutorial.thrift.Name;
+import com.twitter.data.proto.tutorial.thrift.Person;
 import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
 import com.twitter.data.proto.tutorial.thrift.PhoneType;
 import com.twitter.elephantbird.util.TypeRef;
@@ -63,6 +66,10 @@ public class TestThriftToPig {
     ph.setNumber("415-555-5555");
     ph.setType(PhoneType.HOME);
     assertEquals("415-555-5555,HOME", toTuple(ph).toDelimitedString(","));
+
+    Person person = new Person(new Name("bob", "jenkins"), 42, "foo@bar.com", Lists.newArrayList(ph));
+    assertEquals("(bob,jenkins),42,foo@bar.com,{(415-555-5555,HOME)}", toTuple(person).toDelimitedString(","));
+
 
   }
 }
