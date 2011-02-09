@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.pig.piggybank;
 
+import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -823,28 +824,17 @@ public class ThriftToPig<M extends TBase<?>> {
       }
   }
 
-
-  private class TProtoForStruct extends ThriftProtocol {
-    // essentially a hack to get to STRUCT_DESC in a Thrift class
-    TStruct structDesc;
-    @Override
-    public void writeStructBegin(TStruct struct) throws TException {
-      structDesc = struct;
-      throw new TException("expected");
-    }
-  }
-
   private TStruct getStructDesc(Class<? extends TBase<?>> tClass) {
-    // hack to get hold of STRUCT_DESC of a thrift class :
-    // writeStructBegin() uses this descriptor.
-    TProtoForStruct proto = new TProtoForStruct();
+    // hack to get hold of STRUCT_DESC of a thrift class:
+    // Access 'private static final' field STRUCT_DESC using reflection.
+    // Bad practice, but not sure if there is a better way.
     try {
-      tClass.newInstance().write(proto);
-    } catch (TException e) {
+      Field f = tClass.getDeclaredField("STRUCT_DESC");
+      f.setAccessible(true);
+      return (TStruct) f.get(null);
     } catch (Throwable t) {
       throw new RuntimeException(t);
     }
-    return proto.structDesc;
   }
 
   public static void main(String[] args) throws Exception {

@@ -11,8 +11,13 @@ struct PhoneNumber {
   2: optional PhoneType type
 }
 
+struct Name {
+  1: string first_name,
+  2: string last_name
+}
+
 struct Person {
-  1: string name,
+  1: required Name name,
   2: i32 id,
   3: string email,
   4: list<PhoneNumber> phones
