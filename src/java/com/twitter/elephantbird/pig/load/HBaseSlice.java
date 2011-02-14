@@ -5,9 +5,9 @@
  * licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,10 +20,12 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.UnknownScannerException;
 import org.apache.hadoop.hbase.client.HTable;
@@ -66,7 +68,7 @@ public class HBaseSlice implements Slice {
   /** Table Region Location **/
   private final String regionLocation_;
   /** Input Columns **/
-  private final byte[][] inputColumns_;
+  private final List<byte[][]> inputColumns_;
   /** Whether the row should be loaded **/
   private final boolean loadRowKey_;
 
@@ -97,7 +99,7 @@ public class HBaseSlice implements Slice {
 
   /**
    * Constructor
-   * 
+   *
    * @param tableName
    *            table name
    * @param startRow
@@ -110,7 +112,7 @@ public class HBaseSlice implements Slice {
    *            region location
    */
   public HBaseSlice(byte[] tableName, byte[] startRow, byte[] endRow,
-      byte[][] inputColumns, boolean loadRowKey, final String location) {
+      List<byte[][]> inputColumns, boolean loadRowKey, final String location) {
     tableName_ = tableName;
     startRow_ = startRow;
     endRow_ = endRow;
@@ -159,7 +161,7 @@ public class HBaseSlice implements Slice {
   }
 
   /** @return input columns */
-  public byte[][] getInputColumns() {
+  public List<byte[][]> getInputColumns() {
     return this.inputColumns_;
   }
 
@@ -219,7 +221,7 @@ public class HBaseSlice implements Slice {
 
   @Override
   public void init(DataStorage store) throws IOException {
-    HBaseConfiguration conf = new HBaseConfiguration();
+    Configuration conf = HBaseConfiguration.create();
     // connect to the given table
     m_table = new HTable(conf, tableName_);
     // init the scanner
@@ -228,7 +230,7 @@ public class HBaseSlice implements Slice {
 
   /**
    * Init the table scanner
-   * 
+   *
    * @throws IOException
    */
   private void initScanner() throws IOException {
@@ -238,7 +240,7 @@ public class HBaseSlice implements Slice {
 
   /**
    * Restart scanning from survivable exceptions by creating a new scanner.
-   * 
+   *
    * @param startRow
    *            the start row
    * @throws IOException
@@ -261,7 +263,9 @@ public class HBaseSlice implements Slice {
       scan.setFilter(scanFilter);
     }
 
-    scan.addColumns(inputColumns_);
+    for (byte[][] col : inputColumns_) {
+      scan.addColumn(col[0], col[1]);
+    }
     this.m_scanner = this.m_table.getScanner(scan);
   }
 
@@ -291,7 +295,7 @@ public class HBaseSlice implements Slice {
 
   /**
    * Convert a row result to a tuple
-   * 
+   *
    * @param result
    *            row result
    * @param tuple
@@ -299,14 +303,14 @@ public class HBaseSlice implements Slice {
    */
   private void convertResultToTuple(Result result, Tuple tuple) {
     if (mProtoTuple == null)
-      mProtoTuple = new ArrayList<Object>(inputColumns_.length + (loadRowKey_ ? 1 : 0));
+      mProtoTuple = new ArrayList<Object>(inputColumns_.size() + (loadRowKey_ ? 1 : 0));
 
     if (loadRowKey_) {
       mProtoTuple.add(new DataByteArray(result.getRow()));
     }
 
-    for (byte[] column : inputColumns_) {
-      byte[] value = result.getValue(column);
+    for (byte[][] column : inputColumns_) {
+      byte[] value = result.getValue(column[0], column[1]);
       if (value == null) {
         mProtoTuple.add(null);
       } else {

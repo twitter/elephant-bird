@@ -5,9 +5,9 @@
  * licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,6 +28,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HTable;
@@ -61,19 +62,18 @@ LoadFunc {
 
   private static final Log LOG = LogFactory.getLog(HBaseLoader.class);
 
-
   private byte[][] cols_;
   private HTable table_;
-  private final HBaseConfiguration conf_;
+  private final Configuration conf_;
   private final boolean loadRowKey_;
   private final CommandLine configuredOptions_;
   private final static Options validOptions_ = new Options();
   private final static CommandLineParser parser_ = new GnuParser();
 
-  private static void populateValidOptions() { 
+  private static void populateValidOptions() {
     validOptions_.addOption("loadKey", false, "Load Key");
     validOptions_.addOption("gt", true, "Records must be greater than this value (binary, double-slash-escaped)");
-    validOptions_.addOption("lt", true, "Records must be less than this value (binary, double-slash-escaped)");   
+    validOptions_.addOption("lt", true, "Records must be less than this value (binary, double-slash-escaped)");
     validOptions_.addOption("gte", true, "Records must be greater than or equal to this value");
     validOptions_.addOption("lte", true, "Records must be less than or equal to this value");
     validOptions_.addOption("caching", true, "Number of rows scanners should cache");
@@ -83,10 +83,10 @@ LoadFunc {
   /**
    * Constructor. Construct a HBase Table loader to load the cells of the
    * provided columns.
-   * 
+   *
    * @param columnList
    *            columnlist that is a presented string delimited by space.
-   * @throws ParseException 
+   * @throws ParseException
    */
   public HBaseLoader(String columnList) throws ParseException {
     this(columnList, "");
@@ -94,17 +94,17 @@ LoadFunc {
   }
 
   /**
-   * 
+   *
    * @param columnList
    * @param optString Loader options. Known options:<ul>
    * <li>-loadKey=(true|false)  Load the row key as the first column
    * <li>-gt=minKeyVal
-   * <li>-lt=maxKeyVal 
+   * <li>-lt=maxKeyVal
    * <li>-gte=minKeyVal
    * <li>-lte=maxKeyVal
    * <li>-caching=numRows  number of rows to cache (faster scans, more memory).
    * </ul>
-   * @throws ParseException 
+   * @throws ParseException
    */
   public HBaseLoader(String columnList, String optString) throws ParseException {
     populateValidOptions();
@@ -117,13 +117,13 @@ LoadFunc {
       formatter.printHelp( "", validOptions_ );
       throw e;
     }
-    loadRowKey_ = configuredOptions_.hasOption("loadKey");  
+    loadRowKey_ = configuredOptions_.hasOption("loadKey");
     cols_ = new byte[colNames.length][];
     for (int i = 0; i < cols_.length; i++) {
       cols_[i] = Bytes.toBytes(colNames[i]);
     }
 
-    conf_ = new HBaseConfiguration();
+    conf_ = HBaseConfiguration.create();
   }
 
   @Override
@@ -133,7 +133,7 @@ LoadFunc {
     if (configuredOptions_.hasOption("caching")) {
       table_.setScannerCaching(Integer.valueOf(configuredOptions_.getOptionValue("caching")));
     }
-    
+
     byte[][] startKeys = table_.getStartKeys();
     if (startKeys == null || startKeys.length == 0) {
       throw new IOException("Expecting at least one region");
@@ -145,9 +145,9 @@ LoadFunc {
     // one region one slice
     List<HBaseSlice> slices = Lists.newArrayList();
     for (int i = 0; i < startKeys.length; i++) {
-      
+
       byte[] endKey = ((i + 1) < startKeys.length) ? startKeys[i + 1] : HConstants.LAST_ROW;
-      
+
       // skip if the region doesn't satisfy configured options
       if ((skipRegion(CompareOp.LESS, startKeys[i], configuredOptions_.getOptionValue("lt"))) ||
           (skipRegion(CompareOp.GREATER, endKey, configuredOptions_.getOptionValue("gt"))) ||
@@ -206,7 +206,7 @@ LoadFunc {
     // meant. We'll print a warning in that case.
     int index;
     if(-1 != (index = tablename.indexOf("://"))) {
-      if (tablename.startsWith("hdfs:") 
+      if (tablename.startsWith("hdfs:")
           || tablename.startsWith("file:")) {
         index = tablename.lastIndexOf("/");
         if (-1 == index) {
@@ -264,12 +264,12 @@ LoadFunc {
 
   @Override
   public String bytesToCharArray(byte[] b) throws IOException {
-    return Bytes.toString(b);    
+    return Bytes.toString(b);
   }
 
   @Override
   public Double bytesToDouble(byte[] b) throws IOException {
-    if (Bytes.SIZEOF_DOUBLE > b.length){ 
+    if (Bytes.SIZEOF_DOUBLE > b.length){
       return Bytes.toDouble(Bytes.padHead(b, Bytes.SIZEOF_DOUBLE - b.length));
     } else {
       return Bytes.toDouble(Bytes.head(b, Bytes.SIZEOF_DOUBLE));
@@ -278,7 +278,7 @@ LoadFunc {
 
   @Override
   public Float bytesToFloat(byte[] b) throws IOException {
-    if (Bytes.SIZEOF_FLOAT > b.length){ 
+    if (Bytes.SIZEOF_FLOAT > b.length){
       return Bytes.toFloat(Bytes.padHead(b, Bytes.SIZEOF_FLOAT - b.length));
     } else {
       return Bytes.toFloat(Bytes.head(b, Bytes.SIZEOF_FLOAT));
@@ -287,7 +287,7 @@ LoadFunc {
 
   @Override
   public Integer bytesToInteger(byte[] b) throws IOException {
-    if (Bytes.SIZEOF_INT > b.length){ 
+    if (Bytes.SIZEOF_INT > b.length){
       return Bytes.toInt(Bytes.padHead(b, Bytes.SIZEOF_INT - b.length));
     } else {
       return Bytes.toInt(Bytes.head(b, Bytes.SIZEOF_INT));
@@ -296,7 +296,7 @@ LoadFunc {
 
   @Override
   public Long bytesToLong(byte[] b) throws IOException {
-    if (Bytes.SIZEOF_LONG > b.length){ 
+    if (Bytes.SIZEOF_LONG > b.length){
       return Bytes.toLong(Bytes.padHead(b, Bytes.SIZEOF_LONG - b.length));
     } else {
       return Bytes.toLong(Bytes.head(b, Bytes.SIZEOF_LONG));

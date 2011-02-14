@@ -24,7 +24,7 @@ more about that.
 
 1. Protocol Buffers 2.3
 2. Pig 0.6 (not compatible with 0.7+)
-3. HBase 0.20.6
+3. HBase 0.90
 4. Hive 0.7 (with HIVE-1616)
 5. Thrift 0.2
 
