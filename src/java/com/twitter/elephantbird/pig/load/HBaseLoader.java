@@ -62,7 +62,7 @@ LoadFunc {
 
   private static final Log LOG = LogFactory.getLog(HBaseLoader.class);
 
-  private byte[][] cols_;
+  private List<byte[][]> cols_;
   private HTable table_;
   private final Configuration conf_;
   private final boolean loadRowKey_;
@@ -118,9 +118,9 @@ LoadFunc {
       throw e;
     }
     loadRowKey_ = configuredOptions_.hasOption("loadKey");
-    cols_ = new byte[colNames.length][];
-    for (int i = 0; i < cols_.length; i++) {
-      cols_[i] = Bytes.toBytes(colNames[i]);
+    cols_ = Lists.newArrayListWithExpectedSize(colNames.length);
+    for (int i = 0; i < colNames.length; i++) {
+      cols_.add(Bytes.toByteArrays(colNames[i].split(":")));
     }
 
     conf_ = HBaseConfiguration.create();
@@ -138,7 +138,7 @@ LoadFunc {
     if (startKeys == null || startKeys.length == 0) {
       throw new IOException("Expecting at least one region");
     }
-    if (cols_ == null || cols_.length == 0) {
+    if (cols_ == null || cols_.size() == 0) {
       throw new IOException("Expecting at least one column");
     }
 
