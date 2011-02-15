@@ -19,7 +19,7 @@ import com.twitter.elephantbird.pig.piggybank.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFunc {
+public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoThriftB64LinePigLoader.class);
 
   private final TypeRef<M> typeRef_;

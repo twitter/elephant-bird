@@ -9,16 +9,11 @@ package com.twitter.elephantbird.examples.thrift;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
-public enum PhoneType implements TEnum{
-    MOBILE(0),
-    HOME(1),
-    WORK(2);
 
-  private static final Map<Integer, PhoneType> BY_VALUE = new HashMap<Integer,PhoneType>() {{
-    for(PhoneType val : PhoneType.values()) {
-      put(val.getValue(), val);
-    }
-  }};
+public enum PhoneType implements TEnum {
+  MOBILE(0),
+  HOME(1),
+  WORK(2);
 
   private final int value;
 
@@ -38,6 +33,15 @@ public enum PhoneType implements TEnum{
    * @return null if the value is not found.
    */
   public static PhoneType findByValue(int value) { 
-    return BY_VALUE.get(value);
+    switch (value) {
+      case 0:
+        return MOBILE;
+      case 1:
+        return HOME;
+      case 2:
+        return WORK;
+      default:
+        return null;
+    }
   }
 }

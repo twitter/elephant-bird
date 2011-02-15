@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  * A reader for LZO-encoded protobuf blocks, generally written by
  * a ProtobufBlockWriter or similar.  Returns <position, protobuf> pairs.
  */
-public class LzoThriftBlockRecordReader<M extends TBase<?>> extends LzoBinaryBlockRecordReader<M, ThriftWritable<M>> {
+public class LzoThriftBlockRecordReader<M extends TBase<?, ?>> extends LzoBinaryBlockRecordReader<M, ThriftWritable<M>> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoThriftBlockRecordReader.class);
 
   public LzoThriftBlockRecordReader(TypeRef<M> typeRef) {

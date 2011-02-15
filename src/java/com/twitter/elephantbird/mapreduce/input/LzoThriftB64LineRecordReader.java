@@ -8,7 +8,7 @@ import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class  LzoThriftB64LineRecordReader<M extends TBase<?>> extends LzoBinaryB64LineRecordReader<M, ThriftWritable<M>> {
+public class  LzoThriftB64LineRecordReader<M extends TBase<?, ?>> extends LzoBinaryB64LineRecordReader<M, ThriftWritable<M>> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoThriftB64LineRecordReader.class);
 
   public LzoThriftB64LineRecordReader(TypeRef<M> typeRef) {

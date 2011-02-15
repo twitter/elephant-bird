@@ -26,19 +26,19 @@ import org.apache.thrift.meta_data.*;
 import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("Age");
+public class Name implements TBase<Name, Name._Fields>, java.io.Serializable, Cloneable {
+  private static final TStruct STRUCT_DESC = new TStruct("Name");
 
-  private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-  private static final TField AGE_FIELD_DESC = new TField("age", TType.I32, (short)2);
+  private static final TField FIRST_NAME_FIELD_DESC = new TField("first_name", TType.STRING, (short)1);
+  private static final TField LAST_NAME_FIELD_DESC = new TField("last_name", TType.STRING, (short)2);
 
-  public String name;
-  public int age;
+  public String first_name;
+  public String last_name;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
-    NAME((short)1, "name"),
-    AGE((short)2, "age");
+    FIRST_NAME((short)1, "first_name"),
+    LAST_NAME((short)2, "last_name");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -53,10 +53,10 @@ public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Clone
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // NAME
-          return NAME;
-        case 2: // AGE
-          return AGE;
+        case 1: // FIRST_NAME
+          return FIRST_NAME;
+        case 2: // LAST_NAME
+          return LAST_NAME;
         default:
           return null;
       }
@@ -97,118 +97,115 @@ public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Clone
   }
 
   // isset id assignments
-  private static final int __AGE_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
     Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.FIRST_NAME, new FieldMetaData("first_name", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.AGE, new FieldMetaData("age", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I32)));
+    tmpMap.put(_Fields.LAST_NAME, new FieldMetaData("last_name", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(Age.class, metaDataMap);
+    FieldMetaData.addStructMetaDataMap(Name.class, metaDataMap);
   }
 
-  public Age() {
+  public Name() {
   }
 
-  public Age(
-    String name,
-    int age)
+  public Name(
+    String first_name,
+    String last_name)
   {
     this();
-    this.name = name;
-    this.age = age;
-    setAgeIsSet(true);
+    this.first_name = first_name;
+    this.last_name = last_name;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public Age(Age other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetName()) {
-      this.name = other.name;
+  public Name(Name other) {
+    if (other.isSetFirst_name()) {
+      this.first_name = other.first_name;
     }
-    this.age = other.age;
+    if (other.isSetLast_name()) {
+      this.last_name = other.last_name;
+    }
   }
 
-  public Age deepCopy() {
-    return new Age(this);
+  public Name deepCopy() {
+    return new Name(this);
   }
 
   @Override
   public void clear() {
-    this.name = null;
-    setAgeIsSet(false);
-    this.age = 0;
+    this.first_name = null;
+    this.last_name = null;
   }
 
-  public String getName() {
-    return this.name;
+  public String getFirst_name() {
+    return this.first_name;
   }
 
-  public Age setName(String name) {
-    this.name = name;
+  public Name setFirst_name(String first_name) {
+    this.first_name = first_name;
     return this;
   }
 
-  public void unsetName() {
-    this.name = null;
+  public void unsetFirst_name() {
+    this.first_name = null;
   }
 
-  /** Returns true if field name is set (has been asigned a value) and false otherwise */
-  public boolean isSetName() {
-    return this.name != null;
+  /** Returns true if field first_name is set (has been asigned a value) and false otherwise */
+  public boolean isSetFirst_name() {
+    return this.first_name != null;
   }
 
-  public void setNameIsSet(boolean value) {
+  public void setFirst_nameIsSet(boolean value) {
     if (!value) {
-      this.name = null;
+      this.first_name = null;
     }
   }
 
-  public int getAge() {
-    return this.age;
+  public String getLast_name() {
+    return this.last_name;
   }
 
-  public Age setAge(int age) {
-    this.age = age;
-    setAgeIsSet(true);
+  public Name setLast_name(String last_name) {
+    this.last_name = last_name;
     return this;
   }
 
-  public void unsetAge() {
-    __isset_bit_vector.clear(__AGE_ISSET_ID);
+  public void unsetLast_name() {
+    this.last_name = null;
   }
 
-  /** Returns true if field age is set (has been asigned a value) and false otherwise */
-  public boolean isSetAge() {
-    return __isset_bit_vector.get(__AGE_ISSET_ID);
+  /** Returns true if field last_name is set (has been asigned a value) and false otherwise */
+  public boolean isSetLast_name() {
+    return this.last_name != null;
   }
 
-  public void setAgeIsSet(boolean value) {
-    __isset_bit_vector.set(__AGE_ISSET_ID, value);
+  public void setLast_nameIsSet(boolean value) {
+    if (!value) {
+      this.last_name = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case NAME:
+    case FIRST_NAME:
       if (value == null) {
-        unsetName();
+        unsetFirst_name();
       } else {
-        setName((String)value);
+        setFirst_name((String)value);
       }
       break;
 
-    case AGE:
+    case LAST_NAME:
       if (value == null) {
-        unsetAge();
+        unsetLast_name();
       } else {
-        setAge((Integer)value);
+        setLast_name((String)value);
       }
       break;
 
@@ -217,11 +214,11 @@ public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Clone
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case NAME:
-      return getName();
+    case FIRST_NAME:
+      return getFirst_name();
 
-    case AGE:
-      return new Integer(getAge());
+    case LAST_NAME:
+      return getLast_name();
 
     }
     throw new IllegalStateException();
@@ -234,10 +231,10 @@ public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Clone
     }
 
     switch (field) {
-    case NAME:
-      return isSetName();
-    case AGE:
-      return isSetAge();
+    case FIRST_NAME:
+      return isSetFirst_name();
+    case LAST_NAME:
+      return isSetLast_name();
     }
     throw new IllegalStateException();
   }
@@ -246,30 +243,30 @@ public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Clone
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof Age)
-      return this.equals((Age)that);
+    if (that instanceof Name)
+      return this.equals((Name)that);
     return false;
   }
 
-  public boolean equals(Age that) {
+  public boolean equals(Name that) {
     if (that == null)
       return false;
 
-    boolean this_present_name = true && this.isSetName();
-    boolean that_present_name = true && that.isSetName();
-    if (this_present_name || that_present_name) {
-      if (!(this_present_name && that_present_name))
+    boolean this_present_first_name = true && this.isSetFirst_name();
+    boolean that_present_first_name = true && that.isSetFirst_name();
+    if (this_present_first_name || that_present_first_name) {
+      if (!(this_present_first_name && that_present_first_name))
         return false;
-      if (!this.name.equals(that.name))
+      if (!this.first_name.equals(that.first_name))
         return false;
     }
 
-    boolean this_present_age = true;
-    boolean that_present_age = true;
-    if (this_present_age || that_present_age) {
-      if (!(this_present_age && that_present_age))
+    boolean this_present_last_name = true && this.isSetLast_name();
+    boolean that_present_last_name = true && that.isSetLast_name();
+    if (this_present_last_name || that_present_last_name) {
+      if (!(this_present_last_name && that_present_last_name))
         return false;
-      if (this.age != that.age)
+      if (!this.last_name.equals(that.last_name))
         return false;
     }
 
@@ -281,30 +278,30 @@ public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Clone
     return 0;
   }
 
-  public int compareTo(Age other) {
+  public int compareTo(Name other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    Age typedOther = (Age)other;
+    Name typedOther = (Name)other;
 
-    lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+    lastComparison = Boolean.valueOf(isSetFirst_name()).compareTo(typedOther.isSetFirst_name());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetName()) {
-      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+    if (isSetFirst_name()) {
+      lastComparison = TBaseHelper.compareTo(this.first_name, typedOther.first_name);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetAge()).compareTo(typedOther.isSetAge());
+    lastComparison = Boolean.valueOf(isSetLast_name()).compareTo(typedOther.isSetLast_name());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetAge()) {
-      lastComparison = TBaseHelper.compareTo(this.age, typedOther.age);
+    if (isSetLast_name()) {
+      lastComparison = TBaseHelper.compareTo(this.last_name, typedOther.last_name);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -326,17 +323,16 @@ public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Clone
         break;
       }
       switch (field.id) {
-        case 1: // NAME
+        case 1: // FIRST_NAME
           if (field.type == TType.STRING) {
-            this.name = iprot.readString();
+            this.first_name = iprot.readString();
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 2: // AGE
-          if (field.type == TType.I32) {
-            this.age = iprot.readI32();
-            setAgeIsSet(true);
+        case 2: // LAST_NAME
+          if (field.type == TType.STRING) {
+            this.last_name = iprot.readString();
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -356,33 +352,39 @@ public class Age implements TBase<Age, Age._Fields>, java.io.Serializable, Clone
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
-    if (this.name != null) {
-      oprot.writeFieldBegin(NAME_FIELD_DESC);
-      oprot.writeString(this.name);
+    if (this.first_name != null) {
+      oprot.writeFieldBegin(FIRST_NAME_FIELD_DESC);
+      oprot.writeString(this.first_name);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(AGE_FIELD_DESC);
-    oprot.writeI32(this.age);
-    oprot.writeFieldEnd();
+    if (this.last_name != null) {
+      oprot.writeFieldBegin(LAST_NAME_FIELD_DESC);
+      oprot.writeString(this.last_name);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("Age(");
+    StringBuilder sb = new StringBuilder("Name(");
     boolean first = true;
 
-    sb.append("name:");
-    if (this.name == null) {
+    sb.append("first_name:");
+    if (this.first_name == null) {
       sb.append("null");
     } else {
-      sb.append(this.name);
+      sb.append(this.first_name);
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("age:");
-    sb.append(this.age);
+    sb.append("last_name:");
+    if (this.last_name == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.last_name);
+    }
     first = false;
     sb.append(")");
     return sb.toString();

@@ -10,7 +10,7 @@ public class ThriftUtils {
   private static final String CLASS_CONF_PREFIX = "elephantbird.thirft.class.for.";
 
   public static void setClassConf(Configuration jobConf, Class<?> genericClass,
-                                  Class<? extends TBase<?>> thriftClass) {
+                                  Class<? extends TBase<?, ?>> thriftClass) {
     jobConf.set(CLASS_CONF_PREFIX + genericClass.getName(), thriftClass.getName());
   }
 
@@ -27,7 +27,7 @@ public class ThriftUtils {
   /**
    * Returns TypeRef for the Thrift class that was set using setClass(jobConf);
    */
-  public static<M extends TBase<?>> TypeRef<M> getTypeRef(Configuration jobConf, Class<?> genericClass) {
+  public static<M extends TBase<?, ?>> TypeRef<M> getTypeRef(Configuration jobConf, Class<?> genericClass) {
     String className = jobConf.get(CLASS_CONF_PREFIX + genericClass.getName());
     if (className == null) {
       throw new RuntimeException(CLASS_CONF_PREFIX + genericClass.getName() + " is not set");
@@ -48,7 +48,7 @@ public class ThriftUtils {
   /**
    * returns TypeRef for a thrift class.
    */
-  public static<M extends TBase<?>> TypeRef<M> getTypeRef(String thriftClassName) {
+  public static<M extends TBase<?, ?>> TypeRef<M> getTypeRef(String thriftClassName) {
     try {
       Class<?> tClass = Class.forName(thriftClassName);
       verifyAncestry(tClass);

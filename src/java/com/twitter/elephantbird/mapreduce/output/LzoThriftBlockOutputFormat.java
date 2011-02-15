@@ -19,13 +19,13 @@ import org.apache.thrift.TBase;
  * Do not use LzoThriftB64LineOutputFormat.class directly for setting
  * OutputFormat class for a job. Use getOutputFormatClass() instead.
  */
-public class LzoThriftBlockOutputFormat<M extends TBase<?>>
+public class LzoThriftBlockOutputFormat<M extends TBase<?, ?>>
     extends LzoOutputFormat<M, ThriftWritable<M>> {
 
   public LzoThriftBlockOutputFormat() {}
 
   @SuppressWarnings("unchecked")
-  public static <M extends TBase<?>> Class<LzoThriftBlockOutputFormat>
+  public static <M extends TBase<?, ?>> Class<LzoThriftBlockOutputFormat>
      getOutputFormatClass(Class<M> thriftClass, Configuration jobConf) {
 
     ThriftUtils.setClassConf(jobConf, LzoThriftBlockOutputFormat.class, thriftClass);

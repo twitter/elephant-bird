@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.pig.piggybank;
 
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -51,7 +52,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * <li> converts a Thrift struct to a Pig tuple
  * <li> utilities to provide schema for Pig loaders and Pig scripts
  */
-public class ThriftToPig<M extends TBase<?>> {
+public class ThriftToPig<M extends TBase<?, ?>> {
   private static final Logger LOG = LoggerFactory.getLogger(ThriftToPig.class);
 
   /* TODO :
@@ -79,7 +80,7 @@ public class ThriftToPig<M extends TBase<?>> {
   private static BagFactory bagFactory_ = BagFactory.getInstance();
   private static TupleFactory tupleFactory_  = TupleFactory.getInstance();
 
-  private Class<? extends TBase<?>> tClass_;
+  private Class<? extends TBase<?, ?>> tClass_;
   private ThriftProtocol tProtocol_ = new ThriftProtocol();
   private Deque<PigContainer> containerStack_ = new ArrayDeque<PigContainer>();
   private PigContainer curContainer_;
@@ -201,11 +202,11 @@ public class ThriftToPig<M extends TBase<?>> {
     return c;
   }
 
-  public static <M extends TBase<?>> ThriftToPig<M> newInstance(Class<M> tClass) {
+  public static <M extends TBase<?, ?>> ThriftToPig<M> newInstance(Class<M> tClass) {
     return new ThriftToPig<M>(tClass);
   }
 
-  public static <M extends TBase<?>> ThriftToPig<M> newInstance(TypeRef<M> typeRef) {
+  public static <M extends TBase<?, ?>> ThriftToPig<M> newInstance(TypeRef<M> typeRef) {
     return new ThriftToPig<M>(typeRef.getRawClass());
   }
 
@@ -277,7 +278,7 @@ public class ThriftToPig<M extends TBase<?>> {
   private static class StructDescriptor {
     Map<Short, FieldDescriptor> fieldMap;
 
-    public StructDescriptor(Class<? extends TBase<?>> tClass) {
+    public StructDescriptor(Class<? extends TBase<?, ?>> tClass) {
       fieldMap = Maps.newHashMap();
       int idx = 0;
       for (Entry<? extends TFieldIdEnum, FieldMetaData> e : FieldMetaData.getStructMetaDataMap(tClass).entrySet()) {
@@ -295,7 +296,7 @@ public class ThriftToPig<M extends TBase<?>> {
 
   private Map<TStruct, StructDescriptor> structMap;
 
-  private void updateStructMap(Class<? extends TBase<?>> tClass) {
+  private void updateStructMap(Class<? extends TBase<?, ?>> tClass) {
     final TStruct tStruct = getStructDesc(tClass);
 
     if (structMap.get(tStruct) != null) {
@@ -348,8 +349,15 @@ public class ThriftToPig<M extends TBase<?>> {
     }
 
     @Override
-    public void writeBinary(byte[] bin) throws TException {
-      curContainer_.add(new DataByteArray(bin));
+    public void writeBinary(ByteBuffer bin) throws TException {
+      byte[] buf = new byte[bin.remaining()];
+      bin.mark();
+      bin.get(buf);
+      bin.reset();
+      curContainer_.add(new DataByteArray(buf));
+      /* We could use DataByteArray(byte[], start, end) and avoid a
+       * copy here.  But the constructor will make a (quite inefficient) copy.
+       */
     }
 
     @Override
@@ -456,7 +464,7 @@ public class ThriftToPig<M extends TBase<?>> {
     }
 
     @Override
-    public byte[] readBinary() throws TException {
+    public ByteBuffer readBinary() throws TException {
       throw new TException("method not implemented.");
     }
 
@@ -617,15 +625,15 @@ public class ThriftToPig<M extends TBase<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    Class<? extends TBase<?>> getStructClass() {
-      return (Class <? extends TBase<?>>)((StructMetaData)field).structClass;
+    Class<? extends TBase<?, ?>> getStructClass() {
+      return (Class <? extends TBase<?, ?>>)((StructMetaData)field).structClass;
     }
   }
 
   /**
    * Returns Pig schema for the Thrift struct.
    */
-  public static Schema toSchema(Class<? extends TBase<?>> tClass) {
+  public static Schema toSchema(Class<? extends TBase<?, ?>> tClass) {
     Schema schema = new Schema();
 
     try {
@@ -711,7 +719,7 @@ public class ThriftToPig<M extends TBase<?>> {
   /**
    * Turn a Thrift Struct into a loading schema for a pig script.
    */
-  public static String toPigScript(Class<? extends TBase<?>> thriftClass,
+  public static String toPigScript(Class<? extends TBase<?, ?>> thriftClass,
                                    Class<? extends LoadFunc> pigLoader) {
     StringBuilder sb = new StringBuilder();
     /* we are commenting out explicit schema specification. The schema is
@@ -822,7 +830,7 @@ public class ThriftToPig<M extends TBase<?>> {
       }
   }
 
-  private TStruct getStructDesc(Class<? extends TBase<?>> tClass) {
+  private TStruct getStructDesc(Class<? extends TBase<?, ?>> tClass) {
     // hack to get hold of STRUCT_DESC of a thrift class:
     // Access 'private static final' field STRUCT_DESC using reflection.
     // Bad practice, but not sure if there is a better way.
@@ -837,7 +845,7 @@ public class ThriftToPig<M extends TBase<?>> {
 
   public static void main(String[] args) throws Exception {
     if (args.length > 0) {
-      Class<? extends TBase<?>> tClass = ThriftUtils.getTypeRef(args[0]).getRawClass();
+      Class<? extends TBase<?, ?>> tClass = ThriftUtils.getTypeRef(args[0]).getRawClass();
       System.out.println(args[0] + " : " + toSchema(tClass).toString());
       System.out.println(toPigScript(tClass, LzoThriftB64LinePigLoader.class));
     }
