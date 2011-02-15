@@ -15,23 +15,26 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class Person implements TBase<Person._Fields>, java.io.Serializable, Cloneable, Comparable<Person> {
+public class Person implements TBase<Person, Person._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("Person");
 
-  private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+  private static final TField NAME_FIELD_DESC = new TField("name", TType.STRUCT, (short)1);
   private static final TField ID_FIELD_DESC = new TField("id", TType.I32, (short)2);
   private static final TField EMAIL_FIELD_DESC = new TField("email", TType.STRING, (short)3);
   private static final TField PHONES_FIELD_DESC = new TField("phones", TType.LIST, (short)4);
 
-  public String name;
+  public Name name;
   public int id;
   public String email;
   public List<PhoneNumber> phones;
@@ -43,12 +46,10 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
     EMAIL((short)3, "email"),
     PHONES((short)4, "phones");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -57,7 +58,18 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // NAME
+          return NAME;
+        case 2: // ID
+          return ID;
+        case 3: // EMAIL
+          return EMAIL;
+        case 4: // PHONES
+          return PHONES;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -98,19 +110,19 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
   private static final int __ID_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.ID, new FieldMetaData("id", TFieldRequirementType.DEFAULT, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.REQUIRED, 
+        new StructMetaData(TType.STRUCT, Name.class)));
+    tmpMap.put(_Fields.ID, new FieldMetaData("id", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.I32)));
-    put(_Fields.EMAIL, new FieldMetaData("email", TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.EMAIL, new FieldMetaData("email", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.PHONES, new FieldMetaData("phones", TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.PHONES, new FieldMetaData("phones", TFieldRequirementType.DEFAULT, 
         new ListMetaData(TType.LIST, 
             new StructMetaData(TType.STRUCT, PhoneNumber.class))));
-  }});
-
-  static {
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(Person.class, metaDataMap);
   }
 
@@ -118,7 +130,7 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
   }
 
   public Person(
-    String name,
+    Name name,
     int id,
     String email,
     List<PhoneNumber> phones)
@@ -138,7 +150,7 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetName()) {
-      this.name = other.name;
+      this.name = new Name(other.name);
     }
     this.id = other.id;
     if (other.isSetEmail()) {
@@ -157,16 +169,20 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
     return new Person(this);
   }
 
-  @Deprecated
-  public Person clone() {
-    return new Person(this);
+  @Override
+  public void clear() {
+    this.name = null;
+    setIdIsSet(false);
+    this.id = 0;
+    this.email = null;
+    this.phones = null;
   }
 
-  public String getName() {
+  public Name getName() {
     return this.name;
   }
 
-  public Person setName(String name) {
+  public Person setName(Name name) {
     this.name = name;
     return this;
   }
@@ -278,7 +294,7 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
       if (value == null) {
         unsetName();
       } else {
-        setName((String)value);
+        setName((Name)value);
       }
       break;
 
@@ -309,10 +325,6 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case NAME:
@@ -331,12 +343,12 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case NAME:
       return isSetName();
@@ -348,10 +360,6 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
       return isSetPhones();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -419,39 +427,51 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
     int lastComparison = 0;
     Person typedOther = (Person)other;
 
-    lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+    lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+    if (isSetName()) {
+      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetId()).compareTo(isSetId());
+    if (isSetId()) {
+      lastComparison = TBaseHelper.compareTo(this.id, typedOther.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetEmail()).compareTo(typedOther.isSetEmail());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(id, typedOther.id);
+    if (isSetEmail()) {
+      lastComparison = TBaseHelper.compareTo(this.email, typedOther.email);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetPhones()).compareTo(typedOther.isSetPhones());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetEmail()).compareTo(isSetEmail());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(email, typedOther.email);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetPhones()).compareTo(isSetPhones());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(phones, typedOther.phones);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetPhones()) {
+      lastComparison = TBaseHelper.compareTo(this.phones, typedOther.phones);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {
@@ -463,54 +483,52 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case NAME:
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case ID:
-            if (field.type == TType.I32) {
-              this.id = iprot.readI32();
-              setIdIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case EMAIL:
-            if (field.type == TType.STRING) {
-              this.email = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case PHONES:
-            if (field.type == TType.LIST) {
+      switch (field.id) {
+        case 1: // NAME
+          if (field.type == TType.STRUCT) {
+            this.name = new Name();
+            this.name.read(iprot);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // ID
+          if (field.type == TType.I32) {
+            this.id = iprot.readI32();
+            setIdIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // EMAIL
+          if (field.type == TType.STRING) {
+            this.email = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // PHONES
+          if (field.type == TType.LIST) {
+            {
+              TList _list0 = iprot.readListBegin();
+              this.phones = new ArrayList<PhoneNumber>(_list0.size);
+              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
               {
-                TList _list0 = iprot.readListBegin();
-                this.phones = new ArrayList<PhoneNumber>(_list0.size);
-                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-                {
-                  PhoneNumber _elem2;
-                  _elem2 = new PhoneNumber();
-                  _elem2.read(iprot);
-                  this.phones.add(_elem2);
-                }
-                iprot.readListEnd();
+                PhoneNumber _elem2;
+                _elem2 = new PhoneNumber();
+                _elem2.read(iprot);
+                this.phones.add(_elem2);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-        }
-        iprot.readFieldEnd();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 
@@ -524,7 +542,7 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
     oprot.writeStructBegin(STRUCT_DESC);
     if (this.name != null) {
       oprot.writeFieldBegin(NAME_FIELD_DESC);
-      oprot.writeString(this.name);
+      this.name.write(oprot);
       oprot.writeFieldEnd();
     }
     oprot.writeFieldBegin(ID_FIELD_DESC);
@@ -589,6 +607,9 @@ public class Person implements TBase<Person._Fields>, java.io.Serializable, Clon
 
   public void validate() throws TException {
     // check for required fields
+    if (name == null) {
+      throw new TProtocolException("Required field 'name' was not present! Struct: " + toString());
+    }
   }
 
 }

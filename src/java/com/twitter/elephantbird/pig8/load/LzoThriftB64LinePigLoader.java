@@ -20,7 +20,7 @@ import com.twitter.elephantbird.pig.piggybank.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFunc implements LoadMetadata {
+public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc implements LoadMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(LzoThriftB64LinePigLoader.class);
 
   private final TypeRef<M> typeRef_;
@@ -70,10 +70,15 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?>> extends LzoBaseLoadFu
     return new ResourceSchema(ThriftToPig.toSchema(typeRef_.getRawClass()));
   }
 
-
   @Override
   public InputFormat getInputFormat() throws IOException {
-      return LzoThriftB64LineInputFormat.newInstance(typeRef_);
+      try {
+        return LzoThriftB64LineInputFormat.getInputFormatClass(typeRef_.getRawClass(), jobConf).newInstance();
+      } catch (InstantiationException e) {
+        throw new IOException(e);
+      } catch (IllegalAccessException e) {
+        throw new IOException(e);
+      }
   }
 
   /**

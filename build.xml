@@ -119,7 +119,18 @@
     </macrodef>
 
   <macrodef name="generate-thrift">
-      <sequential>   
+      <sequential>
+        <!-- ensure Thrift 0.5.x -->   
+        <exec executable="thrift" outputproperty="thrift.version.string">
+          <arg value="-version"/>
+        </exec>
+        <fail message="Thrift 0.5.x required for thrift support. The local version is '${thrift.version.string}'">
+          <condition> 
+            <not> 
+              <contains string="${thrift.version.string}" substring="Thrift version 0.5."/>
+            </not>
+          </condition>
+        </fail>
         <mkdir dir="${src.gen.java.dir}" />
         <apply executable="thrift" failonerror="true" skipemptyfilesets="true" verbose="true">
           <env key="PATH" path="${env.PATH}:." />

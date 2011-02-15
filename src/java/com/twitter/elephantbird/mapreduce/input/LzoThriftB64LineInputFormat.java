@@ -21,40 +21,28 @@ import com.twitter.elephantbird.util.TypeRef;
  * Do not use LzoThriftB64LineInputFormat.class directly for setting
  * InputFormat class for a job. Use getInputFormatClass() instead.
  */
-public class LzoThriftB64LineInputFormat<M extends TBase<?>>
+public class LzoThriftB64LineInputFormat<M extends TBase<?, ?>>
                 extends LzoInputFormat<LongWritable, ThriftWritable<M>> {
 
-  TypeRef<M> typeRef_ = null;
-
   public LzoThriftB64LineInputFormat() {}
-
-  public LzoThriftB64LineInputFormat(TypeRef<M> typeRef) {
-    typeRef_ = typeRef;
-  }
 
   /**
    * Returns {@link LzoThriftB64LineInputFormat} class for setting up a job.
    * Sets an internal configuration in jobConf so that Task instantiates
    * appropriate object for this generic class based on thriftClass
    */
-  @SuppressWarnings("unchecked")
-  public static <M extends TBase<?>> Class<LzoThriftB64LineInputFormat>
+  public static <M extends TBase<?, ?>> Class<LzoThriftB64LineInputFormat>
      getInputFormatClass(Class<M> thriftClass, Configuration jobConf) {
     ThriftUtils.setClassConf(jobConf, LzoThriftB64LineInputFormat.class, thriftClass);
     return LzoThriftB64LineInputFormat.class;
   }
 
-  public static<M extends TBase<?>> LzoThriftB64LineInputFormat<M> newInstance(TypeRef<M> typeRef) {
-    return new LzoThriftB64LineInputFormat<M>(typeRef);
-  }
-
   @Override
   public RecordReader<LongWritable, ThriftWritable<M>> createRecordReader(InputSplit split,
       TaskAttemptContext taskAttempt) throws IOException, InterruptedException {
-    if (typeRef_ == null) {
-      typeRef_ = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftB64LineInputFormat.class);
-    }
-    return new LzoThriftB64LineRecordReader<M>(typeRef_);
+
+    TypeRef<M> typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftB64LineInputFormat.class);
+    return new LzoThriftB64LineRecordReader<M>(typeRef);
   }
 
 }

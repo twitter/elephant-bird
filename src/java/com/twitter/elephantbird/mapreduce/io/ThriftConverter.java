@@ -7,7 +7,7 @@ import org.apache.thrift.TSerializer;
 
 import com.twitter.elephantbird.util.TypeRef;
 
-public class ThriftConverter<M extends TBase<?>> implements BinaryConverter<M> {
+public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M> {
 
   private TypeRef<M> typeRef;
   private TSerializer serializer;
@@ -16,11 +16,11 @@ public class ThriftConverter<M extends TBase<?>> implements BinaryConverter<M> {
   /**
    * Returns a ThriftConverter for a given Thrift class.
    */
-  public static <M extends TBase<?>> ThriftConverter<M> newInstance(Class<M> tClass) {
+  public static <M extends TBase<?, ?>> ThriftConverter<M> newInstance(Class<M> tClass) {
     return new ThriftConverter<M>(new TypeRef<M>(tClass){});
   }
 
-  public static <M extends TBase<?>> ThriftConverter<M> newInstance(TypeRef<M> typeRef) {
+  public static <M extends TBase<?, ?>> ThriftConverter<M> newInstance(TypeRef<M> typeRef) {
     return new ThriftConverter<M>(typeRef);
   }
 

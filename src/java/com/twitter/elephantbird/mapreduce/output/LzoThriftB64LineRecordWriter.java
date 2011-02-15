@@ -14,7 +14,7 @@ import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
  * @param <T> thrift message that will be written
  * @param <W> writable that wraps this message
  */
-public class LzoThriftB64LineRecordWriter<T extends TBase<?>, W extends ThriftWritable<T>>
+public class LzoThriftB64LineRecordWriter<T extends TBase<?, ?>, W extends ThriftWritable<T>>
 extends LzoBinaryB64LineRecordWriter<T, W>{
 
   public LzoThriftB64LineRecordWriter(BinaryConverter<T> converter, DataOutputStream out) {

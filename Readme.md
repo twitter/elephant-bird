@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+Version: 2.0.0
+
 #### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
 
 ### To Use ###
@@ -26,9 +28,8 @@ NOTE: This is an experimental branch for working with Pig 0.8. It may not work. 
 
 1. Protocol Buffers 2.3
 2. Pig 0.8 (not compatible with 0.7 and below)
-3. HBase 0.20.6
 4. Hive 0.7 (with HIVE-1616)
-5. Thrift 0.2
+5. Thrift 0.5
 
 
 #### Building Without Protocol Buffers ####

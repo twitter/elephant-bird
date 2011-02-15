@@ -15,15 +15,18 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
-public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializable, Cloneable, Comparable<AddressBook> {
+public class AddressBook implements TBase<AddressBook, AddressBook._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("AddressBook");
 
   private static final TField PERSONS_FIELD_DESC = new TField("persons", TType.LIST, (short)1);
@@ -34,12 +37,10 @@ public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializ
   public enum _Fields implements TFieldIdEnum {
     PERSONS((short)1, "persons");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -48,7 +49,12 @@ public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializ
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // PERSONS
+          return PERSONS;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -87,13 +93,13 @@ public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializ
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.PERSONS, new FieldMetaData("persons", TFieldRequirementType.DEFAULT, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.PERSONS, new FieldMetaData("persons", TFieldRequirementType.DEFAULT, 
         new ListMetaData(TType.LIST, 
             new StructMetaData(TType.STRUCT, Person.class))));
-  }});
-
-  static {
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(AddressBook.class, metaDataMap);
   }
 
@@ -124,9 +130,9 @@ public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializ
     return new AddressBook(this);
   }
 
-  @Deprecated
-  public AddressBook clone() {
-    return new AddressBook(this);
+  @Override
+  public void clear() {
+    this.persons = null;
   }
 
   public int getPersonsSize() {
@@ -181,10 +187,6 @@ public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializ
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case PERSONS:
@@ -194,21 +196,17 @@ public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializ
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case PERSONS:
       return isSetPersons();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -249,15 +247,21 @@ public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializ
     int lastComparison = 0;
     AddressBook typedOther = (AddressBook)other;
 
-    lastComparison = Boolean.valueOf(isSetPersons()).compareTo(isSetPersons());
+    lastComparison = Boolean.valueOf(isSetPersons()).compareTo(typedOther.isSetPersons());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(persons, typedOther.persons);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetPersons()) {
+      lastComparison = TBaseHelper.compareTo(this.persons, typedOther.persons);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {
@@ -269,32 +273,29 @@ public class AddressBook implements TBase<AddressBook._Fields>, java.io.Serializ
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case PERSONS:
-            if (field.type == TType.LIST) {
+      switch (field.id) {
+        case 1: // PERSONS
+          if (field.type == TType.LIST) {
+            {
+              TList _list4 = iprot.readListBegin();
+              this.persons = new ArrayList<Person>(_list4.size);
+              for (int _i5 = 0; _i5 < _list4.size; ++_i5)
               {
-                TList _list4 = iprot.readListBegin();
-                this.persons = new ArrayList<Person>(_list4.size);
-                for (int _i5 = 0; _i5 < _list4.size; ++_i5)
-                {
-                  Person _elem6;
-                  _elem6 = new Person();
-                  _elem6.read(iprot);
-                  this.persons.add(_elem6);
-                }
-                iprot.readListEnd();
+                Person _elem6;
+                _elem6 = new Person();
+                _elem6.read(iprot);
+                this.persons.add(_elem6);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-        }
-        iprot.readFieldEnd();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

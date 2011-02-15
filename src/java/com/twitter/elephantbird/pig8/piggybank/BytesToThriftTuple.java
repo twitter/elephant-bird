@@ -27,7 +27,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * }}
  *</pre>
  */
-public abstract class BytesToThriftTuple<T extends TBase<?>> extends EvalFunc<Tuple> {
+public abstract class BytesToThriftTuple<T extends TBase<?, ?>> extends EvalFunc<Tuple> {
 
   private final TDeserializer deserializer_ = new TDeserializer(new TBinaryProtocol.Factory());
   private ThriftToPig<T> thriftToTuple_;

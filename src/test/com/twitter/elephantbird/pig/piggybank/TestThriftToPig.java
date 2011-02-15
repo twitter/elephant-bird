@@ -2,11 +2,13 @@ package com.twitter.elephantbird.pig.piggybank;
 
 import static org.junit.Assert.assertEquals;
 
+import java.nio.ByteBuffer;
+
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
-import org.apache.thrift.test.Fixtures;
+import org.apache.thrift.Fixtures;
 import org.junit.Test;
 
 import thrift.test.HolyMoley;
@@ -22,7 +24,7 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class TestThriftToPig {
 
-  static <M extends TBase<?>> Tuple toTuple(M obj) throws TException {
+  static <M extends TBase<?, ?>> Tuple toTuple(M obj) throws TException {
     // it is very inefficient to create one ThriftToPig for each Thrift object,
     // but good enough for unit testing.
     return ThriftToPig.newInstance(new TypeRef<M>(obj.getClass()){}).getPigTuple(obj);
@@ -49,7 +51,7 @@ public class TestThriftToPig {
 
     // Test null fields :
     OneOfEach mostly_ooe = new OneOfEach(ooe);
-    mostly_ooe.setBase64(null);
+    mostly_ooe.setBase64((ByteBuffer)null);
     mostly_ooe.setI16_list(null);
     assertEquals(
         "1-0-35-27000-16777216-6000000000-3.141592653589793-JSON THIS! \"-"+ooe.zomg_unicode+"-0--{(1),(2),(3)}--{(1),(2),(3)}",

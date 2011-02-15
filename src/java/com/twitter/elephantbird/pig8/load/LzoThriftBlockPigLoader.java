@@ -15,14 +15,14 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
+import com.twitter.elephantbird.mapreduce.input.LzoThriftBlockInputFormat;
 import com.twitter.elephantbird.pig.piggybank.ThriftToPig;
 import com.twitter.elephantbird.pig8.load.LzoBaseLoadFunc;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 
-public class LzoThriftBlockPigLoader<M extends TBase<?>> extends LzoBaseLoadFunc implements LoadMetadata {
+public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc implements LoadMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(LzoThriftBlockPigLoader.class);
 
   private final TypeRef<M> typeRef_;
@@ -77,7 +77,13 @@ public class LzoThriftBlockPigLoader<M extends TBase<?>> extends LzoBaseLoadFunc
   @SuppressWarnings("rawtypes")
   @Override
   public InputFormat getInputFormat() throws IOException {
-      return LzoThriftB64LineInputFormat.newInstance(typeRef_);
+      try {
+        return LzoThriftBlockInputFormat.getInputFormatClass(typeRef_.getRawClass(), jobConf).newInstance();
+      } catch (InstantiationException e) {
+        throw new IOException(e);
+      } catch (IllegalAccessException e) {
+        throw new IOException(e);
+      }
   }
 
   /**

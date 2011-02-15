@@ -20,7 +20,7 @@ import org.apache.thrift.TBase;
  * Do not use LzoThriftBlockInputFormat.class directly for setting
  * InputFormat class for a job. Use getInputFormatClass() instead.
  */
-public class LzoThriftBlockInputFormat<M extends TBase<?>>
+public class LzoThriftBlockInputFormat<M extends TBase<?, ?>>
                 extends LzoInputFormat<LongWritable, ThriftWritable<M>> {
   // implementation is exactly same as LzoThriftB64LineINputFormat
 
@@ -32,7 +32,7 @@ public class LzoThriftBlockInputFormat<M extends TBase<?>>
    * appropriate object for this generic class based on thriftClass
    */
   @SuppressWarnings("unchecked")
-  public static <M extends TBase<?>> Class<LzoThriftBlockInputFormat>
+  public static <M extends TBase<?, ?>> Class<LzoThriftBlockInputFormat>
      getInputFormatClass(Class<M> thriftClass, Configuration jobConf) {
     ThriftUtils.setClassConf(jobConf, LzoThriftBlockInputFormat.class, thriftClass);
     return LzoThriftBlockInputFormat.class;

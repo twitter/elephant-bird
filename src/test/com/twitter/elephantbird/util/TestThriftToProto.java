@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 
 import org.apache.thrift.TException;
-import org.apache.thrift.test.Fixtures;
+import org.apache.thrift.Fixtures;
 import org.junit.Test;
 
 import thrift.test.OneOfEach;
@@ -19,7 +19,7 @@ public class TestThriftToProto {
   @Test
   public void testThriftToProto() throws TException, IOException {
     OneOfEach ooe = Fixtures.oneOfEach;
-    ThriftToProto<OneOfEach, ThriftFixtures.OneOfEach> thriftToProto = 
+    ThriftToProto<OneOfEach, ThriftFixtures.OneOfEach> thriftToProto =
       new ThriftToProto<OneOfEach, ThriftFixtures.OneOfEach>(ooe,
         (ThriftFixtures.OneOfEach) Protobufs.getMessageBuilder(ThriftFixtures.OneOfEach.class).getDefaultInstanceForType());
     ThriftFixtures.OneOfEach proto = (ThriftFixtures.OneOfEach) thriftToProto.convert(ooe);
@@ -33,8 +33,8 @@ public class TestThriftToProto {
     assertEquals(ooe.some_characters, proto.getSomeCharacters());
     assertEquals(ooe.zomg_unicode, proto.getZomgUnicode());
     assertEquals(ooe.what_who, proto.getWhatWho());
-    
-    assertEquals(new String(ooe.base64, "UTF-8"), proto.getBase64().toStringUtf8());
+
+    assertEquals(new String(ooe.getBase64(), "UTF-8"), proto.getBase64().toStringUtf8());
   }
-  
+
 }

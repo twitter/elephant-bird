@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig8.load;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -32,6 +33,8 @@ public abstract class LzoBaseLoadFunc extends LoadFunc {
 
   // Making accessing Hadoop counters from Pig slightly more convenient.
   private final PigCounterHelper counterHelper_ = new PigCounterHelper();
+
+  protected Configuration jobConf;
 
   /**
    * Construct a new load func.
@@ -76,6 +79,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc {
   @Override
   public void setLocation(String location, Job job) throws IOException {
     FileInputFormat.setInputPaths(job, location);
+    this.jobConf = job.getConfiguration();
   }
 
   @Override
