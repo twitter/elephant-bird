@@ -17,9 +17,10 @@ import org.slf4j.LoggerFactory;
 public abstract class BinaryWritable<M> implements WritableComparable<BinaryWritable<M>> {
   private static final Logger LOG = LoggerFactory.getLogger(BinaryWritable.class);
 
-  private M message;
-  private byte[] messageBytes; // deserialization is delayed till get()
+  protected M message;
+  protected byte[] messageBytes; // deserialization is delayed till get() or deserialize()
   private BinaryConverter<M> converter;
+  protected boolean deserialized = false, serialized = false;
 
   protected BinaryWritable(M message, BinaryConverter<M> converter) {
     this.message = message;
@@ -57,17 +58,17 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
 
   /**
    * Returns the current object. <br>
-   * The desirialazion of the actual Protobuf/Thrift object is delayed till
+   * The deserialization of the actual Protobuf/Thrift object is delayed till
    * the first call to this method. <br>
    * In some cases the the parameterized proto class may not be known yet
    * ( in case of default construction. see {@link #setConverter(Class)} ),
    * and this will throw an {@link IllegalStateException}.
    */
   public M get() {
-    if (messageBytes != null) {
+    if (!deserialized && messageBytes != null) {
       checkConverter();
       message = converter.fromBytes(messageBytes);
-      messageBytes = null;
+      deserialized = true;
     }
     return message;
   }
@@ -75,27 +76,19 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
   public void clear() {
     message = null;
     messageBytes = null;
+    deserialized = false;
+    serialized = false;
   }
 
   public void set(M message) {
     this.message = message;
     messageBytes = null;
+    serialized = false;
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    byte[] bytes = null;
-
-    if (message != null) {
-      checkConverter();
-      bytes = converter.toBytes(message);
-      if (bytes == null) {
-        // should we throw an IOException instead?
-        LOG.warn("Could not serialize " + message.getClass());
-      }
-    } else if (messageBytes != null) {
-      bytes = messageBytes;
-    }
+    byte[] bytes = serialize();
 
     if (bytes != null) {
       out.writeInt(bytes.length);
@@ -105,29 +98,40 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     }
   }
 
+  /**
+   * Converts the message to raw bytes, and caches the converted value.
+   * @return converted value, which may be null in case of null message or error.
+   */
+  protected byte[] serialize() {
+    if (message != null && serialized == false ) {
+      checkConverter();
+      messageBytes = converter.toBytes(message);
+      serialized = true;
+      if (messageBytes == null) {
+        // should we throw an IOException instead?
+        LOG.warn("Could not serialize " + message.getClass());
+      }
+    }
+    return messageBytes;
+  }
+
   @Override
   public void readFields(DataInput in) throws IOException {
     int size = in.readInt();
     if (size > 0) {
       messageBytes = new byte[size];
       in.readFully(messageBytes, 0, size);
-      // messageBytes is deserialized in get().
+      // messageBytes is deserialized in get()
+      deserialized = false;
     }
   }
 
   @Override
   public int compareTo(BinaryWritable<M> other) {
-    byte[] bytes = messageBytes;
-    if (message != null) {
-      checkConverter();
-      bytes = converter.toBytes(message);
-    }
-    byte[] otherBytes = other.messageBytes;
-    if (other.message != null) {
-      other.checkConverter();
-      otherBytes = other.converter.toBytes(other.message);
-    }
-    return BytesWritable.Comparator.compareBytes(bytes, 0, bytes.length, otherBytes, 0, otherBytes.length);
+    byte[] thisBytes = serialize();
+    byte[] otherBytes = other.serialize();
+    return BytesWritable.Comparator.compareBytes(thisBytes, 0, thisBytes.length,
+        otherBytes, 0, otherBytes.length);
   }
 
   @Override
@@ -142,6 +146,11 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     } catch (ClassCastException e) {
       return false;
     }
+
+    // Force deserialization of both objects
+    get();
+    other.get();
+
     if (message != null) {
       return message.equals(other.message);
     }
@@ -154,11 +163,13 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
 
   @Override
   public int hashCode() {
+    get();
     return 31 + ((message == null) ? 0 : message.hashCode());
   }
-  
+
   @Override
   public String toString() {
+    get();
     if (message == null) {
       return super.toString();
     }
