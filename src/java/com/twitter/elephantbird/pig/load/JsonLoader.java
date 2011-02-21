@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
 
+import org.apache.hadoop.io.Text;
 import org.apache.pig.builtin.PigStorage;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
@@ -32,45 +33,38 @@ public class JsonLoader extends PigStorage {
 
   protected enum LzoJsonLoaderCounters { LinesRead, LinesJsonDecoded, LinesParseError, LinesParseErrorBadNumber }
 
-  protected BufferedPositionedInputStream is_;
-  protected long end_;
-
   // Making accessing Hadoop counters from Pig slightly more convenient.
   private final PigCounterHelper counterHelper_ = new PigCounterHelper();
 
-  protected boolean verifyStream() throws IOException {
-    return is_ != null && is_.getPosition() <= end_;
-  }
-
-  @Override
-  public void bindTo(String filename, BufferedPositionedInputStream is, long offset, long end) throws IOException {
-    LOG.info("LzoBaseLoadFunc::bindTo, filename = " + filename + ", offset = " + offset + ", and end = " + end);
-    LOG.debug("InputStream position is: "+is.getPosition());
-    is_ = is;
-    end_ = end;
-  }
+  private long end_;
 
   /**
    * Return every non-null line as a single-element tuple to Pig.
    */
   @Override
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
+    if (in == null || in.getPosition() > end_) {
       return null;
     }
-
-    String line;
-    while ((line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
-      incrCounter(LzoJsonLoaderCounters.LinesRead, 1L);
-
-      Tuple t = parseStringToTuple(line);
-      if (t != null) {
-        incrCounter(LzoJsonLoaderCounters.LinesJsonDecoded, 1L);
-        return t;
-      }
+    Text value = new Text();
+    boolean notDone = in.next(value);
+    if (!notDone) {
+      return null;
     }
+    incrCounter(LzoJsonLoaderCounters.LinesRead, 1L);
 
-    return null;
+    Tuple t = parseStringToTuple(value.toString());
+    if (t != null) {
+      incrCounter(LzoJsonLoaderCounters.LinesJsonDecoded, 1L);
+    }
+    return t;
+  }
+
+  @Override
+  public void bindTo(String fileName, BufferedPositionedInputStream in, long offset, long end) throws IOException {
+    super.bindTo(fileName, in, offset, end);
+    // end is private in PigStorage
+    this.end_ = end;
   }
 
   /**
