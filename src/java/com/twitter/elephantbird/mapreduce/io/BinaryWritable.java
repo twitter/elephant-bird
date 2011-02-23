@@ -4,6 +4,7 @@ package com.twitter.elephantbird.mapreduce.io;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.WritableComparable;
@@ -17,10 +18,11 @@ import org.slf4j.LoggerFactory;
 public abstract class BinaryWritable<M> implements WritableComparable<BinaryWritable<M>> {
   private static final Logger LOG = LoggerFactory.getLogger(BinaryWritable.class);
 
-  protected M message;
-  protected byte[] messageBytes; // deserialization is delayed till get() or deserialize()
+  // NOTE: only one of message and messageBytes is non-null at any time so that
+  // message and messageBytes don't go out of sync (user could modify message).
+  private M message;
+  private byte[] messageBytes;
   private BinaryConverter<M> converter;
-  protected boolean deserialized = false, serialized = false;
 
   protected BinaryWritable(M message, BinaryConverter<M> converter) {
     this.message = message;
@@ -57,18 +59,25 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
   }
 
   /**
-   * Returns the current object. <br>
-   * The deserialization of the actual Protobuf/Thrift object is delayed till
-   * the first call to this method. <br>
+   * Returns the current object. Subsequent calls to get() may not return the
+   * same object, but in stead might return a new object deserialized from same
+   * set of bytes. As a result, multiple calls to get() should be avoided, and
+   * modifications to an object returned by get() may not
+   * reflect even if this writable is serialized later. <br>
+   * Please use set() to be certain of what object is serialized.<br><br>
+   *
+   * The deserialization of the actual Protobuf/Thrift object is often delayed
+   * till the first call to this method. <br>
    * In some cases the the parameterized proto class may not be known yet
    * ( in case of default construction. see {@link #setConverter(Class)} ),
    * and this will throw an {@link IllegalStateException}.
    */
   public M get() {
-    if (!deserialized && messageBytes != null) {
+    // may be we should rename this method. the contract would be less
+    // confusing with a different name.
+    if (message == null && messageBytes != null) {
       checkConverter();
-      message = converter.fromBytes(messageBytes);
-      deserialized = true;
+      return converter.fromBytes(messageBytes);
     }
     return message;
   }
@@ -76,14 +85,16 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
   public void clear() {
     message = null;
     messageBytes = null;
-    deserialized = false;
-    serialized = false;
   }
 
   public void set(M message) {
     this.message = message;
-    messageBytes = null;
-    serialized = false;
+    this.messageBytes = null;
+    // should we serialize the object to messageBytes instead?
+    // that is the only way we can guarantee any subsequent modifications to
+    // message by the user don't affect serialization. Unlike Protobuf objects
+    // Thrift objects are mutable. For now we will delay deserialization until
+    // it is required.
   }
 
   @Override
@@ -102,14 +113,16 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
    * Converts the message to raw bytes, and caches the converted value.
    * @return converted value, which may be null in case of null message or error.
    */
-  protected byte[] serialize() {
-    if (message != null && serialized == false ) {
+  private byte[] serialize() {
+    if (messageBytes == null && message != null) {
       checkConverter();
       messageBytes = converter.toBytes(message);
-      serialized = true;
       if (messageBytes == null) {
         // should we throw an IOException instead?
         LOG.warn("Could not serialize " + message.getClass());
+      } else {
+        message = null; // so that message and messageBytes don't go out of
+                        // sync.
       }
     }
     return messageBytes;
@@ -117,12 +130,14 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
 
   @Override
   public void readFields(DataInput in) throws IOException {
+    message = null;
+    messageBytes = null;
     int size = in.readInt();
     if (size > 0) {
-      messageBytes = new byte[size];
-      in.readFully(messageBytes, 0, size);
+      byte[] buf = new byte[size];
+      in.readFully(buf, 0, size);
+      messageBytes = buf;
       // messageBytes is deserialized in get()
-      deserialized = false;
     }
   }
 
@@ -130,50 +145,57 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
   public int compareTo(BinaryWritable<M> other) {
     byte[] thisBytes = serialize();
     byte[] otherBytes = other.serialize();
-    return BytesWritable.Comparator.compareBytes(thisBytes, 0, thisBytes.length,
-        otherBytes, 0, otherBytes.length);
+    int thisLen = thisBytes == null ? 0 : thisBytes.length;
+    int otherLen = otherBytes == null ? 0 : otherBytes.length;
+    return BytesWritable.Comparator.compareBytes(thisBytes, 0, thisLen,
+        otherBytes, 0, otherLen);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public boolean equals(Object obj) {
     if (obj == null) {
       return false;
     }
 
-    BinaryWritable<?> other;
+    BinaryWritable<M> other;
     try {
-      other = (BinaryWritable<?>)obj;
+      other = (BinaryWritable<M>)obj;
     } catch (ClassCastException e) {
       return false;
     }
 
-    // Force deserialization of both objects
-    get();
-    other.get();
-
-    if (message != null) {
-      return message.equals(other.message);
-    }
-    if (other.message == null) {
-      return converter.equals(other.converter);
-    }
-
-    return false;
+    return compareTo(other) == 0;
   }
 
+  /**
+   * <p>Returns a hashCode that is based on the serialized bytes.
+   * This makes the hash stable across multiple instances of JVMs.
+   * (<code>hashCode()</code> is not required to return the same value in
+   * different instances of the same applications in Java, just in a
+   * single instance of the application; Hadoop imposes a more strict requirement.)
+   * <br>
+   * In addition, it may not be feasible to create a deserialized object from
+   * the serialized bytes (see {@link #setConverter(Class)})
+   */
   @Override
   public int hashCode() {
-    get();
-    return 31 + ((message == null) ? 0 : message.hashCode());
+    byte[] bytes = serialize();
+    return (bytes == null) ? 31 : Arrays.hashCode(bytes);
   }
 
   @Override
   public String toString() {
-    get();
-    if (message == null) {
+    M msgObj = null;
+    try {
+      msgObj = get();
+    } catch (IllegalStateException e) {
+      // It is ok. might not be able to avoid this case in some situations.
+      return super.toString() + "{could not be deserialized}";
+    }
+    if (msgObj == null) {
       return super.toString();
     }
-    return message.toString();
+    return msgObj.toString();
   }
-
 }
