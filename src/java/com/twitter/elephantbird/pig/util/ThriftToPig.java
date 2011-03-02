@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.pig.piggybank;
+package com.twitter.elephantbird.pig.util;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
