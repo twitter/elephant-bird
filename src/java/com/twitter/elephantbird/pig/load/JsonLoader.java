@@ -23,7 +23,7 @@ import com.twitter.elephantbird.pig.util.PigCounterHelper;
  */
 public class JsonLoader extends PigStorage {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LzoJsonLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JsonLoader.class);
 
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
   private static final Charset UTF8 = Charset.forName("UTF-8");
@@ -31,7 +31,7 @@ public class JsonLoader extends PigStorage {
 
   private final JSONParser jsonParser_ = new JSONParser();
 
-  protected enum LzoJsonLoaderCounters { LinesRead, LinesJsonDecoded, LinesParseError, LinesParseErrorBadNumber }
+  protected enum JsonLoaderCounters { LinesRead, LinesJsonDecoded, LinesParseError, LinesParseErrorBadNumber }
 
   // Making accessing Hadoop counters from Pig slightly more convenient.
   private final PigCounterHelper counterHelper_ = new PigCounterHelper();
@@ -47,15 +47,16 @@ public class JsonLoader extends PigStorage {
       return null;
     }
     Text value = new Text();
-    boolean notDone = in.next(value);
-    if (!notDone) {
+
+    if (!in.next(value)) {
       return null;
     }
-    incrCounter(LzoJsonLoaderCounters.LinesRead, 1L);
+
+    incrCounter(JsonLoaderCounters.LinesRead, 1L);
 
     Tuple t = parseStringToTuple(value.toString());
     if (t != null) {
-      incrCounter(LzoJsonLoaderCounters.LinesJsonDecoded, 1L);
+      incrCounter(JsonLoaderCounters.LinesJsonDecoded, 1L);
     }
     return t;
   }
@@ -87,15 +88,15 @@ public class JsonLoader extends PigStorage {
       return tupleFactory_.newTuple(values);
     } catch (ParseException e) {
       LOG.warn("Could not json-decode string: " + line, e);
-      incrCounter(LzoJsonLoaderCounters.LinesParseError, 1L);
+      incrCounter(JsonLoaderCounters.LinesParseError, 1L);
       return null;
     } catch (NumberFormatException e) {
       LOG.warn("Very big number exceeds the scale of long: " + line, e);
-      incrCounter(LzoJsonLoaderCounters.LinesParseErrorBadNumber, 1L);
+      incrCounter(JsonLoaderCounters.LinesParseErrorBadNumber, 1L);
       return null;
     } catch (ClassCastException e) {
       LOG.warn("Could not convert to Json Object: " + line, e);
-      incrCounter(LzoJsonLoaderCounters.LinesParseError, 1L);
+      incrCounter(JsonLoaderCounters.LinesParseError, 1L);
       return null;
     }
   }
