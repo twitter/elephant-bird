@@ -24,7 +24,7 @@ import com.google.protobuf.Descriptors.FieldDescriptor.Type;
  * Missing fields and mismatched types will result in exceptions being thrown.
  * <p>
  * TODO: handle complex fields. Only primitives are mapped right now.
- * 
+ *
  * @author dmitriy
  *
  * @param <T> Source thrift class
@@ -32,14 +32,19 @@ import com.google.protobuf.Descriptors.FieldDescriptor.Type;
  */
 public class ThriftToProto<T extends TBase, P extends Message> {
   private static final Logger LOG = LogManager.getLogger(ThriftToProto.class);
-  
+
   Message.Builder protoBuilder_;
   P protoObj_;
   TypeRef<P> typeRef_;
 
   public ThriftToProto(T thriftObj, P protoObj) {
-    protoBuilder_ = Protobufs.getMessageBuilder(protoObj.getClass()); 
+    protoBuilder_ = Protobufs.getMessageBuilder(protoObj.getClass());
     protoObj_ = protoObj;
+  }
+
+  public static <T extends TBase<?, ?>, P extends Message> ThriftToProto<T, P>
+      newInstance(T thriftObj, P protoObj) {
+    return new ThriftToProto<T, P>(thriftObj, protoObj);
   }
 
   @SuppressWarnings("unchecked")
@@ -47,25 +52,22 @@ public class ThriftToProto<T extends TBase, P extends Message> {
 
     Descriptor protoDesc = protoObj_.getDescriptorForType();
 
-    Map<? extends org.apache.thrift.TFieldIdEnum, FieldMetaData> fieldMap = 
+    Map<? extends org.apache.thrift.TFieldIdEnum, FieldMetaData> fieldMap =
       FieldMetaData.getStructMetaDataMap(thriftObj.getClass());
 
     for (Map.Entry<? extends TFieldIdEnum, FieldMetaData> e : fieldMap.entrySet()) {
       final TFieldIdEnum tFieldIdEnum = e.getKey();
       final FieldValueMetaData thriftMetadata = e.getValue().valueMetaData;
-      
+
       FieldDescriptor protoFieldDesc = protoDesc.findFieldByName(tFieldIdEnum.getFieldName());
       if ( protoFieldDesc == null ) {
-        throw new RuntimeException("Field " + tFieldIdEnum.getFieldName() + 
+        throw new RuntimeException("Field " + tFieldIdEnum.getFieldName() +
             " not found in " + protoObj_.getClass().getCanonicalName());
       } else if (!typesMatch(protoFieldDesc, thriftMetadata)) {
         throw new RuntimeException("Field " + tFieldIdEnum.getFieldName() + " type does not match: " +
             "thrift " + thriftMetadata.type + "vs " + protoFieldDesc.getType());
       }
 
-      // ok, just skip lists for now...
-      if (thriftMetadata.type == TType.LIST) continue;
-      
       Object fieldValue = thriftObj.getFieldValue(tFieldIdEnum);
       if (protoFieldDesc.getType() == Type.BYTES) {
         protoBuilder_.setField(protoFieldDesc, (ByteString.copyFrom((byte [])fieldValue)));
@@ -83,11 +85,15 @@ public class ThriftToProto<T extends TBase, P extends Message> {
     }
 
     byte thriftType = thriftMetadata.type;
-    
+
     // TODO: Handle Lists that are more than 1 level deep. Be all pro-style with the recursion.
     if (thriftMetadata.type == TType.LIST && protoFieldDesc.isRepeated())  {
-      thriftType = ((ListMetaData) thriftMetadata).elemMetaData.type;
-    } 
+      FieldValueMetaData listMeta = ((ListMetaData) thriftMetadata).elemMetaData;
+      if (listMeta.isStruct() || listMeta.isContainer()) {
+        return false;
+      }
+      thriftType = listMeta.type;
+    }
     return (protoFieldDesc.getType().equals(thriftTypeToProtoType(thriftType)) ||
         thriftBinSucks(protoFieldDesc.getType(), thriftType));
   }

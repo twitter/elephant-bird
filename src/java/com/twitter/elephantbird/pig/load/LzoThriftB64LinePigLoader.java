@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
-import com.twitter.elephantbird.pig.piggybank.ThriftToPig;
+import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 

@@ -19,20 +19,27 @@ import com.twitter.elephantbird.util.TypeRef;
  *
  * @param <M> Protocol Buffer Message class being serialized
  */
-public abstract class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStoreFunc {
+public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStoreFunc {
 
   private TypeRef<M> typeRef_;
   private Base64 base64_ = new Base64();
-  private final PigToProtobuf pigToProto_ = new PigToProtobuf();
+  Builder builder_;
+
+  protected LzoProtobufB64LinePigStorage(){}
+
+  public LzoProtobufB64LinePigStorage(String protoClassName) {
+    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    setTypeRef(typeRef);
+  }
 
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
+    builder_ =  Protobufs.getMessageBuilder(typeRef_.getRawClass());
   }
 
   public void putNext(Tuple f) throws IOException {
     if (f == null) return;
-	Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
-    os_.write(base64_.encode(pigToProto_.tupleToMessage(builder, f).toByteArray()));
+    os_.write(base64_.encode(PigToProtobuf.tupleToMessage(builder_, f).toByteArray()));
     os_.write("\n".getBytes("UTF-8"));
   }
 

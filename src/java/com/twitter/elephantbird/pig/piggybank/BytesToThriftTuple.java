@@ -11,6 +11,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 
+import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**

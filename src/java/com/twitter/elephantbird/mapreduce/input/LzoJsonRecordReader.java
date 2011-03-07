@@ -76,7 +76,7 @@ public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritab
 
       pos_ = getLzoFilePos();
 
-      if (!decodeLineToJson()) {
+      if (!decodeLineToJson(jsonParser_, currentLine_, value_)) {
         continue;
       }
 
@@ -86,9 +86,9 @@ public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritab
     return false;
   }
 
-  protected boolean decodeLineToJson() {
+  public static boolean decodeLineToJson(JSONParser parser, Text line, MapWritable value) {
     try {
-      JSONObject jsonObj = (JSONObject)jsonParser_.parse(currentLine_.toString());
+      JSONObject jsonObj = (JSONObject)parser.parse(line.toString());
       for (Object key: jsonObj.keySet()) {
         Text mapKey = new Text(key.toString());
         Text mapValue = new Text();
@@ -96,14 +96,14 @@ public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritab
           mapValue.set(jsonObj.get(key).toString());
         }
 
-        value_.put(mapKey, mapValue);
+        value.put(mapKey, mapValue);
       }
       return true;
     } catch (ParseException e) {
-      LOG.warn("Could not json-decode string: " + currentLine_, e);
+      LOG.warn("Could not json-decode string: " + line, e);
       return false;
     } catch (NumberFormatException e) {
-      LOG.warn("Could not parse field into number: " + currentLine_, e);
+      LOG.warn("Could not parse field into number: " + line, e);
       return false;
     }
   }

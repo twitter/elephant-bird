@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.pig.piggybank;
+package com.twitter.elephantbird.pig.util;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
@@ -79,6 +79,9 @@ public class ThriftToPig<M extends TBase<?, ?>> {
    */
   private static BagFactory bagFactory_ = BagFactory.getInstance();
   private static TupleFactory tupleFactory_  = TupleFactory.getInstance();
+
+  /** for some reason there is no TType.BINARY. */
+  private static final byte TTYPE_BINARY = 83;
 
   private Class<? extends TBase<?, ?>> tClass_;
   private ThriftProtocol tProtocol_ = new ThriftProtocol();
@@ -646,6 +649,17 @@ public class ThriftToPig<M extends TBase<?, ?>> {
         } else if (fm.isEnum()) { // enums in Structs are strings (enums in containers are not, yet)
           schema.add(new FieldSchema(meta.fieldName, null, DataType.CHARARRAY));
         } else {
+          if (field.type == TType.STRING) {
+            // A hack to get around the fact that Thrift uses TType.STRING
+            // for both binary and string.
+            Class<?> fieldType = ThriftUtils.getFiedlType(tClass, meta.fieldName);
+            if (fieldType == ByteBuffer.class) {
+              field = new FieldValueMetaData(TTYPE_BINARY);
+            }
+            // This a partition work around. still need to fix the case
+            // when 'binary' is used in containers.
+            // This is fixed in Thrift 0.6 (field.isBinary()).
+          }
           schema.add(singleFieldToFieldSchema(meta.fieldName, field));
         }
       }
@@ -709,8 +723,12 @@ public class ThriftToPig<M extends TBase<?, ?>> {
         return DataType.INTEGER;
       case TType.I64:
         return DataType.LONG;
+      case TType.DOUBLE:
+        return DataType.DOUBLE;
       case TType.STRING:
         return DataType.CHARARRAY;
+      case TTYPE_BINARY:
+        return DataType.BYTEARRAY;
       default:
         throw new IllegalArgumentException("Unexpected type where a simple type is expected : " + field.type);
     }
