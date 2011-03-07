@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.util.Protobufs;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.NullWritable;
@@ -22,7 +23,7 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
   private final BinaryConverter<M> protoConverter_;
   private final DataOutputStream out_;
   private final Base64 base64_;
-  
+
   public LzoBinaryB64LineRecordWriter(BinaryConverter<M> converter, DataOutputStream out) {
     protoConverter_ = converter;
     out_ = out;
@@ -33,7 +34,7 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
       throws IOException, InterruptedException {
     byte[] b64Bytes = base64_.encode(protoConverter_.toBytes(protobufWritable.get()));
     out_.write(b64Bytes);
-    out_.write("\n".getBytes("UTF-8"));
+    out_.write(Protobufs.NEWLINE_UTF8_BYTE);
   }
 
   public void close(TaskAttemptContext taskAttemptContext)

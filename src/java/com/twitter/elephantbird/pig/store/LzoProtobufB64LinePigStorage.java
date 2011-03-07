@@ -6,7 +6,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.pig.data.Tuple;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -23,7 +22,7 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
 
   private TypeRef<M> typeRef_;
   private Base64 base64_ = new Base64();
-  Builder builder_;
+  private Message msgObj; // for newBuilder()
 
   protected LzoProtobufB64LinePigStorage(){}
 
@@ -34,13 +33,14 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
 
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
-    builder_ =  Protobufs.getMessageBuilder(typeRef_.getRawClass());
+    msgObj =  Protobufs.getMessageBuilder(typeRef_.getRawClass()).build();
   }
 
   public void putNext(Tuple f) throws IOException {
     if (f == null) return;
-    os_.write(base64_.encode(PigToProtobuf.tupleToMessage(builder_, f).toByteArray()));
-    os_.write("\n".getBytes("UTF-8"));
+    Message message = PigToProtobuf.tupleToMessage(msgObj.newBuilderForType(), f);
+    os_.write(base64_.encode(message.toByteArray()));
+    os_.write(Protobufs.NEWLINE_UTF8_BYTE);
   }
 
 }

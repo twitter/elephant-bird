@@ -3,7 +3,6 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.IOException;
 
 import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.Protobufs;
