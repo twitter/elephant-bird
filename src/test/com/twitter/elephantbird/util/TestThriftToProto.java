@@ -18,9 +18,8 @@ public class TestThriftToProto {
   public void testThriftToProto() throws TException, IOException {
     OneOfEach ooe = Fixtures.oneOfEach;
     ThriftToProto<OneOfEach, ThriftFixtures.OneOfEach> thriftToProto =
-      new ThriftToProto<OneOfEach, ThriftFixtures.OneOfEach>(ooe,
-        (ThriftFixtures.OneOfEach) Protobufs.getMessageBuilder(ThriftFixtures.OneOfEach.class).getDefaultInstanceForType());
-    ThriftFixtures.OneOfEach proto = (ThriftFixtures.OneOfEach) thriftToProto.convert(ooe);
+      ThriftToProto.newInstance(ooe, ThriftFixtures.OneOfEach.newBuilder().build());
+    ThriftFixtures.OneOfEach proto = thriftToProto.convert(ooe);
     assertEquals(ooe.im_true, proto.getImTrue());
     assertEquals(ooe.im_false, proto.getImFalse());
     assertEquals(ooe.a_bite, proto.getABite());

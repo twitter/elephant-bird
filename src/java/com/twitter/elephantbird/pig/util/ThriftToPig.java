@@ -658,6 +658,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
             }
             // This a partition work around. still need to fix the case
             // when 'binary' is used in containers.
+            // This is fixed in Thrift 0.6 (field.isBinary()).
           }
           schema.add(singleFieldToFieldSchema(meta.fieldName, field));
         }
