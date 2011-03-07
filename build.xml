@@ -66,6 +66,15 @@
    <property name="noprotobuf" value="yes" />
    <compile-noprotobuf />
   </target>
+
+  <target name="nonothing" depends="init">
+   <echo message="building without protobuf and thrift support" />
+   <property name="noprotobuf" value="yes" />
+   <property name="nothrift" value="yes" />
+   <compile-nonothing />
+  </target>
+
+
   
   <target name="init">
     <tstamp/>
@@ -79,6 +88,19 @@
    <sequential>
     <!-- Compile the java code from ${src.java} into ${build} -->
     <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${java.debug}" debuglevel="lines,vars,source" excludes="**/*Protobuf*, **/proto/">
+      <classpath>
+        <fileset dir="lib">
+          <include name="**/*.jar"/>
+        </fileset>
+      </classpath>
+    </javac>
+   </sequential>
+  </macrodef>
+
+  <macrodef name="compile-nonothing">
+   <sequential>
+    <!-- Compile the java code from ${src.java} into ${build} -->
+    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${java.debug}" debuglevel="lines,vars,source" excludes="**/*Protobuf*, **/proto/, **/*Thrift*, **/thrift/, **/*Binary*" >
       <classpath>
         <fileset dir="lib">
           <include name="**/*.jar"/>

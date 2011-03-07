@@ -76,7 +76,6 @@ public class TestProtobufWritable {
     otherJvm.setNewenvironment(true);
     otherJvm.setFork(true);
     otherJvm.setClassname(OtherJvmClass.class.getName());
-    System.getenv();
     for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
       Environment.Variable var = new Environment.Variable();
       var.setKey(entry.getKey());
