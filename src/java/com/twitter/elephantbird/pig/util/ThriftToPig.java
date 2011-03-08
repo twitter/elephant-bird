@@ -656,7 +656,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
             if (fieldType == ByteBuffer.class) {
               field = new FieldValueMetaData(TTYPE_BINARY);
             }
-            // This a partition work around. still need to fix the case
+            // This a partial work around. still need to fix the case
             // when 'binary' is used in containers.
             // This is fixed in Thrift 0.6 (field.isBinary()).
           }

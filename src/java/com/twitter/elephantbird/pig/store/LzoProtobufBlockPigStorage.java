@@ -24,7 +24,7 @@ import java.io.OutputStream;
 public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreFunc {
 
   private TypeRef<M> typeRef_;
-  Builder builder_;
+  private Builder builder_;
   protected ProtobufBlockWriter<M> writer_ = null;
   private int numRecordsPerBlock_ = 10000;
 
