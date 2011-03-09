@@ -1,5 +1,10 @@
 # Elephant Bird #
 
+### Version 2.0.0 ###
+
+NO TICKET. Upgrade Pig compatibility to 0.8
+
+
 ### Version 1.2.1 ###
 
 ISSUE 28. Equals is now consistent with CompareTo for ProtobufWritables (rangadi)
