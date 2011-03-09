@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
-import com.twitter.elephantbird.pig.piggybank.ThriftToPig;
+import com.twitter.elephantbird.pig8.util.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 

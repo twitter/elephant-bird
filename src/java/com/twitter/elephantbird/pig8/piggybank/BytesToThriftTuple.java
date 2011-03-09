@@ -10,7 +10,7 @@ import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 
-import com.twitter.elephantbird.pig.piggybank.ThriftToPig;
+import com.twitter.elephantbird.pig8.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**

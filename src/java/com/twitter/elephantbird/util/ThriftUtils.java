@@ -82,4 +82,14 @@ public class ThriftUtils {
                                   +  containingClass.getName(), e);
     }
   }
+
+  public static Class<?> getFiedlType(Class<?> containingClass, String fieldName) {
+    try {
+      Field field = containingClass.getDeclaredField(fieldName);
+      return field.getType();
+    } catch (NoSuchFieldException e) {
+      throw new RuntimeException("while trying to find " + fieldName + " in "
+                                 + containingClass, e);
+    }
+  }
 }

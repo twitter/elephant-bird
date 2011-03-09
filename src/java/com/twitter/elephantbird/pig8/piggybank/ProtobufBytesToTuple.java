@@ -19,11 +19,23 @@ import com.twitter.elephantbird.util.TypeRef;
  * bytes of a serialized protocol buffer as a DataByteArray.  It outputs the protobuf in
  * expanded form.  The specific protocol buffer is a template parameter, generally specified by a
  * codegen'd derived class. See com.twitter.elephantbird.proto.HadoopProtoCodeGenerator.
+ * Alternatly, full class name could be passed to the constructor in Pig:
+ * <pre>
+ *   DEFINE PersonProtobufBytesToTuple com.twitter.elephantbird.pig.piggybank.ProtobufBytesToTuple('com.twitter.elephantbird.proto.Person');
+ *   persons = FOREACH protobufs GENERATE PersonProtobufBytesToTuple($0);
+ * </pre>
  */
-public abstract class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
+public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
   private TypeRef<M> typeRef_ = null;
   private ProtobufConverter<M> protoConverter_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
+
+  public ProtobufBytesToTuple() {}
+
+  public ProtobufBytesToTuple(String protoClassName) {
+    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    setTypeRef(typeRef);
+  }
 
   /**
    * Set the type parameter so it doesn't get erased by Java. Must be called during
