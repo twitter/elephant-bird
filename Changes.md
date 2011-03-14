@@ -1,5 +1,9 @@
 # Elephant Bird #
 
+### Version 1.2.2 ###
+
+NO TICKET. Protobuf Pig storage : don't reuse builder object.
+
 ### Version 1.2.1 ###
 
 ISSUE 28. Equals is now consistent with CompareTo for ProtobufWritables (rangadi)
