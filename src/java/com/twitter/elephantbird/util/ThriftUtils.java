@@ -7,7 +7,7 @@ import org.apache.thrift.TBase;
 
 public class ThriftUtils {
 
-  private static final String CLASS_CONF_PREFIX = "elephantbird.thirft.class.for.";
+  private static final String CLASS_CONF_PREFIX = "elephantbird.thrift.class.for.";
 
   public static void setClassConf(Configuration jobConf, Class<?> genericClass,
                                   Class<? extends TBase<?, ?>> thriftClass) {

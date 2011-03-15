@@ -1,5 +1,9 @@
 # Elephant Bird #
 
+### Version 1.2.3 ###
+
+ISSUE 34.  Typos in "Thrift"
+
 ### Version 1.2.2 ###
 
 NO TICKET. Protobuf Pig storage : don't reuse builder object.
