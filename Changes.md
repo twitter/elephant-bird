@@ -2,6 +2,7 @@
 
 ### Version 1.2.3 ###
 
+ISSUE 35.  Fixes to B64Line Pig Loader.
 ISSUE 34.  Typos in "Thrift"
 
 ### Version 1.2.2 ###
