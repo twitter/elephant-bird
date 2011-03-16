@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
@@ -34,7 +35,7 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBinaryB64
   }
 
   public LzoProtobufB64LinePigLoader(String protoClassName) {
-    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     setTypeRef(typeRef);
     setLoaderSpec(getClass(), new String[]{protoClassName});
   }
