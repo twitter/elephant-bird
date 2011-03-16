@@ -43,8 +43,9 @@ public class PigCounterHelper {
    * See org.apache.hadoop.mapred.Reporter's incrCounter.
    */
   public void incrCounter(Enum<?> key, long incr) {
-    if (getReporter() != null) {
-      getReporter().incrCounter(key, incr);
+    Reporter reporter = getReporter();
+    if (reporter != null) {
+      reporter.incrCounter(key, incr);
       if (counterEnumMap_.size() > 0) {
         for (Map.Entry<Enum<?>, Long> entry : counterEnumMap_.entrySet()) {
           getReporter().incrCounter(entry.getKey(), entry.getValue());
