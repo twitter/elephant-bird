@@ -72,15 +72,9 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
 
     M value;
     while ((value = reader_.readNext()) != null) {
-      try {
-        Tuple t = thriftToPig_.getPigTuple(value);
-        incrCounter(thriftStructsRead, 1L);
-        return t;
-      } catch (TException e) {
-        incrCounter(thriftErrors, 1L);
-        LOG.warn("ThriftToTuple error :", e); // may be corrupt data.
-        // try next
-      }
+      Tuple t = thriftToPig_.getLazyTuple(value);
+      incrCounter(thriftStructsRead, 1L);
+      return t;
     }
     return null;
   }

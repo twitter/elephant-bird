@@ -43,9 +43,7 @@ public class ThriftBytesToTuple<M extends TBase<?,?>> extends EvalFunc<Tuple> {
     try {
       DataByteArray bytes = (DataByteArray) input.get(0);
       M value = thriftConverter.fromBytes(bytes.get());
-      return thriftToPig.getPigTuple(value);
-    } catch (TException e) {
-      throw new IOException(e);
+      return value == null ? null : thriftToPig.getPigTuple(value);
     } catch (IOException e) {
       return null;
     }

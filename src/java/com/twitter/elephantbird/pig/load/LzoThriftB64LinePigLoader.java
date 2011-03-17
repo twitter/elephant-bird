@@ -36,11 +36,7 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBinaryB
       public Tuple fromBytes(byte[] messageBuffer) {
         M value = converter_.fromBytes(messageBuffer);
         if (value != null) {
-          try {
-            return thriftToPig_.getPigTuple(value);
-          } catch (TException e) {
-            LOG.warn("ThriftToTuple error :", e); // may be struct mismatch
-          }
+          return thriftToPig_.getLazyTuple(value);
         }
         return null;
       }
