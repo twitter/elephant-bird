@@ -21,7 +21,7 @@ public abstract class LzoBinaryB64LinePigLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBinaryB64LinePigLoader.class);
 
   private BinaryConverter<Tuple> tupleConverter_ = null;
-  private final Base64 base64_ = new Base64();
+  private final Base64 base64_ = new Base64(0);
 
   private static final Charset UTF8 = Charset.forName("UTF-8");
   private static final byte RECORD_DELIMITER = (byte)'\n';

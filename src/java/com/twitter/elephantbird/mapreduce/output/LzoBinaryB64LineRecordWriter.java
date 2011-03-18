@@ -27,7 +27,7 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
   public LzoBinaryB64LineRecordWriter(BinaryConverter<M> converter, DataOutputStream out) {
     protoConverter_ = converter;
     out_ = out;
-    base64_ = new Base64();
+    base64_ = new Base64(0);
   }
 
   public void write(NullWritable nullWritable, W protobufWritable)

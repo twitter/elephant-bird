@@ -21,7 +21,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStoreFunc {
 
   private TypeRef<M> typeRef_;
-  private Base64 base64_ = new Base64();
+  private Base64 base64_ = new Base64(0);
   private Message msgObj; // for newBuilder()
 
   protected LzoProtobufB64LinePigStorage(){}
