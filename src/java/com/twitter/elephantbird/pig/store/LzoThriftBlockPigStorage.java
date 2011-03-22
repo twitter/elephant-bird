@@ -26,6 +26,7 @@ public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStor
   private int numRecordsPerBlock = 10000; // is this too high?
 
   public LzoThriftBlockPigStorage(String thriftClassName) {
+    // TODO : use PigUtil once pull request #36 is committed.
     typeRef = ThriftUtils.getTypeRef(thriftClassName);
     pigToThrift = PigToThrift.newInstance(typeRef);
   }
@@ -47,5 +48,6 @@ public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStor
     if (writer != null) {
       writer.close();
     }
+    super.finish();
   }
 }

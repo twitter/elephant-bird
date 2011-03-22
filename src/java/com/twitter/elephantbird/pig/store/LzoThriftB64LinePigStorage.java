@@ -27,6 +27,7 @@ public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseSt
   private ThriftConverter<T> converter;
 
   public LzoThriftB64LinePigStorage(String thriftClassName) {
+    // TODO : use PigUtil once pull request #36 is committed.
     typeRef = ThriftUtils.getTypeRef(thriftClassName);
     pigToThrift = PigToThrift.newInstance(typeRef);
     converter = ThriftConverter.newInstance(typeRef);
