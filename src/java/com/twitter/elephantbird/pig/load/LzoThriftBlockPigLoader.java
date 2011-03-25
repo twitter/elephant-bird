@@ -10,8 +10,8 @@ import org.apache.pig.impl.util.Pair;
 import org.apache.thrift.TBase;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftBlockReader;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
-import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 
@@ -24,7 +24,7 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
   private Pair<String, String> thriftStructsRead;
 
   public LzoThriftBlockPigLoader(String thriftClassName) {
-    typeRef_ = ThriftUtils.getTypeRef(thriftClassName);
+    typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
 
     String group = "LzoBlocks of " + typeRef_.getRawClass().getName();

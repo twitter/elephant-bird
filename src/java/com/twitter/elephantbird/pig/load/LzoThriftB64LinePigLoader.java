@@ -10,8 +10,8 @@ import org.apache.thrift.TBase;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
-import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -24,7 +24,7 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBinaryB
   private final ThriftToPig<M> thriftToPig_;
 
   public LzoThriftB64LinePigLoader(String thriftClassName) {
-    typeRef_ = ThriftUtils.getTypeRef(thriftClassName);
+    typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     converter_ = ThriftConverter.newInstance(typeRef_);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
 

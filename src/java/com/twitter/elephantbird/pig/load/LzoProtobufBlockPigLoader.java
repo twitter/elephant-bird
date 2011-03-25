@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
@@ -35,7 +36,7 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
   }
 
   public LzoProtobufBlockPigLoader(String protoClassName) {
-    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     setTypeRef(typeRef);
     setLoaderSpec(getClass(), new String[]{protoClassName});
   }
