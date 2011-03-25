@@ -1,14 +1,10 @@
 package com.twitter.elephantbird.pig.util;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.util.List;
 
 import com.google.protobuf.Message;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Message.Builder;
 
 @SuppressWarnings("serial")
 /**
@@ -46,17 +42,5 @@ public class ProtobufTuple extends AbstractLazyTuple {
   public long getMemorySize() {
     // The protobuf estimate is obviously inaccurate.
     return msg_.getSerializedSize() + realTuple.getMemorySize();
-  }
-
-  @Override
-  public void readFields(DataInput inp) throws IOException {
-    Builder builder = msg_.newBuilderForType();
-    try {
-      builder.mergeDelimitedFrom((DataInputStream) inp);
-    } catch (ClassCastException e) {
-      throw new IOException("Provided DataInput not instance of DataInputStream.", e);
-    }
-    Message msg = builder.build();
-    reference(new ProtobufTuple(msg));
   }
 }
