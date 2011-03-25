@@ -6,8 +6,6 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigHadoopLogger;
 import org.apache.pig.impl.util.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A helper class to deal with Hadoop counters in Pig.  They are stored within the singleton
@@ -18,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class PigCounterHelper {
   private Map<Pair<String, String>, Long> counterStringMap_ = Maps.newHashMap();
   private Map<Enum<?>, Long> counterEnumMap_ = Maps.newHashMap();
-  private Reporter reporter_ = null;
+  private PigHadoopLogger pigLogger_ = null;
 
   /**
    * Mocks the Reporter.incrCounter, but adds buffering.
@@ -45,8 +43,9 @@ public class PigCounterHelper {
    * See org.apache.hadoop.mapred.Reporter's incrCounter.
    */
   public void incrCounter(Enum<?> key, long incr) {
-    if (getReporter() != null) {
-      getReporter().incrCounter(key, incr);
+    Reporter reporter = getReporter();
+    if (reporter != null) {
+      reporter.incrCounter(key, incr);
       if (counterEnumMap_.size() > 0) {
         for (Map.Entry<Enum<?>, Long> entry : counterEnumMap_.entrySet()) {
           getReporter().incrCounter(entry.getKey(), entry.getValue());
@@ -64,9 +63,9 @@ public class PigCounterHelper {
    * @return the job's reporter object, or null if it isn't retrievable yet.
    */
   private Reporter getReporter() {
-    if (reporter_ == null) {
-      reporter_ = PigHadoopLogger.getInstance().getReporter();
+    if (pigLogger_ == null) {
+      pigLogger_ = PigHadoopLogger.getInstance();
     }
-    return reporter_;
+    return pigLogger_.getReporter();
   }
 }
