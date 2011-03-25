@@ -8,8 +8,8 @@ import org.apache.thrift.TBase;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.util.PigToThrift;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.util.Protobufs;
-import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -27,8 +27,7 @@ public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseSt
   private ThriftConverter<T> converter;
 
   public LzoThriftB64LinePigStorage(String thriftClassName) {
-    // TODO : use PigUtil once pull request #36 is committed.
-    typeRef = ThriftUtils.getTypeRef(thriftClassName);
+    typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     pigToThrift = PigToThrift.newInstance(typeRef);
     converter = ThriftConverter.newInstance(typeRef);
   }

@@ -7,7 +7,7 @@ import org.apache.thrift.TBase;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftBlockWriter;
 import com.twitter.elephantbird.pig.util.PigToThrift;
-import com.twitter.elephantbird.util.ThriftUtils;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.util.TypeRef;
 import java.io.OutputStream;
 
@@ -26,8 +26,7 @@ public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStor
   private int numRecordsPerBlock = 10000; // is this too high?
 
   public LzoThriftBlockPigStorage(String thriftClassName) {
-    // TODO : use PigUtil once pull request #36 is committed.
-    typeRef = ThriftUtils.getTypeRef(thriftClassName);
+    typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     pigToThrift = PigToThrift.newInstance(typeRef);
   }
 
