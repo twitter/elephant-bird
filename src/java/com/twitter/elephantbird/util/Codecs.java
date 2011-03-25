@@ -1,5 +1,7 @@
 package com.twitter.elephantbird.util;
 
+import java.lang.reflect.InvocationTargetException;
+
 import org.apache.commons.codec.binary.Base64;
 
 /**
@@ -17,12 +19,14 @@ public final class Codecs {
      */
     public static Base64 createStandardBase64() {
         try {
-            Base64.class.getConstructor(int.class);
-            return new Base64(0);
+            return Base64.class.getConstructor(int.class).newInstance(0);
         } catch (SecurityException e) {
         } catch (NoSuchMethodException e) {
+        } catch (IllegalArgumentException e) {
+        } catch (InstantiationException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
         }
-        
         return new Base64();
     }
 
