@@ -4,9 +4,11 @@ import java.io.IOException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.pig.data.Tuple;
+import org.omg.IOP.Codec;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
+import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -21,7 +23,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStoreFunc {
 
   private TypeRef<M> typeRef_;
-  private Base64 base64_ = new Base64(0);
+  private Base64 base64_ = Codecs.createStandardBase64();
   private Message msgObj; // for newBuilder()
 
   protected LzoProtobufB64LinePigStorage(){}

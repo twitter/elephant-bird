@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
 
 import org.apache.commons.codec.binary.Base64;
@@ -27,7 +28,7 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
   public LzoBinaryB64LineRecordWriter(BinaryConverter<M> converter, DataOutputStream out) {
     protoConverter_ = converter;
     out_ = out;
-    base64_ = new Base64(0);
+    base64_ = Codecs.createStandardBase64();
   }
 
   public void write(NullWritable nullWritable, W protobufWritable)
