@@ -127,22 +127,22 @@ public class TStructDescriptor {
    */
   public static class Field {
 
-    private TFieldIdEnum fieldIdEnum;
-    private short fieldId;
-    private String fieldName;
-    private FieldValueMetaData field;
+    private final TFieldIdEnum fieldIdEnum;
+    private final short fieldId;
+    private final String fieldName;
+    private final FieldValueMetaData field;
 
     // following fields are set when they are relevant.
-    private Field listElemField;    // lists
-    private Field setElemField;     // sets
-    private Field mapKeyField;      // maps
-    private Field mapValueField;    // maps
-    private Map<String, TEnum> enumMap; // enums
-    private TStructDescriptor tStructDescriptor; // Structs
-    private boolean isBuffer_ = false;  // strings
+    private final Field listElemField;    // lists
+    private final Field setElemField;     // sets
+    private final Field mapKeyField;      // maps
+    private final Field mapValueField;    // maps
+    private final Map<String, TEnum> enumMap; // enums
+    private final TStructDescriptor tStructDescriptor; // Structs
+    private final boolean isBuffer_;  // strings
 
 
-    @SuppressWarnings("unchecked") // casting 'structClass' below
+    @SuppressWarnings("unchecked") // for casting 'structClass' below
     private Field(TFieldIdEnum fieldIdEnum, String fieldName, Class<?> enclosingClass,
                   FieldValueMetaData field) {
       // enclosingClass is only to check a TType.STRING is actually a buffer.
@@ -151,37 +151,59 @@ public class TStructDescriptor {
       this.fieldName = fieldName;
       this.field = field;
 
-      if (field instanceof ListMetaData) {
+      // common case, avoids type checks below.
+      boolean simpleField = field.getClass() == FieldValueMetaData.class;
+
+      if (!simpleField && field instanceof ListMetaData) {
         listElemField = new Field(null, fieldName + "_list_elem", null,
                                   ((ListMetaData)field).elemMetaData);
+      } else {
+        listElemField = null;
+      }
 
-      } else if (field instanceof MapMetaData) {
+      if (!simpleField && field instanceof MapMetaData) {
         mapKeyField = new Field(null, fieldName + "_map_key", null,
                                 ((MapMetaData)field).keyMetaData);
         mapValueField = new Field(null, fieldName + "_map_value", null,
                             ((MapMetaData)field).valueMetaData);
 
-      } else if (field instanceof SetMetaData) {
+      } else {
+        mapKeyField = null;
+        mapValueField = null;
+      }
+
+      if (!simpleField && field instanceof SetMetaData) {
         setElemField = new Field(null, fieldName + "_set_elem", null,
                                 ((SetMetaData)field).elemMetaData);
+      } else {
+        setElemField = null;
+      }
 
-      } else if (field instanceof EnumMetaData) {
+      if (!simpleField && field instanceof EnumMetaData) {
         enumMap = extractEnumMap(((EnumMetaData)field).enumClass);
+      } else {
+        enumMap = null;
+      }
 
-      } else if (field.isStruct()) {
-        tStructDescriptor = getInstance((Class<? extends TBase<?, ?>>)((StructMetaData)field).structClass);
+      if (field.isStruct()) {
+        tStructDescriptor =
+          getInstance((Class<? extends TBase<?, ?>>)
+                      ((StructMetaData)field).structClass);
 
-      } else if (field.type == TType.STRING) {
+      } else {
+        tStructDescriptor = null;
+      }
+
+      if (field.type == TType.STRING && enclosingClass != null) {
         // only Thrift 0.6 and above have explicit isBuffer() method.
         // until then a partial work around that works only if
         // the field is not inside a container.
-        if (enclosingClass != null) {
-          isBuffer_ =
-            ByteBuffer.class == ThriftUtils.getFiedlType(enclosingClass, fieldName);
-        }
+        isBuffer_ =
+          ByteBuffer.class == ThriftUtils.getFiedlType(enclosingClass, fieldName);
+      } else {
+        isBuffer_= false;
       }
     }
-
 
     public short getFieldId() {
       return fieldId;

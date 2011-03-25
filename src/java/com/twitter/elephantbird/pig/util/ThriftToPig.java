@@ -183,17 +183,17 @@ public class ThriftToPig<M extends TBase<?, ?>> {
    * Delays serialization of Thrift fields until they are requested.
    */
   private class LazyTuple extends AbstractLazyTuple {
-    /* TODO : This is only partial optimization. The other part
-     * is to avoid serialization of the Thrift fields from the
+    /* NOTE : This is only a partial optimization. The other part
+     * is to avoid deserialization of the Thrift fields from the
      * binary buffer.
      *
-     * Currently TDeserializer allows deserializing just one field
-     * skipping over the fields before it.
+     * Currently TDeserializer allows deserializing just one field,
+     * psuedo-skipping over the fields before it.
      * But if we are going deserialize 5 fields out of 20, we will be
      * skipping over same set of fields multiple times. OTOH this might
      * still be better than a full deserialization.
      *
-     * We need to write our own version TBinaryProtocol, that truly skips.
+     * We need to write our own version of TBinaryProtocol that truly skips.
      * Even TDeserializer 'skips'/ignores only after deserializing fields.
      * (e.g. Strings, Integers, buffers etc).
      */
