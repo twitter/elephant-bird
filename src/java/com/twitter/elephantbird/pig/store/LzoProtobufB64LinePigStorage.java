@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.pig.data.Tuple;
-import org.omg.IOP.Codec;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
