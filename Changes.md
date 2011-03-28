@@ -2,6 +2,8 @@
 
 ### Version 1.2.4 ###
 
+ISSUE 36. Use Pig class loader in Lzo Pig loader/storage (rangadi)
+
 ### Version 1.2.3 ###
 
 ISSUE 35.  Fixes to B64Line Pig Loader.
