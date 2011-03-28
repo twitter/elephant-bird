@@ -7,9 +7,6 @@ import org.apache.pig.backend.datastorage.DataStorage;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.thrift.TBase;
-import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
@@ -21,7 +18,6 @@ import com.twitter.elephantbird.util.TypeRef;
  * Loader for LZO files with line-oriented base64 encoded Thrift objects.
  */
 public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBinaryB64LinePigLoader {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoThriftB64LinePigLoader.class);
 
   private final TypeRef<M> typeRef_;
   private ThriftConverter<M> converter_;
@@ -36,11 +32,7 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBinaryB
       public Tuple fromBytes(byte[] messageBuffer) {
         M value = converter_.fromBytes(messageBuffer);
         if (value != null) {
-          try {
-            return thriftToPig_.getPigTuple(value);
-          } catch (TException e) {
-            LOG.warn("ThriftToTuple error :", e); // may be struct mismatch
-          }
+          return thriftToPig_.getLazyTuple(value);
         }
         return null;
       }

@@ -8,7 +8,7 @@ import com.google.protobuf.Message;
 import com.twitter.data.proto.BlockStorage.SerializedBlock;
 import com.twitter.elephantbird.util.Protobufs;
 
-/** 
+/**
  * A class to write blocks of serialized objects.
  */
 public abstract class BinaryBlockWriter<M> {
@@ -26,7 +26,7 @@ public abstract class BinaryBlockWriter<M> {
     numRecordsPerBlock_ = numRecordsPerBlock;
     protobufClass_ = protoClass;
     protoConverter_ = protoConverter;
-    
+
     builder_ = reinitializeBlockBuilder();
   }
 
@@ -37,7 +37,7 @@ public abstract class BinaryBlockWriter<M> {
     } else {
       builder_.addProtoBlobs(ByteString.copyFrom(protoConverter_.toBytes(message)));
     }
-    
+
     numRecordsWritten_++;
 
     if (builder_.getProtoBlobsCount() == numRecordsPerBlock_) {
@@ -52,7 +52,6 @@ public abstract class BinaryBlockWriter<M> {
                           .setProtoClassName(protobufClass_.getCanonicalName());
   }
 
-
   public void finish() throws IOException {
     if (builder_.getProtoBlobsCount() > 0) {
       serialize();
@@ -60,6 +59,7 @@ public abstract class BinaryBlockWriter<M> {
   }
 
   public void close() throws IOException {
+    finish();
     out_.close();
   }
 
