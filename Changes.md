@@ -2,6 +2,8 @@
 
 ### Version 1.2.4 ###
 
+ISSUE 37. upgrade common-codec from 1.3 to 1.4 to explictly eliminate misuse. (angushe)
+
 ISSUE 36. Use Pig class loader in Lzo Pig loader/storage (rangadi)
 
 ### Version 1.2.3 ###

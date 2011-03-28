@@ -5,6 +5,7 @@ import java.io.InputStream;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -31,7 +32,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
   private final W value_;
   private TypeRef<M> typeRef_;
 
-  private final Base64 base64_ = new Base64();
+  private final Base64 base64_ = Codecs.createStandardBase64();
   private final BinaryConverter<M> converter_;
 
   private Counter linesReadCounter;

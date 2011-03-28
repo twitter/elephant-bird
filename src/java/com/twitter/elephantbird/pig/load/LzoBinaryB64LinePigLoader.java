@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
+import com.twitter.elephantbird.util.Codecs;
 
 /**
  * This is the base class for all base64 encoded, line-oriented
@@ -21,7 +22,7 @@ public abstract class LzoBinaryB64LinePigLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBinaryB64LinePigLoader.class);
 
   private BinaryConverter<Tuple> tupleConverter_ = null;
-  private final Base64 base64_ = new Base64();
+  private final Base64 base64_ = Codecs.createStandardBase64();
 
   private static final Charset UTF8 = Charset.forName("UTF-8");
   private static final byte RECORD_DELIMITER = (byte)'\n';
