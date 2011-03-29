@@ -7,6 +7,7 @@ import org.apache.pig.data.Tuple;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.util.Base64;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -26,7 +27,7 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
   protected LzoProtobufB64LinePigStorage(){}
 
   public LzoProtobufB64LinePigStorage(String protoClassName) {
-    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     setTypeRef(typeRef);
   }
 
