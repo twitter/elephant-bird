@@ -3,15 +3,14 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
-import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
-import com.twitter.elephantbird.util.Codecs;
-import com.twitter.elephantbird.util.Protobufs;
-
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+
+import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.util.Base64;
+import com.twitter.elephantbird.util.Protobufs;
 
 /**
  * A RecordWriter-derived class for use with the LzoProtobufB64LineOutputFormat.
@@ -23,22 +22,23 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
 
   private final BinaryConverter<M> protoConverter_;
   private final DataOutputStream out_;
-  private final Base64 base64_;
 
   public LzoBinaryB64LineRecordWriter(BinaryConverter<M> converter, DataOutputStream out) {
     protoConverter_ = converter;
     out_ = out;
-    base64_ = Codecs.createStandardBase64();
   }
 
-  public void write(NullWritable nullWritable, W protobufWritable)
+  @Override
+public void write(NullWritable nullWritable, W protobufWritable)
       throws IOException, InterruptedException {
-    byte[] b64Bytes = base64_.encode(protoConverter_.toBytes(protobufWritable.get()));
+    byte[] b64Bytes = Base64.encodeBytesToBytes(
+            protoConverter_.toBytes(protobufWritable.get()));
     out_.write(b64Bytes);
     out_.write(Protobufs.NEWLINE_UTF8_BYTE);
   }
 
-  public void close(TaskAttemptContext taskAttemptContext)
+  @Override
+public void close(TaskAttemptContext taskAttemptContext)
       throws IOException, InterruptedException {
     out_.close();
   }

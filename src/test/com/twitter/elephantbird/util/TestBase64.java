@@ -7,7 +7,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestCodecs {
+public class TestBase64 {
 
     @Before
     public void setUp() {
@@ -33,7 +33,7 @@ public class TestCodecs {
                 "dWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xl" +
                 "ZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5" +
                 "hbCBwbGVhc3VyZS4="; 
-        assertArrayEquals(Codecs.createStandardBase64().encode(quote.getBytes()),
+        assertArrayEquals(Base64.encodeBytesToBytes(quote.getBytes()),
                     expected.getBytes());
     }
 
