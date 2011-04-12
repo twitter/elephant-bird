@@ -11,7 +11,6 @@ import org.apache.pig.ResourceStatistics;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.util.Pair;
 import org.apache.thrift.TBase;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,14 +47,9 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
     }
 
     try {
-      while (reader_.nextKeyValue()) {
+      if (reader_.nextKeyValue()) {
         M value = (M) reader_.getCurrentValue();
-        try {
-          return thriftToPig_.getPigTuple(value);
-        } catch (TException e) {
-          incrCounter(thriftErrors, 1L);
-          LOG.warn("ThriftToTuple error :", e); // may be struct mismatch
-        }
+        return thriftToPig_.getPigTuple(value);
       }
     } catch (InterruptedException e) {
       LOG.error("InterruptedException encountered, bailing.", e);

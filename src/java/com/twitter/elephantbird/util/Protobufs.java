@@ -28,6 +28,9 @@ public class Protobufs {
                                                                          (byte)0xbc, 0x57, (byte)0x99, 0x21, 0x71,
                                                                          (byte)0xbd, (byte)0xff };
 
+  public static final byte NEWLINE_UTF8_BYTE = '\n';
+  public static final byte[] NEWLINE_UTF8_BYTES = new byte[]{NEWLINE_UTF8_BYTE};
+
   public static final String IGNORE_KEY = "IGNORE";
 
   private static final String CLASS_CONF_PREFIX = "elephantbird.protobuf.class.for.";

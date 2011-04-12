@@ -5,7 +5,7 @@ register ../../../dist/elephant-bird-1.0.jar;
 -- the script. It is commented out so that it is does not override the most
 -- up to date schema when the Thrift class changes.
 -- you use ThriftToPig class to pretty print :
---     $ java -cp "[..]elephant-bird-1.0.jar" com.twitter.elephantbird.pig.piggybank.ThriftToPig thift.class.name
+--     $ java -cp "[..]elephant-bird-1.0.jar" com.twitter.elephantbird.pig.piggybank.ThriftToPig thrift.class.name
 
 raw_data = load '/path/to/input_files' using com.twitter.elephantbird.pig.load.LzoThriftB64LinePigLoader('com.twitter.elephantbird.examples.thrift.Person');
        --  as (

@@ -7,7 +7,7 @@ import org.apache.thrift.TBase;
 
 public class ThriftUtils {
 
-  private static final String CLASS_CONF_PREFIX = "elephantbird.thirft.class.for.";
+  private static final String CLASS_CONF_PREFIX = "elephantbird.thrift.class.for.";
 
   public static void setClassConf(Configuration jobConf, Class<?> genericClass,
                                   Class<? extends TBase<?, ?>> thriftClass) {
@@ -45,18 +45,35 @@ public class ThriftUtils {
     return new TypeRef<M>(tClass){};
   }
 
+   /**
+    * returns TypeRef for thrift class. Verifies that the class is
+    * a Thrift class (i.e extends TBase).
+    */
+  public static <M extends TBase<?, ?>> TypeRef<M> getTypeRef(Class<?> tClass) {
+    verifyAncestry(tClass);
+    return new TypeRef<M>(tClass){};
+  }
+
   /**
    * returns TypeRef for a thrift class.
    */
-  public static<M extends TBase<?, ?>> TypeRef<M> getTypeRef(String thriftClassName) {
+  public static <M extends TBase<?, ?>> TypeRef<M> getTypeRef(String thriftClassName, ClassLoader classLoader) {
     try {
-      Class<?> tClass = Class.forName(thriftClassName);
+      Class<?> tClass = Class.forName(thriftClassName, true, classLoader);
+
       verifyAncestry(tClass);
 
       return new TypeRef<M>(tClass){};
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * returns TypeRef for a thrift class.
+   */
+  public static<M extends TBase<?, ?>> TypeRef<M> getTypeRef(String thriftClassName) {
+    return getTypeRef(thriftClassName, null);
   }
 
    /**

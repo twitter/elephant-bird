@@ -38,7 +38,8 @@
   <property name="test.junit.fork.mode" value="perBatch" />
   <property name="test.junit.haltonfailure" value="no" />
   <property name="test.junit.maxmemory" value="512m" />
-
+  <property name="javac.debug" value="on"/>
+  <property name="javac.optimize" value="on"/>
 	
   <path id="test.classpath">
       <pathelement location="${classes.dir}"/>
@@ -52,13 +53,11 @@
   <target name="debug" description="sets properties for debugging (logging on, debug symbols, etc)">
 	<echo message="Building in debug mode..."/>
 	<property name="compile.mode" value="debug"/>
-	<property name="java.debug" value="true"/>
   </target>
 
   <target name="release" description="sets properties for release builds.">
 	<echo message="Building in release mode..."/>
 	<property name="compile.mode" value="release"/>
-	<property name="java.debug" value="false"/>
   </target>
 
   <target name="noproto" depends="init">
@@ -87,7 +86,7 @@
   <macrodef name="compile-noprotobuf">
    <sequential>
     <!-- Compile the java code from ${src.java} into ${build} -->
-    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${java.debug}" debuglevel="lines,vars,source" excludes="**/*Protobuf*, **/proto/">
+    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${javac.debug}" optimize="${javac.optimize}" excludes="**/*Protobuf*, **/proto/">
       <classpath>
         <fileset dir="lib">
           <include name="**/*.jar"/>
@@ -100,7 +99,7 @@
   <macrodef name="compile-nonothing">
    <sequential>
     <!-- Compile the java code from ${src.java} into ${build} -->
-    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${java.debug}" debuglevel="lines,vars,source" excludes="**/*Protobuf*, **/proto/, **/*Thrift*, **/thrift/, **/*Binary*" >
+    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${javac.debug}" optimize="${javac.optimize}" excludes="**/*Protobuf*, **/proto/, **/*Thrift*, **/thrift/, **/*Binary*" >
       <classpath>
         <fileset dir="lib">
           <include name="**/*.jar"/>
@@ -113,7 +112,7 @@
   <macrodef name="compile-java-protobuf">
    <sequential>
     <!-- Compile the java code from ${src.java} into ${build} -->
-    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${java.debug}" debuglevel="lines,vars,source" includes="**/*Protobuf*, **/proto/">
+    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${javac.debug}" optimize="${javac.optimize}" includes="**/*Protobuf*, **/proto/">
       <classpath>
         <fileset dir="lib">
           <include name="**/*.jar"/>
@@ -227,7 +226,7 @@
     <echo message="classes dir: ${classes.dir}" /> 
 	<delete dir="${test.build.classes}"/>
     <mkdir dir="${test.build.classes}"/>
-    <javac srcdir="${test.src.dir}" destdir="${test.build.classes}" deprecation="on" debug="${java.debug}" debuglevel="lines,vars,source">
+    <javac srcdir="${test.src.dir}" destdir="${test.build.classes}" deprecation="on" debug="${javac.debug}" optimize="${javac.optimize}">
       <classpath refid="${test.classpath.id}"/>
       <include name="**/*.java" />
     </javac>

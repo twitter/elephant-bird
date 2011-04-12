@@ -26,7 +26,6 @@ public abstract class BinaryBlockWriter<M> {
     numRecordsPerBlock_ = numRecordsPerBlock;
     innerClass_ = protoClass;
     binaryConverter_ = binaryConverter;
-
     builder_ = reinitializeBlockBuilder();
   }
 
@@ -52,7 +51,6 @@ public abstract class BinaryBlockWriter<M> {
                           .setProtoClassName(innerClass_.getCanonicalName());
   }
 
-
   public void finish() throws IOException {
     if (builder_.getProtoBlobsCount() > 0) {
       serialize();
@@ -60,6 +58,7 @@ public abstract class BinaryBlockWriter<M> {
   }
 
   public void close() throws IOException {
+    finish();
     out_.close();
   }
 

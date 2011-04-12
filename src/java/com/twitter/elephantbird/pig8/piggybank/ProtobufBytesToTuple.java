@@ -11,6 +11,7 @@ import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.pig8.util.ProtobufToPig;
 import com.twitter.elephantbird.pig8.util.ProtobufTuple;
+import com.twitter.elephantbird.pig8.util.PigUtil;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -33,7 +34,7 @@ public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
   public ProtobufBytesToTuple() {}
 
   public ProtobufBytesToTuple(String protoClassName) {
-    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     setTypeRef(typeRef);
   }
 

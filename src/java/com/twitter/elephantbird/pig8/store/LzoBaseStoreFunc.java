@@ -26,7 +26,6 @@ public abstract class LzoBaseStoreFunc extends StoreFunc {
     this.writer = writer;
   }
 
-
   /**
    * Set the storage spec so any arguments given in the script are tracked, to be reinstantiated by the mappers.
    * @param clazz the class of the load function to use.

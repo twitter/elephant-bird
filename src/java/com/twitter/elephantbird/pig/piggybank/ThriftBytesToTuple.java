@@ -12,6 +12,8 @@ import org.apache.thrift.TException;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig8.util.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftUtils;
+import com.twitter.elephantbird.pig8.util.PigUtil;
+import com.twitter.elephantbird.pig8.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -32,7 +34,7 @@ public class ThriftBytesToTuple<M extends TBase<?,?>> extends EvalFunc<Tuple> {
   private final ThriftToPig<M> thriftToPig;
 
   public ThriftBytesToTuple(String thriftClassName) {
-    typeRef = ThriftUtils.getTypeRef(thriftClassName);
+    typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     thriftConverter = ThriftConverter.newInstance(typeRef);
     thriftToPig = ThriftToPig.newInstance(typeRef);
   }
@@ -43,9 +45,7 @@ public class ThriftBytesToTuple<M extends TBase<?,?>> extends EvalFunc<Tuple> {
     try {
       DataByteArray bytes = (DataByteArray) input.get(0);
       M value = thriftConverter.fromBytes(bytes.get());
-      return thriftToPig.getPigTuple(value);
-    } catch (TException e) {
-      throw new IOException(e);
+      return value == null ? null : thriftToPig.getPigTuple(value);
     } catch (IOException e) {
       return null;
     }

@@ -22,7 +22,13 @@ import org.apache.thrift.TBase;
 public class LzoThriftB64LineOutputFormat<M extends TBase<?, ?>>
     extends LzoOutputFormat<M, ThriftWritable<M>> {
 
+  protected TypeRef<M> typeRef;
+
   public LzoThriftB64LineOutputFormat() {}
+
+  public LzoThriftB64LineOutputFormat(TypeRef<M> typeRef) {
+    this.typeRef = typeRef;
+  }
 
   @SuppressWarnings("unchecked")
   public static <M extends TBase<?, ?>> Class<LzoThriftB64LineOutputFormat>

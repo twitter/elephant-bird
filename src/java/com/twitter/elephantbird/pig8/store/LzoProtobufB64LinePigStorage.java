@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.pig.data.Tuple;
 import org.slf4j.Logger;
@@ -49,10 +50,10 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
     if (f == null) {
       return;
     }
-	Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
+    Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
     try {
       writer.write(NullWritable.get(),
-          base64_.encode(pigToProto_.tupleToMessage(builder, f).toByteArray()).toString()+"\n");
+          PigToProtobuf.tupleToMessage(builder, f));
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
@@ -65,7 +66,13 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
       LOG.error("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
     }
-    return LzoProtobufB64LineOutputFormat.newInstance(typeRef_);
+    return new LzoProtobufB64LineOutputFormat<M>();
+  }
+
+  @Override
+  public void setStoreLocation(String location, Job job) throws IOException {
+    super.setStoreLocation(location, job);
+    LzoProtobufB64LineOutputFormat.getOutputFormatClass(typeRef_.getRawClass(), job.getConfiguration());
   }
 
 }

@@ -25,6 +25,7 @@ import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
 import com.twitter.data.proto.tutorial.thrift.PhoneType;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig8.util.ThriftToPig;
+import com.twitter.elephantbird.pig8.util.PigToThrift;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class TestThriftToPig {
@@ -34,12 +35,17 @@ public class TestThriftToPig {
   private static enum TestType {
     THRIFT_TO_PIG,
     BYTES_TO_TUPLE,
+    TUPLE_TO_THRIFT,
   }
 
   static <M extends TBase<?, ?>> Tuple thriftToPig(M obj) throws TException {
     // it is very inefficient to create one ThriftToPig for each Thrift object,
     // but good enough for unit testing.
     return ThriftToPig.newInstance(new TypeRef<M>(obj.getClass()){}).getPigTuple(obj);
+  }
+
+  static <M extends TBase<?, ?>> Tuple thriftToLazyTuple(M obj) throws TException {
+    return ThriftToPig.newInstance(new TypeRef<M>(obj.getClass()){}).getLazyTuple(obj);
   }
 
   static <M extends TBase<?, ?>> Tuple bytesToTuple(M obj)
@@ -54,25 +60,33 @@ public class TestThriftToPig {
     return tTuple.exec(tuple);
   }
 
+  static <M extends TBase<?, ?>> Tuple pigToThrift(M obj) throws TException {
+    // Test PigToThrift using the tuple returned by thriftToPig.
+    // also use LazyTuple
+    Tuple t = thriftToLazyTuple(obj);
+    PigToThrift<M> p2t = PigToThrift.newInstance(new TypeRef<M>(obj.getClass()){});
+    assertEquals(obj, p2t.getThriftObject(t));
+    return t;
+  }
+
   static <M extends TBase<?, ?>> Tuple toTuple(TestType type, M obj) throws Exception {
     switch (type) {
     case THRIFT_TO_PIG:
       return thriftToPig(obj);
     case BYTES_TO_TUPLE:
       return bytesToTuple(obj);
+    case TUPLE_TO_THRIFT:
+      return pigToThrift(obj);
     default:
       return null;
     }
   }
 
   @Test
-  public void testThriftToPig() throws Exception {
+  public void test() throws Exception {
     tupleTest(TestType.THRIFT_TO_PIG);
-  }
-
-  @Test
-  public void testBytesToTuple() throws Exception {
     tupleTest(TestType.BYTES_TO_TUPLE);
+    tupleTest(TestType.TUPLE_TO_THRIFT);
   }
 
   private void tupleTest(TestType type) throws Exception {

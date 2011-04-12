@@ -30,10 +30,6 @@ public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutput
 
   public LzoProtobufB64LineOutputFormat() {}
 
-  public LzoProtobufB64LineOutputFormat(TypeRef<M> typeRef) {
-    this.typeRef_ = typeRef;
-  }
-
   /**
    * Returns {@link LzoProtobufBlockOutputFormat} class.
    * Sets an internal configuration in jobConf so that remote Tasks
@@ -47,17 +43,12 @@ public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutput
     return LzoProtobufB64LineOutputFormat.class;
   }
 
-  public static<M extends Message> LzoProtobufB64LineOutputFormat<M> newInstance(TypeRef<M> typeRef) {
-    return new LzoProtobufB64LineOutputFormat<M>(typeRef);
-  }
-
   @Override
   public RecordWriter<NullWritable, ProtobufWritable<M>> getRecordWriter(TaskAttemptContext job)
   throws IOException, InterruptedException {
     if (typeRef_ == null) {
       typeRef_ = Protobufs.getTypeRef(job.getConfiguration(), LzoProtobufB64LineOutputFormat.class);
     }
-
     return new LzoBinaryB64LineRecordWriter<M, ProtobufWritable<M>>(ProtobufConverter.newInstance(typeRef_), getOutputStream(job));
   }
 }

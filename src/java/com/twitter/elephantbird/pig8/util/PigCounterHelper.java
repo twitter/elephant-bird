@@ -8,7 +8,7 @@ import org.apache.pig.tools.pigstats.PigStatusReporter;
 
 /**
  * A helper class to deal with Hadoop counters in Pig.  They are stored within the singleton
- * PigHadoopLogger instance, but are null for some period of time at job startup, even after
+ * PigStatusReporter instance, but are null for some period of time at job startup, even after
  * Pig has been invoked.  This class buffers counters, trying each time to get a valid Reporter and flushing
  * stored counters each time it does.
  */
@@ -56,5 +56,4 @@ public class PigCounterHelper {
       counterEnumMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
     }
   }
-
 }

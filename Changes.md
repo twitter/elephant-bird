@@ -4,6 +4,23 @@
 
 NO TICKET. Upgrade Pig compatibility to 0.8
 
+### Version 1.2.4 ###
+
+ISSUE 38. Thrift-To-Pig reimplementation. (rangadi)
+
+ISSUE 37. upgrade common-codec from 1.3 to 1.4 to explictly eliminate misuse. (angushe)
+
+ISSUE 36. Use Pig class loader in Lzo Pig loader/storage (rangadi)
+
+### Version 1.2.3 ###
+
+ISSUE 35.  Fixes to B64Line Pig Loader.
+
+ISSUE 34.  Typos in "Thrift"
+
+### Version 1.2.2 ###
+
+NO TICKET. Protobuf Pig storage : do not reuse builder object.
 
 ### Version 1.2.1 ###
 
