@@ -10,6 +10,9 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A copy of the TextInputFormat class for use with LZO-encoded data.  Should be
  * identical to TextInputFormat in use.
@@ -23,10 +26,12 @@ import org.apache.hadoop.mapred.Reporter;
 
 @SuppressWarnings("deprecation")
 public class DeprecatedLzoTextInputFormat extends DeprecatedLzoInputFormat<LongWritable, Text> {
+  private static final Logger LOG = LoggerFactory.getLogger(DeprecatedLzoInputFormat.class);
   @Override
   public RecordReader<LongWritable, Text> getRecordReader(InputSplit split,
       JobConf conf, Reporter reporter) throws IOException {
     reporter.setStatus(split.toString());
+    LOG.info(split.toString());
     return new DeprecatedLzoLineRecordReader(conf, (FileSplit)split);
   }
 
