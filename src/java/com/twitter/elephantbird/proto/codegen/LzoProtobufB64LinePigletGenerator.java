@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.proto.codegen;
 
 import com.google.protobuf.Descriptors.Descriptor;
+import com.twitter.elephantbird.pig.load.LzoProtobufB64LinePigLoader;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.proto.util.FormattingStringBuffer;
 import com.twitter.elephantbird.proto.util.ProtogenHelper;
@@ -20,15 +21,15 @@ public class LzoProtobufB64LinePigletGenerator extends ProtoCodeGenerator {
   public String generateCode() {
     FormattingStringBuffer sb = new FormattingStringBuffer();
 
-    String loaderClassname = String.format("%s.pig.load.Lzo%sProtobufB64LinePigLoader",
-          packageName_, descriptorProto_.getName());
-
     Descriptor msgDescriptor = Protobufs.getMessageDescriptor(
         ProtogenHelper.getProtoClass(packageName_, protoFilename_, descriptorProto_.getName()));
 
-    sb.append(protoToPig_.toPigScript(msgDescriptor, loaderClassname)).endl();
+    sb.append(protoToPig_.toPigScript(msgDescriptor, LzoProtobufB64LinePigLoader.class.getCanonicalName(),
+        String.format("%s.%s", packageName_, descriptorProto_.getName())
+    )).endl();
     sb.endl();
 
     return sb.toString();
   }
+
 }
