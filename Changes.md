@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 1.2.5 ###
+
 ### Version 1.2.4 ###
 
 ISSUE 38. Thrift-To-Pig reimplementation. (rangadi)
