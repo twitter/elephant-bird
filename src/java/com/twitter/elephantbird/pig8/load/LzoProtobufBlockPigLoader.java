@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.pig8.util.PigUtil;
 import com.twitter.elephantbird.pig8.util.ProtobufToPig;
 import com.twitter.elephantbird.pig8.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
@@ -47,7 +48,7 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
    * @param protoClassName full classpath to the generated Protocol Buffer to be loaded.
    */
   public LzoProtobufBlockPigLoader(String protoClassName) {
-    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     setTypeRef(typeRef);
     setLoaderSpec(getClass(), new String[]{protoClassName});
   }

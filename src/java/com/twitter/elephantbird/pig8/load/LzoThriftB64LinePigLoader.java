@@ -15,8 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+import com.twitter.elephantbird.pig8.util.PigUtil;
 import com.twitter.elephantbird.pig8.util.ThriftToPig;
-import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc implements LoadMetadata {
@@ -28,7 +29,7 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
   private final Pair<String, String> thriftErrors;
 
   public LzoThriftB64LinePigLoader(String thriftClassName) {
-    typeRef_ = ThriftUtils.getTypeRef(thriftClassName);
+    typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
 
     String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
@@ -48,7 +49,8 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
 
     try {
       if (reader_.nextKeyValue()) {
-        M value = (M) reader_.getCurrentValue();
+        @SuppressWarnings("unchecked")
+        M value = ((ThriftWritable<M>) reader_.getCurrentValue()).get();
         return thriftToPig_.getPigTuple(value);
       }
     } catch (InterruptedException e) {
@@ -73,6 +75,13 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
       } catch (IllegalAccessException e) {
         throw new IOException(e);
       }
+  }
+
+  @Override
+  public void setLocation(String location, Job job) throws IOException {
+    super.setLocation(location, job);
+    // getInputFormat needs a chance to modify the jobConf
+    getInputFormat();
   }
 
   /**

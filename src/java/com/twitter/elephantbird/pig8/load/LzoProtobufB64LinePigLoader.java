@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.pig8.load;
 
 import java.io.IOException;
+
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.Expression;
@@ -16,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.input.LzoProtobufB64LineInputFormat;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.pig8.util.PigUtil;
 import com.twitter.elephantbird.pig8.util.ProtobufToPig;
 import com.twitter.elephantbird.pig8.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
@@ -45,7 +48,7 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
   * @param protoClassName full classpath to the generated Protocol Buffer to be loaded.
   */
   public LzoProtobufB64LinePigLoader(String protoClassName) {
-    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
+    TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     setTypeRef(typeRef);
     setLoaderSpec(getClass(), new String[]{protoClassName});
   }
@@ -74,7 +77,7 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
     try {
     	while(reader_.nextKeyValue()){
     	  @SuppressWarnings("unchecked")
-        M protoValue = (M) reader_.getCurrentValue();
+        M protoValue = ((ProtobufWritable<M>) reader_.getCurrentValue()).get();
     	  if (protoValue != null) {
     	    t = new ProtobufTuple(protoValue);
     	    incrCounter(protobufsRead, 1L);

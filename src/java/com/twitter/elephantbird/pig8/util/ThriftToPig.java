@@ -25,7 +25,6 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TType;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.twitter.elephantbird.pig8.load.LzoThriftB64LinePigLoader;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;

@@ -15,9 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.input.LzoThriftBlockInputFormat;
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+import com.twitter.elephantbird.pig8.util.PigUtil;
 import com.twitter.elephantbird.pig8.util.ThriftToPig;
-import com.twitter.elephantbird.pig8.load.LzoBaseLoadFunc;
-import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 
@@ -29,7 +29,7 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
   private final Pair<String, String> thriftErrors;
 
   public LzoThriftBlockPigLoader(String thriftClassName) {
-    typeRef_ = ThriftUtils.getTypeRef(thriftClassName);
+    typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
 
     String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
@@ -51,7 +51,7 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
     M value;
     try {
       if (reader_.nextKeyValue()) {
-        value = (M) reader_.getCurrentValue();
+        value = ((ThriftWritable<M>) reader_.getCurrentValue()).get();
         return thriftToPig_.getPigTuple(value);
       }
     } catch (InterruptedException e) {
