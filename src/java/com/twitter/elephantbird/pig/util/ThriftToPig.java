@@ -264,8 +264,9 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
     switch (field.getType()) {
       case TType.STRUCT:
-        fieldSchema = new FieldSchema(fieldName, toSchema(field.gettStructDescriptor()), DataType.TUPLE);
-        break;
+        // wrapping STRUCT in a FieldSchema makes it impossible to
+        // access fields in PIG script (causes runtime error).
+        return toSchema(field.gettStructDescriptor());
       case TType.LIST:
         fieldSchema = singleFieldToFieldSchema(fieldName, field.getListElemField());
         break;
