@@ -71,6 +71,7 @@ public class DeprecatedLzoThriftB64LineRecordReader<M extends TBase<?, ?>>
       M tValue = converter_.fromBytes(base64_.decode(lineBytes));
       if (tValue != null) {
         value.set(tValue);
+        return true;
       }
     }
     return false;
