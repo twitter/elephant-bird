@@ -18,13 +18,13 @@ import java.io.IOException;
 
 /**
  * Decode a lzo compressed line, apply b64 decoding then deserialize into
- * prescribed thrift object.
+ * prescribed thrift object, will skip empty line and undecodable line.
  *
  * @author Yifan SHi
  */
+@SuppressWarnings("deprecation")
 public class DeprecatedLzoThriftB64LineRecordReader<M extends TBase<?, ?>>
     implements RecordReader<LongWritable, ThriftWritable<M>> {
-
   private DeprecatedLzoLineRecordReader textReader;
 
   private TypeRef<M> typeRef_;
@@ -63,10 +63,12 @@ public class DeprecatedLzoThriftB64LineRecordReader<M extends TBase<?, ?>>
     return textReader.getProgress();
   }
 
-
   public boolean next(LongWritable key, ThriftWritable<M> value) throws IOException {
     Text text = new Text();
-    if (textReader.next(key, text)) {
+    while (textReader.next(key, text)) {
+      if (text.equals("\n")) {
+        continue;
+      }
       byte[] lineBytes = text.toString().getBytes("UTF-8");
       M tValue = converter_.fromBytes(base64_.decode(lineBytes));
       if (tValue != null) {
