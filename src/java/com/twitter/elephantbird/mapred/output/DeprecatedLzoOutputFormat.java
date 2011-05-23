@@ -27,7 +27,8 @@ public abstract class DeprecatedLzoOutputFormat <M, W>
     LzopCodec codec = new LzopCodec();
     codec.setConf(job);
 
-    Path file = getTaskOutputPath(job, codec.getDefaultExtension());
+    Path file = getPathForCustomFile(job,  "part");
+    file = file.suffix(codec.getDefaultExtension());
     FileSystem fs = file.getFileSystem(job);
     FSDataOutputStream fileOut = fs.create(file, false);
     return new DataOutputStream(codec.createOutputStream(fileOut));

@@ -25,12 +25,24 @@ public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
    * Sets an internal configuration in jobConf so that Task instantiates
    * appropriate object for this generic class based on thriftClass
    */
-  @SuppressWarnings("unchecked")
+  //@SuppressWarnings("unchecked")
   public static <M extends TBase<?, ?>> Class<DeprecatedLzoThriftB64LineInputFormat>
      getInputFormatClass(Class<M> thriftClass, Configuration jobConf) {
-    ThriftUtils.setClassConf(jobConf, DeprecatedLzoThriftB64LineInputFormat.class, thriftClass);
-    return DeprecatedLzoThriftB64LineInputFormat.class;
+    return getInputFormatClass(
+        DeprecatedLzoThriftB64LineInputFormat.class, thriftClass, jobConf);
   }
+
+  /**
+   * Sets an internal configuration in jobConf so that Task instantiates
+   * appropriate object for this generic class based on thriftClass.
+   * Returns formatClass.
+   */
+  public static <T extends InputFormat, M extends TBase<?, ?>> Class<T> getInputFormatClass(
+      Class<T> formatClass, Class<M> thriftClass, Configuration jobConf) {
+    ThriftUtils.setClassConf(jobConf, formatClass, thriftClass);
+    return formatClass;
+  }
+
 
   /**
    * Return a DeprecatedLzoThriftB64LineRecordReader to handle the work.
@@ -40,8 +52,7 @@ public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
   public RecordReader<LongWritable, ThriftWritable<M>> getRecordReader(
       InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
 
-    TypeRef<M> typeRef = ThriftUtils.getTypeRef(
-        jobConf, DeprecatedLzoThriftB64LineInputFormat.class);
+    TypeRef<M> typeRef = ThriftUtils.getTypeRef(jobConf, this.getClass());
 
     reporter.setStatus(inputSplit.toString());
     return new DeprecatedLzoThriftB64LineRecordReader<M>(
