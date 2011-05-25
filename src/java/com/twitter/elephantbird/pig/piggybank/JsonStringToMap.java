@@ -13,7 +13,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import com.google.common.collect.Maps;
-import com.twitter.elephantbird.pig8.util.PigCounterHelper;
+import com.twitter.elephantbird.pig.util.PigCounterHelper;
 
 /**
  * <p>Transforms a Json string into a Pig map.<br>

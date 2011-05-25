@@ -5,8 +5,8 @@ import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
 
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
-import com.twitter.elephantbird.pig8.util.ProtobufToPig;
-import com.twitter.elephantbird.pig8.util.ProtobufTuple;
+import com.twitter.elephantbird.pig.util.ProtobufToPig;
+import com.twitter.elephantbird.pig.util.ProtobufTuple;
 
 public class TimeProtoConversions {
 

@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.proto.codegen;
 
-import com.twitter.elephantbird.pig8.store.LzoProtobufB64LinePigStorage;
+import com.twitter.elephantbird.pig.store.LzoProtobufB64LinePigStorage;
 import com.twitter.elephantbird.proto.util.FormattingStringBuffer;
 import com.twitter.elephantbird.util.TypeRef;
 

@@ -10,10 +10,10 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
-import com.twitter.elephantbird.pig8.util.ThriftToPig;
+import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftUtils;
-import com.twitter.elephantbird.pig8.util.PigUtil;
-import com.twitter.elephantbird.pig8.util.ThriftToPig;
+import com.twitter.elephantbird.pig.util.PigUtil;
+import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**

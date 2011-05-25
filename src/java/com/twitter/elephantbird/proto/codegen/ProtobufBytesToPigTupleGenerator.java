@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.proto.codegen;
 
-import com.twitter.elephantbird.pig8.piggybank.ProtobufBytesToTuple;
+import com.twitter.elephantbird.pig.piggybank.ProtobufBytesToTuple;
 import com.twitter.elephantbird.proto.util.FormattingStringBuffer;
 import com.twitter.elephantbird.util.TypeRef;
 

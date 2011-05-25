@@ -31,11 +31,11 @@ import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.junit.Test;
 
-import com.twitter.elephantbird.pig8.piggybank.InvokeForDouble;
-import com.twitter.elephantbird.pig8.piggybank.InvokeForFloat;
-import com.twitter.elephantbird.pig8.piggybank.InvokeForInt;
-import com.twitter.elephantbird.pig8.piggybank.InvokeForLong;
-import com.twitter.elephantbird.pig8.piggybank.InvokeForString;
+import com.twitter.elephantbird.pig.piggybank.InvokeForDouble;
+import com.twitter.elephantbird.pig.piggybank.InvokeForFloat;
+import com.twitter.elephantbird.pig.piggybank.InvokeForInt;
+import com.twitter.elephantbird.pig.piggybank.InvokeForLong;
+import com.twitter.elephantbird.pig.piggybank.InvokeForString;
 
 /** need more tests -- non-String funcs and especially the full path through the pig interpreter. 
  * I tested manually, seems to work, but

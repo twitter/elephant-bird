@@ -10,8 +10,8 @@ import org.junit.Test;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.elephantbird.examples.proto.ThriftFixtures.OneOfEach;
-import com.twitter.elephantbird.pig8.util.PigToProtobuf;
-import com.twitter.elephantbird.pig8.util.ThriftToPig;
+import com.twitter.elephantbird.pig.util.PigToProtobuf;
+import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftToProto;
 
 

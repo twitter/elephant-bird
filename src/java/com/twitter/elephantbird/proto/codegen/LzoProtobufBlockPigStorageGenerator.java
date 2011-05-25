@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.proto.codegen;
 
-import com.twitter.elephantbird.pig8.store.LzoProtobufBlockPigStorage;
+import com.twitter.elephantbird.pig.store.LzoProtobufBlockPigStorage;
 import com.twitter.elephantbird.proto.util.FormattingStringBuffer;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -8,7 +8,7 @@ public class LzoProtobufBlockPigStorageGenerator extends ProtoCodeGenerator {
 
   @Override
   public String getFilename() {
-    return String.format("%s/pig8/store/Lzo%sProtobufBlockPigStorage.java",
+    return String.format("%s/pig/store/Lzo%sProtobufBlockPigStorage.java",
         packageName_.replaceAll("\\.", "/"), descriptorProto_.getName());
   }
 
@@ -16,7 +16,7 @@ public class LzoProtobufBlockPigStorageGenerator extends ProtoCodeGenerator {
   public String generateCode() {
     FormattingStringBuffer sb = new FormattingStringBuffer();
 
-    sb.append("package %s.pig8.store;", packageName_).endl().endl();
+    sb.append("package %s.pig.store;", packageName_).endl().endl();
 
     sb.append("import %s.%s.%s;", packageName_, protoFilename_, descriptorProto_.getName()).endl();
     sb.append("import %s;", LzoProtobufBlockPigStorage.class.getName()).endl();

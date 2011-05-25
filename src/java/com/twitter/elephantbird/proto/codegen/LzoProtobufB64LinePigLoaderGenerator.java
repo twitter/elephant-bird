@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.proto.codegen;
 
-import com.twitter.elephantbird.pig8.load.LzoProtobufB64LinePigLoader;
+import com.twitter.elephantbird.pig.load.LzoProtobufB64LinePigLoader;
 import com.twitter.elephantbird.proto.util.FormattingStringBuffer;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -8,7 +8,7 @@ public class LzoProtobufB64LinePigLoaderGenerator extends ProtoCodeGenerator {
 
   @Override
   public String getFilename() {
-    return String.format("%s/pig8/load/Lzo%sProtobufB64LinePigLoader.java",
+    return String.format("%s/pig/load/Lzo%sProtobufB64LinePigLoader.java",
         packageName_.replaceAll("\\.", "/"), descriptorProto_.getName());
   }
 
@@ -16,7 +16,7 @@ public class LzoProtobufB64LinePigLoaderGenerator extends ProtoCodeGenerator {
   public String generateCode() {
     FormattingStringBuffer sb = new FormattingStringBuffer();
 
-    sb.append("package %s.pig8.load;", packageName_).endl().endl();
+    sb.append("package %s.pig.load;", packageName_).endl().endl();
 
     sb.append("import %s.%s.%s;", packageName_, protoFilename_, descriptorProto_.getName()).endl();
     sb.append("import %s.mapreduce.input.Lzo%sProtobufB64LineInputFormat;", packageName_, descriptorProto_.getName()).endl();
