@@ -3,6 +3,7 @@
   <!-- Global properties for this build -->
   <property name="jar.name" value="elephant-bird" />
   <property name="version" value="2.0-SNAPSHOT" />
+  <property name="version" value="1.2.5" />
 
   <!-- Directories -->
   <property name="build.dir" location="build" />

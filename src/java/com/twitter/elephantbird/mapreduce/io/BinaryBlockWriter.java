@@ -41,7 +41,6 @@ public abstract class BinaryBlockWriter<M> {
 
     if (builder_.getProtoBlobsCount() == numRecordsPerBlock_) {
       serialize();
-      builder_ = reinitializeBlockBuilder();
     }
   }
 
@@ -64,6 +63,7 @@ public abstract class BinaryBlockWriter<M> {
 
   protected void serialize() throws IOException {
     SerializedBlock block = builder_.build();
+    builder_ = reinitializeBlockBuilder();
     out_.write(Protobufs.KNOWN_GOOD_POSITION_MARKER);
     writeRawLittleEndian32(block.getSerializedSize());
     block.writeTo(out_);

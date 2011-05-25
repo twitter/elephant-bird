@@ -4,6 +4,18 @@
 
 NO TICKET. Upgrade Pig compatibility to 0.8
 
+### Version 1.2.5 ###
+
+ISSUE 46. ThriftToPig : don't wrap STRUCT in another tuple for schema. (rangadi)
+
+ISSUE 43. NPE in BlockWriter. (rangadi)
+
+ISSUE 42. Couple of useful tweaks to DeprecatedLzoInputFormats. (avibryant)
+
+ISSUE 40. Fix ThriftUtils use of classLoader. (rangadi)
+
+NO TICKET. Use generic protoloader instead of requiring pre-generated ProtobufLoaders. (dvryaboy)
+
 ### Version 1.2.4 ###
 
 ISSUE 38. Thrift-To-Pig reimplementation. (rangadi)

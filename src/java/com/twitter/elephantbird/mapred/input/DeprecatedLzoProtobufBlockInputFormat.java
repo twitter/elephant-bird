@@ -3,7 +3,7 @@ package com.twitter.elephantbird.mapred.input;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
-
+import com.twitter.elephantbird.util.Protobufs;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -30,7 +30,7 @@ import java.io.IOException;
  */
 
 @SuppressWarnings("deprecation")
-public abstract class DeprecatedLzoProtobufBlockInputFormat<M extends Message, W extends ProtobufWritable<M>> extends DeprecatedLzoInputFormat<M, W> {
+public class DeprecatedLzoProtobufBlockInputFormat<M extends Message, W extends ProtobufWritable<M>> extends DeprecatedLzoInputFormat<M, W> {
   private TypeRef typeRef_;
   private W protobufWritable_;
 
@@ -42,8 +42,26 @@ public abstract class DeprecatedLzoProtobufBlockInputFormat<M extends Message, W
     protobufWritable_ = protobufWritable;
   }
 
+  /**
+   * Returns {@link DeprecatedLzoProtobufBlockInputFormat} class.
+   * Sets an internal configuration in jobConf so that remote Tasks
+   * instantiate appropriate object based on protoClass.
+   */
+  @SuppressWarnings("unchecked")
+  public static <M extends Message> Class<DeprecatedLzoProtobufBlockInputFormat>
+     getInputFormatClass(Class<M> protoClass, JobConf jobConf) {
+    Protobufs.setClassConf(jobConf, DeprecatedLzoProtobufBlockInputFormat.class, protoClass);
+    return DeprecatedLzoProtobufBlockInputFormat.class;
+  }
+
   @Override
   public RecordReader<M, W> getRecordReader(InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
+    if (typeRef_ == null) {
+      typeRef_ = Protobufs.getTypeRef(jobConf, DeprecatedLzoProtobufBlockInputFormat.class);
+    }
+    if(protobufWritable_ == null) {
+      protobufWritable_ = (W) new ProtobufWritable<M>(typeRef_);
+    }
     return new DeprecatedLzoProtobufBlockRecordReader(typeRef_, protobufWritable_, jobConf, (FileSplit) inputSplit);
   }
 }

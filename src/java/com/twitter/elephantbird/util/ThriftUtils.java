@@ -59,7 +59,9 @@ public class ThriftUtils {
    */
   public static <M extends TBase<?, ?>> TypeRef<M> getTypeRef(String thriftClassName, ClassLoader classLoader) {
     try {
-      Class<?> tClass = Class.forName(thriftClassName, true, classLoader);
+      Class<?> tClass = classLoader == null ?
+          Class.forName(thriftClassName) :
+          Class.forName(thriftClassName, true, classLoader);
 
       verifyAncestry(tClass);
 

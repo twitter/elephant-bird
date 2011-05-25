@@ -3,8 +3,10 @@ package com.twitter.elephantbird.pig8.util;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
@@ -314,7 +316,7 @@ public class ProtobufToPig {
    * @param loaderClassName the fully qualified classname of the pig loader to use.  Not
    * passed a <code>Class<? extends LoadFunc></code> because in many situations that class
    * is being generated as well, and so doesn't exist in compiled form.
-   * @return a pig schema representing the message.
+   * @return a pig script that can load the given message.
    */
   public String toPigScript(Descriptor msgDescriptor, String loaderClassName) {
     StringBuffer sb = new StringBuffer();
@@ -325,6 +327,34 @@ public class ProtobufToPig {
     sb.append(toPigScriptInternal(msgDescriptor, initialTabOffset));
     sb.append(tabs(initialTabOffset)).append(");").append("\n").append("\n");
 
+    return sb.toString();
+  }
+
+  /**
+   * Same as toPigScript(Descriptor, String) but allows parameters for the loader.
+   *
+   * @param msgDescriptor
+   * @param loaderClassName
+   * @param params
+   * @return a pig script that can load the given message.
+   */
+  public String toPigScript(Descriptor msgDescriptor, String loaderClassName, String... params) {
+    StringBuffer sb = new StringBuffer();
+    final int initialTabOffset = 3;
+
+    sb.append("raw_data = load '$INPUT_FILES' using ")
+    .append(loaderClassName)
+    .append("(");
+    String paramString = "";
+    if (params.length > 0) {
+      paramString = "'" + Joiner.on(",'").join(params) + "'";
+    }
+    sb.append(paramString).append(")").append("\n");
+    sb.append("/**\n");
+    sb.append(tabs(initialTabOffset)).append("as (").append("\n");
+    sb.append(toPigScriptInternal(msgDescriptor, initialTabOffset));
+    sb.append(tabs(initialTabOffset)).append(")").append("\n").append("\n");
+    sb.append("**/\n;\n");
     return sb.toString();
   }
 
@@ -453,4 +483,5 @@ public class ProtobufToPig {
     }
     return sb;
   }
+
 }
