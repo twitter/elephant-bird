@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
@@ -58,10 +59,21 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc {
       return null;
     }
 
+    try {
+      if(!reader_.nextKeyValue()) {
+        return null;
+      }
+    } catch (InterruptedException e) {
+      int errCode = 6018;
+      String errMsg = "Error while reading input";
+      throw new ExecException(errMsg, errCode,
+          PigException.REMOTE_ENVIRONMENT, e);
+    }
+
     Tuple t = null;
     buffer_.reset();
     try {
-      Object line = reader_.getCurrentValue();
+      Text line = (Text)reader_.getCurrentValue();
       if (line != null) {
         String lineStr = line.toString();
         int len = lineStr.length();
