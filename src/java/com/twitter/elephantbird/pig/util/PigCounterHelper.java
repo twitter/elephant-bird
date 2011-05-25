@@ -43,7 +43,7 @@ public class PigCounterHelper {
    */
   public void incrCounter(Enum<?> key, long incr) {
     PigStatusReporter reporter = PigStatusReporter.getInstance();
-    if (reporter != null) {
+    if (reporter != null && reporter.getCounter(key) != null) {
       reporter.getCounter(key).increment(incr);
       if (counterEnumMap_.size() > 0) {
         for (Map.Entry<Enum<?>, Long> entry : counterEnumMap_.entrySet()) {
