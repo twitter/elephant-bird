@@ -4,6 +4,8 @@
 
 NO TICKET. Upgrade Pig compatibility to 0.8
 
+### Version 1.2.6 ###
+
 ### Version 1.2.5 ###
 
 ISSUE 46. ThriftToPig : don't wrap STRUCT in another tuple for schema. (rangadi)

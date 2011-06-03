@@ -25,7 +25,7 @@ public class LzoProtobufBlockPigletGenerator extends ProtoCodeGenerator {
         ProtogenHelper.getProtoClass(packageName_, protoFilename_, descriptorProto_.getName()));
 
     sb.append(protoToPig_.toPigScript(msgDescriptor, LzoProtobufBlockPigLoader.class.getCanonicalName(),
-        String.format("%s.%s", packageName_, descriptorProto_.getName())
+        String.format("%s.%s.%s", packageName_, protoFilename_, descriptorProto_.getName())
     )).endl();
     sb.endl();
 
