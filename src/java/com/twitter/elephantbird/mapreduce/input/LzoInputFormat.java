@@ -48,13 +48,13 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     // The list of files is no different.
     List<FileStatus> files = super.listStatus(job);
     List<FileStatus> results = Lists.newArrayList();
-
+    boolean recursive = job.getConfiguration().getBoolean("mapred.input.dir.recursive", false);
     Iterator<FileStatus> it = files.iterator();
     while (it.hasNext()) {
       FileStatus fileStatus = it.next();
       Path file = fileStatus.getPath();
       FileSystem fs = file.getFileSystem(job.getConfiguration());
-      if (fileStatus.isDir()) {
+      if (recursive && fileStatus.isDir()) {
         addInputPathRecursively(results, fs, file, visibleLzoFilter);
       } else {
         if (visibleLzoFilter.accept(file)) {
