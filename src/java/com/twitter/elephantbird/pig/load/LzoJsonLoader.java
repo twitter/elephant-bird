@@ -37,7 +37,7 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
   protected enum LzoJsonLoaderCounters { LinesRead, LinesJsonDecoded, LinesParseError, LinesParseErrorBadNumber }
 
   public LzoJsonLoader() {
-    LOG.info("LzoJsonLoader creation");
+    LOG.debug("LzoJsonLoader creation");
   }
 
   public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
@@ -93,7 +93,7 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
       return null;
     }
   }
-  
+
   @Override
   public LoadFunc.RequiredFieldResponse fieldsToRead(LoadFunc.RequiredFieldList requiredFieldList) throws FrontendException {
       return new LoadFunc.RequiredFieldResponse(false);

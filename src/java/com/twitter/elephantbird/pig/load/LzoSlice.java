@@ -115,6 +115,9 @@ public class LzoSlice implements Slice {
    * @param store the Pig storage object.
    */
   public void init(DataStorage store) throws IOException {
+
+    LOG.info("LzoSlice::LzoSlice, file = " + filename_ + ", start = " + start_ + ", length = " + length_);
+
     fsis_ = store.asElement(store.getActiveContainer(), filename_).sopen();
 
     CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(new Configuration());
