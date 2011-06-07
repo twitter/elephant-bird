@@ -11,7 +11,17 @@ public class ThriftUtils {
 
   public static void setClassConf(Configuration jobConf, Class<?> genericClass,
                                   Class<? extends TBase<?, ?>> thriftClass) {
-    jobConf.set(CLASS_CONF_PREFIX + genericClass.getName(), thriftClass.getName());
+    String name = CLASS_CONF_PREFIX + genericClass.getName();
+    String existingThrift = jobConf.get(name);
+    if (existingThrift != null) {
+      if (existingThrift != thriftClass.getName()) {
+        throw new RuntimeException(
+            "Register different thriftClass for the same format class: "
+            + genericClass.getName());
+      }
+    } else {
+      jobConf.set(name, thriftClass.getName());
+    }
   }
 
 
