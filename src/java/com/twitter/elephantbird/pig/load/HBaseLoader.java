@@ -8,7 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.pig.backend.hadoop.hbase.HBaseStorage;
 
 /**
- * Please use {@link HBaseStorage} in stead.
+ * @deprecated replaced by {@link HBaseStorage}.
  */
 @Deprecated
 public class HBaseLoader extends HBaseStorage {
