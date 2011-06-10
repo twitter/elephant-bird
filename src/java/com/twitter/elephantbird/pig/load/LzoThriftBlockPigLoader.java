@@ -26,14 +26,10 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
 
   private final TypeRef<M> typeRef_;
   private final ThriftToPig<M> thriftToPig_;
-  private final Pair<String, String> thriftErrors;
 
   public LzoThriftBlockPigLoader(String thriftClassName) {
     typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
-
-    String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
-    thriftErrors = new Pair<String, String>(group, "Errors");
 
     setLoaderSpec(getClass(), new String[]{thriftClassName});
   }
@@ -52,7 +48,7 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
     try {
       if (reader_.nextKeyValue()) {
         value = ((ThriftWritable<M>) reader_.getCurrentValue()).get();
-        return thriftToPig_.getPigTuple(value);
+        return thriftToPig_.getLazyTuple(value);
       }
     } catch (InterruptedException e) {
       LOG.error("InterruptedException encountered, bailing.", e);

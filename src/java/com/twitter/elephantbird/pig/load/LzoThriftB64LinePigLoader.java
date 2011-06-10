@@ -9,7 +9,6 @@ import org.apache.pig.LoadMetadata;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.util.Pair;
 import org.apache.thrift.TBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,14 +25,9 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
   private final TypeRef<M> typeRef_;
   private final ThriftToPig<M> thriftToPig_;
 
-  private final Pair<String, String> thriftErrors;
-
   public LzoThriftB64LinePigLoader(String thriftClassName) {
     typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
-
-    String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
-    thriftErrors = new Pair<String, String>(group, "Errors");
 
     setLoaderSpec(getClass(), new String[]{thriftClassName});
   }
@@ -51,7 +45,7 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
       if (reader_.nextKeyValue()) {
         @SuppressWarnings("unchecked")
         M value = ((ThriftWritable<M>) reader_.getCurrentValue()).get();
-        return thriftToPig_.getPigTuple(value);
+        return thriftToPig_.getLazyTuple(value);
       }
     } catch (InterruptedException e) {
       LOG.error("InterruptedException encountered, bailing.", e);
