@@ -1,14 +1,18 @@
 package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Map;
 
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.pig.PigException;
+import org.apache.pig.backend.executionengine.ExecException;
+import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.builtin.PigStorage;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.apache.pig.impl.io.BufferedPositionedInputStream;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -16,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
+import com.twitter.elephantbird.pig.load.LzoJsonLoader.LzoJsonLoaderCounters;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 
 /**
@@ -24,10 +29,10 @@ import com.twitter.elephantbird.pig.util.PigCounterHelper;
 public class JsonLoader extends PigStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(JsonLoader.class);
+  @SuppressWarnings("rawtypes")
+  protected RecordReader reader_;
 
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-  private static final byte RECORD_DELIMITER = (byte)'\n';
 
   private final JSONParser jsonParser_ = new JSONParser();
 
@@ -36,36 +41,45 @@ public class JsonLoader extends PigStorage {
   // Making accessing Hadoop counters from Pig slightly more convenient.
   private final PigCounterHelper counterHelper_ = new PigCounterHelper();
 
-  private long end_;
-
   /**
    * Return every non-null line as a single-element tuple to Pig.
    */
   @Override
   public Tuple getNext() throws IOException {
-    if (in == null || in.getPosition() > end_) {
+    if (reader_ == null) {
       return null;
     }
-    Text value = new Text();
-
-    if (!in.next(value)) {
+    try {
+      while (reader_.nextKeyValue()) {
+        Text value_ = (Text)reader_.getCurrentValue();
+        incrCounter(LzoJsonLoaderCounters.LinesRead, 1L);
+        Tuple t = parseStringToTuple(value_.toString());
+        if (t != null) {
+          incrCounter(LzoJsonLoaderCounters.LinesJsonDecoded, 1L);
+          return t;
+        }
+      }
       return null;
-    }
 
-    incrCounter(JsonLoaderCounters.LinesRead, 1L);
-
-    Tuple t = parseStringToTuple(value.toString());
-    if (t != null) {
-      incrCounter(JsonLoaderCounters.LinesJsonDecoded, 1L);
+    } catch (InterruptedException e) {
+      int errCode = 6018;
+      String errMsg = "Error while reading input";
+      throw new ExecException(errMsg, errCode,
+          PigException.REMOTE_ENVIRONMENT, e);
     }
-    return t;
   }
 
   @Override
-  public void bindTo(String fileName, BufferedPositionedInputStream in, long offset, long end) throws IOException {
-    super.bindTo(fileName, in, offset, end);
-    // end is private in PigStorage
-    this.end_ = end;
+  public void prepareToRead(@SuppressWarnings("rawtypes") RecordReader reader, PigSplit split) {
+      this.reader_ = reader;
+  }
+
+  // We could implement JsonInputFormat and proxy to it, and maybe that'd be worthwhile,
+  // but taking the cheap shortcut for now.
+  @SuppressWarnings("rawtypes")
+  @Override
+  public InputFormat getInputFormat() {
+      return new TextInputFormat();
   }
 
   /**

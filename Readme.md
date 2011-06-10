@@ -1,6 +1,6 @@
 # Elephant Bird #
 
-Version: 1.2.6
+Version: 2.0.0
 
 #### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
 
@@ -22,11 +22,12 @@ There are a few simple examples that use the input formats.  Note how the protoc
 formats work, and also note that the examples build file uses the custom codegen stuff.  See below for
 more about that.
 
+NOTE: This is an experimental branch for working with Pig 0.8. It may not work. Caveat emptor.
+
 ### Version compatibility ###
 
 1. Protocol Buffers 2.3
-2. Pig 0.6 (not compatible with 0.7+)
-3. HBase 0.90
+2. Pig 0.8 (not compatible with 0.7 and below)
 4. Hive 0.7 (with HIVE-1616)
 5. Thrift 0.5
 
@@ -127,10 +128,9 @@ Bug fixes, features, and documentation improvements are welcome!  Please fork an
 
 ### Contributors ###
 
+Major contributors are listed below. Lots of others have helped too, thanks to all of them!
+See git logs for credits.
+
 * Kevin Weil ([@kevinweil](http://twitter.com/kevinweil))
 * Dmitriy Ryaboy ([@squarecog](http://twitter.com/squarecog))
-* Chuang Liu ([@chuangl4](http://twitter.com/chuangl4))
-* Florian Liebert ([@floliebert](http://twitter.com/floliebert))
-* Ning Liang ([@ningliang](http://twitter.com/ningliang))
-* Johan Oskarsson ([@skr](http://twitter.com/skr))
 * Raghu Angadi ([@raghuangadi](http://twitter.com/raghuangadi))

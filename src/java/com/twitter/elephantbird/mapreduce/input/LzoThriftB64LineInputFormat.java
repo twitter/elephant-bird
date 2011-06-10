@@ -2,16 +2,16 @@ package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
 
-import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
-import com.twitter.elephantbird.util.ThriftUtils;
-import com.twitter.elephantbird.util.TypeRef;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.thrift.TBase;
+
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+import com.twitter.elephantbird.util.ThriftUtils;
+import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * Reads line from an lzo compressed text file, base64 decodes it, and then
@@ -31,7 +31,6 @@ public class LzoThriftB64LineInputFormat<M extends TBase<?, ?>>
    * Sets an internal configuration in jobConf so that Task instantiates
    * appropriate object for this generic class based on thriftClass
    */
-  @SuppressWarnings("unchecked")
   public static <M extends TBase<?, ?>> Class<LzoThriftB64LineInputFormat>
      getInputFormatClass(Class<M> thriftClass, Configuration jobConf) {
     ThriftUtils.setClassConf(jobConf, LzoThriftB64LineInputFormat.class, thriftClass);

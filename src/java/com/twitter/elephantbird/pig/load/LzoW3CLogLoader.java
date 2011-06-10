@@ -1,16 +1,19 @@
 package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.Charset;
+import java.util.Map;
 
-import com.twitter.elephantbird.util.W3CLogParser;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.pig.ExecType;
-import org.apache.pig.backend.datastorage.DataStorage;
+import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.pig.Expression;
+import org.apache.pig.LoadMetadata;
+import org.apache.pig.PigException;
+import org.apache.pig.ResourceSchema;
+import org.apache.pig.ResourceStatistics;
+import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
@@ -19,71 +22,100 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Maps;
+import com.twitter.elephantbird.mapreduce.input.LzoW3CLogInputFormat;
+import com.twitter.elephantbird.mapreduce.input.LzoW3CLogRecordReader;
+
 
 /**
  * Load w3c log LZO file line by line, passing each line as a single-field Tuple to Pig.
  */
-public class LzoW3CLogLoader extends LzoBaseLoadFunc {
+public class LzoW3CLogLoader extends LzoBaseLoadFunc implements LoadMetadata {
   protected static final Logger LOG = LoggerFactory.getLogger(LzoW3CLogLoader.class);
 
   protected static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-  private static final byte RECORD_DELIMITER = (byte)'\n';
+  protected final String fileURI;
+  protected enum LzoW3CLogLoaderCounters { LinesW3CDecoded, UnparseableLines};
 
-  protected W3CLogParser w3cParser_ = null;
-
-  protected enum LzoW3CLogLoaderCounters { LinesRead, LinesW3CDecoded };
-
+  /**
+   * Constructor.
+   * @param fileURI path to HDFS file that contains the CRC to column list mappings, one per line.
+   * @throws IOException
+   */
   public LzoW3CLogLoader(String fileURI) throws IOException {
-    LOG.info("Initialize LzoW3CLogLoader from " + fileURI);
-    Configuration conf = new Configuration();
-    FileSystem fs = FileSystem.get(URI.create(fileURI), conf);
-    InputStream fieldDefIs = fs.open(new Path(fileURI));
-    w3cParser_ = new W3CLogParser(fieldDefIs);
-    fieldDefIs.close();
-  }
-
-  public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
-    // Since we are not block aligned we throw away the first record of each split and count on a different
-    // instance to read it.  The only split this doesn't work for is the first.
-    if (!atFirstRecord) {
-      getNext();
-    }
+    LOG.debug("Initialize LzoW3CLogLoader from " + fileURI);
+    this.fileURI = fileURI;
   }
 
   /**
    * Return every non-null line as a single-element tuple to Pig.
    */
+  @Override
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
+    LzoW3CLogRecordReader reader = (LzoW3CLogRecordReader) reader_;
+    if (reader == null) {
       return null;
     }
+    MapWritable value_;
+    try {
+      if ( reader.nextKeyValue() && (value_ = reader.getCurrentValue()) != null) {
+          Map<String, String> values = Maps.newHashMap();
 
-    String line;
-    while( (line = is_.readLine(UTF8, RECORD_DELIMITER)) != null) {
-      incrCounter(LzoW3CLogLoaderCounters.LinesRead, 1L);
-
-      Tuple t = parseStringToTuple(line);
-      if (t != null) {
-        incrCounter(LzoW3CLogLoaderCounters.LinesW3CDecoded, 1L);
-        return t;
+          for (Writable key: value_.keySet()) {
+            Writable value = value_.get(key);
+            values.put(key.toString(), value != null ? value.toString() : null);
+          }
+          incrCounter(LzoW3CLogLoaderCounters.LinesW3CDecoded, 1L);
+          incrCounter(LzoW3CLogLoaderCounters.UnparseableLines, reader.getBadRecordsSkipped());
+          return tupleFactory_.newTuple(values);
       }
+    } catch (InterruptedException e) {
+      int errCode = 6018;
+      String errMsg = "Error while reading input";
+      throw new ExecException(errMsg, errCode,
+          PigException.REMOTE_ENVIRONMENT, e);
     }
     return null;
   }
 
-  protected Tuple parseStringToTuple(String line) {
-    try {
-      return tupleFactory_.newTuple(w3cParser_.parse(line));
-    } catch (IOException e) {
-      // Remove this for now because our logs have a lot of unmatched records
-//      LOG.warn("Could not w3c-decode string: " + line, e);
-      return null;
-    }
+  @Override
+  public void setLocation(String location, Job job)
+  throws IOException {
+    FileInputFormat.setInputPaths(job, location);
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public InputFormat getInputFormat() {
+    return LzoW3CLogInputFormat.newInstance(fileURI);
+  }
+
+  /**
+   * NOT IMPLEMENTED
+   */
+  @Override
+  public String[] getPartitionKeys(String arg0, Job arg1) throws IOException {
+    return null;
   }
 
   @Override
-  public Schema determineSchema(String filename, ExecType execType, DataStorage store) throws IOException {
-    return new Schema(new FieldSchema("data", DataType.MAP));
+  public ResourceSchema getSchema(String arg0, Job arg1) throws IOException {
+    return new ResourceSchema(new Schema(new FieldSchema("data", DataType.MAP)));
+  }
+
+  /**
+   * NOT IMPLEMENTED
+   */
+  @Override
+  public ResourceStatistics getStatistics(String arg0, Job arg1) throws IOException {
+    return null;
+  }
+
+  /**
+   * NOT IMPLEMENTED
+   */
+  @Override
+  public void setPartitionFilter(Expression arg0) throws IOException {
+
   }
 }

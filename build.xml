@@ -2,7 +2,7 @@
     
   <!-- Global properties for this build -->
   <property name="jar.name" value="elephant-bird" />
-  <property name="version" value="1.2.6" />
+  <property name="version" value="2.0" />
 
   <!-- Directories -->
   <property name="build.dir" location="build" />
@@ -35,7 +35,7 @@
 
   <property name="test.junit.output.format" value="plain"/>
   <property name="test.junit.printsummary" value="yes" />
-  <property name="test.junit.fork.mode" value="perTest" />
+  <property name="test.junit.fork.mode" value="perBatch" />
   <property name="test.junit.haltonfailure" value="no" />
   <property name="test.junit.maxmemory" value="512m" />
   <property name="javac.debug" value="on"/>

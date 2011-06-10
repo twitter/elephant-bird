@@ -14,6 +14,7 @@ import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.ThriftToProto;
 
+
 public class TestPigToProto {
 
   @Test

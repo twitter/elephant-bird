@@ -2,8 +2,8 @@ package com.twitter.elephantbird.mapreduce.input;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.protobuf.Message;
 
+import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;

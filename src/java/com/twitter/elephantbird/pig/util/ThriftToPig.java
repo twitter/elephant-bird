@@ -36,6 +36,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * <li> utilities to provide schema for Pig loaders and Pig scripts
  */
 public class ThriftToPig<M extends TBase<?, ?>> {
+
   public static final Logger LOG = LogManager.getLogger(ThriftToPig.class);
 
   private static BagFactory bagFactory = BagFactory.getInstance();

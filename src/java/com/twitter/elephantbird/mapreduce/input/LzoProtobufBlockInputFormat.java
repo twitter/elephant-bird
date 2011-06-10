@@ -6,7 +6,6 @@ import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -29,6 +28,11 @@ public class LzoProtobufBlockInputFormat<M extends Message> extends LzoInputForm
   public LzoProtobufBlockInputFormat() {
   }
 
+  public LzoProtobufBlockInputFormat(TypeRef<M> typeRef) {
+    super();
+    this.typeRef_ = typeRef;
+  }
+
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
   }
@@ -43,6 +47,10 @@ public class LzoProtobufBlockInputFormat<M extends Message> extends LzoInputForm
      getInputFormatClass(Class<M> protoClass, Configuration jobConf) {
     Protobufs.setClassConf(jobConf, LzoProtobufBlockInputFormat.class, protoClass);
     return LzoProtobufBlockInputFormat.class;
+  }
+
+  public static<M extends Message> LzoProtobufBlockInputFormat<M> newInstance(TypeRef<M> typeRef) {
+    return new LzoProtobufBlockInputFormat<M>(typeRef);
   }
 
   @Override

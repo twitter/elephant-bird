@@ -24,7 +24,7 @@ public class PigTokenHelper {
    */
   public static byte evaluateDelimiter(String inputDelimiter) {
     if (inputDelimiter.length() == 1) {
-      return (byte)inputDelimiter.charAt(0);
+      return inputDelimiter.getBytes()[0];
     } else if (inputDelimiter.length() > 1 && inputDelimiter.charAt(0) == '\\') {
       switch (inputDelimiter.charAt(1)) {
       case 't':

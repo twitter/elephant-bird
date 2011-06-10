@@ -19,7 +19,9 @@ import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneNumber;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneType;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
+
 
 public class TestProtobufWritable {
 

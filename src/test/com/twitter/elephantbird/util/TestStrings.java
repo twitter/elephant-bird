@@ -1,6 +1,8 @@
 package com.twitter.elephantbird.util;
 
 import com.google.common.collect.ImmutableMap;
+import com.twitter.elephantbird.util.Strings;
+
 import org.junit.Test;
 
 import java.util.Map;

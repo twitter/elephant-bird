@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.Map;
 
 import com.twitter.elephantbird.util.W3CLogParser;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -19,7 +20,8 @@ import org.slf4j.LoggerFactory;
 /**
  * A reader for LZO-compressed W3C-style log formatted files.  See discussion in the
  * LzoW3CLogInputFormat for more on the format.  To use, derive from this class and implement
- * the getFieldDefinitionFile() method.
+ * the getFieldDefinitionFile() method. <br>
+ * Most commonly, you can simply call LzoW3CLogInputFormat.newInstance(myFilePath)
  */
 public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable, MapWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoW3CLogRecordReader.class);
@@ -27,9 +29,12 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
   private LineReader in_;
 
   private final LongWritable key_ = new LongWritable();
-  private final Text currentLine_ = new Text();
+  protected final Text currentLine_ = new Text();
   private final MapWritable value_ = new MapWritable();
   protected W3CLogParser w3cLogParser_ = null;
+
+  // Used to hold the number of unparseable records seen between successfull readings.
+  private int badRecordsSkipped_ = 0;
 
   @Override
   public synchronized void close() throws IOException {
@@ -66,12 +71,16 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
     }
   }
 
+  public long getBadRecordsSkipped() {
+    return badRecordsSkipped_;
+  }
+
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
     // Since the lzop codec reads everything in lzo blocks, we can't stop if pos == end.
     // Instead we wait for the next block to be read in, when pos will be > end.
     value_.clear();
-
+    badRecordsSkipped_ = 0;
     while (pos_ <= end_) {
       key_.set(pos_);
 
@@ -83,6 +92,7 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
       pos_ = getLzoFilePos();
 
       if (!decodeLine()) {
+        badRecordsSkipped_ += 1;
         continue;
       }
 
@@ -93,15 +103,19 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
   }
 
   protected boolean decodeLine() {
+    return decodeLine(currentLine_.toString());
+  }
+
+  protected boolean decodeLine(String str) {
     try {
-      Map<String, String> w3cLogFields = w3cLogParser_.parse(currentLine_.toString());
+      Map<String, String> w3cLogFields = w3cLogParser_.parse(str);
       for(Map.Entry<String, String> entrySet : w3cLogFields.entrySet()) {
         String value = entrySet.getValue();
         value_.put(new Text(entrySet.getKey()), new Text(value));
       }
       return true;
     } catch (IOException e) {
-      LOG.warn("Could not w3c-decode string: " + currentLine_, e);
+      LOG.debug("Could not w3c-decode string: " + str, e);
       return false;
     }
   }

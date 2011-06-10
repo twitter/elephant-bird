@@ -9,7 +9,6 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.TMemoryBuffer;
 
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
@@ -47,7 +46,9 @@ public abstract class BytesToThriftTuple<T extends TBase<?, ?>> extends EvalFunc
 
   @Override
   public Tuple exec(org.apache.pig.data.Tuple input) throws IOException {
-    if (input == null || input.size() < 1) return null;
+    if (input == null || input.size() < 1) {
+      return null;
+    }
     try {
       T tObj = typeRef_.safeNewInstance();
       DataByteArray dbarr = (DataByteArray) input.get(0);

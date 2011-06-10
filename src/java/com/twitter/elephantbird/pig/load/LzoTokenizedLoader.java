@@ -4,24 +4,28 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.twitter.elephantbird.pig.util.PigTokenHelper;
-import org.apache.pig.SamplableLoader;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.pig.PigException;
+import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
+import com.twitter.elephantbird.pig.util.PigTokenHelper;
+
 /**
  * A load function that parses a line of input into fields using a delimiter to set the fields. The
  * delimiter is given as a single character, \t, or \x___ or slash u___.
  */
-public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoader {
+public class LzoTokenizedLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoTokenizedLoader.class);
-
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
 
-  private ByteArrayOutputStream buffer_ = new ByteArrayOutputStream(4096);
+  private final ByteArrayOutputStream buffer_ = new ByteArrayOutputStream(4096);
   private final byte recordDel_ = PigTokenHelper.DEFAULT_RECORD_DELIMITER;
   private byte fieldDel_ = PigTokenHelper.DEFAULT_FIELD_DELIMITER;
   private ArrayList<Object> protoTuple_ = null;
@@ -35,18 +39,13 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoad
    */
   public LzoTokenizedLoader(String delimiter) {
     LOG.info("LzoTokenizedLoader with given delimiter [" + delimiter + "]");
-
+    if (delimiter.length() > 1) {
+      LOG.error("Delimiter is not a single character. Cannot construct LzoTokenizedLoader.");
+      throw new IllegalArgumentException();
+    }
     // Store the constructor args so that individual slicers can recreate them.
     setLoaderSpec(getClass(), new String[] { delimiter });
     fieldDel_ = PigTokenHelper.evaluateDelimiter(delimiter);
-  }
-
-  public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
-    // Since we are not block aligned we throw away the first record of each split and count on a different
-    // instance to read it.  The only split this doesn't work for is the first.
-    if (!atFirstRecord) {
-      getNext();
-    }
   }
 
   /**
@@ -54,30 +53,56 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoad
    * does result in tuples with different numbers of fields, which is tracked by
    * a counter.
    */
+  @Override
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
+    if (reader_ == null) {
       return null;
+    }
+
+    try {
+      if(!reader_.nextKeyValue()) {
+        return null;
+      }
+    } catch (InterruptedException e) {
+      int errCode = 6018;
+      String errMsg = "Error while reading input";
+      throw new ExecException(errMsg, errCode,
+          PigException.REMOTE_ENVIRONMENT, e);
     }
 
     Tuple t = null;
     buffer_.reset();
-    while (true) {
-      // BufferedPositionedInputStream is buffered, so no need to buffer.
-      int b = is_.read();
-      prevByte_ = (byte)b;
-      if (prevByte_ == fieldDel_) {
-        readField();
-      } else if (prevByte_ == recordDel_) {
+    try {
+      Text line = (Text)reader_.getCurrentValue();
+      if (line != null) {
+        String lineStr = line.toString();
+        int len = lineStr.length();
+        for (int i= 0;i<len;i++) {
+          int b = lineStr.charAt(i);
+          prevByte_ = (byte)b;
+          if (prevByte_ == fieldDel_) {
+            readField();
+          } else if (prevByte_ == recordDel_) {
+            readField();
+            t =  tupleFactory_.newTupleNoCopy(protoTuple_);
+            protoTuple_ = null;
+            break;
+          } else if (b == -1) {
+            // hit end of file
+            break;
+          } else {
+            buffer_.write(b);
+          }
+        }
         readField();
         t =  tupleFactory_.newTupleNoCopy(protoTuple_);
         protoTuple_ = null;
-        break;
-      } else if (b == -1) {
-        // hit end of file
-        break;
-      } else {
-        buffer_.write(b);
       }
+    } catch (InterruptedException e) {
+      int errCode = 6018;
+      String errMsg = "Error while reading input";
+      throw new ExecException(errMsg, errCode,
+          PigException.REMOTE_ENVIRONMENT, e);
     }
 
     if (t != null) {
@@ -88,28 +113,9 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoad
     return t;
   }
 
-  /**
-   * For SamplableLoader, return the stream position.
-   */
-  public long getPosition() throws IOException {
-    return is_.getPosition();
-  }
 
-  /**
-   * For SamplableLoader.  Skip almost all the way, see if we're at the end, then skip the last byte.
-   */
-  public long skip(long n) throws IOException {
-    long skipped = is_.skip(n - 1);
-    prevByte_ = (byte)is_.read();
-    if(prevByte_ == -1) // End of stream.
-      return skipped;
-    else
-      return skipped + 1;
-  }
 
-  /**
-   * For SamplableLoader, return a tuple at the given position.
-   */
+
   public Tuple getSampledTuple() throws IOException {
     if(prevByte_ == null || prevByte_ == recordDel_) {
       // prevByte = null when this is called for the first time, in that case bindTo would have already
@@ -165,4 +171,10 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc implements SamplableLoad
     }
     return false;
   }
+
+  @Override
+  public InputFormat getInputFormat() {
+    return new LzoTextInputFormat();
+  }
+
 }

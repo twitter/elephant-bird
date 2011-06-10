@@ -15,6 +15,8 @@ import com.google.protobuf.DynamicMessage;
 import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
 import com.twitter.data.proto.tutorial.thrift.PhoneType;
 import com.twitter.elephantbird.examples.proto.ThriftFixtures;
+import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.util.ThriftToProto;
 
 public class TestThriftToProto {
 

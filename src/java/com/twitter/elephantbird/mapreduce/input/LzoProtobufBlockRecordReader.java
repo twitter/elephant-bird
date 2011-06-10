@@ -1,11 +1,12 @@
 package com.twitter.elephantbird.mapreduce.input;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A reader for LZO-encoded protobuf blocks, generally written by

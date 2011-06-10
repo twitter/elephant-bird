@@ -1,5 +1,9 @@
 # Elephant Bird #
 
+### Version 2.0.0 ###
+
+NO TICKET. Upgrade Pig compatibility to 0.8
+
 ### Version 1.2.6 ###
 
 ISSUE 50. Add dynamic Thrift to Proto conversion (dvryaboy)

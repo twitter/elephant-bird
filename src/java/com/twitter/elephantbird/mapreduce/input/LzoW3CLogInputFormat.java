@@ -1,7 +1,12 @@
 package com.twitter.elephantbird.mapreduce.input;
 
+import java.io.IOException;
+
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * An input format for LZO-encoded W3C-style log files.  The W3C style has lines that read
@@ -16,22 +21,33 @@ import org.apache.hadoop.io.MapWritable;
  * and override createRecordReader to return a LzoW3CLogReaderReader-derived object.
  */
 
-public abstract class LzoW3CLogInputFormat extends LzoInputFormat<LongWritable, MapWritable> {
-  /**
-   * A placeholder class to remind you to override createRecordReader with one that returns your
-   * LzoW3CLogRecordReader-derived class.  All that class has to do is override the
-   * getFieldDefinitionFile method; an inline example is below.
-   */
-  /*
+public class LzoW3CLogInputFormat extends LzoInputFormat<LongWritable, MapWritable> {
+
   @Override
-  public RecordReader<LongWritable, MapWritable> createRecordReader(InputSplit split,
-      TaskAttemptContext taskAttempt) throws IOException, InterruptedException {
-    return new LzoW3CLogRecordReader() {
+  public RecordReader<LongWritable, MapWritable> createRecordReader(InputSplit arg0,
+      TaskAttemptContext arg1) throws IOException, InterruptedException {
+    throw new IllegalArgumentException("LzoW3CLogInputFormat must be initialized by calling newInstance(fieldFile)");
+  }
+
+  /**
+   * Use this method to create valid instances of LzoW3CLogInputFormat
+   * @param fieldDefinitionFile path to file in HDFS that contains the CRC hash to column mappings.
+   * @return
+   */
+  public static LzoW3CLogInputFormat newInstance(final String fieldDefinitionFile) {
+    return new LzoW3CLogInputFormat() {
       @Override
-      protected String getFieldDefinitionFile() {
-        return "/path/to/my/w3c/field/definition/file";
+      public RecordReader<LongWritable, MapWritable> createRecordReader(InputSplit split,
+          TaskAttemptContext context) throws IOException, InterruptedException {
+        RecordReader<LongWritable, MapWritable> reader = new LzoW3CLogRecordReader() {
+          @Override
+          protected String getFieldDefinitionFile() {
+            return fieldDefinitionFile;
+          }
+        };
+        reader.initialize(split, context);
+        return reader;
       }
     };
   }
-  */
 }

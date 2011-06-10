@@ -2,16 +2,20 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
-import org.apache.pig.ExecType;
-import org.apache.pig.backend.datastorage.DataStorage;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.pig.Expression;
+import org.apache.pig.LoadMetadata;
+import org.apache.pig.PigException;
+import org.apache.pig.ResourceSchema;
+import org.apache.pig.ResourceStatistics;
+import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.schema.Schema;
-import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
+import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
@@ -19,22 +23,30 @@ import com.twitter.elephantbird.pig.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
-
-public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFunc {
+/**
+ * Loader for LZO-compressed files written using the ProtobufBlockInputFormat<br>
+ * Initialize with a String argument that represents the full classpath of the protocol buffer class to be loaded.<br>
+ * The no-arg constructor will not work and is only there for internal Pig reasons.
+ * @param <M>
+ */
+public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFunc implements LoadMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufBlockPigLoader.class);
 
-  private ProtobufBlockReader<M> reader_ = null;
-  private ProtobufWritable<M> value_ = null;
   private TypeRef<M> typeRef_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
+  private ProtobufWritable<M> value_;
+  protected enum LzoProtobufBlockPigLoaderCounters { ProtobufsRead }
 
-  private Pair<String, String> protobufsRead;
-  private Pair<String, String> protobufErrors;
-
+  /**
+   * Default constructor. Do not use for actual loading.
+   */
   public LzoProtobufBlockPigLoader() {
-    LOG.info("LzoProtobufBlockLoader zero-parameter creation");
   }
 
+  /**
+   *
+   * @param protoClassName full classpath to the generated Protocol Buffer to be loaded.
+   */
   public LzoProtobufBlockPigLoader(String protoClassName) {
     TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     setTypeRef(typeRef);
@@ -49,56 +61,70 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
     value_ = new ProtobufWritable<M>(typeRef_);
-    String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
-    protobufsRead = new Pair<String, String>(group, "Protobufs Read");
-    protobufErrors = new Pair<String, String>(group, "Errors");
   }
-
-  @Override
-  public void postBind() throws IOException {
-    reader_ = new ProtobufBlockReader<M>(is_, typeRef_);
-  }
-
-  @Override
-  public void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
-    // We want to explicitly not do any special syncing here, because the reader_
-    // handles this automatically.
-  }
-
-  @Override
-  protected boolean verifyStream() throws IOException {
-    return is_ != null;
-  }
-
 
   /**
    * Return every non-null line as a single-element tuple to Pig.
    */
+  @SuppressWarnings("unchecked")
+  @Override
   public Tuple getNext() throws IOException {
-    if (!verifyStream()) {
+    if (reader_ == null) {
       return null;
     }
 
-    // If we are past the end of the file split, tell the reader not to read any more new blocks.
-    // Then continue reading until the last of the reader's already-parsed values are used up.
-    // The next split will start at the next sync point and no records will be missed.
-    if (is_.getPosition() > end_) {
-      reader_.markNoMoreNewBlocks();
-    }
-
     Tuple t = null;
-    if (reader_.readProtobuf(value_)) {
-      if (value_.get() == null) {
-        incrCounter(protobufErrors, 1);
+    try {
+      while ( reader_.nextKeyValue()) {
+        value_ = (ProtobufWritable<M>) reader_.getCurrentValue();
+        t = new ProtobufTuple(value_.get());
+        incrCounter(LzoProtobufBlockPigLoaderCounters.ProtobufsRead, 1L);
+        return t;
       }
-      t = new ProtobufTuple(value_.get());
-      incrCounter(protobufsRead, 1L);
+    } catch (InterruptedException e) {
+      int errCode = 6018;
+      String errMsg = "Error while reading input";
+      throw new ExecException(errMsg, errCode,
+          PigException.REMOTE_ENVIRONMENT, e);
     }
     return t;
   }
 
+  /**
+   * NOT IMPLEMENTED
+   */
   @Override
-  public Schema determineSchema(String filename, ExecType execType, DataStorage store) throws IOException {
-    return protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass()));
+  public String[] getPartitionKeys(String location, Job job) throws IOException {
+    return null;
+  }
+
+  @Override
+  public ResourceSchema getSchema(String location, Job job) throws IOException {
+    return new ResourceSchema(protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass())));
+  }
+
+  /**
+   * NOT IMPLEMENTED
+   */
+  @Override
+  public ResourceStatistics getStatistics(String location, Job job) throws IOException {
+    return null;
+  }
+
+  /**
+   * NOT IMPLEMENTED
+   */
+  @Override
+  public void setPartitionFilter(Expression expr) throws IOException {
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public InputFormat getInputFormat() throws IOException {
+    if (typeRef_ == null) {
+      LOG.error("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
+      throw new IllegalArgumentException("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
+    }
+    return LzoProtobufBlockInputFormat.newInstance(typeRef_);
   }
 }

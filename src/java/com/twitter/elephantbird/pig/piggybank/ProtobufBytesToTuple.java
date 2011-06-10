@@ -9,9 +9,9 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
-import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -50,7 +50,9 @@ public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
 
   @Override
   public Tuple exec(Tuple input) throws IOException {
-    if (input == null || input.size() < 1) return null;
+    if (input == null || input.size() < 1) {
+      return null;
+    }
     try {
       DataByteArray bytes = (DataByteArray) input.get(0);
       M value_ = protoConverter_.fromBytes(bytes.get());
