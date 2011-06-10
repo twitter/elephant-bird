@@ -35,11 +35,13 @@ public class LzoTextLoader extends LzoBaseLoadFunc {
 	  }
 	  Tuple t = null;
 	  try {
-		  Object line = reader_.getCurrentValue();
-		  if (line != null) {
-			  incrCounter(LzoTextLoaderCounters.LinesRead, 1L);
-			  t = tupleFactory_.newTuple(new DataByteArray(line.toString().getBytes()));
-		  }
+	    if ( reader_.nextKeyValue()) {
+	      Object line = reader_.getCurrentValue();
+	      if (line != null) {
+	        incrCounter(LzoTextLoaderCounters.LinesRead, 1L);
+	        t = tupleFactory_.newTuple(new DataByteArray(line.toString().getBytes()));
+	      }
+	    }
 	  } catch (InterruptedException e) {
 		  int errCode = 6018;
 		  String errMsg = "Error while reading input";
