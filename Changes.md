@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 1.2.7 ###
+
 ### Version 1.2.6 ###
 
 ISSUE 50. Add dynamic Thrift to Proto conversion (dvryaboy)
