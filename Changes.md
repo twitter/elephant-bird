@@ -6,6 +6,10 @@ NO TICKET. Upgrade Pig compatibility to 0.8
 
 ### Version 1.2.6 ###
 
+ISSUE 50. Add dynamic Thrift to Proto conversion (dvryaboy)
+
+ISSUE 49. Add "deprecated" lzo b64 input/output support for Thrift (sigmoids via rangadi)
+
 ### Version 1.2.5 ###
 
 ISSUE 46. ThriftToPig : don't wrap STRUCT in another tuple for schema. (rangadi)

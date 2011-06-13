@@ -128,10 +128,9 @@ Bug fixes, features, and documentation improvements are welcome!  Please fork an
 
 ### Contributors ###
 
+Major contributors are listed below. Lots of others have helped too, thanks to all of them!
+See git logs for credits.
+
 * Kevin Weil ([@kevinweil](http://twitter.com/kevinweil))
 * Dmitriy Ryaboy ([@squarecog](http://twitter.com/squarecog))
-* Chuang Liu ([@chuangl4](http://twitter.com/chuangl4))
-* Florian Liebert ([@floliebert](http://twitter.com/floliebert))
-* Ning Liang ([@ningliang](http://twitter.com/ningliang))
-* Johan Oskarsson ([@skr](http://twitter.com/skr))
 * Raghu Angadi ([@raghuangadi](http://twitter.com/raghuangadi))

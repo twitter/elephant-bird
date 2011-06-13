@@ -32,7 +32,9 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
   protected enum LzoJsonLoaderCounters { LinesRead, LinesJsonDecoded, LinesParseError, LinesParseErrorBadNumber }
 
-  public LzoJsonLoader() {}
+  public LzoJsonLoader() {
+    LOG.debug("LzoJsonLoader creation");
+  }
 
   /**
    * Return every non-null line as a single-element tuple to Pig.
@@ -85,7 +87,7 @@ public class LzoJsonLoader extends LzoBaseLoadFunc {
   @Override
   public void setLocation(String location, Job job)
   throws IOException {
-	  FileInputFormat.setInputPaths(job, location);
+    FileInputFormat.setInputPaths(job, location);
   }
 
   @Override

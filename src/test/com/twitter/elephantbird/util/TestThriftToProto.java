@@ -4,12 +4,16 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
-import org.apache.thrift.TException;
 import org.apache.thrift.Fixtures;
+import org.apache.thrift.TException;
 import org.junit.Test;
 
 import thrift.test.OneOfEach;
 
+import com.google.protobuf.Descriptors.DescriptorValidationException;
+import com.google.protobuf.DynamicMessage;
+import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
+import com.twitter.data.proto.tutorial.thrift.PhoneType;
 import com.twitter.elephantbird.examples.proto.ThriftFixtures;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.ThriftToProto;
@@ -36,4 +40,13 @@ public class TestThriftToProto {
     assertEquals(new String(ooe.getBase64(), "UTF-8"), proto.getBase64().toStringUtf8());
   }
 
+  @Test
+  public void testThriftToDynamicProto() throws DescriptorValidationException {
+    PhoneNumber thriftPhone = new PhoneNumber("123-34-5467");
+    thriftPhone.type = PhoneType.HOME;
+    ThriftToDynamicProto<PhoneNumber> thriftToProto = new ThriftToDynamicProto<PhoneNumber>(PhoneNumber.class);
+    DynamicMessage msg = thriftToProto.convert(thriftPhone);
+    assertEquals(thriftPhone.number, Protobufs.getFieldByName(msg, "number"));
+    assertEquals(thriftPhone.type.toString(), Protobufs.getFieldByName(msg, "type"));
+  }
 }
