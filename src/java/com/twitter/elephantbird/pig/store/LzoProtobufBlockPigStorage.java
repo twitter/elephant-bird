@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
 import com.google.protobuf.Message.Builder;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoProtobufBlockOutputFormat;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.util.Protobufs;
@@ -28,7 +29,6 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufBlockPigStorage.class);
 
   private TypeRef<M> typeRef_;
-  private final PigToProtobuf pigToProto_ = new PigToProtobuf();
 
   public LzoProtobufBlockPigStorage() {}
 
@@ -50,7 +50,8 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
     }
     Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
     try {
-      writer.write(NullWritable.get(), pigToProto_.tupleToMessage(builder, f));
+      writer.write(NullWritable.get(),
+          new ProtobufWritable<M>((M) PigToProtobuf.tupleToMessage(builder, f), typeRef_));
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();

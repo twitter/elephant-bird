@@ -2,7 +2,6 @@ package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
 import com.google.protobuf.Message.Builder;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoProtobufB64LineOutputFormat;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.util.Protobufs;
@@ -29,8 +29,6 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LinePigStorage.class);
 
   private TypeRef<M> typeRef_;
-  private final Base64 base64_ = new Base64();
-  private final PigToProtobuf pigToProto_ = new PigToProtobuf();
 
   public LzoProtobufB64LinePigStorage() {}
 
@@ -53,7 +51,7 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
     Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
     try {
       writer.write(NullWritable.get(),
-          PigToProtobuf.tupleToMessage(builder, f));
+          new ProtobufWritable<M>((M) PigToProtobuf.tupleToMessage(builder, f), typeRef_));
     } catch (InterruptedException e) {
       throw new IOException(e);
     }

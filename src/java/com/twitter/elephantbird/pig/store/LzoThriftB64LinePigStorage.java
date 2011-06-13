@@ -10,8 +10,8 @@ import org.apache.thrift.TBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoThriftB64LineOutputFormat;
-import com.twitter.elephantbird.pig.store.LzoBaseStoreFunc;
 import com.twitter.elephantbird.pig.util.PigToThrift;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.util.TypeRef;
@@ -41,7 +41,7 @@ public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseSt
     if (f == null) return;
     try {
       writer.write(NullWritable.get(),
-          pigToThrift.getThriftObject(f));
+          new ThriftWritable<T>(pigToThrift.getThriftObject(f), typeRef));
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
