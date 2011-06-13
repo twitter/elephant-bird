@@ -14,10 +14,12 @@ public class ThriftUtils {
     String name = CLASS_CONF_PREFIX + genericClass.getName();
     String existingThrift = jobConf.get(name);
     if (existingThrift != null) {
-      if (existingThrift != thriftClass.getName()) {
+      if (!existingThrift.equals(thriftClass.getName())) {
         throw new RuntimeException(
-            "Register different thriftClass for the same format class: "
-            + genericClass.getName());
+            "Already registered a different thriftClass for "
+            + genericClass.getName()
+            + ". old: " + existingThrift
+            + " new: " + thriftClass);
       }
     } else {
       jobConf.set(name, thriftClass.getName());
