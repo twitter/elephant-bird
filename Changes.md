@@ -1,5 +1,11 @@
 # Elephant Bird #
 
+### Version 2.0.1 ###
+
+ISSUE 51. Fix a regression in ISSUE-49 for Thrift loaders/inputformats.
+
+ISSUE 51. Add HBaseLoader for backward compatibility (rangadi).
+
 ### Version 2.0.0 ###
 
 NO TICKET. Upgrade Pig compatibility to 0.8
