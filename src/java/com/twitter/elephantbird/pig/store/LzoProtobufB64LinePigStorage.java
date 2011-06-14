@@ -31,6 +31,8 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
   private TypeRef<M> typeRef_;
   private ProtobufWritable<M> writable;
 
+  // TODO: should remove the default constructor. mostly not used anymore.
+  // Same for other Protobuf loaders, input and output formats.
   public LzoProtobufB64LinePigStorage() {}
 
   public LzoProtobufB64LinePigStorage(String protoClassName) {
@@ -59,14 +61,13 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
     }
   }
 
-  @SuppressWarnings("rawtypes")
   @Override
-  public OutputFormat getOutputFormat() throws IOException {
+  public OutputFormat<NullWritable, ProtobufWritable<M>> getOutputFormat() throws IOException {
     if (typeRef_ == null) {
       LOG.error("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
     }
-    return new LzoProtobufB64LineOutputFormat<M>();
+    return new LzoProtobufB64LineOutputFormat<M>(typeRef_);
   }
 
   @Override

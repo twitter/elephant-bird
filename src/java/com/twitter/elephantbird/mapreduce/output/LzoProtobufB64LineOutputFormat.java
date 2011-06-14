@@ -30,6 +30,10 @@ public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutput
 
   public LzoProtobufB64LineOutputFormat() {}
 
+  public LzoProtobufB64LineOutputFormat(TypeRef<M> typeRef) {
+    typeRef_ = typeRef;
+  }
+
   /**
    * Returns {@link LzoProtobufBlockOutputFormat} class.
    * Sets an internal configuration in jobConf so that remote Tasks
