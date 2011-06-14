@@ -10,6 +10,7 @@ import org.apache.thrift.TBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoThriftBlockOutputFormat;
 import com.twitter.elephantbird.pig.util.PigToThrift;
 import com.twitter.elephantbird.pig.util.PigUtil;
@@ -26,10 +27,12 @@ public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStor
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseStoreFunc.class);
 
   private TypeRef<T> typeRef;
+  private ThriftWritable<T> writable;
   private PigToThrift<T> pigToThrift;
 
   public LzoThriftBlockPigStorage(String thriftClassName) {
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
+    writable = ThriftWritable.newInstance(typeRef.getRawClass());
     pigToThrift = PigToThrift.newInstance(typeRef);
     setStorageSpec(getClass(), new String[]{thriftClassName});
   }
@@ -39,8 +42,8 @@ public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStor
   public void putNext(Tuple f) throws IOException {
     if (f == null) return;
     try {
-      writer.write(NullWritable.get(),
-          pigToThrift.getThriftObject(f));
+      writable.set(pigToThrift.getThriftObject(f));
+      writer.write(NullWritable.get(), writable);
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
