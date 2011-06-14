@@ -24,7 +24,13 @@ public class LzoThriftBlockInputFormat<M extends TBase<?, ?>>
                 extends LzoInputFormat<LongWritable, ThriftWritable<M>> {
   // implementation is exactly same as LzoThriftB64LineINputFormat
 
+  private TypeRef<M> typeRef_;
+
   public LzoThriftBlockInputFormat() {}
+
+  public LzoThriftBlockInputFormat(TypeRef<M> typeRef) {
+    typeRef_ = typeRef;
+  }
 
   /**
    * Returns {@link LzoThriftBlockInputFormat} class for setting up a job.
@@ -41,9 +47,10 @@ public class LzoThriftBlockInputFormat<M extends TBase<?, ?>>
   @Override
   public RecordReader<LongWritable, ThriftWritable<M>> createRecordReader(InputSplit split,
       TaskAttemptContext taskAttempt) throws IOException, InterruptedException {
-
-    TypeRef<M> typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftBlockInputFormat.class);
-    return new LzoThriftBlockRecordReader<M>(typeRef);
+    if (typeRef_ == null) {
+      typeRef_ = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftBlockInputFormat.class);
+    }
+    return new LzoThriftBlockRecordReader<M>(typeRef_);
   }
 
 }

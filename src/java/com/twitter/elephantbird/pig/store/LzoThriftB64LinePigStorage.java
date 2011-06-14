@@ -10,8 +10,8 @@ import org.apache.thrift.TBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoThriftB64LineOutputFormat;
-import com.twitter.elephantbird.pig.store.LzoBaseStoreFunc;
 import com.twitter.elephantbird.pig.util.PigToThrift;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.util.TypeRef;
@@ -27,10 +27,12 @@ public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseSt
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseStoreFunc.class);
 
   private TypeRef<T> typeRef;
+  private ThriftWritable<T> writable;
   private PigToThrift<T> pigToThrift;
 
   public LzoThriftB64LinePigStorage(String thriftClassName) {
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
+    writable = ThriftWritable.newInstance(typeRef.getRawClass());
     pigToThrift = PigToThrift.newInstance(typeRef);
     setStorageSpec(getClass(), new String[]{thriftClassName});
   }
@@ -40,25 +42,15 @@ public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseSt
   public void putNext(Tuple f) throws IOException {
     if (f == null) return;
     try {
-      writer.write(NullWritable.get(),
-          pigToThrift.getThriftObject(f));
+      writable.set(pigToThrift.getThriftObject(f));
+      writer.write(NullWritable.get(), writable);
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
   }
 
   @Override
-  public OutputFormat getOutputFormat() throws IOException {
-    if (typeRef == null) {
-      LOG.error("Thrift class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
-      throw new IllegalArgumentException("Thrift class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
-    }
-    return new LzoThriftB64LineOutputFormat<T>();
-  }
-
-  @Override
-  public void setStoreLocation(String location, Job job) throws IOException {
-    super.setStoreLocation(location, job);
-    LzoThriftB64LineOutputFormat.getOutputFormatClass(typeRef.getRawClass(), job.getConfiguration());
+  public OutputFormat<NullWritable, ThriftWritable<T>> getOutputFormat() throws IOException {
+    return new LzoThriftB64LineOutputFormat<T>(typeRef);
   }
 }

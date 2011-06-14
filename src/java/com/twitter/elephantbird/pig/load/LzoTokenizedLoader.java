@@ -44,7 +44,6 @@ public class LzoTokenizedLoader extends LzoBaseLoadFunc {
       throw new IllegalArgumentException();
     }
     // Store the constructor args so that individual slicers can recreate them.
-    setLoaderSpec(getClass(), new String[] { delimiter });
     fieldDel_ = PigTokenHelper.evaluateDelimiter(delimiter);
   }
 

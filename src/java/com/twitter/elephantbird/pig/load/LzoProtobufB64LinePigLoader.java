@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.Expression;
@@ -50,7 +51,6 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
   public LzoProtobufB64LinePigLoader(String protoClassName) {
     TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     setTypeRef(typeRef);
-    setLoaderSpec(getClass(), new String[]{protoClassName});
   }
 
   /**
@@ -128,14 +128,12 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
 
   }
 
-  @SuppressWarnings("rawtypes")
   @Override
-  public InputFormat getInputFormat() throws IOException {
+  public InputFormat<LongWritable, ProtobufWritable<M>> getInputFormat() throws IOException {
     if (typeRef_ == null) {
       LOG.error("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
     }
-    return LzoProtobufB64LineInputFormat.newInstance(typeRef_);
+    return new LzoProtobufB64LineInputFormat<M>(typeRef_);
   }
-
 }

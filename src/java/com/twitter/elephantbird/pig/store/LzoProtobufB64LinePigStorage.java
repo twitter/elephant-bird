@@ -2,7 +2,6 @@ package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
 import com.google.protobuf.Message.Builder;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoProtobufB64LineOutputFormat;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.util.Protobufs;
@@ -29,9 +29,10 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LinePigStorage.class);
 
   private TypeRef<M> typeRef_;
-  private final Base64 base64_ = new Base64();
-  private final PigToProtobuf pigToProto_ = new PigToProtobuf();
+  private ProtobufWritable<M> writable;
 
+  // TODO: should remove the default constructor. mostly not used anymore.
+  // Same for other Protobuf loaders, input and output formats.
   public LzoProtobufB64LinePigStorage() {}
 
   public LzoProtobufB64LinePigStorage(String protoClassName) {
@@ -42,6 +43,7 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
 
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
+    writable = ProtobufWritable.newInstance(typeRef.getRawClass());
   }
 
   @Override
@@ -52,21 +54,20 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
     }
     Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
     try {
-      writer.write(NullWritable.get(),
-          PigToProtobuf.tupleToMessage(builder, f));
+      writable.set((M) PigToProtobuf.tupleToMessage(builder, f));
+      writer.write(NullWritable.get(), writable);
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
   }
 
-  @SuppressWarnings("rawtypes")
   @Override
-  public OutputFormat getOutputFormat() throws IOException {
+  public OutputFormat<NullWritable, ProtobufWritable<M>> getOutputFormat() throws IOException {
     if (typeRef_ == null) {
       LOG.error("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
     }
-    return new LzoProtobufB64LineOutputFormat<M>();
+    return new LzoProtobufB64LineOutputFormat<M>(typeRef_);
   }
 
   @Override

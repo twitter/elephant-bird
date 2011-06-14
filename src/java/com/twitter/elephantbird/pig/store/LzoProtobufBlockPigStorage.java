@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
 import com.google.protobuf.Message.Builder;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoProtobufBlockOutputFormat;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.util.Protobufs;
@@ -28,7 +29,7 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufBlockPigStorage.class);
 
   private TypeRef<M> typeRef_;
-  private final PigToProtobuf pigToProto_ = new PigToProtobuf();
+  private ProtobufWritable<M> writable;
 
   public LzoProtobufBlockPigStorage() {}
 
@@ -40,6 +41,7 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
 
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
+    writable = ProtobufWritable.newInstance(typeRef_.getRawClass());
   }
 
   @SuppressWarnings("unchecked")
@@ -50,21 +52,21 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
     }
     Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
     try {
-      writer.write(NullWritable.get(), pigToProto_.tupleToMessage(builder, f));
+      writable.set((M) PigToProtobuf.tupleToMessage(builder, f));
+      writer.write(NullWritable.get(), writable);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
 
-  @SuppressWarnings("rawtypes")
   @Override
-  public OutputFormat getOutputFormat() throws IOException {
+  public OutputFormat<NullWritable, ProtobufWritable<M>> getOutputFormat() throws IOException {
     if (typeRef_ == null) {
       LOG.error("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
     }
-    return LzoProtobufBlockOutputFormat.newInstance(typeRef_);
+    return new LzoProtobufBlockOutputFormat<M>(typeRef_);
   }
 
 }

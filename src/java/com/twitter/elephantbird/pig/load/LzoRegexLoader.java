@@ -27,9 +27,6 @@ public class LzoRegexLoader extends LzoBaseRegexLoader {
   public LzoRegexLoader(String pattern) {
     LOG.info("LzoRegexLoader with regex = " + pattern);
 
-    // Store the constructor args so that individual slicers can recreate them.
-    setLoaderSpec(getClass(), new String[] { pattern } );
-
     pattern = pattern.replace("\\\\","\\");
     pattern_ = Pattern.compile(pattern);
   }
