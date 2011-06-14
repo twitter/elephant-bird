@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.0.3 ###
+
 ### Version 2.0.2 ###
 
 ISSUE 54. Fix Thrift and Protobuf Input/Output format initialization in Pig (rangadi)
