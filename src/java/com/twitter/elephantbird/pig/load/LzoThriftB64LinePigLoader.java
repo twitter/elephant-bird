@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.Expression;
@@ -17,6 +18,7 @@ import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
+
 import com.twitter.elephantbird.util.TypeRef;
 
 public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc implements LoadMetadata {
@@ -28,8 +30,6 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
   public LzoThriftB64LinePigLoader(String thriftClassName) {
     typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
-
-    setLoaderSpec(getClass(), new String[]{thriftClassName});
   }
 
   /**
@@ -61,21 +61,8 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
   }
 
   @Override
-  public InputFormat getInputFormat() throws IOException {
-      try {
-        return LzoThriftB64LineInputFormat.getInputFormatClass(typeRef_.getRawClass(), jobConf).newInstance();
-      } catch (InstantiationException e) {
-        throw new IOException(e);
-      } catch (IllegalAccessException e) {
-        throw new IOException(e);
-      }
-  }
-
-  @Override
-  public void setLocation(String location, Job job) throws IOException {
-    super.setLocation(location, job);
-    // getInputFormat needs a chance to modify the jobConf
-    getInputFormat();
+  public InputFormat<LongWritable, ThriftWritable<M>> getInputFormat() throws IOException {
+    return new LzoThriftB64LineInputFormat<M>(typeRef_);
   }
 
   /**

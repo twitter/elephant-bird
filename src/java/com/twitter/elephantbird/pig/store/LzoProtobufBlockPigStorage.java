@@ -60,14 +60,13 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
     }
   }
 
-  @SuppressWarnings("rawtypes")
   @Override
-  public OutputFormat getOutputFormat() throws IOException {
+  public OutputFormat<NullWritable, ProtobufWritable<M>> getOutputFormat() throws IOException {
     if (typeRef_ == null) {
       LOG.error("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
     }
-    return LzoProtobufBlockOutputFormat.newInstance(typeRef_);
+    return new LzoProtobufBlockOutputFormat<M>(typeRef_);
   }
 
 }

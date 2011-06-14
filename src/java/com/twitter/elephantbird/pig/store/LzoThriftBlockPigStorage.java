@@ -51,16 +51,6 @@ public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStor
 
   @Override
   public OutputFormat getOutputFormat() throws IOException {
-    if (typeRef == null) {
-      LOG.error("Thrift class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
-      throw new IllegalArgumentException("Thrift class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
-    }
-    return new LzoThriftBlockOutputFormat<T>();
-  }
-
-  @Override
-  public void setStoreLocation(String location, Job job) throws IOException {
-    super.setStoreLocation(location, job);
-    LzoThriftBlockOutputFormat.getOutputFormatClass(typeRef.getRawClass(), job.getConfiguration());
+    return new LzoThriftBlockOutputFormat<T>(typeRef);
   }
 }
