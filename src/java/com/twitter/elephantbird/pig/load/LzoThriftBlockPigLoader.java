@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.Expression;
@@ -9,7 +10,6 @@ import org.apache.pig.LoadMetadata;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.util.Pair;
 import org.apache.thrift.TBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +30,6 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
   public LzoThriftBlockPigLoader(String thriftClassName) {
     typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
-
-    setLoaderSpec(getClass(), new String[]{thriftClassName});
   }
 
   /**
@@ -62,16 +60,9 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
     return new ResourceSchema(ThriftToPig.toSchema(typeRef_.getRawClass()));
   }
 
-  @SuppressWarnings("rawtypes")
   @Override
-  public InputFormat getInputFormat() throws IOException {
-      try {
-        return LzoThriftBlockInputFormat.getInputFormatClass(typeRef_.getRawClass(), jobConf).newInstance();
-      } catch (InstantiationException e) {
-        throw new IOException(e);
-      } catch (IllegalAccessException e) {
-        throw new IOException(e);
-      }
+  public InputFormat<LongWritable, ThriftWritable<M>> getInputFormat() throws IOException {
+    return new LzoThriftBlockInputFormat<M>(typeRef_);
   }
 
   /**

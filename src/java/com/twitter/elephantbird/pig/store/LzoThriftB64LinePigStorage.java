@@ -50,17 +50,7 @@ public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseSt
   }
 
   @Override
-  public OutputFormat getOutputFormat() throws IOException {
-    if (typeRef == null) {
-      LOG.error("Thrift class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
-      throw new IllegalArgumentException("Thrift class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
-    }
-    return new LzoThriftB64LineOutputFormat<T>();
-  }
-
-  @Override
-  public void setStoreLocation(String location, Job job) throws IOException {
-    super.setStoreLocation(location, job);
-    LzoThriftB64LineOutputFormat.getOutputFormatClass(typeRef.getRawClass(), job.getConfiguration());
+  public OutputFormat<NullWritable, ThriftWritable<T>> getOutputFormat() throws IOException {
+    return new LzoThriftB64LineOutputFormat<T>(typeRef);
   }
 }
