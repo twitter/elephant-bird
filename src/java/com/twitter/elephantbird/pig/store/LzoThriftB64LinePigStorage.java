@@ -24,7 +24,6 @@ import com.twitter.elephantbird.util.TypeRef;
  * so something more flexible will be possible)
  */
 public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseStoreFunc {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoBaseStoreFunc.class);
 
   private TypeRef<T> typeRef;
   private ThriftWritable<T> writable;
@@ -34,7 +33,6 @@ public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseSt
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     writable = ThriftWritable.newInstance(typeRef.getRawClass());
     pigToThrift = PigToThrift.newInstance(typeRef);
-    setStorageSpec(getClass(), new String[]{thriftClassName});
   }
 
   @Override

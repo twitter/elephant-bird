@@ -27,8 +27,6 @@ import com.twitter.elephantbird.pig.util.PigTokenHelper;
 public class LzoTokenizedStorage extends LzoBaseStoreFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoTokenizedStorage.class);
 
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-
   private final char recordDel_ = PigTokenHelper.DEFAULT_RECORD_DELIMITER;
   private byte fieldDel_ = PigTokenHelper.DEFAULT_FIELD_DELIMITER;
 

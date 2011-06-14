@@ -5,14 +5,8 @@ import java.io.IOException;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.pig.Expression;
-import org.apache.pig.LoadMetadata;
-import org.apache.pig.PigException;
 import org.apache.pig.ResourceSchema;
-import org.apache.pig.ResourceStatistics;
-import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,13 +26,11 @@ import com.twitter.elephantbird.util.TypeRef;
  * Initialize with a String argument that represents the full classpath of the protocol buffer class to be loaded.<br>
  * The no-arg constructor will not work and is only there for internal Pig reasons.
  */
-public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadFunc implements LoadMetadata {
+public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LinePigLoader.class);
 
   private TypeRef<M> typeRef_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
-
-  private Pair<String, String> protobufsRead;
 
   public LzoProtobufB64LinePigLoader() {
     LOG.info("LzoProtobufB64LineLoader zero-parameter creation");
@@ -60,8 +52,6 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
    */
   public void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
-    String group = "LzoB64Lines of " + typeRef_.getRawClass().getName();
-    protobufsRead = new Pair<String, String>(group, "Protobufs Read");
   }
 
   /**
@@ -69,62 +59,15 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
    */
   @Override
   public Tuple getNext() throws IOException {
-    if (reader_ == null) {
-      return null;
-    }
+    M value = getNextBinaryValue(typeRef_);
 
-    Tuple t = null;
-    try {
-    	while(reader_.nextKeyValue()){
-    	  @SuppressWarnings("unchecked")
-        M protoValue = ((ProtobufWritable<M>) reader_.getCurrentValue()).get();
-    	  if (protoValue != null) {
-    	    t = new ProtobufTuple(protoValue);
-    	    incrCounter(protobufsRead, 1L);
-    	    break;
-    	  }
-    	}
-    } catch (InterruptedException e) {
-		  int errCode = 6018;
-		  String errMsg = "Error while reading input";
-		  throw new ExecException(errMsg, errCode,
-				  PigException.REMOTE_ENVIRONMENT, e);
-	  }
-    return t;
-  }
-
-  /**
-   * NOT IMPLEMENTED
-   * @param arg0
-   * @param arg1
-   * @return
-   * @throws IOException
-   */
-  @Override
-  public String[] getPartitionKeys(String arg0, Job arg1) throws IOException {
-    // TODO Auto-generated method stub
-    return null;
+    return value != null ?
+        new ProtobufTuple(value) : null;
   }
 
   @Override
   public ResourceSchema getSchema(String filename, Job job) throws IOException {
     return new ResourceSchema(protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass())));
-
-  }
-
-  /** NOT IMPLEMENTED
-   *
-   */
-  @Override
-  public ResourceStatistics getStatistics(String arg0, Job arg1) throws IOException {
-    return null;
-  }
-
-  /**
-   * NOT IMPLEMENTED
-   */
-  @Override
-  public void setPartitionFilter(Expression arg0) throws IOException {
 
   }
 
