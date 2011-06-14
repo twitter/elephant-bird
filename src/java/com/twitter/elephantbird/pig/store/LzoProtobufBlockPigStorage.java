@@ -29,6 +29,7 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufBlockPigStorage.class);
 
   private TypeRef<M> typeRef_;
+  private ProtobufWritable<M> writable;
 
   public LzoProtobufBlockPigStorage() {}
 
@@ -40,6 +41,7 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
 
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
+    writable = ProtobufWritable.newInstance(typeRef_.getRawClass());
   }
 
   @SuppressWarnings("unchecked")
@@ -50,8 +52,8 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
     }
     Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
     try {
-      writer.write(NullWritable.get(),
-          new ProtobufWritable<M>((M) PigToProtobuf.tupleToMessage(builder, f), typeRef_));
+      writable.set((M) PigToProtobuf.tupleToMessage(builder, f));
+      writer.write(NullWritable.get(), writable);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
