@@ -1,5 +1,11 @@
 # Elephant Bird #
 
+### Version 2.0.2 ###
+
+ISSUE 54. Fix Thrift and Protobuf Input/Output format initialization in Pig (rangadi)
+
+ISSUE 52. Fix Thrift and Protobuf PigStorage (dvryaboy)
+
 ### Version 2.0.1 ###
 
 ISSUE 51. Fix a regression in ISSUE-49 for Thrift loaders/inputformats.
