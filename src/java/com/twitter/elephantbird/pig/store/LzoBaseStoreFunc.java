@@ -19,20 +19,9 @@ public abstract class LzoBaseStoreFunc extends StoreFunc {
   @SuppressWarnings("rawtypes")
   protected RecordWriter writer = null;
 
-  protected FuncSpec storeFuncSpec_;
-
   @Override
   public void prepareToWrite(@SuppressWarnings("rawtypes") RecordWriter writer) {
     this.writer = writer;
-  }
-
-  /**
-   * Set the storage spec so any arguments given in the script are tracked, to be reinstantiated by the mappers.
-   * @param clazz the class of the load function to use.
-   * @param args an array of strings that are fed to the class's constructor.
-   */
-  protected void setStorageSpec(Class <? extends LzoBaseStoreFunc> clazz, String[] args) {
-    storeFuncSpec_ = new FuncSpec(clazz.getName(), args);
   }
 
   @Override
