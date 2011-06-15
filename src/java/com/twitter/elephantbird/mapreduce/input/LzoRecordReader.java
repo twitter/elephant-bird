@@ -55,6 +55,8 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     final Path file = split.getPath();
     Configuration job = context.getConfiguration();
 
+    LOG.info("input split: " + file + " " + start_ + ":" + end_);
+
     FileSystem fs = file.getFileSystem(job);
     CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(job);
     final CompressionCodec codec = compressionCodecs.getCodec(file);
@@ -68,7 +70,6 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     // Creates input stream and also reads the file header.
     createInputReader(codec.createInputStream(fileIn_), job);
 
-    LOG.info("Seeking to split start at pos " + start_);
     if (start_ != 0) {
       fileIn_.seek(start_);
       skipToNextSyncPoint(false);

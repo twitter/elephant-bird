@@ -32,16 +32,25 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
   private final Map<Path, LzoIndex> indexes_ = new HashMap<Path, LzoIndex>();
 
-  private final PathFilter visibleLzoFilter = new PathFilter() {
-
+  private final PathFilter hiddenPathFilter = new PathFilter() {
+    // avoid hidden files and directories.
     @Override
     public boolean accept(Path path) {
       String name = path.getName();
       return !name.startsWith(".") &&
-      !name.startsWith("_") &&
-      name.endsWith(".lzo");
-    }};
+             !name.startsWith("_");
+    }
+  };
 
+  private final PathFilter visibleLzoFilter = new PathFilter() {
+    //applies to lzo files
+    @Override
+    public boolean accept(Path path) {
+      String name = path.getName();
+      return !name.startsWith(".") &&
+             !name.startsWith("_") &&
+             name.endsWith(".lzo");
+    }};
 
   @Override
   protected List<FileStatus> listStatus(JobContext job) throws IOException {
@@ -52,17 +61,11 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     Iterator<FileStatus> it = files.iterator();
     while (it.hasNext()) {
       FileStatus fileStatus = it.next();
-      Path file = fileStatus.getPath();
-      FileSystem fs = file.getFileSystem(job.getConfiguration());
-      if (recursive && fileStatus.isDir()) {
-        addInputPathRecursively(results, fs, file, visibleLzoFilter);
-      } else {
-        if (visibleLzoFilter.accept(file)) {
-          results.add(fileStatus);
-        }
-      }
+      FileSystem fs = fileStatus.getPath().getFileSystem(job.getConfiguration());
+      addInputPath(results, fs, fileStatus, recursive);
     }
 
+    LOG.debug("Total lzo input paths to process : " + results.size());
     // To help split the files at LZO boundaries, walk the list of lzo files and, if they
     // have an associated index file, save that for later.
     for (FileStatus result : results) {
@@ -75,25 +78,28 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
   //MAPREDUCE-1501
   /**
-   * Add files in the input path recursively into the results.
+   * Add lzo file(s). If recursive is set, traverses the directories.
    * @param result
    *          The List to store all files.
    * @param fs
    *          The FileSystem.
-   * @param path
+   * @param pathStat
    *          The input path.
-   * @param inputFilter
-   *          The input filter that can be used to filter files/dirs.
+   * @param recursive
+   *          Traverse in to directory
    * @throws IOException
    */
-  protected void addInputPathRecursively(List<FileStatus> result,
-      FileSystem fs, Path path, PathFilter inputFilter) throws IOException {
-    for(FileStatus stat: fs.listStatus(path, inputFilter)) {
-      if (stat.isDir()) {
-        addInputPathRecursively(result, fs, stat.getPath(), inputFilter);
-      } else {
-        result.add(stat);
+  protected void addInputPath(List<FileStatus> results, FileSystem fs,
+                 FileStatus pathStat, boolean recursive) throws IOException {
+    Path path = pathStat.getPath();
+    if (pathStat.isDir()) {
+      if (recursive) {
+        for(FileStatus stat: fs.listStatus(path, hiddenPathFilter)) {
+          addInputPath(results, fs, stat, recursive);
+        }
       }
+    } else if ( visibleLzoFilter.accept(path) ) {
+      results.add(pathStat);
     }
   }
 
