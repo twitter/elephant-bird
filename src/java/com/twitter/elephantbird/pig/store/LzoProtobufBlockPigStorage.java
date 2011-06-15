@@ -36,7 +36,6 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
   public LzoProtobufBlockPigStorage(String protoClassName) {
     TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
     setTypeRef(typeRef);
-    setStorageSpec(getClass(), new String[]{protoClassName});
   }
 
   protected void setTypeRef(TypeRef<M> typeRef) {

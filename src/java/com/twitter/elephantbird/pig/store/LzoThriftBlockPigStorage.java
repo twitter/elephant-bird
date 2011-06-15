@@ -3,7 +3,6 @@ package com.twitter.elephantbird.pig.store;
 import java.io.IOException;
 
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
@@ -24,7 +23,6 @@ import com.twitter.elephantbird.util.TypeRef;
  * so something more flexible will be possible)
  */
 public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStoreFunc {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoBaseStoreFunc.class);
 
   private TypeRef<T> typeRef;
   private ThriftWritable<T> writable;
@@ -34,7 +32,6 @@ public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStor
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     writable = ThriftWritable.newInstance(typeRef.getRawClass());
     pigToThrift = PigToThrift.newInstance(typeRef);
-    setStorageSpec(getClass(), new String[]{thriftClassName});
   }
 
   @Override
@@ -50,7 +47,7 @@ public class LzoThriftBlockPigStorage<T extends TBase<?, ?>> extends LzoBaseStor
   }
 
   @Override
-  public OutputFormat getOutputFormat() throws IOException {
+  public OutputFormat<NullWritable, ThriftWritable<T>> getOutputFormat() throws IOException {
     return new LzoThriftBlockOutputFormat<T>(typeRef);
   }
 }

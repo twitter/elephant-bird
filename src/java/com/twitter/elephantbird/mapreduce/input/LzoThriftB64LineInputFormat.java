@@ -46,7 +46,6 @@ public class LzoThriftB64LineInputFormat<M extends TBase<?, ?>>
   @Override
   public RecordReader<LongWritable, ThriftWritable<M>> createRecordReader(InputSplit split,
       TaskAttemptContext taskAttempt) throws IOException, InterruptedException {
-
     if (typeRef_ == null) {
       typeRef_ = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), LzoThriftB64LineInputFormat.class);
     }

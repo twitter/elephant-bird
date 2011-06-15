@@ -31,14 +31,13 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
   private TypeRef<M> typeRef_;
   private ProtobufWritable<M> writable;
 
-  // TODO: should remove the default constructor. mostly not used anymore.
-  // Same for other Protobuf loaders, input and output formats.
+  // TODO: should remove the default constructor, after updating codegen.
+  // Same for other Protobuf loaders.
   public LzoProtobufB64LinePigStorage() {}
 
   public LzoProtobufB64LinePigStorage(String protoClassName) {
     TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
     setTypeRef(typeRef);
-    setStorageSpec(getClass(), new String[]{protoClassName});
   }
 
   protected void setTypeRef(TypeRef<M> typeRef) {
@@ -69,11 +68,4 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
     }
     return new LzoProtobufB64LineOutputFormat<M>(typeRef_);
   }
-
-  @Override
-  public void setStoreLocation(String location, Job job) throws IOException {
-    super.setStoreLocation(location, job);
-    LzoProtobufB64LineOutputFormat.getOutputFormatClass(typeRef_.getRawClass(), job.getConfiguration());
-  }
-
 }
