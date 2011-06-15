@@ -65,7 +65,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       addInputPath(results, fs, fileStatus, recursive);
     }
 
-    LOG.info("Total lzo input paths to process : " + results.size());
+    LOG.debug("Total lzo input paths to process : " + results.size());
     // To help split the files at LZO boundaries, walk the list of lzo files and, if they
     // have an associated index file, save that for later.
     for (FileStatus result : results) {
