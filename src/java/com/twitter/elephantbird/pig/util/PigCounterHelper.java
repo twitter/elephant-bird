@@ -2,9 +2,11 @@ package com.twitter.elephantbird.pig.util;
 
 import java.util.Map;
 
-import com.google.common.collect.Maps;
+import org.apache.hadoop.mapreduce.Counter;
 import org.apache.pig.impl.util.Pair;
 import org.apache.pig.tools.pigstats.PigStatusReporter;
+
+import com.google.common.collect.Maps;
 
 /**
  * A helper class to deal with Hadoop counters in Pig.  They are stored within the singleton
@@ -20,21 +22,27 @@ public class PigCounterHelper {
    * Mocks the Reporter.incrCounter, but adds buffering.
    * See org.apache.hadoop.mapred.Reporter's incrCounter.
    */
-  public void incrCounter(String group, String counter, long incr) {
+  public void incrCounter(String group, String counterName, long incr) {
     PigStatusReporter reporter = PigStatusReporter.getInstance();
     if (reporter != null) { // common case
-      reporter.getCounter(group, counter).increment(incr);
-      if (counterStringMap_.size() > 0) {
-        for (Map.Entry<Pair<String, String>, Long> entry : counterStringMap_.entrySet()) {
-          reporter.getCounter(entry.getKey().first, entry.getKey().second).increment(entry.getValue());
+      Counter counter = reporter.getCounter(group, counterName);
+      if (counter != null) {
+        counter.increment(incr);
+
+        if (counterStringMap_.size() > 0) {
+          for (Map.Entry<Pair<String, String>, Long> entry : counterStringMap_.entrySet()) {
+            reporter.getCounter(entry.getKey().first, entry.getKey().second).increment(entry.getValue());
+          }
+          counterStringMap_.clear();
         }
-        counterStringMap_.clear();
+        return;
       }
-    } else { // buffer the increments.
-      Pair<String, String> key = new Pair<String, String>(group, counter);
-      Long currentValue = counterStringMap_.get(key);
-      counterStringMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
     }
+    // In the case when reporter is not available, or we can't get the Counter,
+    // store in the local map.
+    Pair<String, String> key = new Pair<String, String>(group, counterName);
+    Long currentValue = counterStringMap_.get(key);
+    counterStringMap_.put(key, (currentValue == null ? 0 : currentValue) + incr);
   }
 
   /**
