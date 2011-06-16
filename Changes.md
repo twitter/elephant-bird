@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.0.4 ###
+
 ### Version 2.0.3 ###
 
 ISSUE 59. check if PigReporter returns a null counter (dvryaboy)
