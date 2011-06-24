@@ -1,8 +1,6 @@
 package com.twitter.elephantbird.pig.store;
 
 /**
- * Same as {@link LzoPigStorage}
- *
  * @deprecated use {@link LzoPigStorage} instead
  */
 @Deprecated
