@@ -21,7 +21,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * OutputFormat class for a job. Use getOutputFormatClass() or getInstance() instead.
  */
 
-public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutputFormat<M, ProtobufWritable<M>> {
+public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutputFormat<ProtobufWritable<M>> {
   protected TypeRef<M> typeRef_;
 
   protected void setTypeRef(TypeRef<M> typeRef) {

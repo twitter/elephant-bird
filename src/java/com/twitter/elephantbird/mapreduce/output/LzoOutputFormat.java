@@ -4,7 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.hadoop.compression.lzo.LzopCodec;
-import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -17,8 +17,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  * Base class for Lzo outputformats.
  * provides an helper method to create lzo output stream.
  */
-public abstract class LzoOutputFormat<M, W extends BinaryWritable<M>>
-    extends FileOutputFormat<NullWritable, W> {
+public abstract class LzoOutputFormat<W> extends FileOutputFormat<NullWritable,W> {
 
   /**
    * Helper method to create lzo output file needed to create RecordWriter
@@ -32,6 +31,17 @@ public abstract class LzoOutputFormat<M, W extends BinaryWritable<M>>
     Path file = getDefaultWorkFile(job, codec.getDefaultExtension());
     FileSystem fs = file.getFileSystem(conf);
     FSDataOutputStream fileOut = fs.create(file, false);
+
+    /* uncomment after https://github.com/kevinweil/hadoop-lzo/pull/23
+    FSDataOutputStream indexOut = null;
+    if (conf.getBoolean("elephantbird.lzo.output.index", false)) {
+      Path indexPath = new Path(file.getParent(), file.getName() + ".index");
+      indexOut = fs.create(indexPath, false);
+    }
+
+    return new DataOutputStream(codec.createIndexedOutputStream(fileOut, indexOut));
+    */
+
     return new DataOutputStream(codec.createOutputStream(fileOut));
   }
 }

@@ -20,7 +20,7 @@ import org.apache.thrift.TBase;
  * OutputFormat class for a job. Use getOutputFormatClass() instead.
  */
 public class LzoThriftB64LineOutputFormat<M extends TBase<?, ?>>
-    extends LzoOutputFormat<M, ThriftWritable<M>> {
+    extends LzoOutputFormat<ThriftWritable<M>> {
 
   protected TypeRef<M> typeRef_;
 
