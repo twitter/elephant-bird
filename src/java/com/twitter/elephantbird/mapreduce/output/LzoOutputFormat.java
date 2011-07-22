@@ -9,7 +9,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
@@ -17,7 +16,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  * Base class for Lzo outputformats.
  * provides an helper method to create lzo output stream.
  */
-public abstract class LzoOutputFormat<W> extends FileOutputFormat<NullWritable,W> {
+public abstract class LzoOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
   /**
    * Helper method to create lzo output file needed to create RecordWriter

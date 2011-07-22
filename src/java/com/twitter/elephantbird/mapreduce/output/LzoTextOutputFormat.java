@@ -8,7 +8,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-public class LzoTextOutputFormat extends LzoOutputFormat<Text> {
+public class LzoTextOutputFormat extends LzoOutputFormat<NullWritable, Text> {
 
   @Override
   public RecordWriter<NullWritable, Text> getRecordWriter(TaskAttemptContext job)

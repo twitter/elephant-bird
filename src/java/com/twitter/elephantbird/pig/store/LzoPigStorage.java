@@ -59,7 +59,7 @@ public class LzoPigStorage extends PigStorage {
   // This is a temporary work around for PigStorage since
   // it writes a Tuple to outputformat rather than Text.
   // This may change soon and we can use LzoTextOutputFormat directly.
-  protected static class TupleOutputFormat extends LzoOutputFormat<Tuple> {
+  protected static class TupleOutputFormat extends LzoOutputFormat<NullWritable, Tuple> {
 
     private byte fieldDel;
 
