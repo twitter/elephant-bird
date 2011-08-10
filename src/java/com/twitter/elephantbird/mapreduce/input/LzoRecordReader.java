@@ -59,7 +59,7 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(job);
     final CompressionCodec codec = compressionCodecs.getCodec(file);
     if (codec == null) {
-      throw new IOException("No codec for file " + file + " not found, cannot run");
+      throw new IOException("No codec for file " + file + " found, cannot run");
     }
 
     // Open the file and seek to the start of the split.
