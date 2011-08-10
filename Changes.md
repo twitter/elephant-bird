@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.0.5 ###
+
 ### Version 2.0.4 ###
 
 ISSUE 67. Reduce memory footprint of LzoInputFormat (dvryaboy)
