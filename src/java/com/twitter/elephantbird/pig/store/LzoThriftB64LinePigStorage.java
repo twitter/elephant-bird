@@ -2,13 +2,9 @@ package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoThriftB64LineOutputFormat;
@@ -41,14 +37,14 @@ public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseSt
     if (f == null) return;
     try {
       writable.set(pigToThrift.getThriftObject(f));
-      writer.write(NullWritable.get(), writable);
+      writer.write(null, writable);
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
   }
 
   @Override
-  public OutputFormat<NullWritable, ThriftWritable<T>> getOutputFormat() throws IOException {
+  public OutputFormat<T, ThriftWritable<T>> getOutputFormat() throws IOException {
     return new LzoThriftB64LineOutputFormat<T>(typeRef);
   }
 }
