@@ -2,7 +2,6 @@ package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.pig.data.Tuple;
 import org.slf4j.Logger;
@@ -52,7 +51,7 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
     Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
     try {
       writable.set((M) PigToProtobuf.tupleToMessage(builder, f));
-      writer.write(NullWritable.get(), writable);
+      writer.write(null, writable);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -60,7 +59,7 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
   }
 
   @Override
-  public OutputFormat<NullWritable, ProtobufWritable<M>> getOutputFormat() throws IOException {
+  public OutputFormat<M, ProtobufWritable<M>> getOutputFormat() throws IOException {
     if (typeRef_ == null) {
       LOG.error("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");

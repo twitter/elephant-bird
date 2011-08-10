@@ -3,7 +3,6 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -40,7 +39,7 @@ public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFo
    * Sets an internal configuration in jobConf so that remote Tasks
    * instantiate appropriate object for this generic class based on protoClass
    */
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings("unchecked")
   public static <M extends Message> Class<LzoProtobufBlockOutputFormat>
   getOutputFormatClass(Class<M> protoClass, Configuration jobConf) {
 
@@ -53,7 +52,7 @@ public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFo
   }
 
   @Override
-  public RecordWriter<NullWritable, ProtobufWritable<M>> getRecordWriter(TaskAttemptContext job)
+  public RecordWriter<M, ProtobufWritable<M>> getRecordWriter(TaskAttemptContext job)
   throws IOException, InterruptedException {
     if (typeRef_ == null) { // i.e. if not set by a subclass
       typeRef_ = Protobufs.getTypeRef(job.getConfiguration(), LzoProtobufBlockOutputFormat.class);

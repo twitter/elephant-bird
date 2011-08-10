@@ -7,7 +7,6 @@ import java.util.Set;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.pig.data.Tuple;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -15,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
+import com.twitter.elephantbird.mapreduce.output.LzoTextOutputFormat;
 
 /**
  * A storage class to store the ouput of each tuple in a delimited file
@@ -59,7 +59,7 @@ public class LzoJsonStorage extends LzoBaseStoreFunc {
       }
     }
     try {
-      writer.write(null, json.toString()+'\n');
+      writer.write(null, new Text(json.toString()));
     } catch (InterruptedException e) {
       // Under what circumstances does this happen?
       throw new IOException(e);
@@ -67,8 +67,8 @@ public class LzoJsonStorage extends LzoBaseStoreFunc {
   }
 
   @Override
-  public OutputFormat getOutputFormat() {
-    return new TextOutputFormat<NullWritable, Text>();
+  public OutputFormat<NullWritable, Text> getOutputFormat() {
+    return new LzoTextOutputFormat();
   }
 
 

@@ -8,7 +8,6 @@ import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.thrift.TBase;
@@ -38,7 +37,7 @@ public class LzoThriftBlockOutputFormat<M extends TBase<?, ?>>
     return LzoThriftBlockOutputFormat.class;
   }
 
-  public RecordWriter<NullWritable, ThriftWritable<M>> getRecordWriter(TaskAttemptContext job)
+  public RecordWriter<M, ThriftWritable<M>> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
     if (typeRef_ == null) {
       typeRef_ = ThriftUtils.getTypeRef(job.getConfiguration(), LzoThriftBlockOutputFormat.class);

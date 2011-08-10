@@ -9,7 +9,6 @@ import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -19,7 +18,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  */
 
 public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
-    extends RecordWriter<NullWritable, W> {
+    extends RecordWriter<M, W> {
 
   private final BinaryConverter<M> converter;
   private final DataOutputStream out;
@@ -32,7 +31,7 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
   }
 
   @Override
-  public void write(NullWritable nullWritable, W writable)
+  public void write(M nullWritable, W writable)
       throws IOException, InterruptedException {
     byte[] b64Bytes = base64.encode(converter.toBytes(writable.get()));
     out.write(b64Bytes);
