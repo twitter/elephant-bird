@@ -2,11 +2,8 @@ package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -29,8 +26,6 @@ import com.hadoop.compression.lzo.LzoIndex;
  */
 public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoInputFormat.class);
-
-  private final Map<Path, LzoIndex> indexes_ = new HashMap<Path, LzoIndex>();
 
   private final PathFilter hiddenPathFilter = new PathFilter() {
     // avoid hidden files and directories.
@@ -66,13 +61,6 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     }
 
     LOG.debug("Total lzo input paths to process : " + results.size());
-    // To help split the files at LZO boundaries, walk the list of lzo files and, if they
-    // have an associated index file, save that for later.
-    for (FileStatus result : results) {
-      LzoIndex index = LzoIndex.readIndex(result.getPath().getFileSystem(job.getConfiguration()), result.getPath());
-      indexes_.put(result.getPath(), index);
-    }
-
     return results;
   }
 
@@ -105,9 +93,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
   @Override
   protected boolean isSplitable(JobContext context, Path filename) {
-    // LZO files are splittable precisely when they have an associated index file.
-    LzoIndex index = indexes_.get(filename);
-    return !index.isEmpty();
+    return true;
   }
 
   @Override
@@ -121,7 +107,8 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       // Load the index.
       FileSplit fileSplit = (FileSplit)genericSplit;
       Path file = fileSplit.getPath();
-      LzoIndex index = indexes_.get(file);
+      LzoIndex index = LzoIndex.readIndex(file.getFileSystem(job.getConfiguration()), file);
+
       if (index == null) {
         // In listStatus above, a (possibly empty, but non-null) index was put in for every split.
         throw new IOException("Index not found for " + file);
