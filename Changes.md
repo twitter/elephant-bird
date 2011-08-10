@@ -2,6 +2,8 @@
 
 ### Version 2.0.4 ###
 
+ISSUE 67. Reduce memory footprint of LzoInputFormat (dvryaboy)
+
 ### Version 2.0.3 ###
 
 ISSUE 59. check if PigReporter returns a null counter (dvryaboy)
