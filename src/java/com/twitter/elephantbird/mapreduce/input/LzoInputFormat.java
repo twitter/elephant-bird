@@ -101,8 +101,8 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     try {
       FileSystem fs = filename.getFileSystem( context.getConfiguration() );
       return fs.exists( filename.suffix( LzoIndex.LZO_INDEX_SUFFIX ) );
-    } catch (IOException e) {
-      return false;
+    } catch (IOException e) { // not expected
+      throw new RuntimeException(e);
     }
   }
 
@@ -154,7 +154,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       }
       // else ignore the data?
       // should handle splitting the entire file here so that
-      // such errors cab be handled better.
+      // such errors can be handled better.
     }
 
     return result;
