@@ -93,7 +93,17 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
   @Override
   protected boolean isSplitable(JobContext context, Path filename) {
-    return true;
+    /* This should ideally return 'false'
+     * and splitting should be handled completely in
+     * this.getSplit(). Right now, FileInputFormat splits across the
+     * blocks and this.getSplits() adjusts the positions.
+     */
+    try {
+      FileSystem fs = filename.getFileSystem( context.getConfiguration() );
+      return fs.exists( filename.suffix( LzoIndex.LZO_INDEX_SUFFIX ) );
+    } catch (IOException e) { // not expected
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -103,11 +113,22 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     // Find new starts and ends of the file splits that align with the lzo blocks.
     List<InputSplit> result = new ArrayList<InputSplit>();
 
+    Path prevFile = null;
+    LzoIndex prevIndex = null;
+
     for (InputSplit genericSplit : defaultSplits) {
       // Load the index.
       FileSplit fileSplit = (FileSplit)genericSplit;
       Path file = fileSplit.getPath();
-      LzoIndex index = LzoIndex.readIndex(file.getFileSystem(job.getConfiguration()), file);
+
+      LzoIndex index; // reuse index for files with multiple blocks.
+      if ( file.equals(prevFile) ) {
+        index = prevIndex;
+      } else {
+        index = LzoIndex.readIndex(file.getFileSystem(job.getConfiguration()), file);
+        prevFile = file;
+        prevIndex = index;
+      }
 
       if (index == null) {
         // In listStatus above, a (possibly empty, but non-null) index was put in for every split.
@@ -116,6 +137,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
       if (index.isEmpty()) {
         // Empty index, so leave the default split.
+        // split's start position should be 0.
         result.add(fileSplit);
         continue;
       }
@@ -130,6 +152,9 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
         result.add(new FileSplit(file, lzoStart, lzoEnd - lzoStart, fileSplit.getLocations()));
         LOG.debug("Added LZO split for " + file + "[start=" + lzoStart + ", length=" + (lzoEnd - lzoStart) + "]");
       }
+      // else ignore the data?
+      // should handle splitting the entire file here so that
+      // such errors can be handled better.
     }
 
     return result;
