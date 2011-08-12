@@ -2,6 +2,10 @@
 
 ### Version 2.0.5 ###
 
+ISSUE 68. Fix isSplittable() in LzoInputFormat (rangadi)
+
+ISSUE 64. Support for lzo index files in LzoOutputFormat (rangadi)
+
 ### Version 2.0.4 ###
 
 ISSUE 67. Reduce memory footprint of LzoInputFormat (dvryaboy)
