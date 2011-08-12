@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.0.6 ###
+
 ### Version 2.0.5 ###
 
 ISSUE 68. Fix isSplittable() in LzoInputFormat (rangadi)
