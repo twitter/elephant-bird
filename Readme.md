@@ -26,10 +26,10 @@ NOTE: This is an experimental branch for working with Pig 0.8. It may not work. 
 
 ### Version compatibility ###
 
-1. Protocol Buffers 2.3
+1. Protocol Buffers 2.3 (not compatible with 2.4)
 2. Pig 0.8 (not compatible with 0.7 and below)
 4. Hive 0.7 (with HIVE-1616)
-5. Thrift 0.5
+5. Thrift 0.6
 
 
 #### Building Without Protocol Buffers ####
