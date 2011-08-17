@@ -19,9 +19,30 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
- * @author Scott Fines
- *         Date: 8/15/11
- *         Time: 11:17 AM
+ * Loader for uncompressed Protocol Buffer files.
+ *
+ * <p>Initialize with a String argument that represents the full classpath of the protocol
+ * buffer class to be loaded.
+ *
+ * <p>The no-arg constructor will not work and is there only for internal Pig reasons.
+ *
+ * <p>Note: This Loader requires the files to be written in a format which is compliant with
+ * the requirements of {@link ProtobufFileInputFormat}. Specifically, the format must be:
+ * [{@link com.twitter.elephantbird.util.Protobufs.KNOWN_GOOD_POSITION_MARKER} <size of next message>
+ *     <serialized message>]. An example code snippet for writing such a file is:
+ *
+ * <pre>
+ *     Message message = buildYourMessage();
+ *     OutputStream os = getOutputStream();
+ *     os.write(Protobufs.KNOWN_GOOD_POSITION_MARKER);
+ *     message.writeDelimitedTo(os);
+ * </pre>
+ *
+ * <p>Note that nested Protocol Buffers are only automatically converted to Tuples if the
+ * internal Protobuf is part of the same outer class. Otherwise, ProtobufBytesToTuple should be
+ * used.
+ *
+ * <p>Usage of this is identical to that of {@link LzoProtobufBlockPigLoader}.
  */
 public class ProtobufPigLoader<M extends Message> extends LoadFunc {
     private static final Logger LOG = LoggerFactory.getLogger(ProtobufPigLoader.class);
