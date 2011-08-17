@@ -202,7 +202,16 @@
       <fileset dir="${classes.dir}"/>
     </jar>
   </target>
-  
+
+  <target name="jar-precompiled" depends="init" description="generats the distribution from precompiled sources">
+    <mkdir dir="${dist.dir}"/>
+	<!-- Delete the old jar file -->
+	<delete file="${dist.dir}/${jar.name}-${version}.jar"/>
+    <jar jarfile="${dist.dir}/${jar.name}-${version}.jar">
+      <fileset dir="${classes.dir}"/>
+    </jar>
+  </target>
+
   <target name="javadoc" depends="compile" description="generate documentation" >
     <delete dir="${javadoc.dir}" />
     <javadoc destdir="${javadoc.dir}">
@@ -217,6 +226,7 @@
   </target>
 
   <target name="debug-jar" description="Build debug and jar" depends="debug,jar"/>
+
   <target name="release-jar" description="Build release and jar" depends="release,jar"/>
 
   <target name="clean" description="clean up">
