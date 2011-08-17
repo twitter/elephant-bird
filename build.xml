@@ -60,6 +60,14 @@
 	<property name="compile.mode" value="release"/>
   </target>
 
+  <target name="nothrift" depends="init">
+    <echo message="building without thrift support"/>
+      <property name="nothrift" value="yes"/>
+      <generate-protobuf />
+      <compile-generated-protobuf />
+      <compile-java-protobuf />
+  </target>
+
   <target name="noproto" depends="init">
    <echo message="building without protobuf support" />
    <property name="noprotobuf" value="yes" />
@@ -108,7 +116,7 @@
     </javac>
    </sequential>
   </macrodef>
-    
+
   <macrodef name="compile-java-protobuf">
    <sequential>
     <!-- Compile the java code from ${src.java} into ${build} -->
