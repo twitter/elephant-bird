@@ -9,6 +9,7 @@ import com.hadoop.compression.lzo.LzopCodec;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -50,14 +51,14 @@ public abstract class LzoOutputFormat<K, V> extends FileOutputFormat<K, V> {
     LzopCodec codec = new LzopCodec();
     codec.setConf(conf);
 
-    Path file = getDefaultWorkFile(job, codec.getDefaultExtension());
-    FileSystem fs = file.getFileSystem(conf);
+    final Path file = getDefaultWorkFile(job, codec.getDefaultExtension());
+    final FileSystem fs = file.getFileSystem(conf);
     FSDataOutputStream fileOut = fs.create(file, false);
 
     FSDataOutputStream indexOut = null;
     if (conf.getBoolean("elephantbird.lzo.output.index", false)) {
       if ( isLzopIndexSupported ) {
-        Path indexPath = file.suffix(LzoIndex.LZO_INDEX_SUFFIX);
+        Path indexPath = file.suffix(LzoIndex.LZO_TMP_INDEX_SUFFIX);
         indexOut = fs.create(indexPath, false);
       } else {
         LOG.warn("elephantbird.lzo.output.index is enabled, but LzopCodec "
@@ -66,10 +67,31 @@ public abstract class LzoOutputFormat<K, V> extends FileOutputFormat<K, V> {
       }
     }
 
-    OutputStream out = indexOut == null?
-        codec.createOutputStream(fileOut) :
-        codec.createIndexedOutputStream(fileOut, indexOut);
+    final boolean isIndexed = indexOut != null;
 
-    return new DataOutputStream(out);
+    OutputStream out = ( isIndexed ?
+        codec.createIndexedOutputStream(fileOut, indexOut) :
+        codec.createOutputStream(fileOut) );
+
+
+    return new DataOutputStream(out) {
+      // override close() to handle renaming index file.
+
+      public void close() throws IOException {
+        super.close();
+
+        if ( isIndexed ) {
+          // rename or remove the index file based on file size.
+
+          Path tmpPath = file.suffix(LzoIndex.LZO_TMP_INDEX_SUFFIX);
+          FileStatus stat = fs.getFileStatus(file);
+          if (stat.getLen() <= stat.getBlockSize()) {
+            fs.delete(tmpPath, false);
+          } else {
+            fs.rename(tmpPath, file.suffix(LzoIndex.LZO_INDEX_SUFFIX));
+          }
+        }
+      }
+    };
   }
 }
