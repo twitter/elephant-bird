@@ -41,6 +41,7 @@ public class LzoPigStorage extends PigStorage {
 
   public LzoPigStorage(String delimiter) {
     super(delimiter);
+    this.delimiter = delimiter;
   }
 
   @Override
