@@ -44,8 +44,8 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  * key_val = LOAD '$INPUT' AS (f0, key: int, f2, val: chararray);
  *
  * STORE key_val INTO '$OUTPUT' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
- *   '-i 1 -t org.apache.hadoop.io.IntWritable -c com.twitter.twadoop.pig.store.IntWritableConverter',
- *   '-i 3 -t org.apache.hadoop.io.Text        -c com.twitter.twadoop.pig.store.TextConverter'
+ *   '-i 1 -t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter',
+ *   '-i 3 -t org.apache.hadoop.io.Text        -c com.twitter.elephantbird.pig.util.TextConverter'
  * );
  * </pre>
  *
