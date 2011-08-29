@@ -177,24 +177,6 @@ public class TestSequenceFileStorage {
     validate(pigServer.openIterator("A"));
   }
 
-  @Test
-  public void writeIntTextWithParameterizedKeyValueIndices() throws IOException {
-    pigServer.registerQuery("A = LOAD 'file:" + tempFilename + "' USING "
-        + SequenceFileStorage.class.getName() + "('-c " + IntWritableConverter.class.getName()
-        + "', '-c " + TextConverter.class.getName() + "') AS (key:int, val:chararray);");
-    // swap ordering of key and val
-    pigServer.registerQuery("A = FOREACH A GENERATE val, key;");
-    // use indices to specify key and val entries within tuple
-    pigServer.registerQuery("STORE A INTO 'file:" + tempFilename + "-2' USING "
-        + SequenceFileStorage.class.getName() + "('-i 1 -t " + IntWritable.class.getName() + " -c "
-        + IntWritableConverter.class.getName() + "', '-i 0 -t " + Text.class.getName() + " -c "
-        + TextConverter.class.getName() + "');");
-    pigServer.registerQuery("A = LOAD 'file:" + tempFilename + "-2' USING "
-        + SequenceFileStorage.class.getName() + "('-c " + IntWritableConverter.class.getName()
-        + "', '-c " + TextConverter.class.getName() + "') AS (key:int, val:chararray);");
-    validate(pigServer.openIterator("A"));
-  }
-
   @Test(expected = IOException.class)
   public void writeUnsupportedConversion() throws IOException {
     pigServer.registerQuery("A = LOAD 'file:" + tempFilename + "' USING "

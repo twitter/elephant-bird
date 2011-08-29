@@ -28,9 +28,10 @@ public class RawSequenceFileRecordReader extends RecordReader<DataInputBuffer, D
   private final DataOutputBuffer vobuf = new DataOutputBuffer(DEFAULT_BUFFER_SIZE);
   private final DataInputBuffer kibuf = new DataInputBuffer();
   private final DataInputBuffer vibuf = new DataInputBuffer();
-  private FileSplit fileSplit;
   private SequenceFile.Reader reader;
   private ValueBytes vbytes;
+  private long start;
+  private long end;
   private boolean more, valueUncompressed;
 
   @Override
@@ -39,28 +40,40 @@ public class RawSequenceFileRecordReader extends RecordReader<DataInputBuffer, D
     Preconditions.checkNotNull(inputSplit, "InputSplit is null");
     Preconditions.checkNotNull(context, "TaskAttemptContext is null");
     Configuration conf = context.getConfiguration();
-    this.fileSplit = (FileSplit) inputSplit;
-    Path path = this.fileSplit.getPath();
-    this.reader = new SequenceFile.Reader(FileSystem.get(conf), path, conf);
-    this.vbytes = this.reader.createValueBytes();
-    this.more = true;
+    FileSplit fileSplit = (FileSplit) inputSplit;
+    Path path = fileSplit.getPath();
+    reader = new SequenceFile.Reader(FileSystem.get(conf), path, conf);
+    vbytes = this.reader.createValueBytes();
+    start = fileSplit.getStart();
+    if (start > reader.getPosition()) {
+      reader.sync(start);
+    }
+    start = reader.getPosition();
+    end = fileSplit.getStart() + fileSplit.getLength();
+    more = start < end;
   }
 
   @Override
   public void close() throws IOException {
-    Preconditions.checkNotNull(reader);
-    reader.close();
-    reader = null;
+    if (reader != null) {
+      reader.close();
+      reader = null;
+    }
+    vbytes = null;
+    start = end = 0;
     more = false;
   }
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
     Preconditions.checkNotNull(reader);
-    Preconditions.checkState(more);
+    if (!more) {
+      return false;
+    }
+    long pos = reader.getPosition();
     kobuf.reset();
     int recordLength = reader.nextRaw(kobuf, vbytes);
-    if (recordLength < 0) {
+    if (recordLength < 0 || (pos >= end && reader.syncSeen())) {
       return more = false;
     }
     valueUncompressed = false;
@@ -69,14 +82,14 @@ public class RawSequenceFileRecordReader extends RecordReader<DataInputBuffer, D
 
   @Override
   public DataInputBuffer getCurrentKey() throws IOException, InterruptedException {
-    Preconditions.checkState(more);
+    if (!more) return null;
     kibuf.reset(kobuf.getData(), kobuf.getLength());
     return kibuf;
   }
 
   @Override
   public DataInputBuffer getCurrentValue() throws IOException, InterruptedException {
-    Preconditions.checkState(more);
+    if (!more) return null;
     if (!valueUncompressed) {
       vobuf.reset();
       vbytes.writeUncompressedBytes(vobuf);
@@ -88,8 +101,10 @@ public class RawSequenceFileRecordReader extends RecordReader<DataInputBuffer, D
 
   @Override
   public float getProgress() throws IOException, InterruptedException {
-    Preconditions.checkNotNull(reader);
-    Preconditions.checkNotNull(fileSplit);
-    return ((float) reader.getPosition()) / fileSplit.getLength();
+    if (end == start) {
+      return 0.0f;
+    } else {
+      return Math.min(1.0f, (reader.getPosition() - start) / (float) (end - start));
+    }
   }
 }

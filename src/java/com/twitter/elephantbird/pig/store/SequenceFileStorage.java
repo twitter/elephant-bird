@@ -41,11 +41,11 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  * within {@link SequenceFile}s. Usage:
  *
  * <pre>
- * key_val = LOAD '$INPUT' AS (f0, key: int, f2, val: chararray);
+ * key_val = LOAD '$INPUT' AS (key: int, val: chararray);
  *
  * STORE key_val INTO '$OUTPUT' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
- *   '-i 1 -t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter',
- *   '-i 3 -t org.apache.hadoop.io.Text        -c com.twitter.elephantbird.pig.util.TextConverter'
+ *   '-t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter',
+ *   '-t org.apache.hadoop.io.Text        -c com.twitter.elephantbird.pig.util.TextConverter'
  * );
  * </pre>
  *
@@ -55,15 +55,6 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     SequenceFileLoader<K, V> implements StoreFuncInterface {
   protected static Properties parseArgumentString(String args) throws ParseException {
     // define options
-    @SuppressWarnings("static-access")
-    Option indexOption =
-        OptionBuilder
-            .withLongOpt(INDEX_PARAM)
-            .hasArg()
-            .withArgName("i")
-            .withDescription(
-                "Tuple index from which to read data." + " Defaults to '0' for key, '1' for value.")
-            .create("i");
     @SuppressWarnings("static-access")
     Option typeOption =
         OptionBuilder
@@ -83,7 +74,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
                 "Converter type to use for conversion of data." + "  Defaults to '"
                     + TextConverter.class.getName() + "' for key and value.").create("c");
     Options options = new Options();
-    for (Option option : ImmutableList.of(indexOption, typeOption, converterOption))
+    for (Option option : ImmutableList.of(typeOption, converterOption))
       options.addOption(option);
 
     // parse key args and initialize members
@@ -109,7 +100,6 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   protected static final String INDEX_PARAM = "index";
   protected static final String TYPE_PARAM = "type";
-  private final int keyIndex, valueIndex, maxIndex;
   private final Class<K> keyClass;
   private final Class<V> valueClass;
   private RecordWriter<K, V> writer;
@@ -155,9 +145,6 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
   protected SequenceFileStorage(Properties keyProperties, Properties valueProperties)
       throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     super(keyProperties, valueProperties);
-    keyIndex = Integer.parseInt(keyProperties.getProperty(INDEX_PARAM, "0"));
-    valueIndex = Integer.parseInt(valueProperties.getProperty(INDEX_PARAM, "1"));
-    maxIndex = Math.max(keyIndex, valueIndex);
     keyClass =
         (Class<K>) Class.forName(keyProperties.getProperty(TYPE_PARAM, Text.class.getName()));
     valueClass =
@@ -222,11 +209,10 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     Preconditions.checkNotNull(schema, "Schema is null");
     ResourceFieldSchema[] fields = schema.getFields();
     Preconditions.checkNotNull(fields, "Schema fields are undefined");
-    if (maxIndex >= fields.length)
-      throw new IOException("Expecting at least " + (maxIndex + 1)
-          + " schema entries but found only " + fields.length);
-    keyConverter.checkStoreSchema(fields[keyIndex]);
-    valueConverter.checkStoreSchema(fields[valueIndex]);
+    if (2 != fields.length)
+      throw new IOException("Expecting 2 schema entries but found " + fields.length);
+    keyConverter.checkStoreSchema(fields[0]);
+    valueConverter.checkStoreSchema(fields[1]);
   }
 
   @Override
@@ -240,10 +226,9 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
   @Override
   public void putNext(Tuple t) throws IOException {
     Preconditions.checkNotNull(t);
-    Preconditions.checkArgument(t.size() > maxIndex, "Tuple size %d must be greater than %d",
-        t.size(), maxIndex);
-    K key = keyConverter.toWritable(t.get(keyIndex));
-    V value = valueConverter.toWritable(t.get(valueIndex));
+    Preconditions.checkArgument(2 == t.size(), "Expected tuple size 2 but found size %s", t.size());
+    K key = keyConverter.toWritable(t.get(0));
+    V value = valueConverter.toWritable(t.get(1));
     try {
       writer.write(key, value);
     } catch (InterruptedException e) {
