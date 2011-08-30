@@ -18,10 +18,15 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.pig.Expression;
 import org.apache.pig.FileInputLoadFunc;
 import org.apache.pig.LoadCaster;
+import org.apache.pig.LoadMetadata;
 import org.apache.pig.LoadPushDown;
 import org.apache.pig.PigException;
+import org.apache.pig.ResourceSchema;
+import org.apache.pig.ResourceSchema.ResourceFieldSchema;
+import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataByteArray;
@@ -58,7 +63,7 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  * @see WritableConverter
  */
 public class SequenceFileLoader<K extends Writable, V extends Writable> extends FileInputLoadFunc
-    implements LoadPushDown {
+    implements LoadPushDown, LoadMetadata {
   private static Properties createProperties(String converterClassName) {
     Preconditions.checkNotNull(converterClassName);
     Properties properties = new Properties();
@@ -195,6 +200,50 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     FileInputFormat.setInputPaths(job, new Path(location));
     readKey = Boolean.parseBoolean(getContextProperty(READ_KEY_PARAM, "true"));
     readValue = Boolean.parseBoolean(getContextProperty(READ_VALUE_PARAM, "true"));
+  }
+
+  @Override
+  public ResourceSchema getSchema(String location, Job job) throws IOException {
+    ResourceSchema resourceSchema = new ResourceSchema();
+    ResourceFieldSchema keySchema = keyConverter.getLoadSchema();
+    keySchema.setName("key");
+    ResourceFieldSchema valueSchema = valueConverter.getLoadSchema();
+    valueSchema.setName("value");
+    resourceSchema.setFields(new ResourceFieldSchema[] { keySchema, valueSchema });
+    return resourceSchema;
+  }
+
+  /**
+   * This implementation returns {@code null}.
+   *
+   * @see org.apache.pig.LoadMetadata#getStatistics(java.lang.String,
+   *      org.apache.hadoop.mapreduce.Job)
+   */
+  @Override
+  public ResourceStatistics getStatistics(String location, Job job) throws IOException {
+    return null;
+  }
+
+  /**
+   * This implementation returns {@code null}.
+   *
+   * @see org.apache.pig.LoadMetadata#getPartitionKeys(java.lang.String,
+   *      org.apache.hadoop.mapreduce.Job)
+   */
+  @Override
+  public String[] getPartitionKeys(String location, Job job) throws IOException {
+    return null;
+  }
+
+  /**
+   * This implementation throws {@link UnsupportedOperationException}.
+   *
+   * @see org.apache.pig.LoadMetadata#setPartitionFilter(org.apache.pig.Expression)
+   * @throws UnsupportedOperationException
+   */
+  @Override
+  public void setPartitionFilter(Expression expression) throws IOException {
+    throw new UnsupportedOperationException();
   }
 
   @Override

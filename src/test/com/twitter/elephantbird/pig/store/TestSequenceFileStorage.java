@@ -25,7 +25,9 @@ import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.plan.OperatorKey;
 import org.junit.Assert;
 import org.junit.Before;
@@ -126,6 +128,19 @@ public class TestSequenceFileStorage {
         + SequenceFileStorage.class.getName() + "('-c " + IntWritableConverter.class.getName()
         + "', '-c " + TextConverter.class.getName() + "') AS (key:int, val:chararray);");
     validate(pigServer.openIterator("A"));
+  }
+
+  @Test
+  public void readSchema() throws IOException {
+    pigServer.registerQuery("A = LOAD 'file:" + tempFilename + "' USING "
+        + SequenceFileStorage.class.getName() + "('-c " + IntWritableConverter.class.getName()
+        + "', '-c " + TextConverter.class.getName() + "');");
+    Schema schema = pigServer.dumpSchema("A");
+    Assert.assertNotNull(schema);
+    Assert.assertEquals("key", schema.getField(0).alias);
+    Assert.assertEquals(DataType.INTEGER, schema.getField(0).type);
+    Assert.assertEquals("value", schema.getField(1).alias);
+    Assert.assertEquals(DataType.CHARARRAY, schema.getField(1).type);
   }
 
   @Test

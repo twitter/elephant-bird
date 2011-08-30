@@ -21,6 +21,13 @@ public class IntWritableConverter extends AbstractWritableConverter<IntWritable>
   }
 
   @Override
+  public ResourceFieldSchema getLoadSchema() throws IOException {
+    ResourceFieldSchema schema = new ResourceFieldSchema();
+    schema.setType(DataType.INTEGER);
+    return schema;
+  }
+
+  @Override
   public Object bytesToObject(DataByteArray dataByteArray) throws IOException {
     return bytesToInteger(dataByteArray.get());
   }

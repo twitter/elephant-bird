@@ -6,8 +6,10 @@ import java.util.Map;
 import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.io.Text;
+import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 
 /**
@@ -20,6 +22,13 @@ public class TextConverter extends AbstractWritableConverter<Text> {
   public TextConverter() {
     super();
     this.writable = new Text();
+  }
+
+  @Override
+  public ResourceFieldSchema getLoadSchema() throws IOException {
+    ResourceFieldSchema schema = new ResourceFieldSchema();
+    schema.setType(DataType.CHARARRAY);
+    return schema;
   }
 
   @Override

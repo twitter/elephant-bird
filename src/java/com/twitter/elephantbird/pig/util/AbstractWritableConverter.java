@@ -29,6 +29,18 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
   }
 
   /**
+   * Default implementation returns {@code null}.
+   *
+   * @see com.twitter.elephantbird.pig.util.WritableConverter#getLoadSchema()
+   */
+  @Override
+  public ResourceFieldSchema getLoadSchema() throws IOException {
+    ResourceFieldSchema schema = new ResourceFieldSchema();
+    schema.setType(DataType.BYTEARRAY);
+    return schema;
+  }
+
+  /**
    * Default implementation passes raw bytes through to Pig without deserializing Writable data.
    *
    * @see WritableConverter#bytesToObject(org.apache.pig.data.DataByteArray)

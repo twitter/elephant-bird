@@ -28,6 +28,16 @@ public interface WritableConverter<W extends Writable> extends LoadStoreCaster {
   public void initialize(Class<? extends W> writableClass);
 
   /**
+   * Called during evaluation of Pig {@code LOAD} expressions, this method should return the
+   * expected Pig type of data loaded using this WritableConverter, or {@code null} if it can't be
+   * determined before reading data.
+   *
+   * @return
+   * @throws IOException
+   */
+  public ResourceFieldSchema getLoadSchema() throws IOException;
+
+  /**
    * Called during evaluation of Pig {@code LOAD} expressions, this method decodes Writable instance
    * data from raw bytes and then converts the Writable to an appropriate Pig value. Implementations
    * should override this method and delegate to an appropriate {@code LoadCaster#bytesTo*()}
