@@ -27,6 +27,7 @@ import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.plan.OperatorKey;
 import org.junit.Assert;
@@ -131,7 +132,7 @@ public class TestSequenceFileStorage {
   }
 
   @Test
-  public void readSchema() throws IOException {
+  public void readWithoutSchemaTestSchema() throws IOException {
     pigServer.registerQuery("A = LOAD 'file:" + tempFilename + "' USING "
         + SequenceFileStorage.class.getName() + "('-c " + IntWritableConverter.class.getName()
         + "', '-c " + TextConverter.class.getName() + "');");
@@ -141,6 +142,14 @@ public class TestSequenceFileStorage {
     Assert.assertEquals(DataType.INTEGER, schema.getField(0).type);
     Assert.assertEquals("value", schema.getField(1).alias);
     Assert.assertEquals(DataType.CHARARRAY, schema.getField(1).type);
+  }
+
+  @Test(expected = FrontendException.class)
+  public void readWithBadSchema() throws IOException {
+    pigServer.registerQuery("A = LOAD 'file:" + tempFilename + "' USING "
+        + SequenceFileStorage.class.getName() + "('-c " + IntWritableConverter.class.getName()
+        + "', '-c " + TextConverter.class.getName() + "') AS (key:int, val:chararray, bad:int);");
+    validate(pigServer.openIterator("A"));
   }
 
   @Test
