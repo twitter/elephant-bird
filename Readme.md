@@ -35,10 +35,21 @@ NOTE: This is an experimental branch for working with Pig 0.8. It may not work. 
 #### Building Without Protocol Buffers ####
 
 If you don't want to build elephant-bird with protobuf support or you don't have protobuf >= 2.3 available 
-(fedora for instance only provides 2.2), you can have ant exclude all classes that rely on protobuf by using ant noproto target
+(fedora for instance only provides 2.2), you can have ant exclude all classes that rely on protobuf by using ant -Dnoprotobuf=true
+property
 
 for the default target this would be:
-<code><pre>ant noproto release-jar</pre></code>
+<code><pre>ant -Dnoprotobuf=true release-jar</pre></code>
+
+#### Building without Thrift ####
+
+If you don't want to build elephant-bird with thrift support or you don't have thrift >=0.5 available, you
+can have ant exclude all classes that rely on thrift by using the ant -Dnothrift=true property
+
+for the default target this would be:
+<code><pre>ant -Dnothrift=true release-jar</pre></code>
+
+Note that you can combine this with the noprotobuf property to build without thrift OR protocol buffers.
 
 ### License ###
 
