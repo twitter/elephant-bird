@@ -83,20 +83,34 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
     // If we are past the end of the file split, tell the reader not to read any more new blocks.
     // Then continue reading until the last of the reader's already-parsed values are used up.
     // The next split will start at the next sync point and no records will be missed.
-    if (pos_ > end_) {
-      reader_.markNoMoreNewBlocks();
-    }
-    if (reader_.readNext(value_)) {
-      if (value_.get() == null) {
-        recordErrorsCounter.increment(1);
+    while (true) { // loop to skip over bad records
+      if (pos_ > end_) {
+        reader_.markNoMoreNewBlocks();
       }
+      value_.set(null);
+      errorTracker.incRecords();
+      Throwable decodeException = null;
+
+      try {
+        if (!reader_.readNext(value_)) {
+          return false; // EOF
+        }
+      } catch (IOException e) {
+        throw e;
+      } catch (Throwable e) {
+        decodeException = e;
+      }
+
       recordsReadCounter.increment(1);
       key_.set(pos_);
       pos_ = getLzoFilePos();
-      return true;
+      if (value_.get() != null) {
+        return true;
+      }
+      errorTracker.incErrors(decodeException);
+      recordErrorsCounter.increment(1);
+      // continue
     }
-
-    return false;
   }
 }
 

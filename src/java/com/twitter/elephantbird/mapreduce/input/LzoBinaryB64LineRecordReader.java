@@ -2,6 +2,7 @@ package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
@@ -103,12 +104,23 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
         emptyLinesCounter.increment(1);
         continue;
       }
-      byte[] lineBytes = line_.toString().getBytes("UTF-8");
-      M protoValue = converter_.fromBytes(base64_.decode(lineBytes));
+
+      M protoValue = null;
       recordsReadCounter.increment(1);
+
+      errorTracker.incRecords();
+      Throwable decodeException = null;
+
+      try {
+        byte[] lineBytes = Arrays.copyOf(line_.getBytes(), line_.getLength());
+        protoValue = converter_.fromBytes(base64_.decode(lineBytes));
+      } catch(Throwable t) {
+        decodeException = t;
+      }
 
       if (protoValue == null) {
         recordErrorsCounter.increment(1);
+        errorTracker.incErrors(decodeException);
         continue;
       }
 

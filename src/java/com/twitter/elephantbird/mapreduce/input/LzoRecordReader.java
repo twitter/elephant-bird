@@ -27,6 +27,8 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
   protected long end_;
   private FSDataInputStream fileIn_;
 
+  protected InputErrorTracker errorTracker;
+
   /**
    * Get the progress within the split.
    */
@@ -54,6 +56,8 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     end_ = start_ + split.getLength();
     final Path file = split.getPath();
     Configuration job = context.getConfiguration();
+
+    errorTracker = new InputErrorTracker(job);
 
     LOG.info("input split: " + file + " " + start_ + ":" + end_);
 
@@ -83,4 +87,58 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
 
   protected abstract void createInputReader(InputStream input, Configuration conf) throws IOException;
   protected abstract void skipToNextSyncPoint(boolean atFirstRecord) throws IOException;
+
+  /**
+   * Tracks number of of errors in input and throws a Runtime exception
+   * if the rate of errors crosses a limit.<p>
+   *
+   * The intention is to skip over very rare file corruption or incorrect
+   * input, but catch programmer errors (incorrect format, or incorrect
+   * deserializers etc).
+   */
+  static class InputErrorTracker {
+    long numRecords;
+    long numErrors;
+
+    double errorThreshold; // max fraction of errors allowed
+
+    InputErrorTracker(Configuration conf) {
+      //default threshold : 0.01%
+      errorThreshold = conf.getFloat("elephantbird.mapred.input.errors.threshold", 0.0001f);
+      numRecords = 0;
+      numErrors = 0;
+    }
+
+    void incRecords() {
+      numRecords++;
+    }
+
+    void incErrors(Throwable cause) {
+      numErrors++;
+      if (numErrors > numRecords) {
+        // incorrect use of this class
+        throw new RuntimeException("Forgot to invoke incRecords()?");
+      }
+
+      if (cause == null) {
+        cause = new Exception("Unknown error");
+      }
+
+      if (errorThreshold <= 0) { // no errors are tolerated
+        throw new RuntimeException("error while reading input records", cause);
+      }
+
+      LOG.warn("Error while reading an input record (" + numErrors + " so far ): ", cause);
+
+      double errRate = numErrors/(double)numErrors;
+
+      // will always excuse the first error. We can decide if single
+      // error crosses threshold inside close() if we want to.
+      if (numErrors > 1 && errRate > errorThreshold) {
+        LOG.error(numErrors + " out of " + numRecords
+            + " crosses configured threshold (" + errorThreshold + ")");
+        throw new RuntimeException("error rate while reading input records crossed threshold", cause);
+      }
+    }
+  }
 }
