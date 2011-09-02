@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.0.7 ###
+
 ### Version 2.0.6 ###
 
 ISSUE 74. Allow a few bad records in LzoRecordReders (rangadi)
