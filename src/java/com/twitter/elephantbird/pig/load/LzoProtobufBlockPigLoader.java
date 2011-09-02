@@ -10,6 +10,7 @@ import org.apache.pig.data.Tuple;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockInputFormat;
+import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
@@ -51,6 +52,12 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
     typeRef_ = typeRef;
   }
 
+  /**
+   * Return next Protobuf Tuple from input.
+   * <p>
+   * A small fraction of bad records in input are tolerated.
+   * See  {@link LzoRecordReader} for more information on error handling.
+   */
   public Tuple getNext() throws IOException {
     M value = getNextBinaryValue(typeRef_);
 

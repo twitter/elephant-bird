@@ -13,7 +13,7 @@ public class  LzoThriftB64LineRecordReader<M extends TBase<?, ?>> extends LzoBin
 
   public LzoThriftB64LineRecordReader(TypeRef<M> typeRef) {
     super(typeRef, new ThriftWritable<M>(typeRef), new ThriftConverter<M>(typeRef));
-    LOG.info("LzoTProtoB64LineRecordReader, type is " + typeRef.getRawClass());
+    LOG.info("record type is " + typeRef.getRawClass());
   }
 }
 
