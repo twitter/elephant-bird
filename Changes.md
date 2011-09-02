@@ -2,6 +2,12 @@
 
 ### Version 2.0.6 ###
 
+ISSUE 74. Allow a few bad records in LzoRecordReders (rangadi)
+
+ISSUE 73. SequenceFile Pig storage (Andy Schlaikjer)
+
+ISSUE 72. Write lzo index file to a temp file (rangadi)
+
 ### Version 2.0.5 ###
 
 ISSUE 68. Fix isSplittable() in LzoInputFormat (rangadi)
