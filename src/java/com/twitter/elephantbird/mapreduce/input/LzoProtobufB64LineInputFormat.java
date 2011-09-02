@@ -20,6 +20,10 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  *
  * Do not use LzoProtobufB64LineInputFormat.class directly for setting
  * InputFormat class for a job. Use getInputFormatClass() or newInstance(typeRef) instead.
+ *
+ * <p>
+ * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+ * for more information on error handling.
  */
 
 public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFormat<LongWritable, ProtobufWritable<M>> {

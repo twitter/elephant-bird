@@ -21,8 +21,11 @@ import org.apache.hadoop.util.LineReader;
 
 /**
  * Reads line from an lzo compressed text file, base64 decodes it, and then
- * deserializes that into the templatized object.  Returns <position, protobuf>
- * pairs.
+ * deserializes that into the templatized object.
+ *
+ * <p>
+ * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+ * for more information on error handling.
  */
 public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> extends LzoRecordReader<LongWritable, W> {
 
@@ -87,6 +90,16 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
     }
   }
 
+  /**
+   * Read the next key, value pair.
+   * <p>
+   * A small fraction of bad records in input are tolerated.
+   * See  {@link LzoRecordReader} for more information on error handling.
+   *
+   * @return true if a key/value pair was read
+   * @throws IOException
+   * @throws InterruptedException
+   */
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
     // Since the lzop codec reads everything in lzo blocks, we can't stop if pos == end.
@@ -106,7 +119,6 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
       }
 
       M protoValue = null;
-      recordsReadCounter.increment(1);
 
       errorTracker.incRecords();
       Throwable decodeException = null;
@@ -124,6 +136,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
         continue;
       }
 
+      recordsReadCounter.increment(1);
       value_.set(protoValue);
       return true;
     }

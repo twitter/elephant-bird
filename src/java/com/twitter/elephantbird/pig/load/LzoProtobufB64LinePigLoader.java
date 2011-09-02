@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.input.LzoProtobufB64LineInputFormat;
+import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
@@ -56,6 +57,9 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
 
   /**
    * Return every non-null line as a single-element tuple to Pig.
+   * <p>
+   * A small fraction of bad records in input are tolerated.
+   * See  {@link LzoRecordReader} for more information on error handling.
    */
   @Override
   public Tuple getNext() throws IOException {

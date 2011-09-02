@@ -19,6 +19,10 @@ import org.apache.thrift.TBase;
  *
  * Do not use LzoThriftBlockInputFormat.class directly for setting
  * InputFormat class for a job. Use getInputFormatClass() instead.
+ *
+ * <p>
+ * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+ * for more information on error handling.
  */
 public class LzoThriftBlockInputFormat<M extends TBase<?, ?>>
                 extends LzoInputFormat<LongWritable, ThriftWritable<M>> {

@@ -19,7 +19,11 @@ import com.twitter.elephantbird.util.TypeRef;
  * Returns <position, thriftObject> pairs. <br><br>
  *
  * Do not use LzoThriftB64LineInputFormat.class directly for setting
- * InputFormat class for a job. Use getInputFormatClass() instead.
+ * InputFormat class for a job. Use getInputFormatClass() instead.<p>
+ *
+ * <p>
+ * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+ * for more information on error handling.
  */
 public class LzoThriftB64LineInputFormat<M extends TBase<?, ?>>
                 extends LzoInputFormat<LongWritable, ThriftWritable<M>> {

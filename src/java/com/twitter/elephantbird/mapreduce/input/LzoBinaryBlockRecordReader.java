@@ -18,9 +18,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A reader for LZO-encoded protobuf blocks, generally written by
- * a ProtobufBlockWriter or similar.  Returns <position, protobuf> pairs.
+ * a ProtobufBlockWriter or similar.
+ *
+ * <p>
+ * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+ * for more information on error handling.
  */
-
 public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends LzoRecordReader<LongWritable, W> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBinaryBlockRecordReader.class);
 
@@ -78,6 +81,16 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
     LOG.debug("LzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
   }
 
+  /**
+   * Read the next key, value pair.
+   * <p>
+   * A small fraction of bad records in input are tolerated.
+   * See  {@link LzoRecordReader} for more information on error handling.
+   *
+   * @return true if a key/value pair was read
+   * @throws IOException
+   * @throws InterruptedException
+   */
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
     // If we are past the end of the file split, tell the reader not to read any more new blocks.
@@ -101,10 +114,10 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
         decodeException = e;
       }
 
-      recordsReadCounter.increment(1);
       key_.set(pos_);
       pos_ = getLzoFilePos();
       if (value_.get() != null) {
+        recordsReadCounter.increment(1);
         return true;
       }
       errorTracker.incErrors(decodeException);
