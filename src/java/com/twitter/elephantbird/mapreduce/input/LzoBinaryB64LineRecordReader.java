@@ -2,6 +2,7 @@ package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
@@ -20,8 +21,11 @@ import org.apache.hadoop.util.LineReader;
 
 /**
  * Reads line from an lzo compressed text file, base64 decodes it, and then
- * deserializes that into the templatized object.  Returns <position, protobuf>
- * pairs.
+ * deserializes that into the templatized object.
+ *
+ * <p>
+ * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+ * for more information on error handling.
  */
 public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> extends LzoRecordReader<LongWritable, W> {
 
@@ -86,6 +90,16 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
     }
   }
 
+  /**
+   * Read the next key, value pair.
+   * <p>
+   * A small fraction of bad records in input are tolerated.
+   * See  {@link LzoRecordReader} for more information on error handling.
+   *
+   * @return true if a key/value pair was read
+   * @throws IOException
+   * @throws InterruptedException
+   */
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
     // Since the lzop codec reads everything in lzo blocks, we can't stop if pos == end.
@@ -103,15 +117,26 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
         emptyLinesCounter.increment(1);
         continue;
       }
-      byte[] lineBytes = line_.toString().getBytes("UTF-8");
-      M protoValue = converter_.fromBytes(base64_.decode(lineBytes));
-      recordsReadCounter.increment(1);
+
+      M protoValue = null;
+
+      errorTracker.incRecords();
+      Throwable decodeException = null;
+
+      try {
+        byte[] lineBytes = Arrays.copyOf(line_.getBytes(), line_.getLength());
+        protoValue = converter_.fromBytes(base64_.decode(lineBytes));
+      } catch(Throwable t) {
+        decodeException = t;
+      }
 
       if (protoValue == null) {
         recordErrorsCounter.increment(1);
+        errorTracker.incErrors(decodeException);
         continue;
       }
 
+      recordsReadCounter.increment(1);
       value_.set(protoValue);
       return true;
     }

@@ -10,6 +10,7 @@ import org.apache.pig.ResourceSchema;
 import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
 
+import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
@@ -29,6 +30,9 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
 
   /**
    * Return every non-null line as a single-element tuple to Pig.
+   *<p>
+   * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+   * for more information on error handling.
    */
   @Override
   public Tuple getNext() throws IOException {

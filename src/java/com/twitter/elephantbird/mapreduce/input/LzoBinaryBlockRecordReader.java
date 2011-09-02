@@ -18,9 +18,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A reader for LZO-encoded protobuf blocks, generally written by
- * a ProtobufBlockWriter or similar.  Returns <position, protobuf> pairs.
+ * a ProtobufBlockWriter or similar.
+ *
+ * <p>
+ * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+ * for more information on error handling.
  */
-
 public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends LzoRecordReader<LongWritable, W> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBinaryBlockRecordReader.class);
 
@@ -78,25 +81,49 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
     LOG.debug("LzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
   }
 
+  /**
+   * Read the next key, value pair.
+   * <p>
+   * A small fraction of bad records in input are tolerated.
+   * See  {@link LzoRecordReader} for more information on error handling.
+   *
+   * @return true if a key/value pair was read
+   * @throws IOException
+   * @throws InterruptedException
+   */
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
     // If we are past the end of the file split, tell the reader not to read any more new blocks.
     // Then continue reading until the last of the reader's already-parsed values are used up.
     // The next split will start at the next sync point and no records will be missed.
-    if (pos_ > end_) {
-      reader_.markNoMoreNewBlocks();
-    }
-    if (reader_.readNext(value_)) {
-      if (value_.get() == null) {
-        recordErrorsCounter.increment(1);
+    while (true) { // loop to skip over bad records
+      if (pos_ > end_) {
+        reader_.markNoMoreNewBlocks();
       }
-      recordsReadCounter.increment(1);
+      value_.set(null);
+      errorTracker.incRecords();
+      Throwable decodeException = null;
+
+      try {
+        if (!reader_.readNext(value_)) {
+          return false; // EOF
+        }
+      } catch (IOException e) {
+        throw e;
+      } catch (Throwable e) {
+        decodeException = e;
+      }
+
       key_.set(pos_);
       pos_ = getLzoFilePos();
-      return true;
+      if (value_.get() != null) {
+        recordsReadCounter.increment(1);
+        return true;
+      }
+      errorTracker.incErrors(decodeException);
+      recordErrorsCounter.increment(1);
+      // continue
     }
-
-    return false;
   }
 }
 

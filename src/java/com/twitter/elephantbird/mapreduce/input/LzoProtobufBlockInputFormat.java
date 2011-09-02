@@ -18,7 +18,11 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * <br> <br>
  *
  * Do not use LzoProtobufBlockInputFormat.class directly for setting
- * InputFormat class for a job. Use getInputFormatClass() instead.
+ * InputFormat class for a job. Use getInputFormatClass() instead.<p>
+ *
+ * <p>
+ * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
+ * for more information on error handling.
  */
 
 public class LzoProtobufBlockInputFormat<M extends Message> extends LzoInputFormat<LongWritable, ProtobufWritable<M>> {
