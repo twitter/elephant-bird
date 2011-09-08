@@ -113,7 +113,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
       }
       linesReadCounter.increment(1);
       pos_ = getLzoFilePos();
-      if (line_.equals("\n")) {
+      if (line_.getLength() == 0 || line_.charAt(0) == '\n') {
         emptyLinesCounter.increment(1);
         continue;
       }
