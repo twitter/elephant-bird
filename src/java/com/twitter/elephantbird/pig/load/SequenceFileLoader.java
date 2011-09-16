@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -9,6 +10,12 @@ import java.util.Properties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
@@ -36,6 +43,7 @@ import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.UDFContext;
 
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileInputFormat;
+import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 import com.twitter.elephantbird.pig.util.TextConverter;
 import com.twitter.elephantbird.pig.util.WritableConverter;
 
@@ -45,8 +53,8 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  *
  * <pre>
  * key_val = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
- *   'com.twitter.elephantbird.pig.util.IntWritableConverter',
- *   'com.twitter.elephantbird.pig.util.TextConverter'
+ *   '-c com.twitter.elephantbird.pig.util.IntWritableConverter',
+ *   '-c com.twitter.elephantbird.pig.util.TextConverter'
  * ) as (
  *   key: int,
  *   val: chararray
@@ -64,20 +72,15 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  */
 public class SequenceFileLoader<K extends Writable, V extends Writable> extends FileInputLoadFunc
     implements LoadPushDown, LoadMetadata {
-  private static Properties createProperties(String converterClassName) {
-    Preconditions.checkNotNull(converterClassName);
-    Properties properties = new Properties();
-    properties.setProperty(CONVERTER_PARAM, converterClassName.trim());
-    return properties;
-  }
-
   protected static final String CONVERTER_PARAM = "converter";
   protected static final String READ_KEY_PARAM = "_readKey";
   protected static final String READ_VALUE_PARAM = "_readValue";
-  private final DataByteArray keyDataByteArray = new DataByteArray();
-  private final DataByteArray valueDataByteArray = new DataByteArray();
+  protected final CommandLine keyArguments;
+  protected final CommandLine valueArguments;
   protected final WritableConverter<K> keyConverter;
   protected final WritableConverter<V> valueConverter;
+  private final DataByteArray keyDataByteArray = new DataByteArray();
+  private final DataByteArray valueDataByteArray = new DataByteArray();
   private final List<Object> tuple2 = Arrays.asList(new Object(), new Object()), tuple1 = Arrays
       .asList(new Object()), tuple0 = Collections.emptyList();
   private final TupleFactory tupleFactory = TupleFactory.getInstance();
@@ -86,17 +89,29 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   private boolean readKey = true, readValue = true;
 
   /**
-   * @param keyConverterClassName name of WritableConverter implementation to use for keys.
-   * @param valueConverterClassName name of WritableConverter implementation to use for values.
-   * @throws ClassNotFoundException
-   * @throws ClassCastException
-   * @throws InstantiationException
-   * @throws IllegalAccessException
+   * Parses key and value options from argument strings. Available options for both key and value
+   * argument strings include:
+   * <dl>
+   * <dt>-c|--converter cls</dt>
+   * <dd>{@link WritableConverter} implementation class to use for conversion of data. Defaults to
+   * {@link TextConverter} for both key and value.</dd>
+   * </dl>
+   * Any extra arguments found will be treated as String arguments for the WritableConverter
+   * constructor. For instance, the argument string {@code "-c MyConverter 123 abc"} specifies
+   * WritableConverter class {@code MyConverter} along with two ctor String arguments {@code "123"}
+   * and {@code "abc"}. This will cause SequenceFileLoader to call
+   * {@code new MyConverter("123", "abc")} when creating a new instance of MyConverter. If no such
+   * constructor exists, a RuntimeException will be thrown.
+   *
+   * @param keyArgs
+   * @param valueArgs
+   * @throws ParseException
    */
-  public SequenceFileLoader(String keyConverterClassName, String valueConverterClassName)
-      throws ClassNotFoundException, ClassCastException, InstantiationException,
-      IllegalAccessException {
-    this(createProperties(keyConverterClassName), createProperties(valueConverterClassName));
+  public SequenceFileLoader(String keyArgs, String valueArgs) throws ParseException {
+    keyArguments = parseArguments(keyArgs);
+    valueArguments = parseArguments(valueArgs);
+    keyConverter = getWritableConverter(keyArguments);
+    valueConverter = getWritableConverter(valueArguments);
   }
 
   /**
@@ -104,20 +119,65 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    */
   public SequenceFileLoader() throws ClassCastException, ParseException, ClassNotFoundException,
       InstantiationException, IllegalAccessException {
-    this(new Properties(), new Properties());
+    this("", "");
   }
 
-  @SuppressWarnings({ "unchecked" })
-  protected SequenceFileLoader(Properties keyProperties, Properties valueProperties)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-    Preconditions.checkNotNull(keyProperties);
-    Preconditions.checkNotNull(valueProperties);
-    String keyConverterClassName =
-        keyProperties.getProperty(CONVERTER_PARAM, TextConverter.class.getName());
-    keyConverter = (WritableConverter<K>) Class.forName(keyConverterClassName).newInstance();
-    String valueConverterClassName =
-        valueProperties.getProperty(CONVERTER_PARAM, TextConverter.class.getName());
-    valueConverter = (WritableConverter<V>) Class.forName(valueConverterClassName).newInstance();
+  /**
+   * @return Options instance containing valid key/value options.
+   */
+  protected Options getOptions() {
+    @SuppressWarnings("static-access")
+    Option converterOption =
+        OptionBuilder
+            .withLongOpt(CONVERTER_PARAM)
+            .hasArg()
+            .withArgName("cls")
+            .withDescription(
+                "Converter type to use for conversion of data." + "  Defaults to '"
+                    + TextConverter.class.getName() + "' for key and value.").create("c");
+    return new Options().addOption(converterOption);
+  }
+
+  /**
+   * @param args
+   * @return CommandLine instance containing options parsed from argument string.
+   * @throws ParseException
+   */
+  private CommandLine parseArguments(String args) throws ParseException {
+    Options options = getOptions();
+    CommandLine cmdline = null;
+    try {
+      cmdline = new GnuParser().parse(options, args.split(" "));
+    } catch (ParseException e) {
+      new HelpFormatter().printHelp(SequenceFileStorage.class.getName() + "(keyArgs, valueArgs)",
+          options);
+      throw e;
+    }
+    return cmdline;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T extends Writable> WritableConverter<T> getWritableConverter(
+      CommandLine arguments) {
+    final String converterClassName =
+        arguments.getOptionValue(CONVERTER_PARAM, TextConverter.class.getName());
+    String[] converterArgs = arguments.getArgs();
+    WritableConverter<T> converter = null;
+    try {
+      Class<WritableConverter<T>> converterClass =
+          (Class<WritableConverter<T>>) Class.forName(converterClassName);
+      if (converterArgs == null || converterArgs.length == 0) {
+        converter = converterClass.newInstance();
+      } else {
+        Class<?>[] parameterTypes = new Class<?>[converterArgs.length];
+        Arrays.fill(parameterTypes, String.class);
+        Constructor<WritableConverter<T>> ctor = converterClass.getConstructor(parameterTypes);
+        converter = ctor.newInstance((Object[]) converterArgs);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create WritableConverter instance", e);
+    }
+    return converter;
   }
 
   private Properties getContextProperties() {
