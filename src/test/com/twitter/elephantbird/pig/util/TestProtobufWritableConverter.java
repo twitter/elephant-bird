@@ -11,6 +11,9 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class TestProtobufWritableConverter extends
     AbstractTestProtobufWritableConverter<Person, PersonWritable> {
+  /**
+   * @author Andy Schlaikjer
+   */
   public static class PersonWritable extends ProtobufWritable<Person> {
     public PersonWritable() {
       super(TYPE_REF);

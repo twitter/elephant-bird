@@ -11,8 +11,9 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class TestThriftWritableConverter extends
     AbstractTestThriftWritableConverter<Name, NameWritable> {
-  private static final TypeRef<Name> TYPE_REF = ThriftUtils.getTypeRef(Name.class);
-
+  /**
+   * @author Andy Schlaikjer
+   */
   public static class NameWritable extends ThriftWritable<Name> {
     public NameWritable() {
       super(TYPE_REF);
@@ -23,6 +24,7 @@ public class TestThriftWritableConverter extends
     }
   }
 
+  private static final TypeRef<Name> TYPE_REF = ThriftUtils.getTypeRef(Name.class);
   private static final Name V1 = new Name("Jon", "Smith");
   private static final Name V2 = new Name("John", "Doe");
   private static final Name V3 = new Name("Mary", "Jane");

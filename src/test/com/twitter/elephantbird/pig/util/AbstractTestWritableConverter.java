@@ -43,22 +43,22 @@ import com.twitter.elephantbird.pig.store.SequenceFileStorage;
  * @author Andy Schlaikjer
  */
 public class AbstractTestWritableConverter<W extends Writable, C extends WritableConverter<W>> {
+  private final Class<W> writableClass;
   private final Class<C> writableConverterClass;
   private final String writableConverterArguments;
-  private final Class<W> writableClass;
   private final W[] data;
   private final String[][] expected;
   private final String valueSchema;
   protected PigServer pigServer;
   protected String tempFilename;
 
-  public AbstractTestWritableConverter(final Class<C> writableConverterClass,
-      final String writableConverterArguments, final Class<W> writableClass, final W[] data,
-      final String[] expected, final String valueSchema) {
+  public AbstractTestWritableConverter(final Class<W> writableClass,
+      final Class<C> writableConverterClass, final String writableConverterArguments,
+      final W[] data, final String[] expected, final String valueSchema) {
+    this.writableClass = writableClass;
     this.writableConverterClass = writableConverterClass;
     this.writableConverterArguments =
         writableConverterArguments == null ? "" : writableConverterArguments;
-    this.writableClass = writableClass;
     this.data = data;
     this.expected = new String[expected.length][2];
     for (int i = 0; i < expected.length; ++i) {

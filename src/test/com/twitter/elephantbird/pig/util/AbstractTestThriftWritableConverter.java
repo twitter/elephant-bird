@@ -11,8 +11,8 @@ public abstract class AbstractTestThriftWritableConverter<M extends TBase<?, ?>,
     extends AbstractTestWritableConverter<W, ThriftWritableConverter<M, W>> {
   public AbstractTestThriftWritableConverter(Class<M> thriftClass, Class<W> writableClass,
       W[] data, String[] expected, String valueSchema) {
-    super(getWritableConverterClass(thriftClass, writableClass, ThriftWritableConverter.class),
-        "-ca " + thriftClass.getName(), writableClass, data, expected, valueSchema);
+    super(writableClass, getWritableConverterClass(thriftClass, writableClass,
+        ThriftWritableConverter.class), thriftClass.getName(), data, expected, valueSchema);
   }
 
   @SuppressWarnings("unchecked")
