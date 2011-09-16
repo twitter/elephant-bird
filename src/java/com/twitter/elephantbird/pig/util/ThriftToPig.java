@@ -276,6 +276,9 @@ public class ThriftToPig<M extends TBase<?, ?>> {
         break;
       default:
         fieldSchema = new FieldSchema(fieldName, null, getPigDataType(field));
+        if ( PigUtil.Pig9orNewer ) { // bag needs tuples (PIG 0.8 implicitly added this wrapper)
+          fieldSchema = new FieldSchema( "t", new Schema(fieldSchema),  DataType.TUPLE );
+        }
     }
 
     Schema schema = new Schema();

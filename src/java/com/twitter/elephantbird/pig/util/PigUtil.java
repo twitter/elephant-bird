@@ -23,6 +23,21 @@ public class PigUtil {
   }
 
   /**
+   * Temporary hack to check if PIG version is 0.9.0 or newer
+   */
+  public static final boolean Pig9orNewer;
+  static {
+    boolean methodFound = false;
+    try {
+      // check for a new method in a class common to both Pig 0.8 and 0.9
+      Class<?> cls = Class.forName("org.apache.pig.EvalFunc");
+      methodFound = cls.getMethod("getCacheFiles") != null;
+    } catch (Exception e) {
+    }
+    Pig9orNewer = methodFound;
+  }
+
+  /**
    * Returns class using Pig's class loader.
    * If that fails tries {@link Protobufs#getProtobufClass(String)} to
    * resolve the class
