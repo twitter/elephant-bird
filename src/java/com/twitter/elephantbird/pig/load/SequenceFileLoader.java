@@ -65,15 +65,6 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  *   key: chararray,
  *   val: chararray
  * );
- *
- * -- load SequenceFile containing ThriftWritable values
- * key_val = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
- *   '-c com.twitter.elephantbird.pig.util.IntWritableConverter',
- *   '-c com.twitter.elephantbird.pig.util.ThriftWritableConverter -ca my.thrift.Type'
- * ) as (
- *   key: int,
- *   val
- * );
  * </pre>
  *
  * @author Andy Schlaikjer
@@ -82,7 +73,6 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
 public class SequenceFileLoader<K extends Writable, V extends Writable> extends FileInputLoadFunc
     implements LoadPushDown, LoadMetadata {
   protected static final String CONVERTER_PARAM = "converter";
-  protected static final String CONVERTER_ARGUMENT_PARAM = "converter-argument";
   protected static final String READ_KEY_PARAM = "_readKey";
   protected static final String READ_VALUE_PARAM = "_readValue";
   protected final CommandLine keyArguments;
@@ -105,11 +95,13 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * <dt>-c|--converter cls</dt>
    * <dd>{@link WritableConverter} implementation class to use for conversion of data. Defaults to
    * {@link TextConverter} for both key and value.</dd>
-   * <dt>-ca|--converter-argument s</dt>
-   * <dd>{@link String} argument to pass to WritableConverter constructor. Multiple instances of
-   * this option may be specified; All values will be passed to the constructor in the order
-   * specified.</dd>
    * </dl>
+   * Any extra arguments found will be treated as String arguments for the WritableConverter
+   * constructor. For instance, the argument string {@code "-c MyConverter 123 abc"} specifies
+   * WritableConverter class {@code MyConverter} along with two ctor String arguments {@code "123"}
+   * and {@code "abc"}. This will cause SequenceFileLoader to call
+   * {@code new MyConverter("123", "abc")} when creating a new instance of MyConverter. If no such
+   * constructor exists, a RuntimeException will be thrown.
    *
    * @param keyArgs
    * @param valueArgs
@@ -143,16 +135,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
             .withDescription(
                 "Converter type to use for conversion of data." + "  Defaults to '"
                     + TextConverter.class.getName() + "' for key and value.").create("c");
-    @SuppressWarnings("static-access")
-    Option converterArgumentOption =
-        OptionBuilder
-            .withLongOpt(CONVERTER_ARGUMENT_PARAM)
-            .hasArgs()
-            .withArgName("s")
-            .withDescription(
-                "Converter constructor argument. May be specified repeatedly " + "  No default'"
-                    + TextConverter.class.getName() + "' for key and value.").create("ca");
-    return new Options().addOption(converterOption).addOption(converterArgumentOption);
+    return new Options().addOption(converterOption);
   }
 
   /**
@@ -178,7 +161,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       CommandLine arguments) {
     final String converterClassName =
         arguments.getOptionValue(CONVERTER_PARAM, TextConverter.class.getName());
-    String[] converterArgs = arguments.getOptionValues(CONVERTER_ARGUMENT_PARAM);
+    String[] converterArgs = arguments.getArgs();
     WritableConverter<T> converter = null;
     try {
       Class<WritableConverter<T>> converterClass =
