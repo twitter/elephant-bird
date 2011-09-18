@@ -14,8 +14,8 @@ import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * Supports conversion between Pig Tuple and ProtobufWritable types. See discussion in
- * {@link ThriftWritableConverter} for example usage.
+ * Supports conversion between Pig {@link Tuple} and {@link ProtobufWritable} types. See discussion
+ * in {@link ThriftWritableConverter} for example usage.
  *
  * @author Andy Schlaikjer
  * @see ThriftWritableConverter

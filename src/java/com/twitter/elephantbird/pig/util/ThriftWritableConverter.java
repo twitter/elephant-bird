@@ -14,10 +14,10 @@ import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * Supports conversion between Pig Tuple and ThriftWritable types. For example, say we have thrift
- * type {@code Person}. We can use {@link ThriftWritableConverter} and {@link SequenceFileStorage}
- * to convert Tuple data to {@link ThriftWritable}{@code <Person>} instances and store these as
- * values in a {@link SequenceFile}:
+ * Supports conversion between Pig {@link Tuple} and {@link ThriftWritable} types. For example, say
+ * we have thrift type {@code Person}. We can use {@link ThriftWritableConverter} and
+ * {@link SequenceFileStorage} to convert Tuple data to {@link ThriftWritable}{@code <Person>}
+ * instances and store these as values in a {@link SequenceFile}:
  *
  * <pre>
  * -- assume that we identify Person instances by integer id
@@ -25,7 +25,7 @@ import com.twitter.elephantbird.util.TypeRef;
  *
  * STORE people INTO '$output' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
  *   '-t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter',
- *   '-t com.twitter.elephantbird.pig.util.ThriftWritable -c com.twitter.elephantbird.pig.util.ThriftWritableConverter Person'
+ *   '-t com.twitter.elephantbird.mapreduce.io.ThriftWritable -c com.twitter.elephantbird.pig.util.ThriftWritableConverter Person'
  * );
  * </pre>
  *
