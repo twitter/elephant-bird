@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
@@ -9,39 +10,53 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.apache.thrift.TBase;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * Supports conversion between Pig Tuple and Thrift types.
+ * Supports conversion between Pig Tuple and ThriftWritable types. For example, say we have thrift
+ * type {@code Person}. We can use {@link ThriftWritableConverter} and {@link SequenceFileStorage}
+ * to convert Tuple data to {@link ThriftWritable}{@code <Person>} instances and store these as
+ * values in a {@link SequenceFile}:
+ *
+ * <pre>
+ * -- assume that we identify Person instances by integer id
+ * people = LOAD '$data' AS (id: int, person: ());
+ *
+ * STORE people INTO '$output' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
+ *   '-t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter',
+ *   '-t com.twitter.elephantbird.pig.util.ThriftWritable -c com.twitter.elephantbird.pig.util.ThriftWritableConverter Person'
+ * );
+ * </pre>
+ *
+ * Notice that we supply the name of our thrift {@code Person} class as an extra argument to
+ * {@code -c com.twitter.elephantbird.pig.util.ThriftWritableConverter} above. This ensures the
+ * ThriftWritableConverter instance created by the SequenceFileStorage instance knows what thrift
+ * type it's dealing with.
+ *
+ * We can also load {@code ThriftWritable<Person>} data from a SequenceFile and convert back to
+ * Tuples:
+ *
+ * <pre>
+ * people = LOAD '$data' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
+ *   '-c com.twitter.elephantbird.pig.util.IntWritableConverter',
+ *   '-c com.twitter.elephantbird.pig.util.ThriftWritableConverter Person'
+ * ) AS (id: int, person: ());
+ * </pre>
  *
  * @author Andy Schlaikjer
  */
-public class ThriftWritableConverter<M extends TBase<?, ?>, W extends ThriftWritable<M>> extends
-    AbstractWritableConverter<W> {
+public class ThriftWritableConverter<M extends TBase<?, ?>> extends
+    AbstractWritableConverter<ThriftWritable<M>> {
   protected final TypeRef<M> typeRef;
   protected final ThriftToPig<M> thriftToPig;
   protected final PigToThrift<M> pigToThrift;
-  protected Class<? extends W> writableClass;
 
   public ThriftWritableConverter(String thriftClassName) {
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig = ThriftToPig.newInstance(typeRef);
     pigToThrift = PigToThrift.newInstance(typeRef);
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public void initialize(Class<? extends W> writableClass) {
-    try {
-      this.writableClass = writableClass;
-      if (this.writableClass != null) {
-        this.writable = writableClass.newInstance();
-      } else {
-        this.writable = (W) ThriftWritable.newInstance(typeRef.getRawClass());
-      }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    this.writable = ThriftWritable.newInstance(typeRef.getRawClass());
   }
 
   @Override
@@ -56,19 +71,16 @@ public class ThriftWritableConverter<M extends TBase<?, ?>, W extends ThriftWrit
   }
 
   @Override
-  protected Tuple toTuple(W writable, ResourceFieldSchema schema) throws IOException {
+  protected Tuple toTuple(ThriftWritable<M> writable, ResourceFieldSchema schema)
+      throws IOException {
     return thriftToPig.getPigTuple(writable.get());
   }
 
   @Override
-  protected W toWritable(Tuple value, boolean newInstance) throws IOException {
-    W out = this.writable;
+  protected ThriftWritable<M> toWritable(Tuple value, boolean newInstance) throws IOException {
+    ThriftWritable<M> out = this.writable;
     if (newInstance) {
-      try {
-        out = writableClass.newInstance();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      out = ThriftWritable.newInstance(typeRef.getRawClass());
     }
     out.set(pigToThrift.getThriftObject(value));
     return out;

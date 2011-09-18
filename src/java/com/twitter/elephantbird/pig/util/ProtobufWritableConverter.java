@@ -14,34 +14,21 @@ import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * Supports conversion between Pig Tuple and Protocol Buffer types.
+ * Supports conversion between Pig Tuple and ProtobufWritable types. See discussion in
+ * {@link ThriftWritableConverter} for example usage.
  *
  * @author Andy Schlaikjer
+ * @see ThriftWritableConverter
  */
-public class ProtobufWritableConverter<M extends Message, W extends ProtobufWritable<M>> extends
-    AbstractWritableConverter<W> {
+public class ProtobufWritableConverter<M extends Message> extends
+    AbstractWritableConverter<ProtobufWritable<M>> {
   protected final TypeRef<M> typeRef;
   protected final ProtobufToPig protobufToPig;
-  protected Class<? extends W> writableClass;
 
   public ProtobufWritableConverter(String protobufClassName) {
     typeRef = PigUtil.getProtobufTypeRef(protobufClassName);
     protobufToPig = new ProtobufToPig();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public void initialize(Class<? extends W> writableClass) {
-    this.writableClass = writableClass;
-    try {
-      if (this.writableClass != null) {
-        this.writable = writableClass.newInstance();
-      } else {
-        this.writable = (W) ProtobufWritable.newInstance(typeRef.getRawClass());
-      }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    this.writable = ProtobufWritable.newInstance(typeRef.getRawClass());
   }
 
   @Override
@@ -56,19 +43,16 @@ public class ProtobufWritableConverter<M extends Message, W extends ProtobufWrit
   }
 
   @Override
-  protected Tuple toTuple(W writable, ResourceFieldSchema schema) throws IOException {
+  protected Tuple toTuple(ProtobufWritable<M> writable, ResourceFieldSchema schema)
+      throws IOException {
     return protobufToPig.toTuple(writable.get());
   }
 
   @Override
-  protected W toWritable(Tuple value, boolean newInstance) throws IOException {
-    W out = this.writable;
+  protected ProtobufWritable<M> toWritable(Tuple value, boolean newInstance) throws IOException {
+    ProtobufWritable<M> out = this.writable;
     if (newInstance) {
-      try {
-        out = writableClass.newInstance();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      out = ProtobufWritable.newInstance(typeRef.getRawClass());
     }
     out.set(PigToProtobuf.tupleToMessage(typeRef.getRawClass(), value));
     return out;
