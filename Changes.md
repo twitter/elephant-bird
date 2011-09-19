@@ -2,6 +2,14 @@
 
 ### Version 2.0.7 ###
 
+ISSUE 79. Fix schema for DataBag in Pig 0.9 (rangadi)
+
+ISSUE 78. Thrift and Protobuf converters for SequenceFile storage (Andy Schlaikjer)
+
+ISSUE 77. Support passing arguments to converters in SequenceFile storage (Andy Schlaikjer)
+
+ISSUE 75. Fix check for empty line base64 line loaders (rangadi)
+
 ### Version 2.0.6 ###
 
 ISSUE 74. Allow a few bad records in LzoRecordReders (rangadi)
