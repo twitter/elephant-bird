@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.0.8 ###
+
 ### Version 2.0.7 ###
 
 ISSUE 79. Fix schema for DataBag in Pig 0.9 (rangadi)
