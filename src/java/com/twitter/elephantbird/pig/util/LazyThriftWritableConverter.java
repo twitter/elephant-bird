@@ -17,8 +17,8 @@ import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
  * @see ThriftWritableConverter
  */
 public class LazyThriftWritableConverter<M extends TBase<?, ?>> extends ThriftWritableConverter<M> {
-  public LazyThriftWritableConverter(String thriftClassName) {
-    super(thriftClassName);
+  public LazyThriftWritableConverter(String[] args) {
+    super(args);
   }
 
   @Override

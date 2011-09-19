@@ -169,10 +169,9 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       if (converterArgs == null || converterArgs.length == 0) {
         converter = converterClass.newInstance();
       } else {
-        Class<?>[] parameterTypes = new Class<?>[converterArgs.length];
-        Arrays.fill(parameterTypes, String.class);
-        Constructor<WritableConverter<T>> ctor = converterClass.getConstructor(parameterTypes);
-        converter = ctor.newInstance((Object[]) converterArgs);
+        Constructor<WritableConverter<T>> ctor =
+            converterClass.getConstructor(new Class<?>[] { String[].class });
+        converter = ctor.newInstance((Object) converterArgs);
       }
     } catch (Exception e) {
       throw new RuntimeException("Failed to create WritableConverter instance", e);
