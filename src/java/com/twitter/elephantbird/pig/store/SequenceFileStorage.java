@@ -84,8 +84,6 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
         (Class<K>) Class.forName(keyArguments.getOptionValue(TYPE_PARAM, Text.class.getName()));
     valueClass =
         (Class<V>) Class.forName(valueArguments.getOptionValue(TYPE_PARAM, Text.class.getName()));
-    keyConverter.initialize(keyClass);
-    valueConverter.initialize(valueClass);
   }
 
   /**

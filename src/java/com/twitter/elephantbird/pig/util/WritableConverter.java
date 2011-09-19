@@ -23,7 +23,8 @@ public interface WritableConverter<W extends Writable> extends LoadStoreCaster {
    * Called before Pig {@code LOAD} or {@code STORE} expression evaluation by owning
    * {@link SequenceFileStorage} instance.
    *
-   * @param writableClass implementation Class.
+   * @param writableClass implementation Class. This argument is {@code null} when the method is
+   *          called during {@code LOAD} expression evaluation.
    */
   public void initialize(Class<? extends W> writableClass);
 
