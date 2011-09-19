@@ -141,7 +141,7 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
       LOG.warn("Error while reading an input record ("
           + numErrors + " out of " + numRecords + " so far ): ", cause);
 
-      double errRate = numErrors/(double)numErrors;
+      double errRate = numErrors/(double)numRecords;
 
       // will always excuse the first error. We can decide if single
       // error crosses threshold inside close() if we want to.
