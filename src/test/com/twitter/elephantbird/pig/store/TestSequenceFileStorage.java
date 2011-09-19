@@ -136,14 +136,53 @@ public class TestSequenceFileStorage {
     validate(pigServer.openIterator("A"));
   }
 
+  private void registerLoadQuery(Class<?> writableConverterClass, String writableConverterCtorArgs)
+      throws IOException {
+    pigServer.registerQuery(String.format("A = LOAD 'file:%s' USING %s('-c %s %s', '-c %s');",
+        tempFilename, SequenceFileStorage.class.getName(), writableConverterClass.getName(),
+        writableConverterCtorArgs, TextConverter.class.getName()));
+  }
+
   @Test
-  public void readWithWritableConverterArguments() throws IOException {
-    pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s %s %s', '-c %s') AS (key: int, val: chararray);",
-        tempFilename, SequenceFileStorage.class.getName(),
-        NoDefaultConstructorIntWritableConverter.class.getName(), "123", "456",
-        TextConverter.class.getName()));
-    validate(pigServer.openIterator("A"));
+  public void writableConverterArguments01() throws IOException {
+    registerLoadQuery(FixedArgsConstructorIntWritableConverter.class, "123 456");
+    pigServer.dumpSchema("A");
+  }
+
+  @Test(expected = Exception.class)
+  public void writableConverterArguments02() throws IOException {
+    registerLoadQuery(FixedArgsConstructorIntWritableConverter.class, "");
+    pigServer.dumpSchema("A");
+  }
+
+  @Test(expected = Exception.class)
+  public void writableConverterArguments03() throws IOException {
+    registerLoadQuery(FixedArgsConstructorIntWritableConverter.class, "-123 -456");
+    pigServer.dumpSchema("A");
+  }
+
+  @Test
+  public void writableConverterArguments04() throws IOException {
+    registerLoadQuery(FixedArgsConstructorIntWritableConverter.class, "-- -123 -456");
+    pigServer.dumpSchema("A");
+  }
+
+  @Test(expected = Exception.class)
+  public void writableConverterArguments05() throws IOException {
+    registerLoadQuery(VarArgsConstructorIntWritableConverter.class, "");
+    pigServer.dumpSchema("A");
+  }
+
+  @Test
+  public void writableConverterArguments06() throws IOException {
+    registerLoadQuery(VarArgsConstructorIntWritableConverter.class, "1");
+    pigServer.dumpSchema("A");
+  }
+
+  @Test
+  public void writableConverterArguments07() throws IOException {
+    registerLoadQuery(VarArgsConstructorIntWritableConverter.class, "1 2 3 4 5");
+    pigServer.dumpSchema("A");
   }
 
   @Test(expected = Exception.class)
@@ -151,7 +190,7 @@ public class TestSequenceFileStorage {
     pigServer.registerQuery(String.format(
         "A = LOAD 'file:%s' USING %s('-c %s', '-c %s') AS (key: int, val: chararray);",
         tempFilename, SequenceFileStorage.class.getName(),
-        NoDefaultConstructorIntWritableConverter.class.getName(), TextConverter.class.getName()));
+        FixedArgsConstructorIntWritableConverter.class.getName(), TextConverter.class.getName()));
     validate(pigServer.openIterator("A"));
   }
 

@@ -7,11 +7,11 @@ import com.twitter.elephantbird.pig.util.IntWritableConverter;
  *
  * @author Andy Schlaikjer
  */
-public class NoDefaultConstructorIntWritableConverter extends IntWritableConverter {
+public class FixedArgsConstructorIntWritableConverter extends IntWritableConverter {
   private final String a;
   private final String b;
 
-  public NoDefaultConstructorIntWritableConverter(String a, String b) {
+  public FixedArgsConstructorIntWritableConverter(String a, String b) {
     this.a = a;
     this.b = b;
   }

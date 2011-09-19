@@ -26,10 +26,9 @@ public class ProtobufWritableConverter<M extends Message> extends
   protected final TypeRef<M> typeRef;
   protected final ProtobufToPig protobufToPig;
 
-  public ProtobufWritableConverter(String[] args) {
-    Preconditions.checkNotNull(args);
-    Preconditions.checkArgument(0 < args.length);
-    typeRef = PigUtil.getProtobufTypeRef(args[0]);
+  public ProtobufWritableConverter(String protobufClassName) {
+    Preconditions.checkNotNull(protobufClassName);
+    typeRef = PigUtil.getProtobufTypeRef(protobufClassName);
     protobufToPig = new ProtobufToPig();
     this.writable = ProtobufWritable.newInstance(typeRef.getRawClass());
   }

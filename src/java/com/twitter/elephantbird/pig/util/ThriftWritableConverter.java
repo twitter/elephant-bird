@@ -54,10 +54,9 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
   protected final ThriftToPig<M> thriftToPig;
   protected final PigToThrift<M> pigToThrift;
 
-  public ThriftWritableConverter(String[] args) {
-    Preconditions.checkNotNull(args);
-    Preconditions.checkArgument(0 < args.length);
-    typeRef = PigUtil.getThriftTypeRef(args[0]);
+  public ThriftWritableConverter(String thriftClassName) {
+    Preconditions.checkNotNull(thriftClassName);
+    typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig = ThriftToPig.newInstance(typeRef);
     pigToThrift = PigToThrift.newInstance(typeRef);
     this.writable = ThriftWritable.newInstance(typeRef.getRawClass());

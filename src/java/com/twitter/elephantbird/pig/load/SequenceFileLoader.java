@@ -17,6 +17,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.UnrecognizedOptionException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
@@ -98,10 +99,28 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * </dl>
    * Any extra arguments found will be treated as String arguments for the WritableConverter
    * constructor. For instance, the argument string {@code "-c MyConverter 123 abc"} specifies
-   * WritableConverter class {@code MyConverter} along with two ctor String arguments {@code "123"}
-   * and {@code "abc"}. This will cause SequenceFileLoader to call
-   * {@code new MyConverter("123", "abc")} when creating a new instance of MyConverter. If no such
-   * constructor exists, a RuntimeException will be thrown.
+   * WritableConverter class {@code MyConverter} along with two constructor arguments {@code "123"}
+   * and {@code "abc"}. This will cause SequenceFileLoader to invoke
+   * {@code MyConverter(String arg1, String arg2)} with the given values when creating a new
+   * instance of MyConverter. If no such constructor exists, constructor
+   * {@code new MyConverter(String[] args)} is attempted. If this also fails, a RuntimeException
+   * will be thrown.
+   *
+   * <p>
+   * Note that WritableConverter constructor arguments prefixed by one or more hyphens will be
+   * interpreted as options for SequenceFileLoader itself, resulting in an
+   * {@link UnrecognizedOptionException}. To avoid this, place these values after a {@code --}
+   * (double-hyphen) token:
+   *
+   * <pre>
+   * A = LOAD '$data' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
+   *   '-c ...IntWritableConverter',
+   *   '-c ...MyComplexWritableConverter basic options here -- --complex -options here'
+   * );
+   * </pre>
+   *
+   * The above Pig script will cause SequenceFileLoader to attempt execution of
+   * {@code MyComplexWritableConverter("basic", "options", "here", "--complex", "-options", "here")}.
    *
    * @param keyArgs
    * @param valueArgs
@@ -169,9 +188,18 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       if (converterArgs == null || converterArgs.length == 0) {
         converter = converterClass.newInstance();
       } else {
-        Constructor<WritableConverter<T>> ctor =
-            converterClass.getConstructor(new Class<?>[] { String[].class });
-        converter = ctor.newInstance((Object) converterArgs);
+        try {
+          // look up ctor having explicit number of String arguments
+          Class<?>[] parameterTypes = new Class<?>[converterArgs.length];
+          Arrays.fill(parameterTypes, String.class);
+          Constructor<WritableConverter<T>> ctor = converterClass.getConstructor(parameterTypes);
+          converter = ctor.newInstance((Object[]) converterArgs);
+        } catch (NoSuchMethodException e) {
+          // look up ctor having single String[] (or String... varargs) argument
+          Constructor<WritableConverter<T>> ctor =
+              converterClass.getConstructor(new Class<?>[] { String[].class });
+          converter = ctor.newInstance((Object) converterArgs);
+        }
       }
     } catch (Exception e) {
       throw new RuntimeException("Failed to create WritableConverter instance", e);
