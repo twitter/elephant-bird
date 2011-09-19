@@ -41,7 +41,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * people = LOAD '$data' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
  *   '-c com.twitter.elephantbird.pig.util.IntWritableConverter',
  *   '-c com.twitter.elephantbird.pig.util.ThriftWritableConverter Person'
- * ) AS (id: int, person: ());
+ * );
  * </pre>
  *
  * @author Andy Schlaikjer
