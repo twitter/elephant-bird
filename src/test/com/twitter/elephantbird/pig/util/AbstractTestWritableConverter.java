@@ -47,7 +47,7 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
   private final Class<C> writableConverterClass;
   private final String writableConverterArguments;
   private final W[] data;
-  private final String[][] expected;
+  private final String[] expected;
   private final String valueSchema;
   protected PigServer pigServer;
   protected String tempFilename;
@@ -60,11 +60,7 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
     this.writableConverterArguments =
         writableConverterArguments == null ? "" : writableConverterArguments;
     this.data = data;
-    this.expected = new String[expected.length][2];
-    for (int i = 0; i < expected.length; ++i) {
-      this.expected[i][0] = Integer.toString(i);
-      this.expected[i][1] = expected[i];
-    }
+    this.expected = expected;
     this.valueSchema = valueSchema;
   }
 
@@ -154,16 +150,13 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
 
   protected void validate(final Iterator<Tuple> it) throws ExecException {
     int tupleCount = 0;
-    while (it.hasNext()) {
+    for (; it.hasNext(); ++tupleCount) {
       final Tuple tuple = it.next();
       Assert.assertNotNull(tuple);
       Assert.assertEquals(2, tuple.size());
-      for (int i = 0; i < 2; ++i) {
-        final Object entry = tuple.get(i);
-        Assert.assertNotNull(entry);
-        Assert.assertEquals(expected[tupleCount][i], entry.toString());
-      }
-      tupleCount++;
+      Object value = tuple.get(1);
+      Assert.assertNotNull(value);
+      Assert.assertEquals(expected[tupleCount], value.toString());
     }
     Assert.assertEquals(data.length, tupleCount);
   }

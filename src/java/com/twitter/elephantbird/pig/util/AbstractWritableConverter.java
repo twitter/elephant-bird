@@ -35,9 +35,7 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
    */
   @Override
   public ResourceFieldSchema getLoadSchema() throws IOException {
-    ResourceFieldSchema schema = new ResourceFieldSchema();
-    schema.setType(DataType.BYTEARRAY);
-    return schema;
+    return null;
   }
 
   /**

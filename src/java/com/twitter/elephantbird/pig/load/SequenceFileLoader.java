@@ -38,6 +38,7 @@ import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataByteArray;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
@@ -293,8 +294,16 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   public ResourceSchema getSchema(String location, Job job) throws IOException {
     ResourceSchema resourceSchema = new ResourceSchema();
     ResourceFieldSchema keySchema = keyConverter.getLoadSchema();
+    if (keySchema == null) {
+      keySchema = new ResourceFieldSchema();
+      keySchema.setType(DataType.BYTEARRAY);
+    }
     keySchema.setName("key");
     ResourceFieldSchema valueSchema = valueConverter.getLoadSchema();
+    if (valueSchema == null) {
+      valueSchema = new ResourceFieldSchema();
+      valueSchema.setType(DataType.BYTEARRAY);
+    }
     valueSchema.setName("value");
     resourceSchema.setFields(new ResourceFieldSchema[] { keySchema, valueSchema });
     return resourceSchema;
