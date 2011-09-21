@@ -2,6 +2,8 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
+import com.google.common.base.Preconditions;
+
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
@@ -53,6 +55,7 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
   protected final PigToThrift<M> pigToThrift;
 
   public ThriftWritableConverter(String thriftClassName) {
+    Preconditions.checkNotNull(thriftClassName);
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig = ThriftToPig.newInstance(typeRef);
     pigToThrift = PigToThrift.newInstance(typeRef);
