@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.Message;
 
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
@@ -26,6 +27,7 @@ public class ProtobufWritableConverter<M extends Message> extends
   protected final ProtobufToPig protobufToPig;
 
   public ProtobufWritableConverter(String protobufClassName) {
+    Preconditions.checkNotNull(protobufClassName);
     typeRef = PigUtil.getProtobufTypeRef(protobufClassName);
     protobufToPig = new ProtobufToPig();
     this.writable = ProtobufWritable.newInstance(typeRef.getRawClass());

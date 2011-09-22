@@ -42,7 +42,7 @@ import com.twitter.elephantbird.pig.store.SequenceFileStorage;
  *
  * @author Andy Schlaikjer
  */
-public class AbstractTestWritableConverter<W extends Writable, C extends WritableConverter<W>> {
+public abstract class AbstractTestWritableConverter<W extends Writable, C extends WritableConverter<W>> {
   private final Class<W> writableClass;
   private final Class<C> writableConverterClass;
   private final String writableConverterArguments;
