@@ -186,11 +186,12 @@
   
 
   <target name="jar" depends="compile" description="generate the distribution">
+    <property name="jar.file" value="${dist.dir}/${jar.name}-${version}.jar" />
     <!-- Create the distribution directory -->
     <mkdir dir="${dist.dir}"/>
 	<!-- Delete the old jar file -->
-	<delete file="${dist.dir}/${jar.name}-${version}.jar"/>
-    <jar jarfile="${dist.dir}/${jar.name}-${version}.jar">
+	<delete file="${jar.file}"/>
+    <jar jarfile="${jar.file}">
       <fileset dir="${classes.dir}"/>
     </jar>
   </target>
@@ -210,6 +211,17 @@
 
   <target name="debug-jar" description="Build debug and jar" depends="debug,jar"/>
   <target name="release-jar" description="Build release and jar" depends="release,jar"/>
+
+  <target name="maven-install" description="Install release jar in local Maven repository" depends="release-jar">
+    <exec executable="mvn" failonerror="true">
+      <arg value="install:install-file" />
+      <arg value="-DgroupId=com.twitter" />
+      <arg value="-DartifactId=elephant-bird" />
+      <arg value="-Dversion=${version}" />
+      <arg value="-Dpackaging=jar" />
+      <arg value="-Dfile=${jar.file}" />
+    </exec>
+  </target>
 
   <target name="clean" description="clean up">
     <!-- Delete the ${build} and ${dist} directory trees -->
