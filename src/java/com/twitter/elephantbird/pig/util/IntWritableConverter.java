@@ -10,7 +10,7 @@ import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 
 /**
- * Supports conversion between Pig int type (Integer) and {@link IntWritable}.
+ * Supports conversion between Pig types and {@link IntWritable}.
  *
  * @author Andy Schlaikjer
  */
@@ -72,32 +72,35 @@ public class IntWritableConverter extends AbstractWritableConverter<IntWritable>
 
   @Override
   protected IntWritable toWritable(String value, boolean newInstance) throws IOException {
+    Preconditions.checkNotNull(value);
     return toWritable(Integer.parseInt(value), newInstance);
   }
 
   @Override
   protected IntWritable toWritable(Integer value, boolean newInstance) throws IOException {
     Preconditions.checkNotNull(value);
-    if (newInstance)
-      return new IntWritable(value);
-    if (writable == null)
+    if (writable == null) {
       writable = new IntWritable();
+    }
     writable.set(value);
     return writable;
   }
 
   @Override
   protected IntWritable toWritable(Long value, boolean newInstance) throws IOException {
+    Preconditions.checkNotNull(value);
     return toWritable(value.intValue(), newInstance);
   }
 
   @Override
   protected IntWritable toWritable(Float value, boolean newInstance) throws IOException {
+    Preconditions.checkNotNull(value);
     return toWritable(value.intValue(), newInstance);
   }
 
   @Override
   protected IntWritable toWritable(Double value, boolean newInstance) throws IOException {
+    Preconditions.checkNotNull(value);
     return toWritable(value.intValue(), newInstance);
   }
 }
