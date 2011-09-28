@@ -9,6 +9,7 @@ import java.util.Properties;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -179,14 +180,19 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   @SuppressWarnings("unchecked")
   private static <T extends Writable> WritableConverter<T> getWritableConverter(
       CommandLine arguments) {
-    final String converterClassName =
-        arguments.getOptionValue(CONVERTER_PARAM, TextConverter.class.getName());
-    String[] converterArgs = arguments.getArgs();
+    // get remaining non-empty argument strings from commandline
+    String[] converterArgs = removeEmptyArgs(arguments.getArgs());
+
+    // create writable converter instance
     WritableConverter<T> converter = null;
     try {
+      // get writable converter class
       Class<WritableConverter<T>> converterClass =
-          (Class<WritableConverter<T>>) Class.forName(converterClassName);
+          (Class<WritableConverter<T>>) Class.forName(arguments.getOptionValue(CONVERTER_PARAM,
+              TextConverter.class.getName()));
+
       if (converterArgs == null || converterArgs.length == 0) {
+        // use default ctor
         converter = converterClass.newInstance();
       } else {
         try {
@@ -206,6 +212,16 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       throw new RuntimeException("Failed to create WritableConverter instance", e);
     }
     return converter;
+  }
+
+  private static String[] removeEmptyArgs(String[] args) {
+    List<String> converterArgsFiltered = Lists.newArrayList();
+    for (String arg : args) {
+      if (arg == null || arg.isEmpty())
+        continue;
+      converterArgsFiltered.add(arg);
+    }
+    return converterArgsFiltered.toArray(new String[0]);
   }
 
   private Properties getContextProperties() {
