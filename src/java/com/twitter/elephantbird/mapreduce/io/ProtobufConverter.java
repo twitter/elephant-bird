@@ -18,6 +18,17 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   private Message.Builder protoBuilder;
   private TypeRef<M> typeRef;
 
+  // limit the number of warnings in case of serialization errors.
+  private static final int MAX_WARNINGS = 100;
+  private static int numWarningsLogged = 0;
+
+  private static void logWarning(String message, Throwable t) {
+    // does not need to be thread safe
+    if ( numWarningsLogged < MAX_WARNINGS ) {
+      LOG.info(message, t);
+      numWarningsLogged++;
+    }
+  }
 
   /**
    * Returns a ProtobufConverter for a given Protobuf class.
@@ -43,9 +54,9 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
       }
       return  (M) protoBuilder.clone().mergeFrom(messageBuffer).build();
     } catch (InvalidProtocolBufferException e) {
-      LOG.error("Invalid Protobuf exception while building " + typeRef.getRawClass().getName(), e);
+      logWarning("Invalid Protobuf exception while building " + typeRef.getRawClass().getName(), e);
     } catch(UninitializedMessageException ume) {
-      LOG.error("Uninitialized Message Exception while building " + typeRef.getRawClass().getName(), ume);
+      logWarning("Uninitialized Message Exception while building " + typeRef.getRawClass().getName(), ume);
     }
     return null;
   }

@@ -1,5 +1,7 @@
 package com.twitter.elephantbird.mapreduce.io;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
@@ -9,9 +11,23 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M> {
 
+  public static final Logger LOG = LogManager.getLogger(ThriftConverter.class);
+
   private TypeRef<M> typeRef;
   private TSerializer serializer;
   private TDeserializer deserializer;
+
+  // limit the number of warnings in case of serialization errors.
+  private static final int MAX_WARNINGS = 100;
+  private static int numWarningsLogged = 0;
+
+  private static void logWarning(String message, Throwable t) {
+    // does not need to be thread safe
+    if ( numWarningsLogged < MAX_WARNINGS ) {
+      LOG.info(message, t);
+      numWarningsLogged++;
+    }
+  }
 
   /**
    * Returns a ThriftConverter for a given Thrift class.
@@ -37,7 +53,7 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
       deserializer.deserialize(message, messageBuffer);
       return message;
     } catch (TException e) {
-      // print a warning?
+      logWarning("failed to deserialize", e);
       return null;
     }
   }
@@ -49,6 +65,7 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
     try {
       return serializer.serialize(message);
     } catch (TException e) {
+      logWarning("failed to serialize", e);
       return null;
     }
   }
