@@ -2,6 +2,18 @@
 
 ### Version 2.0.8 ###
 
+ISSUE 86. log serialization errors in lzo loaders (rangadi)
+
+ISSUE 85. fix for SequenceFileLoader getWritableConverter (Andy Schlaikjer)
+
+ISSUE 84. various SequenceFileLoader updates (Andy Schlaikjer)
+
+ISSUE 82. maven-install ant target (Andy Schlaikjer)
+
+ISSUE 81. Fix error rate calculation in LzoRecordReader (rangadi)
+
+ISSUE 80. varargs constroctor for WritableConverters in SequenceFileLoader (Andy Schlaikjer)
+
 ### Version 2.0.7 ###
 
 ISSUE 79. Fix schema for DataBag in Pig 0.9 (rangadi)
