@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Message;
+import com.google.protobuf.Message.Builder;
+
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
@@ -11,14 +16,25 @@ import org.apache.pig.data.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Message;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.util.Protobufs;
 
 /**
- * A class for turning Pig Tuples into codegen'd protos for custom Pig StoreFuncs.
+ * Converts a Pig Tuple into a Protobuf message. Tuple values should be ordered to match the natural
+ * order of Protobuf field ordinal values. For example, say we define the following Protobuf
+ * message:
+ *
+ * <pre>
+ * message MyProtobufType {
+ *   optional int32 f1 = 1;
+ *   optional int32 f2 = 3;
+ *   optional int32 f3 = 7;
+ * }
+ * </pre>
+ *
+ * Input Tuples are expected to contain field values in order {@code (f1, f2, f3)}. Tuples may
+ * contain fewer values than Protobuf message fields (e.g. only {@code (f1, f2)} in the prior
+ * example); Any remaining fields will be left unset.
+ *
  * @author Vikram Oberoi
  */
 public class PigToProtobuf {
@@ -58,16 +74,31 @@ public class PigToProtobuf {
       }
 
       if (tupleField != null) {
-        if (fieldDescriptor.isRepeated()) {
-          // Repeated fields are set with Lists containing objects of the fields' Java type.
-          builder.setField(fieldDescriptor, dataBagToRepeatedField(builder, fieldDescriptor, (DataBag)tupleField));
-        } else {
-          if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-            Builder nestedMessageBuilder = builder.newBuilderForField(fieldDescriptor);
-            builder.setField(fieldDescriptor, tupleToMessage((Builder)nestedMessageBuilder, (Tuple)tupleField));
+        try {
+          if (fieldDescriptor.isRepeated()) {
+            // Repeated fields are set with Lists containing objects of the fields' Java type.
+            builder.setField(fieldDescriptor,
+                dataBagToRepeatedField(builder, fieldDescriptor, (DataBag) tupleField));
           } else {
-            builder.setField(fieldDescriptor, tupleFieldToSingleField(fieldDescriptor, tupleField));
+            if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
+              Builder nestedMessageBuilder = builder.newBuilderForField(fieldDescriptor);
+              builder.setField(fieldDescriptor,
+                  tupleToMessage(nestedMessageBuilder, (Tuple) tupleField));
+            } else {
+              builder.setField(fieldDescriptor,
+                  tupleFieldToSingleField(fieldDescriptor, tupleField));
+            }
           }
+        } catch (Exception e) {
+          String value = String.valueOf(tupleField);
+          final int max_length = 100;
+          if (max_length < value.length()) {
+            value = value.substring(0, max_length - 3) + "...";
+          }
+          String type = tupleField == null ? "unknown" : tupleField.getClass().getName();
+          throw new RuntimeException(String.format(
+              "Failed to set field '%s' using tuple value '%s' of type '%s' at index %d",
+              fieldDescriptor.getName(), value, type, i), e);
         }
       }
     }
