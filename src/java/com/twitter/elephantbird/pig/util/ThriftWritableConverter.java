@@ -53,13 +53,32 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
   protected final TypeRef<M> typeRef;
   protected final ThriftToPig<M> thriftToPig;
   protected final PigToThrift<M> pigToThrift;
+  protected Class<? extends ThriftWritable<M>> writableClass;
 
   public ThriftWritableConverter(String thriftClassName) {
     Preconditions.checkNotNull(thriftClassName);
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig = ThriftToPig.newInstance(typeRef);
     pigToThrift = PigToThrift.newInstance(typeRef);
-    this.writable = ThriftWritable.newInstance(typeRef.getRawClass());
+  }
+
+  @Override
+  public void initialize(Class<? extends ThriftWritable<M>> writableClass) {
+    this.writableClass = writableClass;
+    this.writable = createWritable();
+  }
+
+  private ThriftWritable<M> createWritable() {
+    if (writableClass != null && ThriftWritable.class.isAssignableFrom(writableClass)) {
+      try {
+        ThriftWritable<M> writable = writableClass.newInstance();
+        writable.setConverter(typeRef.getRawClass());
+        return writable;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return ThriftWritable.newInstance(typeRef.getRawClass());
   }
 
   @Override
@@ -83,7 +102,7 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
   protected ThriftWritable<M> toWritable(Tuple value, boolean newInstance) throws IOException {
     ThriftWritable<M> out = this.writable;
     if (newInstance) {
-      out = ThriftWritable.newInstance(typeRef.getRawClass());
+      out = createWritable();
     }
     out.set(pigToThrift.getThriftObject(value));
     return out;
