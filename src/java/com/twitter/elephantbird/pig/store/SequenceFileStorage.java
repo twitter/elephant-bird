@@ -25,6 +25,8 @@ import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.StoreFunc;
 import org.apache.pig.StoreFuncInterface;
 import org.apache.pig.data.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.pig.load.SequenceFileLoader;
 
@@ -45,6 +47,7 @@ import com.twitter.elephantbird.pig.load.SequenceFileLoader;
  */
 public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     SequenceFileLoader<K, V> implements StoreFuncInterface {
+  private static final Logger log = LoggerFactory.getLogger(SequenceFileStorage.class);
   protected static final String TYPE_PARAM = "type";
   private final Class<K> keyClass;
   private final Class<V> valueClass;
@@ -182,10 +185,24 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   @Override
   public void putNext(Tuple t) throws IOException {
-    Preconditions.checkNotNull(t);
-    Preconditions.checkArgument(2 == t.size(), "Expected tuple size 2 but found size %s", t.size());
-    K key = keyConverter.toWritable(t.get(0));
-    V value = valueConverter.toWritable(t.get(1));
+    if (t == null) {
+      log.warn("Null tuple found; Skipping tuple");
+      return;
+    }
+    Preconditions.checkArgument(2 <= t.size(), "Expected tuple size >= 2 but found size %s",
+        t.size());
+    Object pigKey = t.get(0);
+    if (pigKey == null) {
+      log.warn("Null key found; Skipping tuple");
+      return;
+    }
+    Object pigValue = t.get(1);
+    if (pigValue == null) {
+      log.warn("Null value found; Skipping tuple");
+      return;
+    }
+    K key = keyConverter.toWritable(pigKey);
+    V value = valueConverter.toWritable(pigValue);
     try {
       writer.write(key, value);
     } catch (InterruptedException e) {
