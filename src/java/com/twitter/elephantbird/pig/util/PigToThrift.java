@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
@@ -23,8 +23,20 @@ import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * Coverts a Pig Tuple into a Thrift struct, assuming fields in
- * tuples match exactly with the fields in Thrift struct.
+ * Converts a Pig Tuple into a Thrift struct. Tuple values should be ordered to match the natural
+ * order of Thrift field ordinal values. For example, say we define the following Thrift struct:
+ *
+ * <pre>
+ * struct MyThriftType {
+ *   1: i32 f1
+ *   3: i32 f2
+ *   7: i32 f3
+ * }
+ * </pre>
+ *
+ * Input Tuples are expected to contain field values in order {@code (f1, f2, f3)}. Tuples may
+ * contain fewer values than Thrift struct fields (e.g. only {@code (f1, f2)} in the prior example);
+ * Any remaining fields will be left unset.
  */
 public class PigToThrift<T extends TBase<?, ?>> {
   private TStructDescriptor structDesc;
@@ -54,6 +66,7 @@ public class PigToThrift<T extends TBase<?, ?>> {
   private static TBase<?, ?> toThrift(TStructDescriptor tDesc, Tuple tuple) {
     int size = tDesc.getFields().size();
     int tupleSize = tuple.size();
+    @SuppressWarnings("rawtypes")
     TBase tObj = newTInstance(tDesc.getThriftClass());
     for(int i = 0; i<size && i<tupleSize; i++) {
       Object pObj;
@@ -64,7 +77,19 @@ public class PigToThrift<T extends TBase<?, ?>> {
       }
       if (pObj != null) {
         Field field = tDesc.getFieldAt(i);
-        tObj.setFieldValue(field.getFieldIdEnum(), toThriftValue(field, pObj));
+        try {
+          tObj.setFieldValue(field.getFieldIdEnum(), toThriftValue(field, pObj));
+        } catch (Exception e) {
+          String value = String.valueOf(tObj);
+          final int max_length = 100;
+          if (max_length < value.length()) {
+            value = value.substring(0, max_length - 3) + "...";
+          }
+          String type = tObj == null ? "unknown" : tObj.getClass().getName();
+          throw new RuntimeException(String.format(
+              "Failed to set field '%s' using tuple value '%s' of type '%s' at index %d",
+              field.getName(), value, type, i), e);
+        }
       }
     }
     return tObj;
