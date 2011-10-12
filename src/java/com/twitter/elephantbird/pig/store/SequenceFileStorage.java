@@ -9,6 +9,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -25,21 +26,33 @@ import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.StoreFunc;
 import org.apache.pig.StoreFuncInterface;
 import org.apache.pig.data.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.pig.load.SequenceFileLoader;
+import com.twitter.elephantbird.pig.util.PigCounterHelper;
+import com.twitter.elephantbird.pig.util.WritableConverter;
 
 /**
  * Pig StoreFunc supporting conversion between Pig tuples and arbitrary key-value pairs stored
- * within {@link SequenceFile}s. Usage:
+ * within {@link SequenceFile}s. Example usage:
  *
  * <pre>
- * key_val = LOAD '$INPUT' AS (key: int, val: chararray);
+ * pairs = LOAD '$INPUT' AS (key: int, value: chararray);
  *
- * STORE key_val INTO '$OUTPUT' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
+ * STORE pairs INTO '$OUTPUT' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
  *   '-t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter',
  *   '-t org.apache.hadoop.io.Text        -c com.twitter.elephantbird.pig.util.TextConverter'
+ * );
+ * </pre>
+ *
+ * If key or value output type is {@link NullWritable}, no {@link WritableConverter} implementation
+ * must be specified; SequenceFileStorage will use {@link NullWritable#get()} directly:
+ *
+ * <pre>
+ * values = LOAD '$INPUT' AS (value: int);
+ *
+ * STORE values INTO '$OUTPUT' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
+ *   '-t org.apache.hadoop.io.NullWritable',
+ *   '-t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter'
  * );
  * </pre>
  *
@@ -47,29 +60,43 @@ import com.twitter.elephantbird.pig.load.SequenceFileLoader;
  */
 public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     SequenceFileLoader<K, V> implements StoreFuncInterface {
-  private static final Logger log = LoggerFactory.getLogger(SequenceFileStorage.class);
+  /**
+   * Failure modes for use with {@link PigCounterHelper} to keep track of runtime error counts.
+   *
+   * @author Andy Schlaikjer
+   */
+  public static enum Error {
+    /**
+     * Null tuple was supplied to {@link SequenceFileStorage#putNext(Tuple)}.
+     */
+    NULL_TUPLE,
+    /**
+     * Null key was supplied to {@link SequenceFileStorage#putNext(Tuple)} and key type is not
+     * {@link NullWritable}.
+     */
+    NULL_KEY,
+    /**
+     * Null value was supplied to {@link SequenceFileStorage#putNext(Tuple)} and value type is not
+     * {@link NullWritable}.
+     */
+    NULL_VALUE;
+  }
+
   protected static final String TYPE_PARAM = "type";
+  private final PigCounterHelper counterHelper = new PigCounterHelper();
   private final Class<K> keyClass;
   private final Class<V> valueClass;
   private RecordWriter<K, V> writer;
 
   /**
    * Parses key and value options from argument strings. Available options for both key and value
-   * argument strings include those supported by {@link SequenceFileLoader}, as well as:
+   * argument strings include those supported by
+   * {@link SequenceFileLoader#SequenceFileLoader(String, String)}, as well as:
    * <dl>
    * <dt>-t|--type cls</dt>
    * <dd>{@link Writable} implementation class of data. Defaults to {@link Text} for both key and
    * value.</dd>
    * </dl>
-   * Usage:
-   *
-   * <pre>
-   * data = LOAD '$INPUT' as (key: int, val: chararray);
-   * STORE data INTO '$OUTPUT' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
-   *   '-t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter',
-   *   '-t org.apache.hadoop.io.Text        -c com.twitter.elephantbird.pig.util.TextConverter'
-   * );
-   * </pre>
    *
    * @param keyArgs
    * @param valueArgs
@@ -87,6 +114,8 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
         (Class<K>) Class.forName(keyArguments.getOptionValue(TYPE_PARAM, Text.class.getName()));
     valueClass =
         (Class<V>) Class.forName(valueArguments.getOptionValue(TYPE_PARAM, Text.class.getName()));
+    Preconditions.checkState(!(keyClass == NullWritable.class && valueClass == NullWritable.class),
+        "Both key and value types are '%s'", NullWritable.class);
   }
 
   /**
@@ -169,10 +198,20 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     Preconditions.checkNotNull(schema, "Schema is null");
     ResourceFieldSchema[] fields = schema.getFields();
     Preconditions.checkNotNull(fields, "Schema fields are undefined");
-    if (2 != fields.length)
-      throw new IOException("Expecting 2 schema entries but found " + fields.length);
-    keyConverter.checkStoreSchema(fields[0]);
-    valueConverter.checkStoreSchema(fields[1]);
+    int i = 0;
+    if (keyClass != NullWritable.class) {
+      checkFieldSchema(fields, i++, keyClass, keyConverter);
+    }
+    if (valueClass != NullWritable.class) {
+      checkFieldSchema(fields, i, valueClass, valueConverter);
+    }
+  }
+
+  private <T extends Writable> void checkFieldSchema(ResourceFieldSchema[] fields, int index,
+      Class<T> writableClass, WritableConverter<T> writableConverter) throws IOException {
+    Preconditions.checkArgument(fields.length > index,
+        "Expecting schema length > %s but found length %s", index, fields.length);
+    writableConverter.checkStoreSchema(fields[index]);
   }
 
   @Override
@@ -185,29 +224,52 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   @Override
   public void putNext(Tuple t) throws IOException {
+    // test for null input tuple
     if (t == null) {
-      log.warn("Null tuple found; Skipping tuple");
+      counterHelper.incrCounter(Error.NULL_TUPLE, 1);
       return;
     }
-    Preconditions.checkArgument(2 <= t.size(), "Expected tuple size >= 2 but found size %s",
-        t.size());
-    Object pigKey = t.get(0);
-    if (pigKey == null) {
-      log.warn("Null key found; Skipping tuple");
-      return;
+
+    // tuple index
+    int i = 0;
+
+    // convert key from pig to writable
+    K key = null;
+    if (keyClass == NullWritable.class) {
+      key = getNullWritable();
+    } else {
+      Object obj = t.get(i++);
+      if (obj == null) {
+        counterHelper.incrCounter(Error.NULL_KEY, 1);
+        return;
+      }
+      key = keyConverter.toWritable(obj);
     }
-    Object pigValue = t.get(1);
-    if (pigValue == null) {
-      log.warn("Null value found; Skipping tuple");
-      return;
+
+    // convert value from pig to writable
+    V value = null;
+    if (valueClass == NullWritable.class) {
+      value = getNullWritable();
+    } else {
+      Object obj = t.get(i);
+      if (obj == null) {
+        counterHelper.incrCounter(Error.NULL_VALUE, 1);
+        return;
+      }
+      value = valueConverter.toWritable(obj);
     }
-    K key = keyConverter.toWritable(pigKey);
-    V value = valueConverter.toWritable(pigValue);
+
+    // write key-value pair
     try {
       writer.write(key, value);
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T extends Writable> T getNullWritable() {
+    return (T) NullWritable.get();
   }
 
   @Override

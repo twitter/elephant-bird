@@ -47,27 +47,43 @@ import org.apache.pig.impl.util.UDFContext;
 
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileInputFormat;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
+import com.twitter.elephantbird.pig.util.NullWritableConverter;
 import com.twitter.elephantbird.pig.util.TextConverter;
 import com.twitter.elephantbird.pig.util.WritableConverter;
 
 /**
  * Pig LoadFunc supporting conversion from key, value objects stored within {@link SequenceFile}s to
- * Pig objects. Example:
+ * Pig objects. Example usage:
  *
  * <pre>
- * key_val = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
+ * pairs = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
  *   '-c com.twitter.elephantbird.pig.util.IntWritableConverter',
  *   '-c com.twitter.elephantbird.pig.util.TextConverter'
  * ) as (
  *   key: int,
- *   val: chararray
+ *   value: chararray
  * );
  *
  * -- or, making use of defaults
- * key_val = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader () as (
- *   key: chararray,
- *   val: chararray
- * );
+ * pairs = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader ();
+ * </pre>
+ *
+ * If the configured {@link WritableConverter} implementation returns type {@link DataType#NULL}
+ * from {@link WritableConverter#getLoadSchema()} (e.g. {@link NullWritableConverter}), then the
+ * associated values will not be included within loaded tuples. For instance:
+ *
+ * <pre>
+ * values = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
+ *   '-c com.twitter.elephantbird.pig.util.NullWritableConverter',
+ *   '-c com.twitter.elephantbird.pig.util.TextConverter'
+ * )
+ * DESCRIBE values; -- {(value: chararray)}
+ *
+ * keys = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
+ *   '-c com.twitter.elephantbird.pig.util.TextConverter',
+ *   '-c com.twitter.elephantbird.pig.util.NullWritableConverter'
+ * )
+ * DESCRIBE keys; -- {(key: chararray)}
  * </pre>
  *
  * @author Andy Schlaikjer
@@ -105,8 +121,9 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * and {@code "abc"}. This will cause SequenceFileLoader to invoke
    * {@code MyConverter(String arg1, String arg2)} with the given values when creating a new
    * instance of MyConverter. If no such constructor exists, constructor
-   * {@code new MyConverter(String[] args)} is attempted. If this also fails, a RuntimeException
-   * will be thrown.
+   * {@code new MyConverter(String[] args)} is attempted. If no such constructor exists, constructor
+   * {@code new MyConverter(String argsJoinedOnSpace)} is attempted. If this also fails, a
+   * RuntimeException will be thrown.
    *
    * <p>
    * Note that WritableConverter constructor arguments prefixed by one or more hyphens will be
@@ -122,7 +139,16 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * </pre>
    *
    * The above Pig script will cause SequenceFileLoader to attempt execution of
-   * {@code MyComplexWritableConverter("basic", "options", "here", "--complex", "-options", "here")}.
+   * {@code MyComplexWritableConverter} constructors in the following order:
+   * <ol>
+   * <li>
+   * <code>MyComplexWritableConverter("basic", "options", "here", "--complex", "-options", "here")</code>
+   * </li>
+   * <li>
+   * <code>MyComplexWritableConverter(new String[]{"basic", "options", "here", "--complex", "-options", "here"})</code>
+   * </li>
+   * <li><code>MyComplexWritableConverter("basic options here --complex -options here")</code></li>
+   * </ol>
    *
    * @param keyArgs
    * @param valueArgs
@@ -182,36 +208,52 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       CommandLine arguments) {
     // get remaining non-empty argument strings from commandline
     String[] converterArgs = removeEmptyArgs(arguments.getArgs());
-
-    // create writable converter instance
-    WritableConverter<T> converter = null;
     try {
+
       // get writable converter class
       Class<WritableConverter<T>> converterClass =
           (Class<WritableConverter<T>>) Class.forName(arguments.getOptionValue(CONVERTER_PARAM,
               TextConverter.class.getName()));
 
       if (converterArgs == null || converterArgs.length == 0) {
+
         // use default ctor
-        converter = converterClass.newInstance();
+        return converterClass.newInstance();
+
       } else {
         try {
+
           // look up ctor having explicit number of String arguments
           Class<?>[] parameterTypes = new Class<?>[converterArgs.length];
           Arrays.fill(parameterTypes, String.class);
           Constructor<WritableConverter<T>> ctor = converterClass.getConstructor(parameterTypes);
-          converter = ctor.newInstance((Object[]) converterArgs);
+          return ctor.newInstance((Object[]) converterArgs);
+
         } catch (NoSuchMethodException e) {
-          // look up ctor having single String[] (or String... varargs) argument
-          Constructor<WritableConverter<T>> ctor =
-              converterClass.getConstructor(new Class<?>[] { String[].class });
-          converter = ctor.newInstance((Object) converterArgs);
+          try {
+
+            // look up ctor having single String[] (or String... varargs) argument
+            Constructor<WritableConverter<T>> ctor =
+                converterClass.getConstructor(new Class<?>[] { String[].class });
+            return ctor.newInstance((Object) converterArgs);
+
+          } catch (NoSuchMethodException e2) {
+
+            // look up ctor having single String argument and join args together
+            Constructor<WritableConverter<T>> ctor =
+                converterClass.getConstructor(new Class<?>[] { String.class });
+            StringBuilder sb = new StringBuilder(converterArgs[0]);
+            for (int i = 1; i < converterArgs.length; ++i) {
+              sb.append(" ").append(converterArgs[i]);
+            }
+            return ctor.newInstance(sb.toString());
+
+          }
         }
       }
     } catch (Exception e) {
       throw new RuntimeException("Failed to create WritableConverter instance", e);
     }
-    return converter;
   }
 
   private static String[] removeEmptyArgs(String[] args) {
@@ -309,19 +351,32 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   @Override
   public ResourceSchema getSchema(String location, Job job) throws IOException {
     ResourceSchema resourceSchema = new ResourceSchema();
+    List<ResourceFieldSchema> fieldSchemas = Lists.newArrayList();
+
+    // determine key field schema
     ResourceFieldSchema keySchema = keyConverter.getLoadSchema();
     if (keySchema == null) {
       keySchema = new ResourceFieldSchema();
       keySchema.setType(DataType.BYTEARRAY);
     }
     keySchema.setName("key");
+    if (keySchema.getType() != DataType.NULL) {
+      fieldSchemas.add(keySchema);
+    }
+
+    // determine value field schema
     ResourceFieldSchema valueSchema = valueConverter.getLoadSchema();
     if (valueSchema == null) {
       valueSchema = new ResourceFieldSchema();
       valueSchema.setType(DataType.BYTEARRAY);
     }
     valueSchema.setName("value");
-    resourceSchema.setFields(new ResourceFieldSchema[] { keySchema, valueSchema });
+    if (valueSchema.getType() != DataType.NULL) {
+      fieldSchemas.add(valueSchema);
+    }
+
+    // return tuple schema
+    resourceSchema.setFields(fieldSchemas.toArray(new ResourceFieldSchema[0]));
     return resourceSchema;
   }
 
@@ -364,6 +419,14 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     this.reader = reader;
     keyConverter.initialize(null);
     valueConverter.initialize(null);
+    ResourceFieldSchema fieldSchema = keyConverter.getLoadSchema();
+    if (fieldSchema != null && fieldSchema.getType() == DataType.NULL) {
+      readKey = false;
+    }
+    fieldSchema = valueConverter.getLoadSchema();
+    if (fieldSchema != null && fieldSchema.getType() == DataType.NULL) {
+      readValue = false;
+    }
   }
 
   @Override

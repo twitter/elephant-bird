@@ -13,6 +13,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -41,6 +42,7 @@ import com.twitter.elephantbird.pig.util.AbstractWritableConverter;
 import com.twitter.elephantbird.pig.util.GenericWritableConverter;
 import com.twitter.elephantbird.pig.util.IntWritableConverter;
 import com.twitter.elephantbird.pig.util.LoadFuncTupleIterator;
+import com.twitter.elephantbird.pig.util.NullWritableConverter;
 import com.twitter.elephantbird.pig.util.TextConverter;
 
 /**
@@ -54,6 +56,7 @@ import com.twitter.elephantbird.pig.util.TextConverter;
  * @see AbstractWritableConverter
  * @see IntWritableConverter
  * @see TextWritableConverter
+ * @see NullWritableConverter
  */
 public class TestSequenceFileStorage {
   private static final String LINE_ONE = "one, two, buckle my shoe";
@@ -123,24 +126,30 @@ public class TestSequenceFileStorage {
     validate(new LoadFuncTupleIterator(storage));
   }
 
-  private void registerLoadQuery() throws IOException {
+  private void registerLoadQuery(Class<?> keyConverterClass, String keyConverterCtorArgs,
+      Class<?> valueConverterClass, String valueConverterCtorArgs, String schemaClause)
+      throws IOException {
     pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s') AS (key: int, val: chararray);",
-        tempFilename, SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
-        TextConverter.class.getName()));
+        "A = LOAD 'file:%s' USING %s('-c %s %s', '-c %s %s') %s;", tempFilename,
+        SequenceFileStorage.class.getName(), keyConverterClass.getName(), keyConverterCtorArgs,
+        valueConverterClass.getName(), valueConverterCtorArgs, schemaClause));
+  }
+
+  private void registerLoadQuery(Class<?> writableConverterClass, String writableConverterCtorArgs)
+      throws IOException {
+    registerLoadQuery(writableConverterClass, writableConverterCtorArgs, TextConverter.class, "",
+        "");
+  }
+
+  private void registerLoadQuery() throws IOException {
+    registerLoadQuery(IntWritableConverter.class, "", TextConverter.class, "",
+        "AS (key: int, value: chararray)");
   }
 
   @Test
   public void read() throws IOException {
     registerLoadQuery();
     validate(pigServer.openIterator("A"));
-  }
-
-  private void registerLoadQuery(Class<?> writableConverterClass, String writableConverterCtorArgs)
-      throws IOException {
-    pigServer.registerQuery(String.format("A = LOAD 'file:%s' USING %s('-c %s %s', '-c %s');",
-        tempFilename, SequenceFileStorage.class.getName(), writableConverterClass.getName(),
-        writableConverterCtorArgs, TextConverter.class.getName()));
   }
 
   @Test
@@ -187,18 +196,14 @@ public class TestSequenceFileStorage {
 
   @Test(expected = Exception.class)
   public void readWithMissingWritableConverterArguments() throws IOException {
-    pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s') AS (key: int, val: chararray);",
-        tempFilename, SequenceFileStorage.class.getName(),
-        FixedArgsConstructorIntWritableConverter.class.getName(), TextConverter.class.getName()));
+    registerLoadQuery(FixedArgsConstructorIntWritableConverter.class, "", TextConverter.class, "",
+        "AS (key: int, value: chararray)");
     validate(pigServer.openIterator("A"));
   }
 
   @Test
   public void readWithoutSchemaTestSchema() throws IOException {
-    pigServer.registerQuery(String.format("A = LOAD 'file:%s' USING %s('-c %s', '-c %s');",
-        tempFilename, SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
-        TextConverter.class.getName()));
+    registerLoadQuery(IntWritableConverter.class, "", TextConverter.class, "", "");
     Schema schema = pigServer.dumpSchema("A");
     Assert.assertNotNull(schema);
     Assert.assertEquals("key", schema.getField(0).alias);
@@ -209,10 +214,8 @@ public class TestSequenceFileStorage {
 
   @Test(expected = FrontendException.class)
   public void readWithBadSchema() throws IOException {
-    pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s') AS (key: int, val: chararray, bad: int);",
-        tempFilename, SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
-        TextConverter.class.getName()));
+    registerLoadQuery(IntWritableConverter.class, "", TextConverter.class, "",
+        "AS (key: int, value: chararray, bad: int)");
     validate(pigServer.openIterator("A"));
   }
 
@@ -226,7 +229,7 @@ public class TestSequenceFileStorage {
   @Test
   public void readPushValueProjection() throws IOException {
     registerLoadQuery();
-    pigServer.registerQuery("B = FOREACH A GENERATE val;");
+    pigServer.registerQuery("B = FOREACH A GENERATE value;");
     validateIndex(pigServer.openIterator("B"), 1);
   }
 
@@ -243,11 +246,49 @@ public class TestSequenceFileStorage {
   }
 
   @Test
-  public void readByteArraysWriteByteArraysRead() throws IOException {
+  public void readWriteNullKeysRead() throws IOException {
+    registerLoadQuery();
+    tempFilename = tempFilename + "-2";
+    pigServer.registerQuery(String.format("A = FOREACH A GENERATE value;"));
     pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s') AS (key:bytearray, val:bytearray);",
-        tempFilename, SequenceFileStorage.class.getName(),
-        GenericWritableConverter.class.getName(), GenericWritableConverter.class.getName()));
+        "STORE A INTO 'file:%s' USING %s('-t %s', '-t %s -c %s');", tempFilename,
+        SequenceFileStorage.class.getName(), NullWritable.class.getName(), Text.class.getName(),
+        TextConverter.class.getName()));
+    registerLoadQuery(NullWritableConverter.class, "", TextConverter.class, "", "");
+    validateIndex(pigServer.openIterator("A"), 1);
+  }
+
+  @Test
+  public void readWriteNullValuesRead() throws IOException {
+    registerLoadQuery();
+    tempFilename = tempFilename + "-2";
+    pigServer.registerQuery(String.format("A = FOREACH A GENERATE key;"));
+    pigServer.registerQuery(String.format(
+        "STORE A INTO 'file:%s' USING %s('-t %s -c %s', '-t %s');", tempFilename,
+        SequenceFileStorage.class.getName(), IntWritable.class.getName(),
+        IntWritableConverter.class.getName(), NullWritable.class.getName()));
+    registerLoadQuery(IntWritableConverter.class, "", NullWritableConverter.class, "", "");
+    validateIndex(pigServer.openIterator("A"), 0);
+  }
+
+  @Test
+  public void readWriteUnexpectedNullValuesRead() throws IOException {
+    registerLoadQuery();
+    tempFilename = tempFilename + "-2";
+    pigServer.registerQuery(String
+        .format("A = FOREACH A GENERATE key, (key == 2 ? null : value) AS value;"));
+    pigServer.registerQuery(String.format(
+        "STORE A INTO 'file:%s' USING %s('-t %s -c %s', '-t %s -c %s');", tempFilename,
+        SequenceFileStorage.class.getName(), IntWritable.class.getName(),
+        IntWritableConverter.class.getName(), Text.class.getName(), TextConverter.class.getName()));
+    registerLoadQuery();
+    validate(pigServer.openIterator("A"), 2);
+  }
+
+  @Test
+  public void readByteArraysWriteByteArraysRead() throws IOException {
+    registerLoadQuery(GenericWritableConverter.class, "", GenericWritableConverter.class, "",
+        "AS (key:bytearray, value:bytearray)");
     tempFilename = tempFilename + "-2";
     pigServer.registerQuery(String.format(
         "STORE A INTO 'file:%s' USING %s('-t %s -c %s', '-t %s -c %s');", tempFilename,
@@ -261,8 +302,8 @@ public class TestSequenceFileStorage {
   @Test(expected = IOException.class)
   public void writeUnsupportedConversion() throws IOException {
     registerLoadQuery();
-    // swap ordering of key and val
-    pigServer.registerQuery("A = FOREACH A GENERATE TOTUPLE(key), val;");
+    // swap ordering of key and value
+    pigServer.registerQuery("A = FOREACH A GENERATE TOTUPLE(key), value;");
     // the following should die because IntWritableConverter doesn't support conversion of Tuple to
     // IntWritable
     pigServer.registerQuery(String.format(
@@ -280,14 +321,12 @@ public class TestSequenceFileStorage {
         "STORE A INTO 'file:%s' USING %s('-t %s -c %s', '-t %s -c %s');", tempFilename,
         SequenceFileStorage.class.getName(), Text.class.getName(), TextConverter.class.getName(),
         Text.class.getName(), TextConverter.class.getName()));
-    pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s') AS (key:chararray, value:chararray);",
-        tempFilename, SequenceFileStorage.class.getName(), TextConverter.class.getName(),
-        TextConverter.class.getName()));
+    registerLoadQuery(TextConverter.class, "", TextConverter.class, "",
+        "AS (key:chararray, value:chararray)");
     validate(pigServer.openIterator("A"));
   }
 
-  protected void validate(Iterator<Tuple> it) throws ExecException {
+  protected void validate(Iterator<Tuple> it, int expectedTupleCount) throws ExecException {
     int tupleCount = 0;
     while (it.hasNext()) {
       Tuple tuple = it.next();
@@ -300,7 +339,11 @@ public class TestSequenceFileStorage {
       }
       tupleCount++;
     }
-    Assert.assertEquals(DATA.length, tupleCount);
+    Assert.assertEquals(expectedTupleCount, tupleCount);
+  }
+
+  protected void validate(Iterator<Tuple> it) throws ExecException {
+    validate(it, EXPECTED.length);
   }
 
   protected void validateIndex(Iterator<Tuple> it, int index) throws ExecException {
@@ -314,6 +357,6 @@ public class TestSequenceFileStorage {
       Assert.assertEquals(EXPECTED[tupleCount][index], entry.toString());
       tupleCount++;
     }
-    Assert.assertEquals(DATA.length, tupleCount);
+    Assert.assertEquals(EXPECTED.length, tupleCount);
   }
 }
