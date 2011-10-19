@@ -27,10 +27,26 @@ public class ProtobufWritableConverter<M extends Message> extends
   protected final ProtobufToPig protobufToPig;
 
   public ProtobufWritableConverter(String protobufClassName) {
+    super(new ProtobufWritable<M>());
     Preconditions.checkNotNull(protobufClassName);
     typeRef = PigUtil.getProtobufTypeRef(protobufClassName);
     protobufToPig = new ProtobufToPig();
-    this.writable = ProtobufWritable.newInstance(typeRef.getRawClass());
+    writable.setConverter(typeRef.getRawClass());
+  }
+
+  @Override
+  public void initialize(Class<? extends ProtobufWritable<M>> writableClass) {
+    if (writableClass == null || writableClass == this.writableClass) {
+      return;
+    }
+    super.initialize(writableClass);
+    try {
+      writable = writableClass.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Failed to creat instance of Writable class '%s'",
+          writableClass.getName()), e);
+    }
+    writable.setConverter(typeRef.getRawClass());
   }
 
   @Override
@@ -51,12 +67,8 @@ public class ProtobufWritableConverter<M extends Message> extends
   }
 
   @Override
-  protected ProtobufWritable<M> toWritable(Tuple value, boolean newInstance) throws IOException {
-    ProtobufWritable<M> out = this.writable;
-    if (newInstance) {
-      out = ProtobufWritable.newInstance(typeRef.getRawClass());
-    }
-    out.set(PigToProtobuf.tupleToMessage(typeRef.getRawClass(), value));
-    return out;
+  protected ProtobufWritable<M> toWritable(Tuple value) throws IOException {
+    writable.set(PigToProtobuf.tupleToMessage(typeRef.getRawClass(), value));
+    return writable;
   }
 }

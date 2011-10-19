@@ -20,12 +20,40 @@ import org.apache.pig.data.Tuple;
 public abstract class AbstractWritableConverter<W extends Writable> extends WritableStoreCaster<W>
     implements WritableConverter<W> {
   /**
-   * Default implementation does nothing.
+   * Class of Writable instance used internally for conversion.
+   */
+  protected Class<W> writableClass;
+
+  @SuppressWarnings("unchecked")
+  public AbstractWritableConverter(W writable) {
+    super(writable);
+    if (writable != null) {
+      writableClass = (Class<W>) writable.getClass();
+    }
+  }
+
+  public AbstractWritableConverter() {
+    super();
+  }
+
+  /**
+   * For non-null inputs, tests that any existing {@link #writableClass} is assignable from the
+   * given class and updates {@link #writableClass} to reference given class.
    *
    * @see WritableConverter#initialize(java.lang.Class)
    */
   @Override
+  @SuppressWarnings("unchecked")
   public void initialize(Class<? extends W> writableClass) {
+    if (writableClass == null) {
+      return;
+    }
+    if (this.writableClass != null) {
+      Preconditions.checkArgument(this.writableClass.isAssignableFrom(writableClass),
+          "Existing Writable implementation '%s' is not assignable from class '%s'",
+          this.writableClass.getName(), writableClass.getName());
+    }
+    this.writableClass = (Class<W>) writableClass;
   }
 
   /**
@@ -49,6 +77,16 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
   }
 
   /**
+   * Default implementation returns value of {@link #writableClass}.
+   *
+   * @see com.twitter.elephantbird.pig.util.WritableConverter#getWritableClass()
+   */
+  @Override
+  public Class<W> getWritableClass() throws IOException {
+    return writableClass;
+  }
+
+  /**
    * Default implementation does nothing.
    *
    * @see WritableConverter#checkStoreSchema(org.apache.pig.ResourceSchema.ResourceFieldSchema)
@@ -66,32 +104,31 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
   @Override
   @SuppressWarnings("unchecked")
   public W toWritable(Object value) throws IOException {
-    Preconditions.checkNotNull(value);
-    // route to appropriate method using Pig data type
-    byte type = DataType.findType(value);
-    switch (type) {
-      case DataType.BYTEARRAY:
-        return toWritable((DataByteArray) value, false);
-      case DataType.CHARARRAY:
-        return toWritable((String) value, false);
-      case DataType.INTEGER:
-        return toWritable((Integer) value, false);
-      case DataType.LONG:
-        return toWritable((Long) value, false);
-      case DataType.FLOAT:
-        return toWritable((Float) value, false);
-      case DataType.DOUBLE:
-        return toWritable((Double) value, false);
-      case DataType.MAP:
-        return toWritable((Map<String, Object>) value, false);
-      case DataType.TUPLE:
-        return toWritable((Tuple) value, false);
-      case DataType.BAG:
-        return toWritable((DataBag) value, false);
-      case DataType.ERROR:
-        throw new IOException("Failed to find Pig type for class '" + value.getClass().getName()
-            + "'");
+    if (value == null) {
+      return null;
     }
-    throw new IOException("Pig type '" + DataType.findTypeName(type) + "' is unsupported");
+    // route to appropriate method using Pig data type
+    switch (DataType.findType(value)) {
+      case DataType.BYTEARRAY:
+        return toWritable((DataByteArray) value);
+      case DataType.CHARARRAY:
+        return toWritable((String) value);
+      case DataType.INTEGER:
+        return toWritable((Integer) value);
+      case DataType.LONG:
+        return toWritable((Long) value);
+      case DataType.FLOAT:
+        return toWritable((Float) value);
+      case DataType.DOUBLE:
+        return toWritable((Double) value);
+      case DataType.MAP:
+        return toWritable((Map<String, Object>) value);
+      case DataType.TUPLE:
+        return toWritable((Tuple) value);
+      case DataType.BAG:
+        return toWritable((DataBag) value);
+      default:
+        throw new IOException("Pig value class '" + value.getClass().getName() + "' is unsupported");
+    }
   }
 }

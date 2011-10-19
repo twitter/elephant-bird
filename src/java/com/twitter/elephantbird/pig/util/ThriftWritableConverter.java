@@ -26,8 +26,8 @@ import com.twitter.elephantbird.util.TypeRef;
  * people = LOAD '$data' AS (id: int, person: ());
  *
  * STORE people INTO '$output' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
- *   '-t org.apache.hadoop.io.IntWritable -c com.twitter.elephantbird.pig.util.IntWritableConverter',
- *   '-t com.twitter.elephantbird.mapreduce.io.ThriftWritable -c com.twitter.elephantbird.pig.util.ThriftWritableConverter Person'
+ *   '-c com.twitter.elephantbird.pig.util.IntWritableConverter',
+ *   '-c com.twitter.elephantbird.pig.util.ThriftWritableConverter Person'
  * );
  * </pre>
  *
@@ -55,11 +55,27 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
   protected final PigToThrift<M> pigToThrift;
 
   public ThriftWritableConverter(String thriftClassName) {
+    super(new ThriftWritable<M>());
     Preconditions.checkNotNull(thriftClassName);
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig = ThriftToPig.newInstance(typeRef);
     pigToThrift = PigToThrift.newInstance(typeRef);
-    this.writable = ThriftWritable.newInstance(typeRef.getRawClass());
+    writable.setConverter(typeRef.getRawClass());
+  }
+
+  @Override
+  public void initialize(Class<? extends ThriftWritable<M>> writableClass) {
+    if (writableClass == null || writableClass == this.writableClass) {
+      return;
+    }
+    super.initialize(writableClass);
+    try {
+      writable = writableClass.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Failed to creat instance of Writable class '%s'",
+          writableClass.getName()), e);
+    }
+    writable.setConverter(typeRef.getRawClass());
   }
 
   @Override
@@ -80,12 +96,8 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
   }
 
   @Override
-  protected ThriftWritable<M> toWritable(Tuple value, boolean newInstance) throws IOException {
-    ThriftWritable<M> out = this.writable;
-    if (newInstance) {
-      out = ThriftWritable.newInstance(typeRef.getRawClass());
-    }
-    out.set(pigToThrift.getThriftObject(value));
-    return out;
+  protected ThriftWritable<M> toWritable(Tuple value) throws IOException {
+    writable.set(pigToThrift.getThriftObject(value));
+    return writable;
   }
 }

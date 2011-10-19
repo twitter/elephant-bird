@@ -19,6 +19,9 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
@@ -39,7 +42,6 @@ import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataByteArray;
-import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
@@ -47,7 +49,7 @@ import org.apache.pig.impl.util.UDFContext;
 
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileInputFormat;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
-import com.twitter.elephantbird.pig.util.NullWritableConverter;
+import com.twitter.elephantbird.pig.util.DefaultWritableConverter;
 import com.twitter.elephantbird.pig.util.TextConverter;
 import com.twitter.elephantbird.pig.util.WritableConverter;
 
@@ -68,36 +70,22 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  * pairs = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader ();
  * </pre>
  *
- * If the configured {@link WritableConverter} implementation returns type {@link DataType#NULL}
- * from {@link WritableConverter#getLoadSchema()} (e.g. {@link NullWritableConverter}), then the
- * associated values will not be included within loaded tuples. For instance:
- *
- * <pre>
- * values = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
- *   '-c com.twitter.elephantbird.pig.util.NullWritableConverter',
- *   '-c com.twitter.elephantbird.pig.util.TextConverter'
- * )
- * DESCRIBE values; -- {(value: chararray)}
- *
- * keys = LOAD '$INPUT' USING com.twitter.elephantbird.pig.load.SequenceFileLoader (
- *   '-c com.twitter.elephantbird.pig.util.TextConverter',
- *   '-c com.twitter.elephantbird.pig.util.NullWritableConverter'
- * )
- * DESCRIBE keys; -- {(key: chararray)}
- * </pre>
- *
  * @author Andy Schlaikjer
  * @see WritableConverter
  */
 public class SequenceFileLoader<K extends Writable, V extends Writable> extends FileInputLoadFunc
     implements LoadPushDown, LoadMetadata {
-  protected static final String CONVERTER_PARAM = "converter";
-  protected static final String READ_KEY_PARAM = "_readKey";
-  protected static final String READ_VALUE_PARAM = "_readValue";
+  public static final String CONVERTER_PARAM = "converter";
+  private static final String READ_KEY_PARAM = "_readKey";
+  private static final String READ_VALUE_PARAM = "_readValue";
+  protected static final String KEY_CLASS_PARAM = "_keyClass";
+  protected static final String VALUE_CLASS_PARAM = "_valueClass";
   protected final CommandLine keyArguments;
   protected final CommandLine valueArguments;
   protected final WritableConverter<K> keyConverter;
   protected final WritableConverter<V> valueConverter;
+  protected Class<K> keyClass;
+  protected Class<V> valueClass;
   private final DataByteArray keyDataByteArray = new DataByteArray();
   private final DataByteArray valueDataByteArray = new DataByteArray();
   private final List<Object> tuple2 = Arrays.asList(new Object(), new Object()), tuple1 = Arrays
@@ -105,7 +93,9 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   private final TupleFactory tupleFactory = TupleFactory.getInstance();
   protected String signature;
   private RecordReader<DataInputBuffer, DataInputBuffer> reader;
-  private boolean readKey = true, readValue = true;
+  private boolean readKey = true;
+  private boolean readValue = true;
+  private boolean isFrontEnd = false;
 
   /**
    * Parses key and value options from argument strings. Available options for both key and value
@@ -113,17 +103,23 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * <dl>
    * <dt>-c|--converter cls</dt>
    * <dd>{@link WritableConverter} implementation class to use for conversion of data. Defaults to
-   * {@link TextConverter} for both key and value.</dd>
+   * {@link DefaultWritableConverter} for both key and value.</dd>
    * </dl>
    * Any extra arguments found will be treated as String arguments for the WritableConverter
    * constructor. For instance, the argument string {@code "-c MyConverter 123 abc"} specifies
    * WritableConverter class {@code MyConverter} along with two constructor arguments {@code "123"}
-   * and {@code "abc"}. This will cause SequenceFileLoader to invoke
-   * {@code MyConverter(String arg1, String arg2)} with the given values when creating a new
-   * instance of MyConverter. If no such constructor exists, constructor
-   * {@code new MyConverter(String[] args)} is attempted. If no such constructor exists, constructor
-   * {@code new MyConverter(String argsJoinedOnSpace)} is attempted. If this also fails, a
-   * RuntimeException will be thrown.
+   * and {@code "abc"}. This will cause SequenceFileLoader to attempt to invoke the following
+   * constructors, in order, to create a new instance of MyConverter:
+   * <ol>
+   * <li><code>MyConverter(String arg1, String arg2)</code> -- constructor arguments are passed as
+   * explicit arguments.</li>
+   * <li><code>MyConverter(String[] args)</code> -- constructor arguments are passed within a String
+   * array.</li>
+   * <li><code>MyConverter(String... args)</code> -- same as above, with var args syntax.</li>
+   * <li><code>MyConverter(String argString)</code> -- constructor arguments are joined with space
+   * char to create {@code argString}.</li>
+   * </ol>
+   * If none of these constructors exist, a RuntimeException will be thrown.
    *
    * <p>
    * Note that WritableConverter constructor arguments prefixed by one or more hyphens will be
@@ -138,34 +134,32 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * );
    * </pre>
    *
-   * The above Pig script will cause SequenceFileLoader to attempt execution of
-   * {@code MyComplexWritableConverter} constructors in the following order:
-   * <ol>
-   * <li>
-   * <code>MyComplexWritableConverter("basic", "options", "here", "--complex", "-options", "here")</code>
-   * </li>
-   * <li>
-   * <code>MyComplexWritableConverter(new String[]{"basic", "options", "here", "--complex", "-options", "here"})</code>
-   * </li>
-   * <li><code>MyComplexWritableConverter("basic options here --complex -options here")</code></li>
-   * </ol>
-   *
    * @param keyArgs
    * @param valueArgs
    * @throws ParseException
+   * @throws IOException
    */
-  public SequenceFileLoader(String keyArgs, String valueArgs) throws ParseException {
-    keyArguments = parseArguments(keyArgs);
-    valueArguments = parseArguments(valueArgs);
+  public SequenceFileLoader(String keyArgs, String valueArgs) throws ParseException, IOException {
+    // parse key, value arguments
+    Options options = getOptions();
+    keyArguments = parseArguments(options, keyArgs);
+    valueArguments = parseArguments(options, valueArgs);
+
+    // construct key, value converters
     keyConverter = getWritableConverter(keyArguments);
     valueConverter = getWritableConverter(valueArguments);
+
+    // initialize key, value converters and classes
+    initialize();
   }
 
   /**
    * Default constructor. Defaults used for all options.
+   *
+   * @throws ParseException
+   * @throws IOException
    */
-  public SequenceFileLoader() throws ClassCastException, ParseException, ClassNotFoundException,
-      InstantiationException, IllegalAccessException {
+  public SequenceFileLoader() throws ParseException, IOException {
     this("", "");
   }
 
@@ -181,7 +175,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
             .withArgName("cls")
             .withDescription(
                 "Converter type to use for conversion of data." + "  Defaults to '"
-                    + TextConverter.class.getName() + "' for key and value.").create("c");
+                    + TextConverter.class.getName() + "'.").create("c");
     return new Options().addOption(converterOption);
   }
 
@@ -190,8 +184,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * @return CommandLine instance containing options parsed from argument string.
    * @throws ParseException
    */
-  private CommandLine parseArguments(String args) throws ParseException {
-    Options options = getOptions();
+  private static CommandLine parseArguments(Options options, String args) throws ParseException {
     CommandLine cmdline = null;
     try {
       cmdline = new GnuParser().parse(options, args.split(" "));
@@ -203,6 +196,10 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     return cmdline;
   }
 
+  /**
+   * @param arguments
+   * @return new WritableConverter instance constructed using given arguments.
+   */
   @SuppressWarnings("unchecked")
   private static <T extends Writable> WritableConverter<T> getWritableConverter(
       CommandLine arguments) {
@@ -210,11 +207,15 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     String[] converterArgs = removeEmptyArgs(arguments.getArgs());
     try {
 
-      // get writable converter class
-      Class<WritableConverter<T>> converterClass =
-          (Class<WritableConverter<T>>) Class.forName(arguments.getOptionValue(CONVERTER_PARAM,
-              TextConverter.class.getName()));
+      // get converter classname
+      String converterClassName =
+          arguments.getOptionValue(CONVERTER_PARAM, DefaultWritableConverter.class.getName());
 
+      // get converter class
+      Class<WritableConverter<T>> converterClass =
+          (Class<WritableConverter<T>>) Class.forName(converterClassName);
+
+      // construct converter instance
       if (converterArgs == null || converterArgs.length == 0) {
 
         // use default ctor
@@ -256,6 +257,10 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     }
   }
 
+  /**
+   * @param args
+   * @return new String[] containing non-empty values from args.
+   */
   private static String[] removeEmptyArgs(String[] args) {
     List<String> converterArgsFiltered = Lists.newArrayList();
     for (String arg : args) {
@@ -266,18 +271,29 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     return converterArgsFiltered.toArray(new String[0]);
   }
 
-  private Properties getContextProperties() {
-    Preconditions.checkNotNull(signature, "Signature is null");
-    return UDFContext.getUDFContext().getUDFProperties(getClass(), new String[] { signature });
-  }
+  /**
+   * Initializes key, value WritableConverters and classes.
+   *
+   * @throws IOException
+   */
+  protected void initialize() throws IOException {
+    /*
+     * Initialize key, value converters; We pass in key, value class here (instead of null) to allow
+     * derived classes (i.e. SequenceFileStorage) the opportunity to initialize these values from
+     * user-specified options.
+     */
+    keyConverter.initialize(keyClass);
+    valueConverter.initialize(valueClass);
 
-  private void setContextProperty(String name, String value) {
-    Preconditions.checkNotNull(name, "Context property name is null");
-    getContextProperties().setProperty(signature + name, value);
-  }
-
-  private String getContextProperty(String name, String defaultValue) {
-    return getContextProperties().getProperty(signature + name, defaultValue);
+    /*
+     * Allow converters opportunity to define writable classes if they are not already defined.
+     */
+    if (keyClass == null) {
+      keyClass = keyConverter.getWritableClass();
+    }
+    if (valueClass == null) {
+      valueClass = valueConverter.getWritableClass();
+    }
   }
 
   @Override
@@ -300,6 +316,20 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     this.signature = signature;
   }
 
+  protected Properties getContextProperties() {
+    Preconditions.checkNotNull(signature, "Signature is null");
+    return UDFContext.getUDFContext().getUDFProperties(getClass(), new String[] { signature });
+  }
+
+  protected void setContextProperty(String name, String value) {
+    Preconditions.checkNotNull(name, "Context property name is null");
+    getContextProperties().setProperty(signature + name, value);
+  }
+
+  protected String getContextProperty(String name, String defaultValue) {
+    return getContextProperties().getProperty(signature + name, defaultValue);
+  }
+
   @Override
   public List<OperatorSet> getFeatures() {
     return ImmutableList.of(OperatorSet.PROJECTION);
@@ -315,6 +345,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       switch (i) {
         case 0:
           readKey = true;
+          // TODO(Andy Schlaikjer) enable schema checking here?
           // try {
           // keyConverter.checkLoadSchema(ResourceSchemaUtil.createResourceFieldSchema(field));
           // } catch (IOException e) {
@@ -323,6 +354,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
           break;
         case 1:
           readValue = true;
+          // TODO(Andy Schlaikjer) enable schema checking here?
           // try {
           // valueConverter.checkLoadSchema(ResourceSchemaUtil.createResourceFieldSchema(field));
           // } catch (IOException e) {
@@ -340,44 +372,62 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   }
 
   @Override
-  public void setLocation(String location, Job job) throws IOException {
-    Preconditions.checkNotNull(location, "Location is null");
-    Preconditions.checkNotNull(location, "Job is null");
-    FileInputFormat.setInputPaths(job, new Path(location));
-    readKey = Boolean.parseBoolean(getContextProperty(READ_KEY_PARAM, "true"));
-    readValue = Boolean.parseBoolean(getContextProperty(READ_VALUE_PARAM, "true"));
-  }
-
-  @Override
   public ResourceSchema getSchema(String location, Job job) throws IOException {
-    ResourceSchema resourceSchema = new ResourceSchema();
-    List<ResourceFieldSchema> fieldSchemas = Lists.newArrayList();
+    // keep track of runtime environment
+    isFrontEnd = true;
+
+    // attempt to load key, value classes from input sequence file data
+    initializeWritableClasses(job.getConfiguration(), new Path(location));
 
     // determine key field schema
     ResourceFieldSchema keySchema = keyConverter.getLoadSchema();
     if (keySchema == null) {
-      keySchema = new ResourceFieldSchema();
-      keySchema.setType(DataType.BYTEARRAY);
+      return null;
     }
     keySchema.setName("key");
-    if (keySchema.getType() != DataType.NULL) {
-      fieldSchemas.add(keySchema);
-    }
 
     // determine value field schema
     ResourceFieldSchema valueSchema = valueConverter.getLoadSchema();
     if (valueSchema == null) {
-      valueSchema = new ResourceFieldSchema();
-      valueSchema.setType(DataType.BYTEARRAY);
+      return null;
     }
     valueSchema.setName("value");
-    if (valueSchema.getType() != DataType.NULL) {
-      fieldSchemas.add(valueSchema);
-    }
 
     // return tuple schema
-    resourceSchema.setFields(fieldSchemas.toArray(new ResourceFieldSchema[0]));
+    ResourceSchema resourceSchema = new ResourceSchema();
+    resourceSchema.setFields(new ResourceFieldSchema[] { keySchema, valueSchema });
     return resourceSchema;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initializeWritableClasses(Configuration conf, Path inputPath) throws IOException {
+    // test for existence of input path
+    FileSystem fs = FileSystem.get(conf);
+    FileStatus status = fs.getFileStatus(inputPath);
+    if (status == null) {
+      return;
+    }
+
+    if (status.isDir()) {
+      FileStatus[] statuses = fs.globStatus(new Path(inputPath, "part-*-00000"));
+      if (statuses == null || statuses.length == 0) {
+        return;
+      }
+      inputPath = statuses[0].getPath();
+    }
+
+    // open sequence file and get key, value classes
+    SequenceFile.Reader reader = new SequenceFile.Reader(fs, inputPath, conf);
+    try {
+      keyClass = (Class<K>) reader.getKeyClass();
+      valueClass = (Class<V>) reader.getValueClass();
+    } finally {
+      reader.close();
+    }
+
+    // initialize key, value converters
+    keyConverter.initialize(keyClass);
+    valueConverter.initialize(valueClass);
   }
 
   /**
@@ -414,19 +464,54 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   }
 
   @Override
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public void setLocation(String location, Job job) throws IOException {
+    Preconditions.checkNotNull(location, "Location is null");
+    Preconditions.checkNotNull(job, "Job is null");
+    Path inputPath = new Path(location);
+    if (isFrontEnd) {
+      if (keyClass != null) {
+        setContextProperty(KEY_CLASS_PARAM, keyClass.getName());
+      }
+      if (valueClass != null) {
+        setContextProperty(VALUE_CLASS_PARAM, valueClass.getName());
+      }
+    } else {
+      // attempt to recover key, value classes from context
+      if (keyClass == null) {
+        keyClass = getWritableClass(getContextProperty(KEY_CLASS_PARAM, null));
+      }
+      if (valueClass == null) {
+        valueClass = getWritableClass(getContextProperty(VALUE_CLASS_PARAM, null));
+      }
+
+      // if all else fails, read key, value classes from input sequence file data
+      if (keyClass == null || valueClass == null) {
+        initializeWritableClasses(job.getConfiguration(), inputPath);
+      }
+    }
+    FileInputFormat.setInputPaths(job, inputPath);
+    readKey = Boolean.parseBoolean(getContextProperty(READ_KEY_PARAM, "true"));
+    readValue = Boolean.parseBoolean(getContextProperty(READ_VALUE_PARAM, "true"));
+  }
+
+  @SuppressWarnings("unchecked")
+  protected static <W extends Writable> Class<W> getWritableClass(String writableClassName)
+      throws IOException {
+    if (writableClassName == null) {
+      return null;
+    }
+    try {
+      return (Class<W>) Class.forName(writableClassName);
+    } catch (Exception e) {
+      throw new IOException(String.format("Failed to load Writable class '%s'", writableClassName),
+          e);
+    }
+  }
+
+  @Override
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public void prepareToRead(RecordReader reader, PigSplit split) throws IOException {
     this.reader = reader;
-    keyConverter.initialize(null);
-    valueConverter.initialize(null);
-    ResourceFieldSchema fieldSchema = keyConverter.getLoadSchema();
-    if (fieldSchema != null && fieldSchema.getType() == DataType.NULL) {
-      readKey = false;
-    }
-    fieldSchema = valueConverter.getLoadSchema();
-    if (fieldSchema != null && fieldSchema.getType() == DataType.NULL) {
-      readValue = false;
-    }
   }
 
   @Override

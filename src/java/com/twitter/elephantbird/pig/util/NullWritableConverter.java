@@ -8,15 +8,14 @@ import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 
 /**
- * Supports conversion from NullWritable to Pig null, and from all Pig types to
- * {@link NullWritable}.
+ * Supports conversion from NullWritable to Pig null, and from all Pig types to {@link NullWritable}
+ * .
  *
  * @author Andy Schlaikjer
  */
 public class NullWritableConverter extends AbstractWritableConverter<NullWritable> {
   public NullWritableConverter() {
-    super();
-    this.writable = NullWritable.get();
+    super(NullWritable.get());
   }
 
   @Override
@@ -33,6 +32,6 @@ public class NullWritableConverter extends AbstractWritableConverter<NullWritabl
 
   @Override
   public NullWritable toWritable(Object value) throws IOException {
-    return this.writable;
+    return writable;
   }
 }

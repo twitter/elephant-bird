@@ -19,15 +19,12 @@ import org.apache.pig.data.DataType;
  */
 public class GenericWritableConverter extends AbstractWritableConverter<Writable> {
   private final DataInputBuffer ibuf = new DataInputBuffer();
-  private Class<? extends Writable> writableClass;
 
   @Override
-  public void initialize(Class<? extends Writable> writableClass) {
-    this.writableClass = writableClass;
-    /*
-     * No need to initialize this.writable: On LOAD, we pass bytes directly to Pig without
-     * conversion. On STORE, writable will be initialized as needed.
-     */
+  public ResourceFieldSchema getLoadSchema() throws IOException {
+    ResourceFieldSchema schema = new ResourceFieldSchema();
+    schema.setType(DataType.BYTEARRAY);
+    return schema;
   }
 
   @Override
@@ -39,9 +36,8 @@ public class GenericWritableConverter extends AbstractWritableConverter<Writable
   }
 
   @Override
-  protected Writable toWritable(DataByteArray value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    if (writable == null || newInstance) {
+  protected Writable toWritable(DataByteArray value) throws IOException {
+    if (writable == null) {
       Preconditions.checkNotNull(writableClass, "Writable implementation class is null");
       try {
         writable = writableClass.newInstance();
