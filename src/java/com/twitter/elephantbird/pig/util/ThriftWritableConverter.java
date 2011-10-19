@@ -64,17 +64,11 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
   }
 
   @Override
-  public void initialize(Class<? extends ThriftWritable<M>> writableClass) {
-    if (writableClass == null || writableClass == this.writableClass) {
+  public void initialize(Class<? extends ThriftWritable<M>> writableClass) throws IOException {
+    if (writableClass == null) {
       return;
     }
     super.initialize(writableClass);
-    try {
-      writable = writableClass.newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(String.format("Failed to creat instance of Writable class '%s'",
-          writableClass.getName()), e);
-    }
     writable.setConverter(typeRef.getRawClass());
   }
 

@@ -72,6 +72,8 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   public static final String TYPE_PARAM = "type";
   private final PigCounterHelper counterHelper = new PigCounterHelper();
+  private Class<K> keyClass;
+  private Class<V> valueClass;
   private RecordWriter<K, V> writer;
 
   /**
@@ -124,12 +126,44 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   @Override
   protected void initialize() throws IOException {
-    // attempt to initialize key, value classes using arguments
+    /*
+     * Attempt to initialize key, value classes using arguments. If user doesn't specify '--type'
+     * arg, then class will be null.
+     */
     keyClass = getWritableClass(keyArguments.getOptionValue(TYPE_PARAM));
     valueClass = getWritableClass(valueArguments.getOptionValue(TYPE_PARAM));
 
-    // proceed as usual
-    super.initialize();
+    // initialize key, value converters
+    keyConverter.initialize(keyClass);
+    valueConverter.initialize(valueClass);
+
+    // allow converters to define writable classes if not already defined
+    if (keyClass == null) {
+      keyClass = keyConverter.getWritableClass();
+    }
+    if (valueClass == null) {
+      valueClass = valueConverter.getWritableClass();
+    }
+  }
+
+  /**
+   * @param writableClassName
+   * @return {@code null} if writableClassName is {@code null}, otherwise the Class instance named
+   *         by writableClassName.
+   * @throws IOException
+   */
+  @SuppressWarnings("unchecked")
+  private static <W extends Writable> Class<W> getWritableClass(String writableClassName)
+      throws IOException {
+    if (writableClassName == null) {
+      return null;
+    }
+    try {
+      return (Class<W>) Class.forName(writableClassName);
+    } catch (Exception e) {
+      throw new IOException(String.format("Failed to load Writable class '%s'", writableClassName),
+          e);
+    }
   }
 
   @Override
@@ -144,25 +178,6 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     Preconditions.checkNotNull(fields, "Schema fields are undefined");
     checkFieldSchema(fields, 0, keyConverter);
     checkFieldSchema(fields, 1, valueConverter);
-
-    /*
-     * Allow one more opportunity for converters to define key, value classes. This is useful for
-     * DefaultWritableConverter to determine most appropriate WritableConverter impl to use based on
-     * runtime schema.
-     */
-    if (keyClass == null) {
-      keyClass = keyConverter.getWritableClass();
-    }
-    if (valueClass == null) {
-      valueClass = valueConverter.getWritableClass();
-    }
-
-    verifyWritableClass(keyClass, true, keyConverter);
-    verifyWritableClass(valueClass, false, valueConverter);
-
-    // define key, value class context params
-    setContextProperty(KEY_CLASS_PARAM, keyClass.getName());
-    setContextProperty(VALUE_CLASS_PARAM, valueClass.getName());
   }
 
   private <T extends Writable> void checkFieldSchema(ResourceFieldSchema[] fields, int index,
@@ -179,14 +194,8 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-    if (keyClass == null) {
-      keyClass = getWritableClass(getContextProperty(KEY_CLASS_PARAM, null));
-    }
     verifyWritableClass(keyClass, true, keyConverter);
-    if (valueClass == null) {
-      valueClass = getWritableClass(getContextProperty(VALUE_CLASS_PARAM, null));
-    }
-    verifyWritableClass(keyClass, true, keyConverter);
+    verifyWritableClass(valueClass, false, valueConverter);
     job.setOutputKeyClass(keyClass);
     job.setOutputValueClass(valueClass);
     FileOutputFormat.setOutputPath(job, new Path(location));
@@ -205,11 +214,19 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     }
   }
 
-  private static void verifyWritableClass(Class<?> cls, boolean isKeyClass,
-      WritableConverter<?> converter) {
-    Preconditions.checkNotNull(cls, "%s Writable class is undefined;"
+  /**
+   * Tests validity of Writable class, ensures consistent error message for both key and value
+   * tests.
+   *
+   * @param writableClass class being tested.
+   * @param isKeyClass {@code true} if testing keyClass, {@code false} otherwise.
+   * @param writableConverter associated WritableConverter instance.
+   */
+  private static <W extends Writable> void verifyWritableClass(Class<W> writableClass,
+      boolean isKeyClass, WritableConverter<W> writableConverter) {
+    Preconditions.checkNotNull(writableClass, "%s Writable class is undefined;"
         + " WritableConverter of type '%s' does not define default Writable type,"
-        + " and no type was specified otherwise", isKeyClass ? "Key" : "Value", converter
+        + " and no type was specified by user", isKeyClass ? "Key" : "Value", writableConverter
         .getClass().getName());
   }
 

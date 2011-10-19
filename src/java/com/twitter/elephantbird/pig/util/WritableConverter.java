@@ -24,13 +24,14 @@ public interface WritableConverter<W extends Writable> extends LoadStoreCaster {
   /**
    * Called during evaluation of both Pig {@code LOAD} and {@code STORE} expressions by an owning
    * {@link SequenceFileLoader} or {@link SequenceFileStorage} instance. This method is called on
-   * the Pig front-end as well as back-end. Implementations should allow repeated calls to this
+   * the Pig front end as well as back end. Implementations should allow repeated calls to this
    * method without adverse side effects.
    *
-   * @param writableClass the Writable class specified by the user for use with
-   *          {@link SequenceFileStorage}, if any. Otherwise, {@code null}.
+   * @param writableClass the Writable class specified by the user via
+   *          {@link SequenceFileStorage#SequenceFileStorage(String, String)}, if any. Otherwise,
+   *          {@code null}.
    */
-  public void initialize(Class<? extends W> writableClass);
+  public void initialize(Class<? extends W> writableClass) throws IOException;
 
   /**
    * Called during evaluation of Pig {@code LOAD} expressions (after {@link #initialize(Class)}),

@@ -35,17 +35,11 @@ public class ProtobufWritableConverter<M extends Message> extends
   }
 
   @Override
-  public void initialize(Class<? extends ProtobufWritable<M>> writableClass) {
-    if (writableClass == null || writableClass == this.writableClass) {
+  public void initialize(Class<? extends ProtobufWritable<M>> writableClass) throws IOException {
+    if (writableClass == null) {
       return;
     }
     super.initialize(writableClass);
-    try {
-      writable = writableClass.newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(String.format("Failed to creat instance of Writable class '%s'",
-          writableClass.getName()), e);
-    }
     writable.setConverter(typeRef.getRawClass());
   }
 

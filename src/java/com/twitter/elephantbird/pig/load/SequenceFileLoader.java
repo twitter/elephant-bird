@@ -19,9 +19,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
@@ -49,7 +46,6 @@ import org.apache.pig.impl.util.UDFContext;
 
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileInputFormat;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
-import com.twitter.elephantbird.pig.util.DefaultWritableConverter;
 import com.twitter.elephantbird.pig.util.TextConverter;
 import com.twitter.elephantbird.pig.util.WritableConverter;
 
@@ -78,14 +74,10 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   public static final String CONVERTER_PARAM = "converter";
   private static final String READ_KEY_PARAM = "_readKey";
   private static final String READ_VALUE_PARAM = "_readValue";
-  protected static final String KEY_CLASS_PARAM = "_keyClass";
-  protected static final String VALUE_CLASS_PARAM = "_valueClass";
   protected final CommandLine keyArguments;
   protected final CommandLine valueArguments;
   protected final WritableConverter<K> keyConverter;
   protected final WritableConverter<V> valueConverter;
-  protected Class<K> keyClass;
-  protected Class<V> valueClass;
   private final DataByteArray keyDataByteArray = new DataByteArray();
   private final DataByteArray valueDataByteArray = new DataByteArray();
   private final List<Object> tuple2 = Arrays.asList(new Object(), new Object()), tuple1 = Arrays
@@ -95,7 +87,6 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   private RecordReader<DataInputBuffer, DataInputBuffer> reader;
   private boolean readKey = true;
   private boolean readValue = true;
-  private boolean isFrontEnd = false;
 
   /**
    * Parses key and value options from argument strings. Available options for both key and value
@@ -103,7 +94,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * <dl>
    * <dt>-c|--converter cls</dt>
    * <dd>{@link WritableConverter} implementation class to use for conversion of data. Defaults to
-   * {@link DefaultWritableConverter} for both key and value.</dd>
+   * {@link TextConverter} for both key and value.</dd>
    * </dl>
    * Any extra arguments found will be treated as String arguments for the WritableConverter
    * constructor. For instance, the argument string {@code "-c MyConverter 123 abc"} specifies
@@ -149,7 +140,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     keyConverter = getWritableConverter(keyArguments);
     valueConverter = getWritableConverter(valueArguments);
 
-    // initialize key, value converters and classes
+    // initialize key, value converters
     initialize();
   }
 
@@ -209,7 +200,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
 
       // get converter classname
       String converterClassName =
-          arguments.getOptionValue(CONVERTER_PARAM, DefaultWritableConverter.class.getName());
+          arguments.getOptionValue(CONVERTER_PARAM, TextConverter.class.getName());
 
       // get converter class
       Class<WritableConverter<T>> converterClass =
@@ -272,28 +263,13 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   }
 
   /**
-   * Initializes key, value WritableConverters and classes.
+   * Initializes key, value WritableConverters.
    *
    * @throws IOException
    */
   protected void initialize() throws IOException {
-    /*
-     * Initialize key, value converters; We pass in key, value class here (instead of null) to allow
-     * derived classes (i.e. SequenceFileStorage) the opportunity to initialize these values from
-     * user-specified options.
-     */
-    keyConverter.initialize(keyClass);
-    valueConverter.initialize(valueClass);
-
-    /*
-     * Allow converters opportunity to define writable classes if they are not already defined.
-     */
-    if (keyClass == null) {
-      keyClass = keyConverter.getWritableClass();
-    }
-    if (valueClass == null) {
-      valueClass = valueConverter.getWritableClass();
-    }
+    keyConverter.initialize(null);
+    valueConverter.initialize(null);
   }
 
   @Override
@@ -373,12 +349,6 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
 
   @Override
   public ResourceSchema getSchema(String location, Job job) throws IOException {
-    // keep track of runtime environment
-    isFrontEnd = true;
-
-    // attempt to load key, value classes from input sequence file data
-    initializeWritableClasses(job.getConfiguration(), new Path(location));
-
     // determine key field schema
     ResourceFieldSchema keySchema = keyConverter.getLoadSchema();
     if (keySchema == null) {
@@ -397,37 +367,6 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     ResourceSchema resourceSchema = new ResourceSchema();
     resourceSchema.setFields(new ResourceFieldSchema[] { keySchema, valueSchema });
     return resourceSchema;
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initializeWritableClasses(Configuration conf, Path inputPath) throws IOException {
-    // test for existence of input path
-    FileSystem fs = FileSystem.get(conf);
-    FileStatus status = fs.getFileStatus(inputPath);
-    if (status == null) {
-      return;
-    }
-
-    if (status.isDir()) {
-      FileStatus[] statuses = fs.globStatus(new Path(inputPath, "part-*-00000"));
-      if (statuses == null || statuses.length == 0) {
-        return;
-      }
-      inputPath = statuses[0].getPath();
-    }
-
-    // open sequence file and get key, value classes
-    SequenceFile.Reader reader = new SequenceFile.Reader(fs, inputPath, conf);
-    try {
-      keyClass = (Class<K>) reader.getKeyClass();
-      valueClass = (Class<V>) reader.getValueClass();
-    } finally {
-      reader.close();
-    }
-
-    // initialize key, value converters
-    keyConverter.initialize(keyClass);
-    valueConverter.initialize(valueClass);
   }
 
   /**
@@ -468,44 +407,9 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     Preconditions.checkNotNull(location, "Location is null");
     Preconditions.checkNotNull(job, "Job is null");
     Path inputPath = new Path(location);
-    if (isFrontEnd) {
-      if (keyClass != null) {
-        setContextProperty(KEY_CLASS_PARAM, keyClass.getName());
-      }
-      if (valueClass != null) {
-        setContextProperty(VALUE_CLASS_PARAM, valueClass.getName());
-      }
-    } else {
-      // attempt to recover key, value classes from context
-      if (keyClass == null) {
-        keyClass = getWritableClass(getContextProperty(KEY_CLASS_PARAM, null));
-      }
-      if (valueClass == null) {
-        valueClass = getWritableClass(getContextProperty(VALUE_CLASS_PARAM, null));
-      }
-
-      // if all else fails, read key, value classes from input sequence file data
-      if (keyClass == null || valueClass == null) {
-        initializeWritableClasses(job.getConfiguration(), inputPath);
-      }
-    }
     FileInputFormat.setInputPaths(job, inputPath);
     readKey = Boolean.parseBoolean(getContextProperty(READ_KEY_PARAM, "true"));
     readValue = Boolean.parseBoolean(getContextProperty(READ_VALUE_PARAM, "true"));
-  }
-
-  @SuppressWarnings("unchecked")
-  protected static <W extends Writable> Class<W> getWritableClass(String writableClassName)
-      throws IOException {
-    if (writableClassName == null) {
-      return null;
-    }
-    try {
-      return (Class<W>) Class.forName(writableClassName);
-    } catch (Exception e) {
-      throw new IOException(String.format("Failed to load Writable class '%s'", writableClassName),
-          e);
-    }
   }
 
   @Override

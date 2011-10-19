@@ -20,40 +20,46 @@ import org.apache.pig.data.Tuple;
 public abstract class AbstractWritableConverter<W extends Writable> extends WritableStoreCaster<W>
     implements WritableConverter<W> {
   /**
-   * Class of Writable instance used internally for conversion.
+   * Constructs new instance of this class using the given Writable instance for data conversion.
+   * The class of the given Writable is used to initialize {@link #writableClass}.
+   *
+   * @param writable
    */
-  protected Class<W> writableClass;
-
-  @SuppressWarnings("unchecked")
   public AbstractWritableConverter(W writable) {
     super(writable);
-    if (writable != null) {
-      writableClass = (Class<W>) writable.getClass();
-    }
   }
 
+  /**
+   * Default constructor.
+   */
   public AbstractWritableConverter() {
     super();
   }
 
   /**
-   * For non-null inputs, tests that any existing {@link #writableClass} is assignable from the
-   * given class and updates {@link #writableClass} to reference given class.
+   * Default implementation tests that class of internal Writable instance, if defined, is
+   * assignable from the given class. If so, the internal Writable instance is replaced with a new
+   * instance of the given class. If the given class is {@code null}, nothing is done.
    *
    * @see WritableConverter#initialize(java.lang.Class)
    */
   @Override
-  @SuppressWarnings("unchecked")
-  public void initialize(Class<? extends W> writableClass) {
+  public void initialize(Class<? extends W> writableClass) throws IOException {
     if (writableClass == null) {
       return;
     }
-    if (this.writableClass != null) {
-      Preconditions.checkArgument(this.writableClass.isAssignableFrom(writableClass),
+    if (writable != null) {
+      Class<?> existingWritableClass = writable.getClass();
+      Preconditions.checkArgument(existingWritableClass.isAssignableFrom(writableClass),
           "Existing Writable implementation '%s' is not assignable from class '%s'",
-          this.writableClass.getName(), writableClass.getName());
+          existingWritableClass.getName(), writableClass.getName());
     }
-    this.writableClass = (Class<W>) writableClass;
+    try {
+      writable = writableClass.newInstance();
+    } catch (Exception e) {
+      throw new IOException(String.format("Failed to create instance of Writable type '%s'",
+          writableClass.getName()), e);
+    }
   }
 
   /**
@@ -82,8 +88,12 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
    * @see com.twitter.elephantbird.pig.util.WritableConverter#getWritableClass()
    */
   @Override
+  @SuppressWarnings("unchecked")
   public Class<W> getWritableClass() throws IOException {
-    return writableClass;
+    if (writable == null) {
+      return null;
+    }
+    return (Class<W>) writable.getClass();
   }
 
   /**

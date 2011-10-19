@@ -37,15 +37,7 @@ public class GenericWritableConverter extends AbstractWritableConverter<Writable
 
   @Override
   protected Writable toWritable(DataByteArray value) throws IOException {
-    if (writable == null) {
-      Preconditions.checkNotNull(writableClass, "Writable implementation class is null");
-      try {
-        writable = writableClass.newInstance();
-      } catch (Exception e) {
-        throw new IOException("Failed to create instance of class '" + writableClass.getName()
-            + "'");
-      }
-    }
+    Preconditions.checkNotNull(writable, "Writable is null");
     byte[] bytes = value.get();
     ibuf.reset(bytes, bytes.length);
     writable.readFields(ibuf);

@@ -43,8 +43,8 @@ import com.twitter.elephantbird.pig.store.SequenceFileStorage;
  * @author Andy Schlaikjer
  */
 public abstract class AbstractTestWritableConverter<W extends Writable, C extends WritableConverter<W>> {
-  private final Class<W> writableClass;
-  private final Class<C> writableConverterClass;
+  private final Class<? extends W> writableClass;
+  private final Class<? extends C> writableConverterClass;
   private final String writableConverterArguments;
   private final W[] data;
   private final String[] expected;
@@ -52,8 +52,8 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
   protected PigServer pigServer;
   protected String tempFilename;
 
-  public AbstractTestWritableConverter(final Class<W> writableClass,
-      final Class<C> writableConverterClass, final String writableConverterArguments,
+  public AbstractTestWritableConverter(final Class<? extends W> writableClass,
+      final Class<? extends C> writableConverterClass, final String writableConverterArguments,
       final W[] data, final String[] expected, final String valueSchema) {
     this.writableClass = writableClass;
     this.writableConverterClass = writableConverterClass;
@@ -124,8 +124,8 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
   @Test
   public void read() throws IOException {
     pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s %s') AS (key: int, val: %s);", tempFilename,
-        SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
+        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s -- %s') AS (key: int, val: %s);",
+        tempFilename, SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
         writableConverterClass.getName(), writableConverterArguments, valueSchema));
     validate(pigServer.openIterator("A"));
   }
@@ -133,17 +133,16 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
   @Test
   public void readWriteRead() throws IOException {
     pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s %s') AS (key: int, val: %s);", tempFilename,
-        SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
+        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s -- %s') AS (key: int, val: %s);",
+        tempFilename, SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
         writableConverterClass.getName(), writableConverterArguments, valueSchema));
     pigServer.registerQuery(String.format(
-        "STORE A INTO 'file:%s-2' USING %s('-t %s -c %s', '-t %s -c %s %s');", tempFilename,
-        SequenceFileStorage.class.getName(), IntWritable.class.getName(),
-        IntWritableConverter.class.getName(), writableClass.getName(),
-        writableConverterClass.getName(), writableConverterArguments));
+        "STORE A INTO 'file:%s-2' USING %s('-c %s', '-c %s -t %s -- %s');", tempFilename,
+        SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
+        writableConverterClass.getName(), writableClass.getName(), writableConverterArguments));
     pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s-2' USING %s('-c %s', '-c %s %s') AS (key: int, val: %s);", tempFilename,
-        SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
+        "A = LOAD 'file:%s-2' USING %s('-c %s', '-c %s -- %s') AS (key: int, val: %s);",
+        tempFilename, SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
         writableConverterClass.getName(), writableConverterArguments, valueSchema));
     validate(pigServer.openIterator("A"));
   }
