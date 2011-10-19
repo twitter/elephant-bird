@@ -2,8 +2,6 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
-import com.google.common.base.Preconditions;
-
 import org.apache.hadoop.io.LongWritable;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
@@ -16,8 +14,7 @@ import org.apache.pig.data.DataType;
  */
 public class LongWritableConverter extends AbstractWritableConverter<LongWritable> {
   public LongWritableConverter() {
-    super();
-    this.writable = new LongWritable();
+    super(new LongWritable());
   }
 
   @Override
@@ -71,36 +68,28 @@ public class LongWritableConverter extends AbstractWritableConverter<LongWritabl
   }
 
   @Override
-  protected LongWritable toWritable(String value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    return toWritable(Long.parseLong(value), newInstance);
+  protected LongWritable toWritable(String value) throws IOException {
+    return toWritable(Long.parseLong(value));
   }
 
   @Override
-  protected LongWritable toWritable(Integer value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    return toWritable(value.longValue(), newInstance);
+  protected LongWritable toWritable(Integer value) throws IOException {
+    return toWritable(value.longValue());
   }
 
   @Override
-  protected LongWritable toWritable(Long value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    if (newInstance) {
-      writable = new LongWritable();
-    }
+  protected LongWritable toWritable(Long value) throws IOException {
     writable.set(value);
     return writable;
   }
 
   @Override
-  protected LongWritable toWritable(Float value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    return toWritable(value.longValue(), newInstance);
+  protected LongWritable toWritable(Float value) throws IOException {
+    return toWritable(value.longValue());
   }
 
   @Override
-  protected LongWritable toWritable(Double value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    return toWritable(value.longValue(), newInstance);
+  protected LongWritable toWritable(Double value) throws IOException {
+    return toWritable(value.longValue());
   }
 }

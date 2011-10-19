@@ -22,9 +22,17 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   private final DataInputBuffer buf = new DataInputBuffer();
   protected W writable;
 
+  public WritableLoadCaster(W writable) {
+    super();
+    this.writable = writable;
+  }
+
+  public WritableLoadCaster() {
+  }
+
   /**
-   * Deserializes raw bytes into a Writable instance, returning that instance. We rely on derived
-   * classes to initialize {@link #writable} before this method gets called.
+   * Deserializes raw bytes into a Writable instance, returning that instance. This implementation
+   * relies on derived classes to initialize {@link #writable} before this method is called.
    *
    * @param bytes serialized Writable data.
    * @param writable Writable instance into which data should be stored.

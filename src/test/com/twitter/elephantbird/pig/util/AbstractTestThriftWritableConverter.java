@@ -9,22 +9,22 @@ import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
  */
 public abstract class AbstractTestThriftWritableConverter<M extends TBase<?, ?>> extends
     AbstractTestWritableConverter<ThriftWritable<M>, ThriftWritableConverter<M>> {
-  public AbstractTestThriftWritableConverter(Class<M> thriftClass, ThriftWritable<M>[] data,
+  public AbstractTestThriftWritableConverter(Class<M> thriftClass,
+      Class<? extends ThriftWritable<M>> writableClass,
+      Class<? extends ThriftWritableConverter<M>> writableConverterClass, ThriftWritable<M>[] data,
       String[] expected, String valueSchema) {
-    super(getWritableClass(thriftClass, ThriftWritable.class), getWritableConverterClass(
-        thriftClass, ThriftWritableConverter.class), thriftClass.getName(), data, expected,
-        valueSchema);
+    super(writableClass, writableConverterClass, thriftClass.getName(), data, expected, valueSchema);
   }
 
   @SuppressWarnings("unchecked")
-  private static <M extends TBase<?, ?>> Class<ThriftWritable<M>> getWritableClass(
-      Class<M> thriftClass, Class<?> cls) {
-    return (Class<ThriftWritable<M>>) cls;
+  public static <M extends TBase<?, ?>, W extends ThriftWritable<M>> Class<W> getWritableClass(
+      Class<M> thriftClass, Class<?> writableClass) {
+    return (Class<W>) writableClass;
   }
 
   @SuppressWarnings("unchecked")
-  private static <M extends TBase<?, ?>> Class<ThriftWritableConverter<M>> getWritableConverterClass(
-      Class<M> thriftClass, Class<?> cls) {
-    return (Class<ThriftWritableConverter<M>>) cls;
+  public static <M extends TBase<?, ?>, W extends ThriftWritable<M>, C extends ThriftWritableConverter<M>> Class<C> getWritableConverterClass(
+      Class<M> thriftClass, Class<W> writableClass, Class<?> writableConverterClass) {
+    return (Class<C>) writableConverterClass;
   }
 }
