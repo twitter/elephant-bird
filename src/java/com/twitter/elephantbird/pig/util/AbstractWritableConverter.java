@@ -20,12 +20,46 @@ import org.apache.pig.data.Tuple;
 public abstract class AbstractWritableConverter<W extends Writable> extends WritableStoreCaster<W>
     implements WritableConverter<W> {
   /**
-   * Default implementation does nothing.
+   * Constructs new instance of this class using the given Writable instance for data conversion.
+   * The class of the given Writable is used to initialize {@link #writableClass}.
+   *
+   * @param writable
+   */
+  public AbstractWritableConverter(W writable) {
+    super(writable);
+  }
+
+  /**
+   * Default constructor.
+   */
+  public AbstractWritableConverter() {
+    super();
+  }
+
+  /**
+   * Default implementation tests that class of internal Writable instance, if defined, is
+   * assignable from the given class. If so, the internal Writable instance is replaced with a new
+   * instance of the given class. If the given class is {@code null}, nothing is done.
    *
    * @see WritableConverter#initialize(java.lang.Class)
    */
   @Override
-  public void initialize(Class<? extends W> writableClass) {
+  public void initialize(Class<? extends W> writableClass) throws IOException {
+    if (writableClass == null) {
+      return;
+    }
+    if (writable != null) {
+      Class<?> existingWritableClass = writable.getClass();
+      Preconditions.checkArgument(existingWritableClass.isAssignableFrom(writableClass),
+          "Existing Writable implementation '%s' is not assignable from class '%s'",
+          existingWritableClass.getName(), writableClass.getName());
+    }
+    try {
+      writable = writableClass.newInstance();
+    } catch (Exception e) {
+      throw new IOException(String.format("Failed to create instance of Writable type '%s'",
+          writableClass.getName()), e);
+    }
   }
 
   /**
@@ -49,6 +83,20 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
   }
 
   /**
+   * Default implementation returns value of {@link #writableClass}.
+   *
+   * @see com.twitter.elephantbird.pig.util.WritableConverter#getWritableClass()
+   */
+  @Override
+  @SuppressWarnings("unchecked")
+  public Class<W> getWritableClass() throws IOException {
+    if (writable == null) {
+      return null;
+    }
+    return (Class<W>) writable.getClass();
+  }
+
+  /**
    * Default implementation does nothing.
    *
    * @see WritableConverter#checkStoreSchema(org.apache.pig.ResourceSchema.ResourceFieldSchema)
@@ -66,32 +114,31 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
   @Override
   @SuppressWarnings("unchecked")
   public W toWritable(Object value) throws IOException {
-    Preconditions.checkNotNull(value);
-    // route to appropriate method using Pig data type
-    byte type = DataType.findType(value);
-    switch (type) {
-      case DataType.BYTEARRAY:
-        return toWritable((DataByteArray) value, false);
-      case DataType.CHARARRAY:
-        return toWritable((String) value, false);
-      case DataType.INTEGER:
-        return toWritable((Integer) value, false);
-      case DataType.LONG:
-        return toWritable((Long) value, false);
-      case DataType.FLOAT:
-        return toWritable((Float) value, false);
-      case DataType.DOUBLE:
-        return toWritable((Double) value, false);
-      case DataType.MAP:
-        return toWritable((Map<String, Object>) value, false);
-      case DataType.TUPLE:
-        return toWritable((Tuple) value, false);
-      case DataType.BAG:
-        return toWritable((DataBag) value, false);
-      case DataType.ERROR:
-        throw new IOException("Failed to find Pig type for class '" + value.getClass().getName()
-            + "'");
+    if (value == null) {
+      return null;
     }
-    throw new IOException("Pig type '" + DataType.findTypeName(type) + "' is unsupported");
+    // route to appropriate method using Pig data type
+    switch (DataType.findType(value)) {
+      case DataType.BYTEARRAY:
+        return toWritable((DataByteArray) value);
+      case DataType.CHARARRAY:
+        return toWritable((String) value);
+      case DataType.INTEGER:
+        return toWritable((Integer) value);
+      case DataType.LONG:
+        return toWritable((Long) value);
+      case DataType.FLOAT:
+        return toWritable((Float) value);
+      case DataType.DOUBLE:
+        return toWritable((Double) value);
+      case DataType.MAP:
+        return toWritable((Map<String, Object>) value);
+      case DataType.TUPLE:
+        return toWritable((Tuple) value);
+      case DataType.BAG:
+        return toWritable((DataBag) value);
+      default:
+        throw new IOException("Pig value class '" + value.getClass().getName() + "' is unsupported");
+    }
   }
 }

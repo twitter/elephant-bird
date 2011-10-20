@@ -3,8 +3,6 @@ package com.twitter.elephantbird.pig.util;
 import java.io.IOException;
 import java.util.Map;
 
-import com.google.common.base.Preconditions;
-
 import org.apache.hadoop.io.Text;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataBag;
@@ -20,8 +18,7 @@ import org.apache.pig.data.Tuple;
  */
 public class TextConverter extends AbstractWritableConverter<Text> {
   public TextConverter() {
-    super();
-    this.writable = new Text();
+    super(new Text());
   }
 
   @Override
@@ -62,51 +59,48 @@ public class TextConverter extends AbstractWritableConverter<Text> {
   }
 
   @Override
-  protected Text toWritable(DataByteArray value, boolean newInstance) throws IOException {
-    return toWritable(value.toString(), newInstance);
+  protected Text toWritable(DataByteArray value) throws IOException {
+    return toWritable(value.toString());
   }
 
   @Override
-  protected Text toWritable(String value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    if (writable == null)
-      writable = new Text();
+  protected Text toWritable(String value) throws IOException {
     writable.set(value.toString());
     return writable;
   }
 
   @Override
-  protected Text toWritable(Integer value, boolean newInstance) throws IOException {
-    return toWritable(value.toString(), newInstance);
+  protected Text toWritable(Integer value) throws IOException {
+    return toWritable(value.toString());
   }
 
   @Override
-  protected Text toWritable(Long value, boolean newInstance) throws IOException {
-    return toWritable(value.toString(), newInstance);
+  protected Text toWritable(Long value) throws IOException {
+    return toWritable(value.toString());
   }
 
   @Override
-  protected Text toWritable(Float value, boolean newInstance) throws IOException {
-    return toWritable(value.toString(), newInstance);
+  protected Text toWritable(Float value) throws IOException {
+    return toWritable(value.toString());
   }
 
   @Override
-  protected Text toWritable(Double value, boolean newInstance) throws IOException {
-    return toWritable(value.toString(), newInstance);
+  protected Text toWritable(Double value) throws IOException {
+    return toWritable(value.toString());
   }
 
   @Override
-  protected Text toWritable(Map<String, Object> value, boolean newInstance) throws IOException {
-    return toWritable(value.toString(), newInstance);
+  protected Text toWritable(Map<String, Object> value) throws IOException {
+    return toWritable(value.toString());
   }
 
   @Override
-  protected Text toWritable(Tuple value, boolean newInstance) throws IOException {
-    return toWritable(value.toString(), newInstance);
+  protected Text toWritable(Tuple value) throws IOException {
+    return toWritable(value.toString());
   }
 
   @Override
-  protected Text toWritable(DataBag value, boolean newInstance) throws IOException {
-    return toWritable(value.toString(), newInstance);
+  protected Text toWritable(DataBag value) throws IOException {
+    return toWritable(value.toString());
   }
 }

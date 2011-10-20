@@ -2,8 +2,6 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
-import com.google.common.base.Preconditions;
-
 import org.apache.hadoop.io.IntWritable;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
@@ -16,8 +14,7 @@ import org.apache.pig.data.DataType;
  */
 public class IntWritableConverter extends AbstractWritableConverter<IntWritable> {
   public IntWritableConverter() {
-    super();
-    this.writable = new IntWritable();
+    super(new IntWritable());
   }
 
   @Override
@@ -71,36 +68,28 @@ public class IntWritableConverter extends AbstractWritableConverter<IntWritable>
   }
 
   @Override
-  protected IntWritable toWritable(String value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    return toWritable(Integer.parseInt(value), newInstance);
+  protected IntWritable toWritable(String value) throws IOException {
+    return toWritable(Integer.parseInt(value));
   }
 
   @Override
-  protected IntWritable toWritable(Integer value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    if (writable == null) {
-      writable = new IntWritable();
-    }
+  protected IntWritable toWritable(Integer value) throws IOException {
     writable.set(value);
     return writable;
   }
 
   @Override
-  protected IntWritable toWritable(Long value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    return toWritable(value.intValue(), newInstance);
+  protected IntWritable toWritable(Long value) throws IOException {
+    return toWritable(value.intValue());
   }
 
   @Override
-  protected IntWritable toWritable(Float value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    return toWritable(value.intValue(), newInstance);
+  protected IntWritable toWritable(Float value) throws IOException {
+    return toWritable(value.intValue());
   }
 
   @Override
-  protected IntWritable toWritable(Double value, boolean newInstance) throws IOException {
-    Preconditions.checkNotNull(value);
-    return toWritable(value.intValue(), newInstance);
+  protected IntWritable toWritable(Double value) throws IOException {
+    return toWritable(value.intValue());
   }
 }
