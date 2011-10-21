@@ -60,21 +60,6 @@
 	<property name="compile.mode" value="release"/>
   </target>
 
-  <target name="noproto" depends="init">
-   <echo message="building without protobuf support" />
-   <property name="noprotobuf" value="yes" />
-   <compile-noprotobuf />
-  </target>
-
-  <target name="nonothing" depends="init">
-   <echo message="building without protobuf and thrift support" />
-   <property name="noprotobuf" value="yes" />
-   <property name="nothrift" value="yes" />
-   <compile-nonothing />
-  </target>
-
-
-  
   <target name="init">
     <tstamp/>
     <!-- Create the build directory structure used by compile -->
@@ -108,7 +93,7 @@
     </javac>
    </sequential>
   </macrodef>
-    
+
   <macrodef name="compile-java-protobuf">
    <sequential>
     <!-- Compile the java code from ${src.java} into ${build} -->
@@ -122,8 +107,8 @@
    </sequential>
   </macrodef>
 
-  <target name="compile" depends="init, compile-protobuf" description="compile the source">
-   <compile-noprotobuf />
+  <target name="compile" depends="init, compile-protobuf,generate-thrift" description="compile the source">
+   <compile-nonothing />
   </target>
     
   <macrodef name="generate-protobuf">
@@ -177,13 +162,15 @@
     </sequential>
   </macrodef>
 
-  <target name="compile-protobuf" depends="init" unless="noprotobuf">
-    <generate-thrift />
+  <target name="compile-protobuf" depends="init,generate-thrift" unless="noprotobuf">
     <generate-protobuf />
     <compile-generated-protobuf />
     <compile-java-protobuf />
   </target>
-  
+
+    <target name="generate-thrift" depends="init" unless="nothrift">
+        <generate-thrift />
+    </target>
 
   <target name="jar" depends="compile" description="generate the distribution">
     <property name="jar.file" value="${dist.dir}/${jar.name}-${version}.jar" />
@@ -195,7 +182,8 @@
       <fileset dir="${classes.dir}"/>
     </jar>
   </target>
-  
+
+
   <target name="javadoc" depends="compile" description="generate documentation" >
     <delete dir="${javadoc.dir}" />
     <javadoc destdir="${javadoc.dir}">
@@ -210,6 +198,7 @@
   </target>
 
   <target name="debug-jar" description="Build debug and jar" depends="debug,jar"/>
+
   <target name="release-jar" description="Build release and jar" depends="release,jar"/>
 
   <target name="maven-install" description="Install release jar in local Maven repository" depends="release-jar">
