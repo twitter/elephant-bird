@@ -2,6 +2,10 @@
 
 ### Version 2.0.9 ###
 
+ISSUE 89. Improve interface and Null handling in SequenceFileStorage (Andy Schlaikjer)
+
+ISSUE 88. Better error messages while storing Thrift or Protobufs (Andy Schlaikjer)
+
 ### Version 2.0.8 ###
 
 ISSUE 86. log serialization errors in lzo loaders (rangadi)
