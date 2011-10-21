@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.1.0 ###
+
 ### Version 2.0.9 ###
 
 ISSUE 89. Improve interface and Null handling in SequenceFileStorage (Andy Schlaikjer)
