@@ -126,9 +126,13 @@ public class Protobufs {
    // Translates from protobuf field names to other field names, stripping out any that have value IGNORE.
    // i.e. if you have a protobuf with field names a, b, c and your fieldNameTranslations map looks like
    // { "a" => "A", "c" => "IGNORE" }, then you'll end up with A, b
-   public static List<String> getMessageFieldNames(Class<? extends Message> protoClass, Map<String, String> fieldNameTranslations) {
+  public static List<String> getMessageFieldNames(Class<? extends Message> protoClass, Map<String, String> fieldNameTranslations) {
+    return getMessageFieldNames(getMessageDescriptor(protoClass), fieldNameTranslations);
+  }
+
+   public static List<String> getMessageFieldNames(Descriptor descriptor, Map<String, String> fieldNameTranslations) {
      Function<FieldDescriptor, String> fieldTransformer = getFieldTransformerFor(fieldNameTranslations);
-     return ListHelper.filter(Lists.transform(getMessageDescriptor(protoClass).getFields(), fieldTransformer), Predicates.<String>notNull());
+     return ListHelper.filter(Lists.transform(descriptor.getFields(), fieldTransformer), Predicates.<String>notNull());
    }
 
    public static Function<FieldDescriptor, String> getFieldTransformerFor(final Map<String, String> fieldNameTranslations) {
