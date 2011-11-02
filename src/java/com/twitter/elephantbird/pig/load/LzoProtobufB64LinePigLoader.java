@@ -7,6 +7,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +16,8 @@ import com.twitter.elephantbird.mapreduce.input.LzoProtobufB64LineInputFormat;
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
+import com.twitter.elephantbird.pig.util.ProjectedProtoTuple;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
-import com.twitter.elephantbird.pig.util.ProtobufTuple;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -32,6 +33,7 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
 
   private TypeRef<M> typeRef_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
+  private ProjectedProtoTuple<M> tupleTemplate = null;
 
   public LzoProtobufB64LinePigLoader() {
     LOG.info("LzoProtobufB64LineLoader zero-parameter creation");
@@ -55,6 +57,12 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
     typeRef_ = typeRef;
   }
 
+  @Override
+  public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
+                                              throws FrontendException {
+    return pushProjectionHelper(requiredFieldList);
+  }
+
   /**
    * Return every non-null line as a single-element tuple to Pig.
    * <p>
@@ -63,10 +71,13 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
    */
   @Override
   public Tuple getNext() throws IOException {
-    M value = getNextBinaryValue(typeRef_);
+    if (tupleTemplate == null) {
+      tupleTemplate = new ProjectedProtoTuple<M>(typeRef_, requiredFieldList);
+    }
 
+    M value = getNextBinaryValue(typeRef_);
     return value != null ?
-        new ProtobufTuple(value) : null;
+        tupleTemplate.newTuple(value) : null;
   }
 
   @Override
