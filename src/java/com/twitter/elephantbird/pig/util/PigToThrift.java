@@ -66,7 +66,6 @@ public class PigToThrift<T extends TBase<?, ?>> {
   private static TBase<?, ?> toThrift(TStructDescriptor tDesc, Tuple tuple) {
     int size = tDesc.getFields().size();
     int tupleSize = tuple.size();
-    @SuppressWarnings("rawtypes")
     TBase tObj = newTInstance(tDesc.getThriftClass());
     for(int i = 0; i<size && i<tupleSize; i++) {
       Object pObj;

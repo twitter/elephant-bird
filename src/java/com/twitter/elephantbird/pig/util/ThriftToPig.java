@@ -73,7 +73,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
    * @return
    */
   public Tuple getLazyTuple(M thriftObj) {
-    return new LazyTuple(thriftObj);
+    return new LazyTuple(structDesc, thriftObj);
   }
 
   @SuppressWarnings("unchecked")
@@ -84,7 +84,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
       Field field = tDesc.getFieldAt(i);
       Object value = tDesc.getFieldValue(i, tObj);
       try {
-        tuple.set(i, toPigObject(field, value));
+        tuple.set(i, toPigObject(field, value, false));
       } catch (ExecException e) { // not expected
         throw new RuntimeException(e);
       }
@@ -93,7 +93,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   }
 
   @SuppressWarnings("unchecked")
-  private static Object toPigObject(Field field, Object value) {
+  private static Object toPigObject(Field field, Object value, boolean lazy) {
     if (value == null) {
       return null;
     }
@@ -108,13 +108,17 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     case TType.STRING:
       return stringTypeToPig(value);
     case TType.STRUCT:
-      return toTuple(field.gettStructDescriptor(), (TBase<?, ?>)value);
+      if (lazy) {
+        return new LazyTuple(field.gettStructDescriptor(), (TBase<?, ?>)value);
+      } else {
+        return toTuple(field.gettStructDescriptor(), (TBase<?, ?>)value);
+      }
     case TType.MAP:
-      return toPigMap(field, (Map<Object, Object>)value);
+      return toPigMap(field, (Map<Object, Object>)value, lazy);
     case TType.SET:
-      return toPigBag(field.getSetElemField(), (Collection<Object>)value);
+      return toPigBag(field.getSetElemField(), (Collection<Object>)value, lazy);
     case TType.LIST:
-      return toPigBag(field.getListElemField(), (Collection<Object>)value);
+      return toPigBag(field.getListElemField(), (Collection<Object>)value, lazy);
     case TType.ENUM:
       return value.toString();
     default:
@@ -146,14 +150,16 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     return null;
   }
 
-  private static Map<String, Object> toPigMap(Field field, Map<Object, Object> map) {
+  private static Map<String, Object> toPigMap(Field field,
+                                              Map<Object, Object> map,
+                                              boolean lazy) {
     // PIG map's key always a String. just use toString() and hope
     // things would work out ok.
     HashMap<String, Object> out = new HashMap<String, Object>(map.size());
     Field valueField = field.getMapValueField();
     for(Entry<Object, Object> e : map.entrySet()) {
       Object prev = out.put(e.getKey().toString(),
-                            toPigObject(valueField, e.getValue()));
+                            toPigObject(valueField, e.getValue(), lazy));
       if (prev != null) {
         String msg = "Duplicate keys while converting to String while "
           + " processing map " + field.getName() + " (key type : "
@@ -166,10 +172,12 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     return out;
   }
 
-  private static DataBag toPigBag(Field field, Collection<Object> values) {
+  private static DataBag toPigBag(Field field,
+                                  Collection<Object> values,
+                                  boolean lazy) {
     List<Tuple> tuples = Lists.newArrayListWithExpectedSize(values.size());
     for(Object value : values) {
-      Object pValue = toPigObject(field, value);
+      Object pValue = toPigObject(field, value, lazy);
       if (pValue instanceof Tuple) { // DataBag should contain Tuples
         tuples.add((Tuple)pValue);
       } else {
@@ -183,7 +191,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   /**
    * Delays serialization of Thrift fields until they are requested.
    */
-  private class LazyTuple extends AbstractLazyTuple {
+  private static class LazyTuple extends AbstractLazyTuple {
     /* NOTE : This is only a partial optimization. The other part
      * is to avoid deserialization of the Thrift fields from the
      * binary buffer.
@@ -198,17 +206,19 @@ public class ThriftToPig<M extends TBase<?, ?>> {
      * Even TDeserializer 'skips'/ignores only after deserializing fields.
      * (e.g. Strings, Integers, buffers etc).
      */
-    private M tObject;
+    private TBase<?, ?> tObject;
+    private TStructDescriptor desc;
 
-    LazyTuple(M tObject) {
-      initRealTuple(structDesc.getFields().size());
+    LazyTuple(TStructDescriptor desc, TBase<?, ?> tObject) {
+      initRealTuple(desc.getFields().size());
       this.tObject = tObject;
+      this.desc = desc;
     }
 
     @Override
     protected Object getObjectAt(int index) {
-      Field field = structDesc.getFieldAt(index);
-      return toPigObject(field, structDesc.getFieldValue(index, tObject));
+      Field field = desc.getFieldAt(index);
+      return toPigObject(field, desc.getFieldValue(index, tObject), true);
     }
   }
 
