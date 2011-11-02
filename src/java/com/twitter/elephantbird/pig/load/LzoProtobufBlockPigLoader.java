@@ -4,20 +4,10 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.pig.ResourceSchema;
-import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.FrontendException;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockInputFormat;
-import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
-import com.twitter.elephantbird.pig.util.PigUtil;
-import com.twitter.elephantbird.pig.util.ProjectedProtoTuple;
-import com.twitter.elephantbird.pig.util.ProtobufToPig;
-import com.twitter.elephantbird.util.Protobufs;
-import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * Loader for LZO-compressed files written using the ProtobufBlockInputFormat<br>
@@ -25,11 +15,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * The no-arg constructor will not work and is only there for internal Pig reasons.
  * @param <M>
  */
-public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFunc {
-
-  private TypeRef<M> typeRef_ = null;
-  private final ProtobufToPig protoToPig_ = new ProtobufToPig();
-  private ProjectedProtoTuple<M> tupleTemplate = null;
+public class LzoProtobufBlockPigLoader<M extends Message> extends LzoProtobufB64LinePigLoader<M> {
 
   /**
    * Default constructor. Do not use for actual loading.
@@ -41,44 +27,7 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoBaseLoadFun
    * @param protoClassName full classpath to the generated Protocol Buffer to be loaded.
    */
   public LzoProtobufBlockPigLoader(String protoClassName) {
-    TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
-    setTypeRef(typeRef);
-  }
-
-  /**
-   * Set the type parameter so it doesn't get erased by Java.  Must be called before getNext!
-   *
-   * @param typeRef
-   */
-  public void setTypeRef(TypeRef<M> typeRef) {
-    typeRef_ = typeRef;
-  }
-
-  @Override
-  public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
-                                              throws FrontendException {
-    return pushProjectionHelper(requiredFieldList);
-  }
-
-  /**
-   * Return next Protobuf Tuple from input.
-   * <p>
-   * A small fraction of bad records in input are tolerated.
-   * See  {@link LzoRecordReader} for more information on error handling.
-   */
-  public Tuple getNext() throws IOException {
-    if (tupleTemplate == null) {
-      tupleTemplate = new ProjectedProtoTuple<M>(typeRef_, requiredFieldList);
-    }
-    M value = getNextBinaryValue(typeRef_);
-
-    return value != null ?
-        tupleTemplate.newTuple(value) : null;
-  }
-
-  @Override
-  public ResourceSchema getSchema(String location, Job job) throws IOException {
-    return new ResourceSchema(protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass())));
+    super(protoClassName);
   }
 
   @Override

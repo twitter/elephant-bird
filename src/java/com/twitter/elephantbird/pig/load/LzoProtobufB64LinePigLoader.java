@@ -31,7 +31,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LinePigLoader.class);
 
-  private TypeRef<M> typeRef_ = null;
+  protected TypeRef<M> typeRef_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
   private ProjectedProtoTuple<M> tupleTemplate = null;
 
