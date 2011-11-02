@@ -73,7 +73,6 @@ public class TestThriftToPig {
       Tuple pt = new ProjectedThriftTuple<M>(typeRef, reqFieldList).newTuple(obj);
       int pidx=0;
       for(int idx : idxList) {
-        ThriftToPig.LOG.info("XXX : " + idx + " " + t.get(idx).toString() + " == " + pt.get(pidx));
         assertEquals(t.get(idx).toString(), pt.get(pidx++).toString());
       }
     } catch (ExecException e) { // not expected
