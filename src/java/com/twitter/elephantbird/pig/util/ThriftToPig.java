@@ -56,6 +56,10 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     structDesc = TStructDescriptor.getInstance(tClass);
   }
 
+  public TStructDescriptor getTStructDescriptor() {
+    return structDesc;
+  }
+
   /**
    * Converts a thrift object to Pig tuple.
    * All the fields are deserialized.
@@ -93,7 +97,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   }
 
   @SuppressWarnings("unchecked")
-  private static Object toPigObject(Field field, Object value, boolean lazy) {
+  static Object toPigObject(Field field, Object value, boolean lazy) {
     if (value == null) {
       return null;
     }
