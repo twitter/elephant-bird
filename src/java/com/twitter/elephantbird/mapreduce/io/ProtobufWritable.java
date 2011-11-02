@@ -9,6 +9,8 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
 
+  private Class<?> protobufExtensionClass;
+
   public ProtobufWritable() {
     super(null, null);
   }
@@ -30,6 +32,14 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
 
   @Override
   protected BinaryConverter<M> getConverterFor(Class<M> clazz) {
-    return ProtobufConverter.newInstance(clazz);
+    if (protobufExtensionClass !=null) {
+      return ProtobufConverter.newInstance(clazz, protobufExtensionClass);
+    } else {
+      return ProtobufConverter.newInstance(clazz);
+    }
+  }
+  
+  public void setExtensionClass(Class<?> protobufExtensionClass) {
+    this.protobufExtensionClass = protobufExtensionClass;
   }
 }

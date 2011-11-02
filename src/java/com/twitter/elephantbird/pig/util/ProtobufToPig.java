@@ -2,6 +2,8 @@ package com.twitter.elephantbird.pig.util;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -63,15 +65,20 @@ public class ProtobufToPig {
     }
 
     Descriptor msgDescriptor = msg.getDescriptorForType();
-    Tuple tuple = tupleFactory_.newTuple(msgDescriptor.getFields().size());
+    Set<FieldDescriptor> fdSet = new LinkedHashSet<FieldDescriptor>();
+    fdSet.addAll(msgDescriptor.getFields());
+    fdSet.addAll(msg.getAllFields().keySet());
+    Tuple tuple = tupleFactory_.newTuple(fdSet.size());
     int curField = 0;
     try {
       // Walk through all the possible fields in the message.
-      for (FieldDescriptor fieldDescriptor : msgDescriptor.getFields()) {
+      for (FieldDescriptor fieldDescriptor : fdSet) {
         // Get the set value, or the default value, or null.
         Object fieldValue = getFieldValue(msg, fieldDescriptor);
 
-        if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
+        if (fieldValue == null) {
+          tuple.set(curField++, null);
+        } else if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
           tuple.set(curField++, messageToTuple(fieldDescriptor, fieldValue));
         } else {
           tuple.set(curField++, singleFieldToTuple(fieldDescriptor, fieldValue));
@@ -230,7 +237,7 @@ public class ProtobufToPig {
    * @return the Schema for the nested message.
    * @throws FrontendException if Pig decides to.
    */
-  private FieldSchema messageToFieldSchema(FieldDescriptor fieldDescriptor) throws FrontendException {
+  public FieldSchema messageToFieldSchema(FieldDescriptor fieldDescriptor) throws FrontendException {
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToFieldSchema called with field of type " + fieldDescriptor.getType();
 
     // Since protobufs do not have a map type, we use CountedMap to fake it.  Whenever the protobuf has a repeated CountedMap in it,
