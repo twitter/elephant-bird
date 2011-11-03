@@ -77,6 +77,10 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   public Map<String, Object> bytesToMap(byte[] bytes) throws IOException {
     return toMap(writable = readFields(bytes, writable));
   }
+  
+  public Map<String, Object> bytesToMap(byte[] bytes, ResourceFieldSchema schema) throws IOException {
+    return toMap(writable = readFields(bytes, writable), schema);
+  }
 
   @Override
   public Tuple bytesToTuple(byte[] bytes, ResourceFieldSchema schema) throws IOException {
@@ -109,6 +113,10 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   }
 
   protected Map<String, Object> toMap(W writable) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+  
+  protected Map<String, Object> toMap(W writable, ResourceFieldSchema schema) throws IOException {
     throw new UnsupportedOperationException();
   }
 
