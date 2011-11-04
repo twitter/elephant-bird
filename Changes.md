@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.1.1 ###
+
 ### Version 2.1.0 ###
 
 ISSUE 95. Allow enum for key field in Thrift maps (Raghu Angadi)
