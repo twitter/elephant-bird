@@ -2,6 +2,12 @@
 
 ### Version 2.1.0 ###
 
+ISSUE 95. Allow enum for key field in Thrift maps (Raghu Angadi)
+
+ISSUE 94. Update WritableLoadCaster to work with pig0.9 (Jonathan Coveney)
+
+ISSUE 91. Add getMessageFieldNames() method to Protobuf utils (Bill Graham)
+
 ### Version 2.0.9 ###
 
 ISSUE 89. Improve interface and Null handling in SequenceFileStorage (Andy Schlaikjer)
