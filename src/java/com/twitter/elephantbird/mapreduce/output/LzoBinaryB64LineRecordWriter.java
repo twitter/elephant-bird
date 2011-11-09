@@ -5,12 +5,15 @@ import java.io.IOException;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.thrift.TBase;
 
 /**
  * A RecordWriter-derived class for use with the LzoProtobufB64LineOutputFormat.
@@ -42,5 +45,12 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
   public void close(TaskAttemptContext taskAttemptContext)
       throws IOException, InterruptedException {
     out.close();
+  }
+
+  // for convenience
+  public static <M extends TBase<?, ?>> LzoBinaryB64LineRecordWriter<M, ThriftWritable<M>>
+               newThriftWriter(Class<M> tClass, DataOutputStream out) {
+    return new LzoBinaryB64LineRecordWriter<M, ThriftWritable<M>>
+                            (ThriftConverter.newInstance(tClass), out);
   }
 }
