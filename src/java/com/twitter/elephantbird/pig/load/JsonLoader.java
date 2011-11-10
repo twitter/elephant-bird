@@ -100,6 +100,10 @@ public class JsonLoader extends PigStorage {
         values.put(key.toString(), value != null ? value.toString() : null);
       }
       return tupleFactory_.newTuple(values);
+    } catch (NullPointerException e) {
+      LOG.warn("Could not json-decode string: " + line, e);
+      incrCounter(JsonLoaderCounters.LinesParseError, 1L);
+      return null;
     } catch (ParseException e) {
       LOG.warn("Could not json-decode string: " + line, e);
       incrCounter(JsonLoaderCounters.LinesParseError, 1L);
