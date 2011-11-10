@@ -99,6 +99,9 @@ public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritab
         value.put(mapKey, mapValue);
       }
       return true;
+    } catch (NullPointerException e) {
+      LOG.warn("Could not json-decode string: " + line, e);
+      return false;
     } catch (ParseException e) {
       LOG.warn("Could not json-decode string: " + line, e);
       return false;
