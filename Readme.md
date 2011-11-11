@@ -72,14 +72,21 @@ Apache licensed.
 * Regex-based loaders
 * LzoPigStorage (just what it sounds like)
 * [W3C logs](http://www.w3.org/TR/WD-logfile.html)
-* Serialized protocol buffers in one of two flavors
-    * Block-based (via codegen, see below)
-    * Line-based, base64 encoded (via codegen, see below)
-* SequenceFile Loaders (and converter interface / implementations to convert generic Writables into Tuples)
+* Serialized protocol buffers
+    * Block-based (dynamic or via codegen, see below)
+    * Line-based, base64 encoded (dynamic or via codegen, see below)
+    * In SequenceFiles, using ProtobufWritableConverter
+* Serialized Thrift
+    * Block-based (dynamic)
+    * Line-based, base64 encoded (dynamic)
+    * In SequenceFiles, using ThriftWritableConverter
+* SequenceFile Loaders
+    * Has converter interface for turning Tuples into Writable
+    * provides implementations to convert generic Writables, Thrift, Protobufs
 
 ##### LZO-based StoreFuncs for Pig #####
 * LzoPigStorage
-* Serialized protocol buffers and Thrift 
+* Serialized Protobufs and Thrift 
 * SequenceFile Storage (with converters, as above)
     
 ##### Utilities #####
