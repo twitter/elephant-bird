@@ -17,7 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An abstract base class that handles setting up all LZO-based RecordReaders. <p>
+ * An abstract base class that handles setting up all LZO-based RecordReaders.
+ * If a filename ends with ".lzo" and there is no codec found, it is
+ * treated as an error (most often the cause is missing LZO libraries).<p>
+ *
+ * Non-LZO files are also read. If there is a codec configurated, the
+ * input is opened with the codec, otherwise it is opened as a normal file.
  *
  * <b>Error handling:</b><br>
  * A small fraction of bad records are tolerated. When deserialization
@@ -75,14 +80,20 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(job);
     final CompressionCodec codec = compressionCodecs.getCodec(file);
     if (codec == null) {
-      throw new IOException("No codec for file " + file + " found, cannot run");
+      // throw error only for lzo files, could be a run time lzo library error
+      if (file.getName().endsWith(".lzo")) {
+        throw new IOException("No codec for file " + file + " found, cannot run");
+      }
+      // else open it as a simple file
     }
 
     // Open the file and seek to the start of the split.
     fileIn_ = fs.open(split.getPath());
+    InputStream inStream = (codec == null) ?
+                           fileIn_ : codec.createInputStream(fileIn_);
 
     // Creates input stream and also reads the file header.
-    createInputReader(codec.createInputStream(fileIn_), job);
+    createInputReader(inStream, job);
 
     if (start_ != 0) {
       fileIn_.seek(start_);

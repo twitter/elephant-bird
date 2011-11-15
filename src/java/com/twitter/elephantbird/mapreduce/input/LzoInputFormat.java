@@ -8,6 +8,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -26,6 +28,9 @@ import com.hadoop.compression.lzo.LzoIndex;
  */
 public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoInputFormat.class);
+
+  private static final String lzoIndexSuffix = ".lzo" + LzoIndex.LZO_INDEX_SUFFIX;
+  private static final String lzoTmpIndexSuffix = ".lzo" + LzoIndex.LZO_TMP_INDEX_SUFFIX;
 
   private final PathFilter hiddenPathFilter = new PathFilter() {
     // avoid hidden files and directories.
@@ -53,11 +58,12 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     List<FileStatus> files = super.listStatus(job);
     List<FileStatus> results = Lists.newArrayList();
     boolean recursive = job.getConfiguration().getBoolean("mapred.input.dir.recursive", false);
+    boolean includeNonLzo = job.getConfiguration().getBoolean("elephantbird.lzo.input.include.nonlzo", false);
     Iterator<FileStatus> it = files.iterator();
     while (it.hasNext()) {
       FileStatus fileStatus = it.next();
       FileSystem fs = fileStatus.getPath().getFileSystem(job.getConfiguration());
-      addInputPath(results, fs, fileStatus, recursive);
+      addInputPath(results, fs, fileStatus, recursive, includeNonLzo);
     }
 
     LOG.debug("Total lzo input paths to process : " + results.size());
@@ -78,16 +84,25 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
    * @throws IOException
    */
   protected void addInputPath(List<FileStatus> results, FileSystem fs,
-                 FileStatus pathStat, boolean recursive) throws IOException {
+                 FileStatus pathStat, boolean recursive, boolean includeNonLzo) throws IOException {
     Path path = pathStat.getPath();
     if (pathStat.isDir()) {
       if (recursive) {
         for(FileStatus stat: fs.listStatus(path, hiddenPathFilter)) {
-          addInputPath(results, fs, stat, recursive);
+          addInputPath(results, fs, stat, recursive, includeNonLzo);
         }
       }
-    } else if ( visibleLzoFilter.accept(path) ) {
-      results.add(pathStat);
+    } else {
+      if (includeNonLzo) {
+        String name = path.getName();
+        if (!name.endsWith(lzoIndexSuffix) && !name.endsWith(lzoTmpIndexSuffix)) {
+          results.add(pathStat);
+        }
+      } else { // read only lzo files
+        if (visibleLzoFilter.accept(path)) {
+          results.add(pathStat);
+        }
+      }
     }
   }
 
@@ -99,8 +114,16 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
      * blocks and this.getSplits() adjusts the positions.
      */
     try {
-      FileSystem fs = filename.getFileSystem( context.getConfiguration() );
-      return fs.exists( filename.suffix( LzoIndex.LZO_INDEX_SUFFIX ) );
+      if (visibleLzoFilter.accept(filename)) {
+        FileSystem fs = filename.getFileSystem( context.getConfiguration() );
+        return fs.exists( filename.suffix( LzoIndex.LZO_INDEX_SUFFIX ) );
+      } else { // non-lzo file
+        //only simple files are splitable (borrowed from TextInputFormat).
+        CompressionCodec codec =
+          new CompressionCodecFactory(context.getConfiguration()).getCodec(filename);
+        return codec == null;
+        // TODO: bzip2 files are splitable. reuse reader from PigStorage.
+      }
     } catch (IOException e) { // not expected
       throw new RuntimeException(e);
     }
@@ -120,6 +143,12 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       // Load the index.
       FileSplit fileSplit = (FileSplit)genericSplit;
       Path file = fileSplit.getPath();
+
+      if (!visibleLzoFilter.accept(file)) {
+        // non lzo file. just keep the split
+        result.add(fileSplit);
+        continue;
+      }
 
       LzoIndex index; // reuse index for files with multiple blocks.
       if ( file.equals(prevFile) ) {
