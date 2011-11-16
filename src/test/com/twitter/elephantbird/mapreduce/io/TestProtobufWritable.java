@@ -19,7 +19,6 @@ import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneNumber;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneType;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
 
 
@@ -30,7 +29,9 @@ public class TestProtobufWritable {
 
   @BeforeClass
   public static void setUp() {
-    Person p1 = Person.newBuilder()
+    Person.Builder personBuilder = Person.newBuilder();
+      
+    Person p1 = personBuilder
     .setEmail("email1@example.com")
     .setId(74)
     .setName("Example Person")
@@ -38,7 +39,7 @@ public class TestProtobufWritable {
     .addPhone(PhoneNumber.newBuilder().setType(PhoneType.HOME).setNumber("214121").build())
     .build();
 
-    Person p2 = Person.newBuilder()
+    Person p2 = personBuilder.clear()
     .setEmail("email2@example.com")
     .setId(7334)
     .setName("Another person")
