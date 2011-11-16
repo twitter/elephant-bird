@@ -4,11 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
-
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
@@ -16,6 +11,10 @@ import org.apache.pig.data.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Message;
+import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.util.Protobufs;
 
 /**
@@ -124,7 +123,7 @@ public class PigToProtobuf {
       Tuple tuple = bagIter.next();
       if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
         Builder nestedMessageBuilder = containingMessageBuilder.newBuilderForField(fieldDescriptor);
-        bagContents.add(tupleToMessage((Builder)nestedMessageBuilder, tuple));
+        bagContents.add(tupleToMessage(nestedMessageBuilder, tuple));
       } else {
         try {
           bagContents.add(tupleFieldToSingleField(fieldDescriptor, tuple.get(0)));

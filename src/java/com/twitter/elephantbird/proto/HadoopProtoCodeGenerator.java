@@ -1,5 +1,9 @@
 package com.twitter.elephantbird.proto;
 
+import google.protobuf.compiler.Plugin.CodeGeneratorRequest;
+import google.protobuf.compiler.Plugin.CodeGeneratorResponse;
+import google.protobuf.compiler.Plugin.CodeGeneratorResponse.File;
+
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,18 +11,16 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 
+import net.sourceforge.yamlbeans.YamlException;
+import net.sourceforge.yamlbeans.YamlReader;
+
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
-import com.google.protobuf.compiler.Plugin.CodeGeneratorRequest;
-import com.google.protobuf.compiler.Plugin.CodeGeneratorResponse;
-import com.google.protobuf.compiler.Plugin.CodeGeneratorResponse.File;
 import com.twitter.elephantbird.proto.codegen.ProtoCodeGenerator;
 import com.twitter.elephantbird.proto.util.ProtogenHelper;
 
-import net.sourceforge.yamlbeans.YamlException;
-import net.sourceforge.yamlbeans.YamlReader;
 
 public class HadoopProtoCodeGenerator {
   public static void main(String[] args) throws IOException, YamlException {
@@ -78,6 +80,7 @@ public class HadoopProtoCodeGenerator {
   private static Function<String, ProtoCodeGenerator> createCodeGenerator(final String protoFilename,
       final String packageName, final DescriptorProto proto) {
     return new Function<String, ProtoCodeGenerator>() {
+      @Override
       public ProtoCodeGenerator apply(String classname) {
         try {
           Class<? extends ProtoCodeGenerator> codeGenClass = Class.forName(classname).asSubclass(ProtoCodeGenerator.class);
