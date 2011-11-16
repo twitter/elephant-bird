@@ -29,6 +29,8 @@ import com.hadoop.compression.lzo.LzoIndex;
 public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoInputFormat.class);
 
+  public static final String ALLOW_NONLZO_CONF_KEY = "elephantbird.mapred.input.include.nonlzo";
+
   private static final String lzoIndexSuffix = ".lzo" + LzoIndex.LZO_INDEX_SUFFIX;
   private static final String lzoTmpIndexSuffix = ".lzo" + LzoIndex.LZO_TMP_INDEX_SUFFIX;
 
@@ -58,7 +60,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     List<FileStatus> files = super.listStatus(job);
     List<FileStatus> results = Lists.newArrayList();
     boolean recursive = job.getConfiguration().getBoolean("mapred.input.dir.recursive", false);
-    boolean includeNonLzo = job.getConfiguration().getBoolean("elephantbird.lzo.input.include.nonlzo", false);
+    boolean includeNonLzo = job.getConfiguration().getBoolean(ALLOW_NONLZO_CONF_KEY, false);
     Iterator<FileStatus> it = files.iterator();
     while (it.hasNext()) {
       FileStatus fileStatus = it.next();
