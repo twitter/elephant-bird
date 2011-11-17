@@ -5,13 +5,20 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Message.Builder;
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
+import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
 
 import org.apache.pig.ResourceSchema;
+import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
@@ -119,8 +126,8 @@ public class PigToProtobuf {
    * @return Protobufs Descriptor
    * @throws Descriptors.DescriptorValidationException
    */
-  public static Descriptors.Descriptor schemaToProtoDescriptor(ResourceSchema schema)
-      throws Descriptors.DescriptorValidationException {
+  public static Descriptor schemaToProtoDescriptor(ResourceSchema schema)
+      throws DescriptorValidationException {
       return schemaToProtoDescriptor(schema, null);
   }
 
@@ -133,22 +140,21 @@ public class PigToProtobuf {
    * @return Protobufs Descriptor
    * @throws Descriptors.DescriptorValidationException
    */
-  public static Descriptors.Descriptor schemaToProtoDescriptor(ResourceSchema schema,
-      List<Pair<String, DescriptorProtos.FieldDescriptorProto.Type>> extraFields)
-      throws Descriptors.DescriptorValidationException {
+  public static Descriptor schemaToProtoDescriptor(ResourceSchema schema, List<Pair<String, Type>> extraFields)
+      throws DescriptorValidationException {
 
     // init protobufs
-    DescriptorProtos.DescriptorProto.Builder desBuilder = DescriptorProtos.DescriptorProto.newBuilder();
+    DescriptorProto.Builder desBuilder = DescriptorProto.newBuilder();
 
     int count = 0;
-    for (ResourceSchema.ResourceFieldSchema fieldSchema : schema.getFields()) {
+    for (ResourceFieldSchema fieldSchema : schema.getFields()) {
       // Pig types
       int position = ++count;
       String fieldName = fieldSchema.getName();
       byte dataTypeId = fieldSchema.getType();
 
       // determine and add protobuf types
-      DescriptorProtos.FieldDescriptorProto.Type protoType = pigTypeToProtoType(dataTypeId);
+      Type protoType = pigTypeToProtoType(dataTypeId);
       if (LOG.isInfoEnabled()) {
         LOG.info("Mapping Pig field " + fieldName + " of type " + dataTypeId + " to protobuf type: " + protoType);
       }
@@ -162,19 +168,18 @@ public class PigToProtobuf {
 
     // If extra fields are needed, let's add them
     if (extraFields != null) {
-      for (Pair<String, com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type> extraField : extraFields) {
+      for (Pair<String, Type> extraField : extraFields) {
         addField(desBuilder, extraField.first, ++count, extraField.second);
       }
     }
 
     desBuilder.setName("PigToProtobufDynamicBuilder");
 
-    DescriptorProtos.DescriptorProto descriptorProto = desBuilder.build();
-    DescriptorProtos.FileDescriptorProto fileDescriptorProto = DescriptorProtos.FileDescriptorProto.newBuilder()
-        .addMessageType(descriptorProto).build();
+    DescriptorProto descriptorProto = desBuilder.build();
+    FileDescriptorProto fileDescriptorProto = FileDescriptorProto.newBuilder().addMessageType(descriptorProto).build();
 
-    Descriptors.FileDescriptor[] fileDescs = new Descriptors.FileDescriptor[0];
-    Descriptors.FileDescriptor dynamicDescriptor = Descriptors.FileDescriptor.buildFrom(fileDescriptorProto, fileDescs);
+    FileDescriptor[] fileDescs = new FileDescriptor[0];
+    FileDescriptor dynamicDescriptor = FileDescriptor.buildFrom(fileDescriptorProto, fileDescs);
 
     return dynamicDescriptor.findMessageTypeByName("PigToProtobufDynamicBuilder");
   }
@@ -235,10 +240,8 @@ public class PigToProtobuf {
   /**
    * Add a field to a protobuf builder
    */
-  private static void addField(DescriptorProtos.DescriptorProto.Builder builder, String name, int fieldId,
-                               DescriptorProtos.FieldDescriptorProto.Type type) {
-    DescriptorProtos.FieldDescriptorProto.Builder fdBuilder =
-      DescriptorProtos.FieldDescriptorProto.newBuilder()
+  private static void addField(DescriptorProto.Builder builder, String name, int fieldId, Type type) {
+    FieldDescriptorProto.Builder fdBuilder = FieldDescriptorProto.newBuilder()
       .setName(name)
       .setNumber(fieldId)
       .setType(type);
@@ -248,25 +251,26 @@ public class PigToProtobuf {
   /**
    * For a given Pig type, return the protobufs type that maps to it.
    */
-  private static DescriptorProtos.FieldDescriptorProto.Type pigTypeToProtoType(byte pigTypeId) {
+  private static Type pigTypeToProtoType(byte pigTypeId) {
 
     switch(pigTypeId) {
         case DataType.BOOLEAN:
-          return DescriptorProtos.FieldDescriptorProto.Type.TYPE_BOOL;
+          return Type.TYPE_BOOL;
         case DataType.INTEGER:
-          return DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32;
+          return Type.TYPE_INT32;
         case DataType.LONG:
-          return DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT64;
+          return Type.TYPE_INT64;
         case DataType.FLOAT:
-          return DescriptorProtos.FieldDescriptorProto.Type.TYPE_FLOAT;
+          return Type.TYPE_FLOAT;
         case DataType.DOUBLE:
-          return DescriptorProtos.FieldDescriptorProto.Type.TYPE_DOUBLE;
+          return Type.TYPE_DOUBLE;
         case DataType.CHARARRAY:
-          return DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING;
+          return Type.TYPE_STRING;
         case DataType.BYTEARRAY:
-          return DescriptorProtos.FieldDescriptorProto.Type.TYPE_BYTES;
+          return Type.TYPE_BYTES;
         default:
-          throw new IllegalArgumentException("Unexpected Pig type where a simple type is expected : " + pigTypeId);
+          throw new IllegalArgumentException("Unsupported Pig type passed (" + pigTypeId +
+              ") where a simple type is expected while converting Pig to a dynamic Protobuf");
     }
   }
 }
