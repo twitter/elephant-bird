@@ -240,9 +240,21 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   private static FieldSchema singleFieldToFieldSchema(String fieldName, Field field) throws FrontendException {
     switch (field.getType()) {
       case TType.LIST:
-        return new FieldSchema(fieldName, singleFieldToTupleSchema(fieldName + "_tuple", field.getListElemField()), DataType.BAG);
+        Schema s1 = singleFieldToTupleSchema(fieldName + "_tuple", field.getListElemField());
+        if (PigUtil.Pig9orNewer && field.getListElemField().getType()==TType.STRUCT) {
+          //In pig9, if the field is a struct, then we need to wrap it in a Tuple
+          return new FieldSchema(fieldName, new Schema(new FieldSchema("t",s1,DataType.TUPLE)), DataType.BAG);
+        } else {
+          return new FieldSchema(fieldName, s1, DataType.BAG);
+        }
       case TType.SET:
-        return new FieldSchema(fieldName, singleFieldToTupleSchema(fieldName + "_tuple", field.getSetElemField()), DataType.BAG);
+        Schema s2 = singleFieldToTupleSchema(fieldName + "_tuple", field.getSetElemField());
+        if (PigUtil.Pig9orNewer && field.getSetElemField().getType()==TType.STRUCT) {
+          //In pig9, if the field is a struct, then we need to wrap it in a Tuple
+          return new FieldSchema(fieldName, new Schema(new FieldSchema("t",s2,DataType.TUPLE)), DataType.BAG);
+        } else {
+          return new FieldSchema(fieldName, s2, DataType.BAG);
+        }
       case TType.MAP:
         // can not specify types for maps in Pig.
         if (field.getMapKeyField().getType() != TType.STRING

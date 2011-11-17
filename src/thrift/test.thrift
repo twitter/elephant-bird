@@ -20,3 +20,17 @@ struct TestPerson {
   2: map<TestPhoneType, string>   phones, // for testing enum keys in maps.
 }
 
+struct TestIngredient {
+  1: string name,
+  2: string color,
+}
+
+struct TestRecipe {
+  1: string name,
+  2: list<TestIngredient> ingredients,
+}
+
+struct TestUniqueRecipe {
+  1: string name,
+  2: set<TestIngredient> ingredients,
+}
