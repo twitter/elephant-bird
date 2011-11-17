@@ -60,6 +60,14 @@ public class Protobufs {
     return protoClass.asSubclass(Message.class);
   }
 
+  /**
+   * For a configured protoClass, should the message be dynamic or is it a pre-generated Message class? If protoClass is
+   * null or set to DynamicMessage.class, then the configurer intends for a dynamically generated protobuf to be used.
+   */
+  public static boolean useDynamicProtoMessage(Class protoClass) {
+    return protoClass == null || protoClass.getCanonicalName().equals(DynamicMessage.class.getCanonicalName());
+  }
+
   public static Class<? extends Message> getInnerProtobufClass(String canonicalClassName) {
     // is an inner class and is not visible from the outside.  We have to instantiate
     String parentClass = canonicalClassName.substring(0, canonicalClassName.lastIndexOf("."));
