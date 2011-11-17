@@ -155,14 +155,16 @@ public class TestThriftToPig {
         tupleString.equals("(bob,jenkins)-{MOBILE=650-555-5555, HOME=408-555-5555, WORK=415-555-5555}"));
   }
 
-  @Test
-  //test a list of structs
   //pig9 changed how building bag schemas is handled, which introduced a bug in elephantbird
-  //this test isolates that bug
+  //these 2 tests test for that issue
+
+  //test a list of a struct
+  @Test
   public void nestedStructInListTest() throws FrontendException {
     nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestRecipe");
   }
 
+  //test a set of a struct
   @Test
   public void nestedStructInSetTest() throws FrontendException {
     nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUniqueRecipe");

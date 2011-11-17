@@ -240,20 +240,22 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   private static FieldSchema singleFieldToFieldSchema(String fieldName, Field field) throws FrontendException {
     switch (field.getType()) {
       case TType.LIST:
-        Schema s1 = singleFieldToTupleSchema(fieldName + "_tuple", field.getListElemField());
         if (PigUtil.Pig9orNewer && field.getListElemField().getType()==TType.STRUCT) {
           //In pig9, if the field is a struct, then we need to wrap it in a Tuple
-          return new FieldSchema(fieldName, new Schema(new FieldSchema("t",s1,DataType.TUPLE)), DataType.BAG);
+          Schema internalSchema=singleFieldToTupleSchema(fieldName, field.getListElemField());
+          return new FieldSchema(fieldName, new Schema(new FieldSchema("t",internalSchema,DataType.TUPLE)), DataType.BAG);
         } else {
-          return new FieldSchema(fieldName, s1, DataType.BAG);
+          Schema internalSchema=singleFieldToTupleSchema(fieldName + "_tuple", field.getListElemField());
+          return new FieldSchema(fieldName, internalSchema, DataType.BAG);
         }
       case TType.SET:
-        Schema s2 = singleFieldToTupleSchema(fieldName + "_tuple", field.getSetElemField());
         if (PigUtil.Pig9orNewer && field.getSetElemField().getType()==TType.STRUCT) {
           //In pig9, if the field is a struct, then we need to wrap it in a Tuple
-          return new FieldSchema(fieldName, new Schema(new FieldSchema("t",s2,DataType.TUPLE)), DataType.BAG);
+          Schema internalSchema=singleFieldToTupleSchema(fieldName, field.getSetElemField());
+          return new FieldSchema(fieldName, new Schema(new FieldSchema("t",internalSchema,DataType.TUPLE)), DataType.BAG);
         } else {
-          return new FieldSchema(fieldName, s2, DataType.BAG);
+          Schema internalSchema=singleFieldToTupleSchema(fieldName + "_tuple", field.getSetElemField());
+          return new FieldSchema(fieldName, internalSchema, DataType.BAG);
         }
       case TType.MAP:
         // can not specify types for maps in Pig.
