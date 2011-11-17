@@ -155,9 +155,7 @@ public class PigToProtobuf {
 
       // determine and add protobuf types
       Type protoType = pigTypeToProtoType(dataTypeId);
-      if (LOG.isInfoEnabled()) {
-        LOG.info("Mapping Pig field " + fieldName + " of type " + dataTypeId + " to protobuf type: " + protoType);
-      }
+      LOG.info("Mapping Pig field " + fieldName + " of type " + dataTypeId + " to protobuf type: " + protoType);
 
       addField(desBuilder, fieldName, position, protoType);
     }
