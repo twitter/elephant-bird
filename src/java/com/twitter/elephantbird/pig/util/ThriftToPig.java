@@ -240,23 +240,11 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   private static FieldSchema singleFieldToFieldSchema(String fieldName, Field field) throws FrontendException {
     switch (field.getType()) {
       case TType.LIST:
-        if (PigUtil.Pig9orNewer && field.getListElemField().getType()==TType.STRUCT) {
-          //In pig9, if the field is a struct, then we need to wrap it in a Tuple
-          Schema internalSchema=singleFieldToTupleSchema(fieldName, field.getListElemField());
-          return new FieldSchema(fieldName, new Schema(new FieldSchema("t",internalSchema,DataType.TUPLE)), DataType.BAG);
-        } else {
-          Schema internalSchema=singleFieldToTupleSchema(fieldName + "_tuple", field.getListElemField());
-          return new FieldSchema(fieldName, internalSchema, DataType.BAG);
-        }
+        Schema internalSchema=singleFieldToTupleSchema(fieldName, field.getListElemField());
+        return new FieldSchema(fieldName, internalSchema, DataType.BAG);
       case TType.SET:
-        if (PigUtil.Pig9orNewer && field.getSetElemField().getType()==TType.STRUCT) {
-          //In pig9, if the field is a struct, then we need to wrap it in a Tuple
-          Schema internalSchema=singleFieldToTupleSchema(fieldName, field.getSetElemField());
-          return new FieldSchema(fieldName, new Schema(new FieldSchema("t",internalSchema,DataType.TUPLE)), DataType.BAG);
-        } else {
-          Schema internalSchema=singleFieldToTupleSchema(fieldName + "_tuple", field.getSetElemField());
-          return new FieldSchema(fieldName, internalSchema, DataType.BAG);
-        }
+        Schema internalSchema2=singleFieldToTupleSchema(fieldName, field.getSetElemField());
+        return new FieldSchema(fieldName, internalSchema2, DataType.BAG);
       case TType.MAP:
         // can not specify types for maps in Pig.
         if (field.getMapKeyField().getType() != TType.STRING
@@ -280,9 +268,13 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
     switch (field.getType()) {
       case TType.STRUCT:
-        // wrapping STRUCT in a FieldSchema makes it impossible to
-        // access fields in PIG script (causes runtime error).
-        return toSchema(field.gettStructDescriptor());
+        Schema internalSchema=toSchema(field.gettStructDescriptor());
+        //In pig9, if the field is a struct, then we need to wrap it in a Tuple
+        if (PigUtil.Pig9orNewer) {
+          return new Schema(new FieldSchema("t",internalSchema,DataType.TUPLE));
+        } else {
+          return internalSchema;
+        }
       case TType.LIST:
         fieldSchema = singleFieldToFieldSchema(fieldName, field.getListElemField());
         break;
