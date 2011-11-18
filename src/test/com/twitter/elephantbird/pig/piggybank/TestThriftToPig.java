@@ -170,10 +170,42 @@ public class TestThriftToPig {
     nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUniqueRecipe");
   }
 
+  @Test
+  public void stringsInSetTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestNameList");
+  }
+
+  @Test
+  public void stringsInListTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestNameSet");
+  }
+
+  @Test
+  public void listInListTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestListInList");
+  }
+
+  @Test
+  public void setInListTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInList");
+  }
+
+  @Test
+  public void listInSetTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestListInSet");
+  }
+
+  @Test
+  public void setInSetTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInSet");
+  }
+
   public void nestedInListTestHelper(String s) throws FrontendException {
     TypeRef typeRef_ = PigUtil.getThriftTypeRef(s);
     Schema schema=ThriftToPig.toSchema(typeRef_.getRawClass());
     Schema oldSchema = Schema.getPigSchema(new ResourceSchema(schema));
+    System.out.println(schema);//remove
+    System.out.println(oldSchema);//remove
     assertTrue(schema.toString().equals(oldSchema.toString())); //this should be a direct equals, but there is a pig bug
   }
 }
