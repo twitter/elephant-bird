@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.1.2 ###
+
 ### Version 2.1.1 ###
 
 ISSUE 104. utility to generate DynamicProtobuf for given PigSchema (Bill Graham)
