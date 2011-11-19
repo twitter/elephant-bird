@@ -2,6 +2,10 @@
 
 ### Version 2.1.1 ###
 
+ISSUE 104. utility to generate DynamicProtobuf for given PigSchema (Bill Graham)
+
+ISSUE 100. Front page doc update (Dmitriy Ryaboy)
+
 ### Version 2.1.0 ###
 
 ISSUE 95. Allow enum for key field in Thrift maps (Raghu Angadi)
