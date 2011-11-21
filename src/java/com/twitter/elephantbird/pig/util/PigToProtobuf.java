@@ -54,10 +54,18 @@ public class PigToProtobuf {
    * @param tuple the tuple
    * @return a message representing the given tuple
    */
-
   public static Message tupleToMessage(Builder builder, Tuple tuple) {
-    List<FieldDescriptor> fieldDescriptors = builder.getDescriptorForType().getFields();
+    return tupleToMessage(builder, builder.getDescriptorForType().getFields(), tuple);
+  }
 
+  /**
+   * @param builder
+   * @param fieldDescriptors should be same as builder.getDescriptorForType.getFields().
+   *        Avoids overhead of getFields() which creates an array each time.
+   * @param tuple
+   * @return
+   */
+  public static Message tupleToMessage(Builder builder, List<FieldDescriptor> fieldDescriptors, Tuple tuple) {
     if (tuple == null) {
       return  builder.build();
     }
