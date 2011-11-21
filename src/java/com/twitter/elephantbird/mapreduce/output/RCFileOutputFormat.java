@@ -30,7 +30,7 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
   // in case we need different compression from global default compression
   public static String RCFILE_COMPRESSION_CODEC_CONF = "elephantbird.rcfile.output.compression.codec";
 
-  public static String RCFILE_DEFAULT_EXTENSION = "rc";
+  public static String RCFILE_DEFAULT_EXTENSION = ".rc";
   public static String RCFILE_EXTENSION_OVERRIDE_CONF = "elephantbird.refile.output.filename.extension"; // "none" disables it.
 
   /**

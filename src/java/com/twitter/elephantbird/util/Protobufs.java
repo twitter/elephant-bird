@@ -14,12 +14,14 @@ import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.ProtocolMessageEnum;
 import com.google.protobuf.UninitializedMessageException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -70,7 +72,7 @@ public class Protobufs {
    * For a configured protoClass, should the message be dynamic or is it a pre-generated Message class? If protoClass is
    * null or set to DynamicMessage.class, then the configurer intends for a dynamically generated protobuf to be used.
    */
-  public static boolean useDynamicProtoMessage(Class protoClass) {
+  public static boolean useDynamicProtoMessage(Class<?> protoClass) {
     return protoClass == null || protoClass.getCanonicalName().equals(DynamicMessage.class.getCanonicalName());
   }
 
@@ -278,7 +280,9 @@ public class Protobufs {
   }
 
   /**
-   * Serializes a single field
+   * Serializes a single field. All the native fields are serialized using
+   * "NoTag" methods in {@link CodedOutputStream}
+   * e.g. <code>writeInt32NoTag()</code>. The field index is not written.
    *
    * @param output
    * @param fd
@@ -287,9 +291,61 @@ public class Protobufs {
    */
   public static void writeFieldNoTag(CodedOutputStream   output,
                                      FieldDescriptor     fd,
-                                     Object              fieldValue)
+                                     Object              value)
                                      throws IOException {
+    if (value == null) {
+      return;
+    }
 
+    if (fd.isRepeated()) {
+      @SuppressWarnings("unchecked")
+      List<Object> values = (List<Object>) value;
+      for(Object obj : values) {
+        writeFieldNoTag(output, fd, obj);
+      }
+    } else {
+      switch (fd.getType()) {
+      case DOUBLE:
+        output.writeDoubleNoTag((Double) value);    break;
+      case FLOAT:
+        output.writeFloatNoTag((Float) value);      break;
+      case INT64:
+      case UINT64:
+        output.writeInt64NoTag((Long) value);       break;
+      case INT32:
+        output.writeInt32NoTag((Integer) value);    break;
+      case FIXED64:
+        output.writeFixed64NoTag((Long) value);     break;
+      case FIXED32:
+        output.writeFixed32NoTag((Integer) value);  break;
+      case BOOL:
+        output.writeBoolNoTag((Boolean) value);     break;
+      case STRING:
+        output.writeStringNoTag((String) value);    break;
+      case GROUP:
+      case MESSAGE:
+        output.writeMessageNoTag((Message) value);  break;
+      case BYTES:
+        output.writeBytesNoTag((ByteString) value); break;
+      case UINT32:
+        output.writeUInt32NoTag((Integer) value);   break;
+      case ENUM:
+        output.writeEnumNoTag(((ProtocolMessageEnum) value).getNumber()); break;
+      case SFIXED32:
+        output.writeSFixed32NoTag((Integer) value); break;
+      case SFIXED64:
+        output.writeSFixed64NoTag((Long) value);    break;
+      case SINT32:
+        output.writeSInt32NoTag((Integer) value);   break;
+      case SINT64:
+        output.writeSInt64NoTag((Integer) value);   break;
+
+      default:
+        throw new IllegalArgumentException("Unknown type " + fd.getType()
+                                           + " for " + fd.getFullName());
+      }
+    }
 
   }
 }
+

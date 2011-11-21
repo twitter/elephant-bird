@@ -15,18 +15,10 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.pig.StoreFunc;
 import org.apache.pig.data.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Message;
-import com.google.protobuf.DescriptorProtos.DescriptorProto;
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.mapreduce.output.RCFileOutputFormat;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
@@ -35,15 +27,14 @@ import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * TODO
+ *  - javadoc
+ *  - stats?
  */
 public class RCFileProtobufPigStorage extends StoreFunc {
-  private static final Logger LOG = LoggerFactory.getLogger(RCFileProtobufPigStorage.class);
 
   private TypeRef<? extends Message> typeRef;
   private Builder msgBuilder;
   private List<FieldDescriptor> msgFields;
-  private List<Builder> columnBuilders; // one builder for each of the non-primitive fields.
-  private List<FieldDescriptor> dynamicFields;
 
   RecordWriter<NullWritable, Writable> writer = null;
 
@@ -56,31 +47,7 @@ public class RCFileProtobufPigStorage extends StoreFunc {
     typeRef = Protobufs.getTypeRef(protoClassName);
     msgBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
     msgFields = msgBuilder.getDescriptorForType().getFields();
-    columnBuilders = Lists.newArrayListWithCapacity(msgFields.size());
-    dynamicFields = Lists.newArrayListWithCapacity(msgFields.size());
     colValRefs = new BytesRefWritable[msgFields.size()];
-
-    for (FieldDescriptor fd : msgFields) {
-
-      if (fd.getType() == Type.MESSAGE && !fd.isRepeated()) {
-        columnBuilders.add(msgBuilder.newBuilderForField(fd));
-        dynamicFields.add(null);
-
-      } else { // create a dyanamic message: TODO write primitive types directly.
-        Descriptor desc;
-        try {
-          desc = Protobufs.makeMessageDescriptor(DescriptorProto.newBuilder()
-                                                  .setName("proto_idx" + fd.getIndex())
-                                                  .addField(fd.toProto())
-                                                  .build());
-          Builder dynBuilder = DynamicMessage.newBuilder(desc);
-          columnBuilders.add(dynBuilder);
-          dynamicFields.add(dynBuilder.getDescriptorForType().getFields().get(0));
-        } catch (DescriptorValidationException e) {
-          throw new RuntimeException(e); // not expected
-        }
-      }
-    }
 
     for (int i = 0; i < msgFields.size(); i++) {
       colValRefs[i] = new BytesRefWritable();
@@ -102,7 +69,6 @@ public class RCFileProtobufPigStorage extends StoreFunc {
   @Override
   public void putNext(Tuple t) throws IOException {
     Message msg = PigToProtobuf.tupleToMessage(msgBuilder.clone(), t);
-
     protoStream.flush();
     byteStream.reset(); // TODO : resize the array it if is too large.
     int startPos = 0;
@@ -110,16 +76,7 @@ public class RCFileProtobufPigStorage extends StoreFunc {
     for (int i=0; i < msgFields.size(); i++) {
       FieldDescriptor fd = msgFields.get(i);
       if (msg.hasField(fd)) {
-        Message colMsg;
-        Object val = msg.getField(fd);
-
-        if (dynamicFields.get(i) != null) {
-          colMsg = columnBuilders.get(i).clone()
-                      .setField(dynamicFields.get(i), val).build();
-        } else { // a message
-          colMsg = (Message) val;
-        }
-        colMsg.writeTo(protoStream);
+        Protobufs.writeFieldNoTag(protoStream, fd, msg.getField(fd));
         protoStream.flush();
       }
 
@@ -141,9 +98,4 @@ public class RCFileProtobufPigStorage extends StoreFunc {
     FileOutputFormat.setOutputPath(job, new Path(location));
     RCFileOutputFormat.setColumnNumber(job.getConfiguration(), msgFields.size());
   }
-
-  public static class RCFileProtobufOutputFormat<M> extends RCFileOutputFormat {
-
-  }
-
 }
