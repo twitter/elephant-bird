@@ -13,6 +13,8 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -23,7 +25,13 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(RCFileOutputFormat.class);
+
+  // in case we need different compression from global default compression
   public static String RCFILE_COMPRESSION_CODEC_CONF = "elephantbird.rcfile.output.compression.codec";
+
+  public static String RCFILE_DEFAULT_EXTENSION = "rc";
+  public static String RCFILE_EXTENSION_OVERRIDE_CONF = "elephantbird.refile.output.filename.extension"; // "none" disables it.
 
   /**
    * set number of columns into the given configuration.
@@ -69,7 +77,10 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
       codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
     }
 
-    Path file = getDefaultWorkFile(job, (codec == null ? "" : codec.getDefaultExtension()));
+    String ext = conf.get(RCFILE_EXTENSION_OVERRIDE_CONF, RCFILE_DEFAULT_EXTENSION);
+    Path file = getDefaultWorkFile(job, ext.equalsIgnoreCase("none") ? null : ext);
+
+    LOG.info("writing to rcfile " + file.toString());
 
     // TODO : add metadata.
     final RCFile.Writer out = new RCFile.Writer(file.getFileSystem(conf), conf, file, job, codec);

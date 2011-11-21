@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.util;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -8,9 +9,14 @@ import java.util.Map;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
@@ -129,6 +135,24 @@ public class Protobufs {
         return f.getName();
       }
     });
+  }
+
+  /**
+   * Returns a Message {@link Descriptor} for a dynamically generated
+   * DescriptorProto.
+   *
+   * @param descProto
+   * @throws DescriptorValidationException
+   */
+  public static Descriptor makeMessageDescriptor(DescriptorProto descProto)
+                                      throws DescriptorValidationException {
+
+    DescriptorProtos.FileDescriptorProto fileDescP =
+      DescriptorProtos.FileDescriptorProto.newBuilder().addMessageType(descProto).build();
+
+    Descriptors.FileDescriptor[] fileDescs = new Descriptors.FileDescriptor[0];
+    Descriptors.FileDescriptor dynamicDescriptor = Descriptors.FileDescriptor.buildFrom(fileDescP, fileDescs);
+    return dynamicDescriptor.findMessageTypeByName(descProto.getName());
   }
 
    // Translates from protobuf field names to other field names, stripping out any that have value IGNORE.
@@ -251,5 +275,21 @@ public class Protobufs {
   public static void setClassConf(Configuration jobConf, Class<?> genericClass,
       Class<? extends Message> protoClass) {
     jobConf.set(CLASS_CONF_PREFIX + genericClass.getName(), protoClass.getName());
+  }
+
+  /**
+   * Serializes a single field
+   *
+   * @param output
+   * @param fd
+   * @param fieldValue
+   * @throws IOException
+   */
+  public static void writeFieldNoTag(CodedOutputStream   output,
+                                     FieldDescriptor     fd,
+                                     Object              fieldValue)
+                                     throws IOException {
+
+
   }
 }

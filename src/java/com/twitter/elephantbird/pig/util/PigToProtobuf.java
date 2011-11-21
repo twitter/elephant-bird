@@ -181,13 +181,7 @@ public class PigToProtobuf {
 
     desBuilder.setName("PigToProtobufDynamicBuilder");
 
-    DescriptorProto descriptorProto = desBuilder.build();
-    FileDescriptorProto fileDescriptorProto = FileDescriptorProto.newBuilder().addMessageType(descriptorProto).build();
-
-    FileDescriptor[] fileDescs = new FileDescriptor[0];
-    FileDescriptor dynamicDescriptor = FileDescriptor.buildFrom(fileDescriptorProto, fileDescs);
-
-    return dynamicDescriptor.findMessageTypeByName("PigToProtobufDynamicBuilder");
+    return Protobufs.makeMessageDescriptor(desBuilder.build());
   }
 
   /**
