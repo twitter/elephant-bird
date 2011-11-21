@@ -5,14 +5,26 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Message.Builder;
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
+import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
 
+import org.apache.pig.ResourceSchema;
+import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +127,70 @@ public class PigToProtobuf {
   }
 
   /**
+   * For a given <code>ResourceSchema</code>, generate a protobufs <code>Descriptor</code> with analagous field names
+   * and types.
+   *
+   * @param schema Pig schema.
+   * @return Protobufs Descriptor
+   * @throws Descriptors.DescriptorValidationException
+   */
+  public static Descriptor schemaToProtoDescriptor(ResourceSchema schema)
+      throws DescriptorValidationException {
+      return schemaToProtoDescriptor(schema, null);
+  }
+
+  /**
+   * For a given <code>ResourceSchema</code>, generate a protobufs <code>Descriptor</code> with analogous field names
+   * and types.
+   *
+   * @param schema Pig schema.
+   * @param extraFields optionally pass a List of extra fields (Pairs of name:type) to be included.
+   * @return Protobufs Descriptor
+   * @throws Descriptors.DescriptorValidationException
+   */
+  public static Descriptor schemaToProtoDescriptor(ResourceSchema schema, List<Pair<String, Type>> extraFields)
+      throws DescriptorValidationException {
+
+    // init protobufs
+    DescriptorProto.Builder desBuilder = DescriptorProto.newBuilder();
+
+    int count = 0;
+    for (ResourceFieldSchema fieldSchema : schema.getFields()) {
+      // Pig types
+      int position = ++count;
+      String fieldName = fieldSchema.getName();
+      byte dataTypeId = fieldSchema.getType();
+
+      // determine and add protobuf types
+      Type protoType = pigTypeToProtoType(dataTypeId);
+      LOG.info("Mapping Pig field " + fieldName + " of type " + dataTypeId + " to protobuf type: " + protoType);
+
+      addField(desBuilder, fieldName, position, protoType);
+    }
+
+    if (count == 0) {
+      throw new IllegalArgumentException("ResourceSchema does not have any fields");
+    }
+
+    // If extra fields are needed, let's add them
+    if (extraFields != null) {
+      for (Pair<String, Type> extraField : extraFields) {
+        addField(desBuilder, extraField.first, ++count, extraField.second);
+      }
+    }
+
+    desBuilder.setName("PigToProtobufDynamicBuilder");
+
+    DescriptorProto descriptorProto = desBuilder.build();
+    FileDescriptorProto fileDescriptorProto = FileDescriptorProto.newBuilder().addMessageType(descriptorProto).build();
+
+    FileDescriptor[] fileDescs = new FileDescriptor[0];
+    FileDescriptor dynamicDescriptor = FileDescriptor.buildFrom(fileDescriptorProto, fileDescs);
+
+    return dynamicDescriptor.findMessageTypeByName("PigToProtobufDynamicBuilder");
+  }
+
+  /**
    * Converts a DataBag into a List of objects with the type in the given FieldDescriptor. DataBags
    * don't map cleanly to repeated protobuf types, so each Tuple has to be unwrapped (by taking the
    * first element if the type is primitive or by converting the Tuple to a Message if the type is
@@ -164,6 +240,43 @@ public class PigToProtobuf {
       return ByteString.copyFrom(((DataByteArray)tupleField).get());
     default:
       return tupleField;
+    }
+  }
+
+  /**
+   * Add a field to a protobuf builder
+   */
+  private static void addField(DescriptorProto.Builder builder, String name, int fieldId, Type type) {
+    FieldDescriptorProto.Builder fdBuilder = FieldDescriptorProto.newBuilder()
+      .setName(name)
+      .setNumber(fieldId)
+      .setType(type);
+    builder.addField(fdBuilder.build());
+  }
+
+  /**
+   * For a given Pig type, return the protobufs type that maps to it.
+   */
+  private static Type pigTypeToProtoType(byte pigTypeId) {
+
+    switch(pigTypeId) {
+        case DataType.BOOLEAN:
+          return Type.TYPE_BOOL;
+        case DataType.INTEGER:
+          return Type.TYPE_INT32;
+        case DataType.LONG:
+          return Type.TYPE_INT64;
+        case DataType.FLOAT:
+          return Type.TYPE_FLOAT;
+        case DataType.DOUBLE:
+          return Type.TYPE_DOUBLE;
+        case DataType.CHARARRAY:
+          return Type.TYPE_STRING;
+        case DataType.BYTEARRAY:
+          return Type.TYPE_BYTES;
+        default:
+          throw new IllegalArgumentException("Unsupported Pig type passed (" + pigTypeId +
+              ") where a simple type is expected while converting Pig to a dynamic Protobuf");
     }
   }
 }
