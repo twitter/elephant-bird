@@ -240,9 +240,11 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   private static FieldSchema singleFieldToFieldSchema(String fieldName, Field field) throws FrontendException {
     switch (field.getType()) {
       case TType.LIST:
-        return new FieldSchema(fieldName, singleFieldToTupleSchema(fieldName + "_tuple", field.getListElemField()), DataType.BAG);
+        Schema internalSchema=singleFieldToTupleSchema(fieldName, field.getListElemField());
+        return new FieldSchema(fieldName, internalSchema, DataType.BAG);
       case TType.SET:
-        return new FieldSchema(fieldName, singleFieldToTupleSchema(fieldName + "_tuple", field.getSetElemField()), DataType.BAG);
+        Schema internalSchema2=singleFieldToTupleSchema(fieldName, field.getSetElemField());
+        return new FieldSchema(fieldName, internalSchema2, DataType.BAG);
       case TType.MAP:
         // can not specify types for maps in Pig.
         if (field.getMapKeyField().getType() != TType.STRING
@@ -258,33 +260,37 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   }
 
   /**
+   * A helper function which wraps a Schema in a tuple (for Pig bags) if our version of pig makes it necessary
+   */
+  private static Schema wrapInTupleIfPig9(Schema schema) throws FrontendException {
+      if (PigUtil.Pig9orNewer) {
+          return new Schema(new FieldSchema("t",schema,DataType.TUPLE));
+      } else {
+          return schema;
+      }
+  }
+
+  /**
+   * A helper function which wraps a FieldSchema in a tuple (for Pig bags) if our version of pig makes it necessary
+   */
+  private static Schema wrapInTupleIfPig9(FieldSchema fieldSchema) throws FrontendException {
+      return wrapInTupleIfPig9(new Schema(fieldSchema));
+  }
+
+  /**
    * Returns a schema with single tuple (for Pig bags).
    */
   private static Schema singleFieldToTupleSchema(String fieldName, Field field) throws FrontendException {
-
-    FieldSchema fieldSchema = null;
-
     switch (field.getType()) {
       case TType.STRUCT:
-        // wrapping STRUCT in a FieldSchema makes it impossible to
-        // access fields in PIG script (causes runtime error).
-        return toSchema(field.gettStructDescriptor());
+        return wrapInTupleIfPig9(toSchema(field.gettStructDescriptor()));
       case TType.LIST:
-        fieldSchema = singleFieldToFieldSchema(fieldName, field.getListElemField());
-        break;
+        return wrapInTupleIfPig9(singleFieldToFieldSchema(fieldName, field.getListElemField()));
       case TType.SET:
-        fieldSchema = singleFieldToFieldSchema(fieldName, field.getSetElemField());
-        break;
+        return wrapInTupleIfPig9(singleFieldToFieldSchema(fieldName, field.getSetElemField()));
       default:
-        fieldSchema = new FieldSchema(fieldName, null, getPigDataType(field));
-        if ( PigUtil.Pig9orNewer ) { // bag needs tuples (PIG 0.8 implicitly added this wrapper)
-          fieldSchema = new FieldSchema( "t", new Schema(fieldSchema),  DataType.TUPLE );
-        }
+        return wrapInTupleIfPig9(new FieldSchema(fieldName, null, getPigDataType(field)));
     }
-
-    Schema schema = new Schema();
-    schema.add(fieldSchema);
-    return schema;
   }
 
   private static byte getPigDataType(Field field) {
