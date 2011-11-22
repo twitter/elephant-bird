@@ -9,7 +9,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -18,10 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Hive's {@link org.apache.hadoop.hive.ql.io.RCFileOutputFormat} is written for
+ * deprecated OutputFormat. Pig requires newer OutputFormat.
+ * In addition RCFileOutputFormat's functionality this class adds RCFile
+ * metadata support.
  *
- * TODO:
- *
- * Hive's RCFileOutputFormat ported to non-deprecated mapreduce + Metadata support
+ * TODO: contribute this to PIG.
  */
 
 public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable> {
