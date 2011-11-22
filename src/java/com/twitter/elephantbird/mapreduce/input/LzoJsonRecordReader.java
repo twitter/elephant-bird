@@ -89,14 +89,23 @@ public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritab
   public static boolean decodeLineToJson(JSONParser parser, Text line, MapWritable value) {
     try {
       JSONObject jsonObj = (JSONObject)parser.parse(line.toString());
-      for (Object key: jsonObj.keySet()) {
-        Text mapKey = new Text(key.toString());
-        Text mapValue = new Text();
-        if (jsonObj.get(key) != null) {
-          mapValue.set(jsonObj.get(key).toString());
-        }
+      if (jsonObj != null) {
+        for (Object key: jsonObj.keySet()) {
+          Text mapKey = new Text(key.toString());
+          Text mapValue = new Text();
+          if (jsonObj.get(key) != null) {
+            mapValue.set(jsonObj.get(key).toString());
+          }
 
-        value.put(mapKey, mapValue);
+          value.put(mapKey, mapValue);
+        }
+      }
+      else {
+          // JSONParser#parse(String) may return a null reference, e.g. when
+          // the input parameter is the string "null".  A single line with
+          // "null" is not valid JSON though.
+          LOG.warn("Could not json-decode string: " + line);
+          return false;
       }
       return true;
     } catch (ParseException e) {
