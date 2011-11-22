@@ -9,6 +9,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -57,11 +58,7 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
     return conf.getInt(RCFile.COLUMN_NUMBER_CONF_STR, 0);
   }
 
-
-  @Override
-  public RecordWriter<NullWritable, Writable> getRecordWriter(
-      TaskAttemptContext job) throws IOException, InterruptedException {
-
+  protected RCFile.Writer createRCFileWriter(TaskAttemptContext job) throws IOException {
     Configuration conf = job.getConfiguration();
 
     // override compression codec if set.
@@ -82,20 +79,36 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
 
     LOG.info("writing to rcfile " + file.toString());
 
-    // TODO : add metadata.
-    final RCFile.Writer out = new RCFile.Writer(file.getFileSystem(conf), conf, file, job, codec);
+    // TODO add metadata
+    return new RCFile.Writer(file.getFileSystem(conf), conf, file, job, codec);
+  }
 
-    return new RecordWriter<NullWritable, Writable>() {
-      @Override
-      public void close(TaskAttemptContext context) throws IOException, InterruptedException {
-        out.close();
-      }
+  /**
+   * RecordWriter wrapper around an RCFile.Writer
+   */
+  static protected class Writer extends RecordWriter<NullWritable, Writable> {
 
-      @Override
-      public void write(NullWritable key, Writable value) throws IOException, InterruptedException {
-        out.append(value);
-      }
-    };
+    private RCFile.Writer rcfile;
 
+    protected Writer(RCFileOutputFormat outputFormat, TaskAttemptContext job) throws IOException {
+      rcfile = outputFormat.createRCFileWriter(job);
+    }
+
+    @Override
+    public void close(TaskAttemptContext context) throws IOException, InterruptedException {
+      rcfile.close();
+    }
+
+    @Override
+    public void write(NullWritable key, Writable value) throws IOException, InterruptedException {
+      rcfile.append(value);
+      // add counters
+    }
+  }
+
+  @Override
+  public RecordWriter<NullWritable, Writable> getRecordWriter(
+      TaskAttemptContext job) throws IOException, InterruptedException {
+    return new Writer(this, job);
   }
 }
