@@ -31,11 +31,7 @@ public class ProtobufTuple extends AbstractLazyTuple {
   protected Object getObjectAt(int idx) {
     FieldDescriptor fieldDescriptor = fieldDescriptors_.get(idx);
     Object fieldValue = msg_.getField(fieldDescriptor);
-    if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-      return protoConv_.messageToTuple(fieldDescriptor, fieldValue);
-    } else {
-      return protoConv_.singleFieldToTuple(fieldDescriptor, fieldValue);
-    }
+    return protoConv_.fieldToPig(fieldDescriptor, fieldValue);
   }
 
   @Override

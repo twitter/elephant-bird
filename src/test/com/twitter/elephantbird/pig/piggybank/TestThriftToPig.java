@@ -5,7 +5,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
+import org.apache.pig.LoadPushDown.RequiredField;
+import org.apache.pig.LoadPushDown.RequiredFieldList;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
@@ -26,11 +29,13 @@ import com.twitter.data.proto.tutorial.thrift.Person;
 import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
 import com.twitter.data.proto.tutorial.thrift.PhoneType;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
+import com.twitter.elephantbird.pig.util.ProjectedThriftTuple;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.pig.util.PigToThrift;
 import com.twitter.elephantbird.thrift.test.TestName;
 import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
+import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class TestThriftToPig {
@@ -46,7 +51,41 @@ public class TestThriftToPig {
   static <M extends TBase<?, ?>> Tuple thriftToPig(M obj) throws TException {
     // it is very inefficient to create one ThriftToPig for each Thrift object,
     // but good enough for unit testing.
-    return ThriftToPig.newInstance(new TypeRef<M>(obj.getClass()){}).getPigTuple(obj);
+
+    TypeRef<M> typeRef = new TypeRef<M>(obj.getClass()){};
+    ThriftToPig<M> thriftToPig = ThriftToPig.newInstance(typeRef);
+
+    Tuple t = thriftToPig.getPigTuple(obj);
+
+    // test projected tuple. project a subset of fields based on field name.
+
+    List<Field> tFields = thriftToPig.getTStructDescriptor().getFields();
+    List<Integer> idxList = Lists.newArrayList();
+    RequiredFieldList reqFieldList = new RequiredFieldList();
+    for (int i=0; i < tFields.size(); i++) {
+      String name = tFields.get(i).getName();
+      if (name.hashCode()%2 == 0) {
+        RequiredField rf = new RequiredField();
+        rf.setAlias(name);
+        rf.setIndex(i);
+        reqFieldList.add(rf);
+
+        idxList.add(i);
+      }
+    }
+
+    try {
+      Tuple pt = new ProjectedThriftTuple<M>(typeRef, reqFieldList).newTuple(obj);
+      int pidx=0;
+      for(int idx : idxList) {
+        assertEquals(t.get(idx).toString(), pt.get(pidx++).toString());
+      }
+    } catch (ExecException e) { // not expected
+      throw new TException(e);
+    }
+
+    // return the full tuple
+    return t;
   }
 
   static <M extends TBase<?, ?>> Tuple thriftToLazyTuple(M obj) throws TException {

@@ -121,6 +121,12 @@ public abstract class AbstractLazyTuple implements Tuple {
     realTuple.write(out);
   }
 
+  @Override
+  public String toString() {
+    convertAll();
+    return realTuple.toString();
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public int compareTo(Object arg0) {

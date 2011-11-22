@@ -85,6 +85,19 @@ public class ProtobufToPig {
   }
 
   /**
+   * Returns either {@link #messageToTuple(FieldDescriptor, Object)}
+   * or {@link #singleFieldToTuple(FieldDescriptor, Object)} depending
+   * on whether the field is a Message or a simple field.
+   */
+  protected Object fieldToPig(FieldDescriptor fieldDescriptor, Object fieldValue) {
+    if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
+      return messageToTuple(fieldDescriptor, fieldValue);
+    } else {
+      return singleFieldToTuple(fieldDescriptor, fieldValue);
+    }
+  }
+
+  /**
    * Translate a nested message to a tuple.  If the field is repeated, it walks the list and adds each to a bag.
    * Otherwise, it just adds the given one.
    * @param fieldDescriptor the descriptor object for the given field.

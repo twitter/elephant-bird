@@ -8,24 +8,25 @@ import org.apache.hadoop.mapreduce.Job;
 
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.thrift.TBase;
 
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
+import com.twitter.elephantbird.pig.util.ProjectedThriftTuple;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 
 import com.twitter.elephantbird.util.TypeRef;
 
 public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
 
-  private final TypeRef<M> typeRef_;
-  private final ThriftToPig<M> thriftToPig_;
+  protected final TypeRef<M> typeRef_;
+  private ProjectedThriftTuple<M> tupleTemplate;
 
   public LzoThriftB64LinePigLoader(String thriftClassName) {
     typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
-    thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
   }
 
   /**
@@ -36,10 +37,20 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
    */
   @Override
   public Tuple getNext() throws IOException {
+    if (tupleTemplate == null) {
+      tupleTemplate = new ProjectedThriftTuple<M>(typeRef_, requiredFieldList);
+    }
+
     M value = getNextBinaryValue(typeRef_);
 
     return value != null ?
-      thriftToPig_.getLazyTuple(value) : null;
+      tupleTemplate.newTuple(value) : null;
+  }
+
+  @Override
+  public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
+                                              throws FrontendException {
+    return pushProjectionHelper(requiredFieldList);
   }
 
   @Override
