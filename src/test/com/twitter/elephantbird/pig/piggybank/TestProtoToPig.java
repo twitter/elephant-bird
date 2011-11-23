@@ -5,6 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.pig.LoadPushDown.RequiredField;
+import org.apache.pig.LoadPushDown.RequiredFieldList;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
@@ -16,7 +18,10 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.data.proto.tutorial.pig.piggybank.AddressBookProtobufBytesToTuple;
+import com.twitter.elephantbird.pig.util.PigUtil;
+import com.twitter.elephantbird.pig.util.ProjectedProtobufTupleFactory;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
+import com.twitter.elephantbird.util.TypeRef;
 
 public class TestProtoToPig {
 
@@ -40,6 +45,12 @@ public class TestProtoToPig {
     Tuple protoTuple = new ProtobufTuple(personProto);
     Tuple normalTuple = Fixtures.buildPersonTuple();
     List<FieldDescriptor> fieldDescs = personProto.getDescriptorForType().getFields();
+
+    TypeRef<Person> typeRef = PigUtil.getProtobufTypeRef(Person.class.getName());
+    Tuple projectedTuple =
+      new ProjectedProtobufTupleFactory<Person>(typeRef, evenFields(fieldDescs)).newTuple(personProto);
+
+    int idx = 0;
     for (FieldDescriptor fd : fieldDescs) {
       // Skipping data bags. Data bags actually work; it' just our fixture is not good for this,
       // since it tests "default value" functionality by leaving some elements as null, expecting
@@ -49,6 +60,28 @@ public class TestProtoToPig {
         continue;
       }
       assertEquals(protoTuple.get(fd.getIndex()), normalTuple.get(fd.getIndex()));
+      if (idx%2 == 0) {
+        assertEquals(projectedTuple.get(fd.getIndex()/2), normalTuple.get(fd.getIndex()));
+      }
+      idx++;
     }
   }
+
+  private static RequiredFieldList evenFields(List<FieldDescriptor> protoFields) {
+    RequiredFieldList reqList = new RequiredFieldList();
+
+    int i = 0;
+    for(FieldDescriptor fd : protoFields) {
+      if (i%2 == 0) {
+        RequiredField field = new RequiredField();
+        field.setAlias(fd.getName());
+        field.setIndex(i);
+        // field.setType() type is not used
+        reqList.add(field);
+      }
+      i++;
+    }
+    return reqList;
+  }
+
 }

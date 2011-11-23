@@ -1,6 +1,9 @@
 package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
@@ -9,10 +12,14 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.pig.Expression;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.LoadMetadata;
+import org.apache.pig.LoadPushDown;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.impl.logicalLayer.FrontendException;
+import org.apache.pig.impl.util.ObjectSerializer;
 import org.apache.pig.impl.util.Pair;
+import org.apache.pig.impl.util.UDFContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,17 +33,22 @@ import com.twitter.elephantbird.util.TypeRef;
  * filenames to end in .lzo, otherwise it assumes they are not compressed and skips them.
  * TODO: Improve the logic to accept a mixture of lzo and non-lzo files.
  */
-public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata {
+public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, LoadPushDown {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseLoadFunc.class);
 
   protected final String LZO_EXTENSION = new LzopCodec().getDefaultExtension();
 
+  @SuppressWarnings("unchecked")
   protected RecordReader reader_;
 
   // Making accessing Hadoop counters from Pig slightly more convenient.
   private final PigCounterHelper counterHelper_ = new PigCounterHelper();
 
   protected Configuration jobConf;
+  protected String contextSignature;
+  protected static final String projectionKey = "LzoBaseLoadFunc_projectedFields";
+
+  protected RequiredFieldList requiredFieldList = null;
 
   /**
    * Construct a new load func.
@@ -67,10 +79,27 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata {
     counterHelper_.incrCounter(groupCounterPair.first, groupCounterPair.second, incr);
   }
 
+  /** UDF properties for this class based on context signature */
+  protected Properties getUDFProperties() {
+    return UDFContext.getUDFContext()
+        .getUDFProperties(this.getClass(), new String[] {contextSignature});
+  }
+
+  @Override
+  public void setUDFContextSignature(String signature) {
+    this.contextSignature = signature;
+  }
+
   @Override
   public void setLocation(String location, Job job) throws IOException {
     FileInputFormat.setInputPaths(job, location);
     this.jobConf = job.getConfiguration();
+
+    String projectedFields = getUDFProperties().getProperty(projectionKey);
+    if (projectedFields != null) {
+      requiredFieldList =
+        (RequiredFieldList) ObjectSerializer.deserialize(projectedFields);
+    }
   }
 
   /**
@@ -92,8 +121,43 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata {
     return null;
   }
 
+  // LoadPushDown implementation:
+
   @Override
-  public void prepareToRead(RecordReader reader, PigSplit split) {
+  public List<OperatorSet> getFeatures() {
+    return Arrays.asList(LoadPushDown.OperatorSet.PROJECTION);
+  }
+
+  @Override
+  public RequiredFieldResponse pushProjection(
+      RequiredFieldList requiredFieldList) throws FrontendException {
+    // the default implementation disables the feature.
+    // a projection needs to be explicitly supported by sub classes.
+    return null;
+  }
+
+  /**
+   * A helper method for implementing
+   * {@link LoadPushDown#pushProjection(RequiredFieldList)}. <p>
+   *
+   * Stores requiredFieldList in context. The requiredFields are read from
+   * context on the backend (in side {@link #setLocation(String, Job)}).
+   */
+  protected RequiredFieldResponse pushProjectionHelper(
+                                          RequiredFieldList requiredFieldList)
+                                          throws FrontendException {
+    try {
+      getUDFProperties().setProperty(projectionKey,
+                                     ObjectSerializer.serialize(requiredFieldList));
+    } catch (IOException e) { // not expected
+      throw new FrontendException(e);
+    }
+
+    return new RequiredFieldResponse(true);
+  }
+
+  @Override
+  public void prepareToRead(@SuppressWarnings("unchecked") RecordReader reader, PigSplit split) {
       this.reader_ = reader;
   }
 
