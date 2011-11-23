@@ -30,10 +30,12 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
   private static final Logger LOG = LoggerFactory.getLogger(RCFileOutputFormat.class);
 
   // in case we need different compression from global default compression
-  public static String RCFILE_COMPRESSION_CODEC_CONF = "elephantbird.rcfile.output.compression.codec";
+  public static String COMPRESSION_CODEC_CONF = "elephantbird.rcfile.output.compression.codec";
 
-  public static String RCFILE_DEFAULT_EXTENSION = ".rc";
-  public static String RCFILE_EXTENSION_OVERRIDE_CONF = "elephantbird.refile.output.filename.extension"; // "none" disables it.
+  public static String DEFAULT_EXTENSION = ".rc";
+  public static String EXTENSION_OVERRIDE_CONF = "elephantbird.refile.output.filename.extension"; // "none" disables it.
+
+  public static String COLUMN_METADATA_PROTOBUF_KEY = "elephantbird.rcfile.column.info.protobuf";
 
   /**
    * set number of columns into the given configuration.
@@ -59,11 +61,12 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
     return conf.getInt(RCFile.COLUMN_NUMBER_CONF_STR, 0);
   }
 
+  public void setColumnInfo(){}
   protected RCFile.Writer createRCFileWriter(TaskAttemptContext job) throws IOException {
     Configuration conf = job.getConfiguration();
 
     // override compression codec if set.
-    String codecOverride = conf.get(RCFILE_COMPRESSION_CODEC_CONF);
+    String codecOverride = conf.get(COMPRESSION_CODEC_CONF);
     if (codecOverride != null) {
       conf.setBoolean("mapred.output.compress", true);
       conf.set("mapred.output.compression.codec", codecOverride);
@@ -75,7 +78,7 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
       codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
     }
 
-    String ext = conf.get(RCFILE_EXTENSION_OVERRIDE_CONF, RCFILE_DEFAULT_EXTENSION);
+    String ext = conf.get(EXTENSION_OVERRIDE_CONF, DEFAULT_EXTENSION);
     Path file = getDefaultWorkFile(job, ext.equalsIgnoreCase("none") ? null : ext);
 
     LOG.info("writing to rcfile " + file.toString());

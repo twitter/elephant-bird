@@ -27,10 +27,9 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
 
-  /*
-   * typeRef is only required for setting metadata for the RCFile
-   * if we are ok to delay file creation until the first row is created,
-   * this info could be derived from object
+  /* typeRef is only required for setting metadata for the RCFile
+   * if we delay file creation until the first row is written,
+   * this info could be derived from protobuf being written.
    */
   private TypeRef<? extends Message> typeRef;
   private List<FieldDescriptor> msgFields;

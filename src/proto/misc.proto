@@ -8,3 +8,12 @@ message CountedMap {
   optional string key         = 1;
   optional int64 value        = 2;
 };
+
+
+// Metadata stored with columnar storage like Hive's RCFile
+// 
+message ColumnarMetadata {
+  optional string   classname   = 1;                // FYI only, not used.
+  repeated int32    field_id    = 2;                // list of field indices stored
+  optional int32    nesting     = 3 [default = 0];  // when nesting is used
+}
