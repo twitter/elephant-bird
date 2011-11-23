@@ -15,7 +15,7 @@ import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
-import com.twitter.elephantbird.pig.util.ProjectedThriftTuple;
+import com.twitter.elephantbird.pig.util.ProjectedThriftTupleFactory;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 
 import com.twitter.elephantbird.util.TypeRef;
@@ -23,7 +23,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
 
   protected final TypeRef<M> typeRef_;
-  private ProjectedThriftTuple<M> tupleTemplate;
+  private ProjectedThriftTupleFactory<M> tupleTemplate;
 
   public LzoThriftB64LinePigLoader(String thriftClassName) {
     typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
@@ -38,7 +38,7 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
   @Override
   public Tuple getNext() throws IOException {
     if (tupleTemplate == null) {
-      tupleTemplate = new ProjectedThriftTuple<M>(typeRef_, requiredFieldList);
+      tupleTemplate = new ProjectedThriftTupleFactory<M>(typeRef_, requiredFieldList);
     }
 
     M value = getNextBinaryValue(typeRef_);

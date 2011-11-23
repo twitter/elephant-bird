@@ -19,7 +19,7 @@ import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.data.proto.tutorial.pig.piggybank.AddressBookProtobufBytesToTuple;
 import com.twitter.elephantbird.pig.util.PigUtil;
-import com.twitter.elephantbird.pig.util.ProjectedProtoTuple;
+import com.twitter.elephantbird.pig.util.ProjectedProtobufTupleFactory;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -48,7 +48,7 @@ public class TestProtoToPig {
 
     TypeRef<Person> typeRef = PigUtil.getProtobufTypeRef(Person.class.getName());
     Tuple projectedTuple =
-      new ProjectedProtoTuple<Person>(typeRef, evenFields(fieldDescs)).newTuple(personProto);
+      new ProjectedProtobufTupleFactory<Person>(typeRef, evenFields(fieldDescs)).newTuple(personProto);
 
     int idx = 0;
     for (FieldDescriptor fd : fieldDescs) {

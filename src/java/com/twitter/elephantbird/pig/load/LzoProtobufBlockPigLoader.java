@@ -32,6 +32,6 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoProtobufB64
 
   @Override
   public InputFormat<LongWritable, ProtobufWritable<M>> getInputFormat() throws IOException {
-    return new LzoProtobufBlockInputFormat<M>(typeRef_);
+    return new LzoProtobufBlockInputFormat<M>(typeRef);
   }
 }
