@@ -259,7 +259,8 @@ public class ThriftToPig<M extends TBase<?, ?>> {
         return new FieldSchema(fieldName, singleFieldToTupleSchema(fieldName + "_tuple", field.getSetElemField()), DataType.BAG);
       case TType.MAP:
         // can not specify types for maps in Pig.
-        if (field.getMapKeyField().getType() != TType.STRING) {
+        if (field.getMapKeyField().getType() != TType.STRING
+            && field.getMapKeyField().getType() != TType.ENUM) {
           LOG.warn("Using a map with non-string key for field " + field.getName()
               + ". while converting to PIG Tuple, toString() is used for the key."
               + " It could result in incorrect maps.");

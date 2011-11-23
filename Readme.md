@@ -1,6 +1,6 @@
 # Elephant Bird #
 
-Version: 2.1.0
+Version: 2.1.2
 
 #### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
 
@@ -27,7 +27,7 @@ NOTE: This is an experimental branch for working with Pig 0.8. It may not work. 
 ### Version compatibility ###
 
 1. Protocol Buffers 2.3 (not compatible with 2.4+)
-2. Pig 0.8 (not compatible with 0.7 and below)
+2. Pig 0.8. 0.9 (not compatible with 0.7 and below)
 4. Hive 0.7 (with HIVE-1616)
 5. Thrift 0.5
 
@@ -46,58 +46,69 @@ Apache licensed.
 
 ### Contents ###
 
-##### LZO-based Hadoop Input Formats #####
+##### Hadoop Input Formats #####
 * JSON data
 * Line-based data (TextInputFormat but for LZO; also available in deprecated 0.18 format)
 * [W3C logs](http://www.w3.org/TR/WD-logfile.html)
 * Serialized protocol buffers in one of three flavors
-    * Block-based (via codegen, see below; also available in deprecated 0.18 format)
+    * Block-based (also available in deprecated 0.18 format)
     * Block-based, into generic bytes.
-    * Line-based, base64 encoded (via codegen, see below)
+    * Line-based, base64 encoded
 * Same as protocol buffers, but Thrift.
 
     
-##### LZO-based Hadoop Writables #####
-* Protocol buffer writables (via codegen, see below)
+##### Hadoop Writables #####
+* Protocol buffer and Thrift writables 
 
-##### LZO-based Hadoop OutputFormats #####
-* Serialized protocol buffers in one of two flavors
-    * Block-based (via codegen, see below)
-    * Line-based, base64 encoded (via codegen, see below)
+##### Hadoop OutputFormats #####
+* Serialized protocol buffers and Thrift messages in one of two flavors
+    * Block-based
+    * Line-based, base64 encoded
+* LZO-only (patches to make this more general would be great)
 
-##### LZO-based LoadFuncs for Pig #####
+
+##### LoadFuncs for Pig #####
 * JSON data
 * Regex-based loaders
-* Sampling loaders for LZO
-* Text loaders (TextLoader equivalent but for LZO)
-* Tokenized loaders (PigStorage equivalent but for LZO)
+* LzoPigStorage (just what it sounds like)
 * [W3C logs](http://www.w3.org/TR/WD-logfile.html)
-* Serialized protocol buffers in one of two flavors
-    * Block-based (via codegen, see below)
-    * Line-based, base64 encoded (via codegen, see below)
+* Serialized protocol buffers
+    * Block-based (dynamic or via codegen, see below)
+    * Line-based, base64 encoded (dynamic or via codegen, see below)
+    * In SequenceFiles, using ProtobufWritableConverter
+* Serialized Thrift
+    * Block-based (dynamic)
+    * Line-based, base64 encoded (dynamic)
+    * In SequenceFiles, using ThriftWritableConverter
+* SequenceFile Loaders
+    * Has converter interface for turning Tuples into Writable
+    * provides implementations to convert generic Writables, Thrift, Protobufs
 
 ##### LZO-based StoreFuncs for Pig #####
-* Tokenized storage (PigStorage equivalent but for LZO)
-* Serialized protocol buffers in one flavor
-    * Line-based, base64 encoded (via codegen, see below)
+* LzoPigStorage
+* Serialized Protobufs and Thrift 
+* SequenceFile Storage (with converters, as above)
     
 ##### Utilities #####
 * Counters in Pig
 * Protocol buffer utilities
-* Conversions from protocol buffers to pig scripts
+* Thrift utilities
+* Conversions from protocol buffers and Thrift messages to pig tuples
+* Conversions from Thrift to PB's DynamicMessage
 * Reading and writing block-based protocol buffer format (see ProtobufBlockWriter)
+
+### Working with Thrift and Protocol Buffers in Hadoop ###
+
+We provide InputFormats, OutputFormats, Pig Load / Store functions, Hive SerDes,
+and Writables for working with Thrift and Google Protocol Buffers. 
+We haven't written up the docs yet, but look at `ProtobufMRExample.java`, `ThriftMRExample.java`, `people_phone_number_count.pig`, `people_phone_number_count_thrift.pig` under `examples` directory for reflection-based dynamic usage.
+We also provide utilities for generating Protobuf-specific Loaders, Input/Output Formats, etc, if for some reason you want to avoid
+the dynamic bits.
 
 ### Protobuf Codegen? ###
 
-Yes. Most of the work with protobufs can be templatized via a `<M extends Message>` (where `Message`
-means `com.google.protobuf.Message`) but Hadoop works mainly via reflection.  [Java type erasure](http://java.sun.com/docs/books/tutorial/java/generics/erasure.html) prevents templated types from
-being instantiated properly via reflection, so our solution is to write the templatized class, and then
-generate code for derived classes that do little more than instantiate the type parameter.  This causes a slight
-proliferation of classes, but it only needs to be done during the build phase (don't check in generated code!)
-so in practice it isn't an issue.  It turns out this can be done for Hadoop, Pig, HBase, etc, and you can easily
-add your own classes to it.  The model we use here is file-based: essentially, you can configure it such that you
-generate some set of derived protobuf-related classes for each protocol buffer defined in a given file.  This distribution
-ships with classes
+Note: this is not strictly required for working with Protocol Buffers in Hadoop. We can do most of this dynamically.
+Some people like having specific classes, though, so this functionality is available since protobuf 2.3 makes it so easy to do.
 
 In protobuf 2.3, Google introduced the notion of a [protocol buffer plugin](http://code.google.com/apis/protocolbuffers/docs/reference/cpp/google.protobuf.compiler.plugin.pb.html) that 
 lets you hook in to their code generation elegantly, with all the parsed metadata available.  We use this in 
@@ -118,13 +129,23 @@ my_file:
 
 There are examples in the examples subdirectory showing how to integrate this code generation into a build, both for generating Java files pre-jar and for generating other types of files from protocol buffer definitions post-compile (there are examples that do this to generate [Pig](http://hadoop.apache.org/pig) loaders for a set of protocol buffers).  
 
-### No, really, Protobuf codegen? ###
+### SequenceFiles and Pig ###
 
-We recently revisited all the stuff described above and found ways to get around the codegen issue. We haven't written up the docs yet, but look at `ProtobufMRExample.java`, `ThriftMRExample.java`, `people_phone_number_count.pig`, `people_phone_number_count_thrift.pig` under `examples` directory for usage. It is not very different from using the specific code-generated classes.
+For details of how the Pig integration with SequenceFiles works, please see javadocs for the following classes:
+* ([SequenceFileLoader](https://github.com/kevinweil/elephant-bird/blob/master/src/java/com/twitter/elephantbird/pig/load/SequenceFileLoader.java))
+* ([SequenceFileStorage](https://github.com/kevinweil/elephant-bird/blob/master/src/java/com/twitter/elephantbird/pig/store/SequenceFileStorage.java))
+* ([GenericWritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/src/java/com/twitter/elephantbird/pig/util/GenericWritableConverter.java))
+* ([AbstractWritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/src/java/com/twitter/elephantbird/pig/util/AbstractWritableConverter.java))
 
-### Commit Back! ###
 
-Bug fixes, features, and documentation improvements are welcome!  Please fork and send me a pull request on github, and I will do my best to keep up.  If you make major changes, add yourself to the contributors list below.
+### How To Contribute ###
+
+Bug fixes, features, and documentation improvements are welcome!
+
+Please fork the *eb-dev* branch and send us a pull request on github.
+
+We merge eb-dev into master every few weeks. The latest version on master is what we are actively running on Twitter's hadoop clusters daily, over hundreds of terabytes of data.
+
 
 ### Contributors ###
 
@@ -134,3 +155,4 @@ See git logs for credits.
 * Kevin Weil ([@kevinweil](http://twitter.com/kevinweil))
 * Dmitriy Ryaboy ([@squarecog](http://twitter.com/squarecog))
 * Raghu Angadi ([@raghuangadi](http://twitter.com/raghuangadi))
+* Andy Schlaikjer ([@sagemintblue])(http://twitter.com/sagemintblue))

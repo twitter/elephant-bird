@@ -1,12 +1,5 @@
 com.twitter.data.proto
 com.twitter.data.proto.tutorial
-com.twitter.data.proto.tutorial.hive.serde
-com.twitter.data.proto.tutorial.mapred.input
-com.twitter.data.proto.tutorial.mapreduce.input
-com.twitter.data.proto.tutorial.mapreduce.io
-com.twitter.data.proto.tutorial.mapreduce.output
-com.twitter.data.proto.tutorial.pig.load
-com.twitter.data.proto.tutorial.pig.piggybank
 com.twitter.data.proto.tutorial.thrift
 com.twitter.elephantbird.examples.proto
 com.twitter.elephantbird.hive.serde
@@ -23,4 +16,5 @@ com.twitter.elephantbird.proto
 com.twitter.elephantbird.proto.codegen
 com.twitter.elephantbird.proto.util
 com.twitter.elephantbird.thrift
+com.twitter.elephantbird.thrift.test
 com.twitter.elephantbird.util

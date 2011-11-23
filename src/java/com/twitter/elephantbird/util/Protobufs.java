@@ -60,6 +60,14 @@ public class Protobufs {
     return protoClass.asSubclass(Message.class);
   }
 
+  /**
+   * For a configured protoClass, should the message be dynamic or is it a pre-generated Message class? If protoClass is
+   * null or set to DynamicMessage.class, then the configurer intends for a dynamically generated protobuf to be used.
+   */
+  public static boolean useDynamicProtoMessage(Class protoClass) {
+    return protoClass == null || protoClass.getCanonicalName().equals(DynamicMessage.class.getCanonicalName());
+  }
+
   public static Class<? extends Message> getInnerProtobufClass(String canonicalClassName) {
     // is an inner class and is not visible from the outside.  We have to instantiate
     String parentClass = canonicalClassName.substring(0, canonicalClassName.lastIndexOf("."));
@@ -126,9 +134,13 @@ public class Protobufs {
    // Translates from protobuf field names to other field names, stripping out any that have value IGNORE.
    // i.e. if you have a protobuf with field names a, b, c and your fieldNameTranslations map looks like
    // { "a" => "A", "c" => "IGNORE" }, then you'll end up with A, b
-   public static List<String> getMessageFieldNames(Class<? extends Message> protoClass, Map<String, String> fieldNameTranslations) {
+  public static List<String> getMessageFieldNames(Class<? extends Message> protoClass, Map<String, String> fieldNameTranslations) {
+    return getMessageFieldNames(getMessageDescriptor(protoClass), fieldNameTranslations);
+  }
+
+   public static List<String> getMessageFieldNames(Descriptor descriptor, Map<String, String> fieldNameTranslations) {
      Function<FieldDescriptor, String> fieldTransformer = getFieldTransformerFor(fieldNameTranslations);
-     return ListHelper.filter(Lists.transform(getMessageDescriptor(protoClass).getFields(), fieldTransformer), Predicates.<String>notNull());
+     return ListHelper.filter(Lists.transform(descriptor.getFields(), fieldTransformer), Predicates.<String>notNull());
    }
 
    public static Function<FieldDescriptor, String> getFieldTransformerFor(final Map<String, String> fieldNameTranslations) {

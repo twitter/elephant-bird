@@ -142,14 +142,17 @@ public class PigToThrift<T extends TBase<?, ?>> {
     return null;
   }
 
-  private static Map<String, Object> toThriftMap(Field field, Map<String, Object> map) {
-    if (field.getMapKeyField().getType() != TType.STRING) {
-      throw new IllegalArgumentException("TStructs's map key is not a String");
-    }
-    HashMap<String, Object> out = new HashMap<String, Object>(map.size());
+  private static Map<Object, Object> toThriftMap(Field field, Map<String, Object> map) {
+    Field keyField   = field.getMapKeyField();
     Field valueField = field.getMapValueField();
+    if (keyField.getType() != TType.STRING
+        && keyField.getType() != TType.ENUM) {
+      throw new IllegalArgumentException("TStructs's map key should be a STRING or an ENUM");
+    }
+    HashMap<Object, Object> out = new HashMap<Object, Object>(map.size());
     for(Entry<String, Object> e : map.entrySet()) {
-      out.put(e.getKey(), toThriftValue(valueField, e.getValue()));
+      out.put(toThriftValue(keyField,   e.getKey()),
+              toThriftValue(valueField, e.getValue()));
     }
     return out;
   }

@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.pig.piggybank;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,6 +22,7 @@ import thrift.test.HolyMoley;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.twitter.data.proto.tutorial.thrift.Name;
 import com.twitter.data.proto.tutorial.thrift.Person;
@@ -31,6 +33,9 @@ import com.twitter.elephantbird.pig.util.ProjectedThriftTupleFactory;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.pig.util.PigToThrift;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
+import com.twitter.elephantbird.thrift.test.TestName;
+import com.twitter.elephantbird.thrift.test.TestPerson;
+import com.twitter.elephantbird.thrift.test.TestPhoneType;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class TestThriftToPig {
@@ -171,5 +176,19 @@ public class TestThriftToPig {
 
     Person person = new Person(new Name("bob", "jenkins"), 42, "foo@bar.com", Lists.newArrayList(ph));
     assertEquals("(bob,jenkins),42,foo@bar.com,{(415-555-5555,HOME)}", toTuple(type, person).toDelimitedString(","));
+
+    // test Enum map
+    TestPerson testPerson = new TestPerson(
+                                  new TestName("bob", "jenkins"),
+                                  ImmutableMap.of(
+                                      TestPhoneType.HOME,   "408-555-5555",
+                                      TestPhoneType.MOBILE, "650-555-5555",
+                                      TestPhoneType.WORK,   "415-555-5555"));
+
+    String tupleString = toTuple(type, testPerson).toDelimitedString("-");
+    assertTrue( // the order of elements in map could vary because of HashMap
+        tupleString.equals("(bob,jenkins)-{MOBILE=650-555-5555, WORK=415-555-5555, HOME=408-555-5555}") ||
+        tupleString.equals("(bob,jenkins)-{MOBILE=650-555-5555, HOME=408-555-5555, WORK=415-555-5555}")
+    );
   }
 }
