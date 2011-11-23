@@ -40,6 +40,7 @@
   <property name="test.junit.maxmemory" value="512m" />
   <property name="javac.debug" value="on"/>
   <property name="javac.optimize" value="on"/>
+  <property name="test.library.path" value="none"/>
 	
   <path id="test.classpath">
       <pathelement location="${classes.dir}"/>
@@ -263,8 +264,7 @@
       <sysproperty key="test.log.dir" value="${test.log.dir}"/>
       <sysproperty key="test.source.dir" value="${test.src.dir}"/>
       <sysproperty key="test.build.extraconf" value="${test.build.extraconf}" />
-      <sysproperty key="java.library.path"
-       value="${lib.dir}/*.jar:${classes.dir}:${test.build.classes}:${basedir}/bin"/>
+      <sysproperty key="java.library.path" value="${test.library.path}"/>
       <classpath refid="${test.classpath.id}"/>
       <formatter type="${test.junit.output.format}" />
       <batchtest todir="${test.log.dir}" unless="testcase">
