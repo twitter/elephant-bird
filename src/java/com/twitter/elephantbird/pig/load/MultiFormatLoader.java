@@ -44,11 +44,10 @@ public class MultiFormatLoader<M> extends LzoBaseLoadFunc {
     typeRef = new TypeRef<M>(clazz){};
 
     // initialize tupleImpl
-
     if (Message.class.isAssignableFrom(clazz)) {
-      tupleImpl = new ProtobufToTuple(typeRef);
+      tupleImpl = new ProtobufToTuple();
     } else if (TBase.class.isAssignableFrom(clazz)) {
-      tupleImpl = new ThriftToTuple(typeRef);
+      tupleImpl = new ThriftToTuple();
     } else {
       throw new RuntimeException(className + " is not a Protobuf or Thrift class");
     }
@@ -82,21 +81,15 @@ public class MultiFormatLoader<M> extends LzoBaseLoadFunc {
   /*
    * classes to convert to Thrift or Protobuf object into tuples:
    */
-
   private static interface ObjToTuple {
     abstract ResourceSchema getSchema();
     abstract Tuple toTuple(Object obj);
   };
 
-  private static class ThriftToTuple implements ObjToTuple {
-    private TypeRef<TBase<?, ?>> typeRef;
-    private ThriftToPig<TBase<?, ?>> thriftToPig;
+  private class ThriftToTuple implements ObjToTuple {
 
     @SuppressWarnings("unchecked")
-    ThriftToTuple(TypeRef<?> typeRef) {
-      this.typeRef = (TypeRef<TBase<?, ?>>) typeRef;
-      this.thriftToPig = ThriftToPig.newInstance(this.typeRef);
-    }
+    private ThriftToPig<TBase<?, ?>> thriftToPig = ThriftToPig.newInstance((TypeRef)typeRef);
 
     @Override
     public ResourceSchema getSchema() {
@@ -109,17 +102,11 @@ public class MultiFormatLoader<M> extends LzoBaseLoadFunc {
     }
   }
 
-  private static class ProtobufToTuple implements ObjToTuple {
-    private TypeRef<Message> typeRef;
+  private class ProtobufToTuple implements ObjToTuple {
 
-    @SuppressWarnings("unchecked")
-    ProtobufToTuple(TypeRef<?> typeRef) {
-      this.typeRef = (TypeRef<Message>)typeRef;
-    }
-
-    @Override
+    @Override @SuppressWarnings("unchecked")
     public ResourceSchema getSchema() {
-      Descriptor desc = Protobufs.getMessageDescriptor(typeRef.getRawClass());
+      Descriptor desc = Protobufs.getMessageDescriptor((Class<Message>)typeRef.getRawClass());
       return new ResourceSchema(new ProtobufToPig().toSchema(desc));
     }
 
