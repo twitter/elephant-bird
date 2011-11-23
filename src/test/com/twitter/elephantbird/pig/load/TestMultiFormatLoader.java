@@ -45,7 +45,7 @@ public class TestMultiFormatLoader {
   public void setUp() throws Exception {
 
     if (!GPLNativeCodeLoader.isNativeCodeLoaded()) {
-      // should have an option to force running these tests.
+      // TODO: Consider using @RunWith / @SuiteClasses
       return;
     }
 
