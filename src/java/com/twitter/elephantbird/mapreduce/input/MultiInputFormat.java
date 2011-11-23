@@ -5,10 +5,12 @@ import java.io.InputStream;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
@@ -17,7 +19,6 @@ import org.apache.thrift.TBase;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.BlockStorage.SerializedBlock;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
-import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -55,15 +56,13 @@ public class MultiInputFormat<M>
   };
 
   /**
-   * Returns {@link MultiInputFormat} class for setting up a job.
-   * Sets an internal configuration in jobConf so that Task instantiates
-   * appropriate object for this generic class based on thriftClass
+   * Sets jobs input format to {@link MultiInputFormat} and stores
+   * supplied clazz's name in job configuration. This configuration is
+   * read on the remote tasks to initialize the input format correctly.
    */
-  @SuppressWarnings("unchecked")
-  public static <M> Class<MultiInputFormat>
-     getInputFormatClass(Class<M> clazz, Configuration jobConf) {
-    HadoopUtils.setInputFormatClass(jobConf, CLASS_CONF_KEY, clazz);
-    return MultiInputFormat.class;
+  public static void setInputFormatClass(Class<?> clazz, Job job) {
+    job.setInputFormatClass(MultiInputFormat.class);
+    HadoopUtils.setInputFormatClass(job.getConfiguration(), CLASS_CONF_KEY, clazz);
   }
 
   @SuppressWarnings("unchecked") // return type is runtime dependent
@@ -78,7 +77,6 @@ public class MultiInputFormat<M>
     Class<?> recordClass = typeRef.getRawClass();
 
     Format fileFormat = determineFileFormat(split, conf);
-    ThriftToPig.LOG.info("XXX " + ((FileSplit)split).getPath() + " == " + fileFormat);
 
     // Thrift
     if (TBase.class.isAssignableFrom(recordClass)) {
@@ -116,7 +114,7 @@ public class MultiInputFormat<M>
     try {
       clazz = conf.getClassByName(className);
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("failed to instantiate class '" + className + "'", e);
     }
 
     typeRef = new TypeRef<M>(clazz){};
@@ -160,10 +158,8 @@ public class MultiInputFormat<M>
         }
       }
     } finally {
-      if (lzoIn != null) {
-        lzoIn.close();
-      }
-      in.close();
+      IOUtils.closeStream(lzoIn);
+      IOUtils.closeStream(in);
     }
 
     // the check passed
