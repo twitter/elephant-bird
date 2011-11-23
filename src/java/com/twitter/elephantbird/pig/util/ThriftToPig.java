@@ -232,6 +232,11 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   public static Schema toSchema(Class<? extends TBase<?, ?>> tClass) {
     return toSchema(TStructDescriptor.getInstance(tClass));
   }
+
+  public Schema toSchema() {
+    return toSchema(structDesc);
+  }
+
   public static Schema toSchema(TStructDescriptor tDesc ) {
     Schema schema = new Schema();
 

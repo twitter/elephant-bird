@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.util;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
@@ -31,5 +32,27 @@ public class HadoopUtils {
     LOG.warn("Context is not a TaskInputOutputContext. "
         + "will return a dummy counter for '" + name + "'");
     return new Counter(name, name) {};
+  }
+
+  /**
+   * A helper to set configuration to class name.
+   * Throws a RuntimeExcpetion if the
+   * configuration is already set to a different class name.
+   */
+  public static void setInputFormatClass(Configuration  conf,
+                                         String         configKey,
+                                         Class<?>       clazz) {
+    String existingClass = conf.get(configKey);
+    String className = clazz.getName();
+
+    if (existingClass != null && !existingClass.equals(className)) {
+        throw new RuntimeException(
+            "Already registered a different thriftClass for "
+            + configKey
+            + ". old: " + existingClass
+            + " new: " + className);
+    } else {
+      conf.set(configKey, className);
+    }
   }
 }
