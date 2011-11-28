@@ -16,7 +16,7 @@ import com.twitter.elephantbird.mapreduce.input.LzoProtobufB64LineInputFormat;
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
-import com.twitter.elephantbird.pig.util.ProjectedProtoTuple;
+import com.twitter.elephantbird.pig.util.ProjectedProtobufTupleFactory;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -31,12 +31,11 @@ import com.twitter.elephantbird.util.TypeRef;
 public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LinePigLoader.class);
 
-  protected TypeRef<M> typeRef_ = null;
-  private final ProtobufToPig protoToPig_ = new ProtobufToPig();
-  private ProjectedProtoTuple<M> tupleTemplate = null;
+  protected TypeRef<M> typeRef = null;
+  private final ProtobufToPig protoToPig = new ProtobufToPig();
+  private ProjectedProtobufTupleFactory<M> tupleTemplate = null;
 
   public LzoProtobufB64LinePigLoader() {
-    LOG.info("LzoProtobufB64LineLoader zero-parameter creation");
   }
 
   /**
@@ -54,7 +53,7 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
    * @param typeRef
    */
   public void setTypeRef(TypeRef<M> typeRef) {
-    typeRef_ = typeRef;
+    this.typeRef = typeRef;
   }
 
   @Override
@@ -72,26 +71,25 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
   @Override
   public Tuple getNext() throws IOException {
     if (tupleTemplate == null) {
-      tupleTemplate = new ProjectedProtoTuple<M>(typeRef_, requiredFieldList);
+      tupleTemplate = new ProjectedProtobufTupleFactory<M>(typeRef, requiredFieldList);
     }
 
-    M value = getNextBinaryValue(typeRef_);
+    M value = getNextBinaryValue(typeRef);
     return value != null ?
         tupleTemplate.newTuple(value) : null;
   }
 
   @Override
   public ResourceSchema getSchema(String filename, Job job) throws IOException {
-    return new ResourceSchema(protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass())));
-
+    return new ResourceSchema(protoToPig.toSchema(Protobufs.getMessageDescriptor(typeRef.getRawClass())));
   }
 
   @Override
   public InputFormat<LongWritable, ProtobufWritable<M>> getInputFormat() throws IOException {
-    if (typeRef_ == null) {
+    if (typeRef == null) {
       LOG.error("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
     }
-    return new LzoProtobufB64LineInputFormat<M>(typeRef_);
+    return new LzoProtobufB64LineInputFormat<M>(typeRef);
   }
 }

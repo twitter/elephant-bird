@@ -95,9 +95,19 @@ public class JsonLoader extends PigStorage {
     try {
       Map<String, String> values = Maps.newHashMap();
       JSONObject jsonObj = (JSONObject)jsonParser_.parse(line);
-      for (Object key: jsonObj.keySet()) {
-        Object value = jsonObj.get(key);
-        values.put(key.toString(), value != null ? value.toString() : null);
+      if (jsonObj != null) {
+        for (Object key: jsonObj.keySet()) {
+          Object value = jsonObj.get(key);
+          values.put(key.toString(), value != null ? value.toString() : null);
+        }
+      }
+      else {
+          // JSONParser#parse(String) may return a null reference, e.g. when
+          // the input parameter is the string "null".  A single line with
+          // "null" is not valid JSON though.
+          LOG.warn("Could not json-decode string: " + line);
+          incrCounter(JsonLoaderCounters.LinesParseError, 1L);
+          return null;
       }
       return tupleFactory_.newTuple(values);
     } catch (ParseException e) {

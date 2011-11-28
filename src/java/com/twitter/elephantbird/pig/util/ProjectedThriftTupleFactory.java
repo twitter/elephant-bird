@@ -17,18 +17,15 @@ import com.twitter.elephantbird.util.TypeRef;
 /**
  * A tuple factory to create thrift tuples where
  * only a subset of fields are required.
- *
- * It is not called a "Factory" to avoid confusion with
- * a traditional TupleFactory that creates a raw tuple.
  */
-public class ProjectedThriftTuple<T extends TBase<?, ?>> {
+public class ProjectedThriftTupleFactory<T extends TBase<?, ?>> {
 
   private static TupleFactory tf  = TupleFactory.getInstance();
 
   private int[] requiredFields;
   private final TStructDescriptor tStructDesc;
 
-  public ProjectedThriftTuple(TypeRef<T> typeRef, RequiredFieldList requiredFieldList) {
+  public ProjectedThriftTupleFactory(TypeRef<T> typeRef, RequiredFieldList requiredFieldList) {
     tStructDesc = TStructDescriptor.getInstance(typeRef.getRawClass());
     int numFields = tStructDesc.getFields().size();
 

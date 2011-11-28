@@ -17,11 +17,8 @@ import com.twitter.elephantbird.util.TypeRef;
 /**
  * A tuple factory to create protobuf tuples where
  * only a subset of fields are required.
- *
- * It is not called a "Factory" to avoid confusion with
- * a traditional TupleFactory that creates a raw tuple.
  */
-public class ProjectedProtoTuple<M extends Message> {
+public class ProjectedProtobufTupleFactory<M extends Message> {
 
   private static TupleFactory tf  = TupleFactory.getInstance();
 
@@ -29,7 +26,7 @@ public class ProjectedProtoTuple<M extends Message> {
   private final ProtobufToPig protoConv;
 
 
-  public ProjectedProtoTuple(TypeRef<M> typeRef, RequiredFieldList requiredFieldList) {
+  public ProjectedProtobufTupleFactory(TypeRef<M> typeRef, RequiredFieldList requiredFieldList) {
 
     List<FieldDescriptor> protoFields =
       Protobufs.getMessageDescriptor(typeRef.getRawClass()).getFields();

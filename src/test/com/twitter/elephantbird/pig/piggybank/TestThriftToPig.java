@@ -29,13 +29,13 @@ import com.twitter.data.proto.tutorial.thrift.Person;
 import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
 import com.twitter.data.proto.tutorial.thrift.PhoneType;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
-import com.twitter.elephantbird.pig.util.ProjectedThriftTuple;
+import com.twitter.elephantbird.pig.util.ProjectedThriftTupleFactory;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.pig.util.PigToThrift;
+import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.thrift.test.TestName;
 import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
-import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class TestThriftToPig {
@@ -75,7 +75,7 @@ public class TestThriftToPig {
     }
 
     try {
-      Tuple pt = new ProjectedThriftTuple<M>(typeRef, reqFieldList).newTuple(obj);
+      Tuple pt = new ProjectedThriftTupleFactory<M>(typeRef, reqFieldList).newTuple(obj);
       int pidx=0;
       for(int idx : idxList) {
         assertEquals(t.get(idx).toString(), pt.get(pidx++).toString());

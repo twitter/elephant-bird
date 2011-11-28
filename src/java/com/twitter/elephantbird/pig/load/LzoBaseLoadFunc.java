@@ -35,6 +35,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, LoadPushDown {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseLoadFunc.class);
 
+  @SuppressWarnings("unchecked")
   protected RecordReader reader_;
 
   // Making accessing Hadoop counters from Pig slightly more convenient.
@@ -42,7 +43,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
 
   protected Configuration jobConf;
   protected String contextSignature;
-  protected static final String projectionSuffix = "_LzoBaseLoadFunc_projectedFields";
+  protected static final String projectionKey = "LzoBaseLoadFunc_projectedFields";
 
   protected RequiredFieldList requiredFieldList = null;
 
@@ -91,8 +92,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
     FileInputFormat.setInputPaths(job, location);
     this.jobConf = job.getConfiguration();
 
-    String projectedFields = getUDFProperties().getProperty(
-                                   contextSignature + projectionSuffix);
+    String projectedFields = getUDFProperties().getProperty(projectionKey);
     if (projectedFields != null) {
       requiredFieldList =
         (RequiredFieldList) ObjectSerializer.deserialize(projectedFields);
@@ -138,15 +138,14 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
    * {@link LoadPushDown#pushProjection(RequiredFieldList)}. <p>
    *
    * Stores requiredFieldList in context. The requiredFields are read from
-   * context on the backend inside {@link #setLocation(String, Job)}.
+   * context on the backend (in side {@link #setLocation(String, Job)}).
    */
   protected RequiredFieldResponse pushProjectionHelper(
                                           RequiredFieldList requiredFieldList)
                                           throws FrontendException {
     try {
-      getUDFProperties().setProperty(
-                          contextSignature + projectionSuffix,
-                          ObjectSerializer.serialize(requiredFieldList));
+      getUDFProperties().setProperty(projectionKey,
+                                     ObjectSerializer.serialize(requiredFieldList));
     } catch (IOException e) { // not expected
       throw new FrontendException(e);
     }
@@ -155,7 +154,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
   }
 
   @Override
-  public void prepareToRead(RecordReader reader, PigSplit split) {
+  public void prepareToRead(@SuppressWarnings("unchecked") RecordReader reader, PigSplit split) {
       this.reader_ = reader;
   }
 
