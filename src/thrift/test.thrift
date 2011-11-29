@@ -64,3 +64,28 @@ struct TestSetInSet {
   1: string name,
   2: set<set<string>> names,
 }
+
+struct TestMap {
+  1: string name,
+  2: map<string,string> names,
+}
+
+struct TestMapInList {
+  1: string name,
+  2: list<map<string,string>> names,
+}
+
+struct TestListInMap {
+  1: string name,
+  2: map<string,list<string>> names,
+}
+
+struct TestMapInSet {
+  1: string name,
+  2: set<map<string,string>> names,
+}
+
+struct TestSetInMap {
+  1: string name,
+  2: map<string,set<string>> names,
+}

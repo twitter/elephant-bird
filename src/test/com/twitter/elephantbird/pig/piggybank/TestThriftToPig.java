@@ -13,6 +13,7 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.util.Utils;
 import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
@@ -155,57 +156,93 @@ public class TestThriftToPig {
         tupleString.equals("(bob,jenkins)-{MOBILE=650-555-5555, HOME=408-555-5555, WORK=415-555-5555}"));
   }
 
-  //pig9 changed how building bag schemas is handled, which introduced a bug in elephantbird
-  //these 2 tests test for that issue
-
   //test a list of a struct
   @Test
   public void nestedStructInListTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestRecipe");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestRecipe","name:chararray,ingredients:bag{t:tuple(name:chararray,color:chararray)}");
   }
 
   //test a set of a struct
   @Test
   public void nestedStructInSetTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUniqueRecipe");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUniqueRecipe","name:chararray,ingredients:bag{t:tuple(name:chararray,color:chararray)}");
   }
 
   @Test
   public void stringsInSetTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestNameList");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestNameList","name:chararray,names:bag{t:tuple(names_tuple:chararray)}");
   }
 
   @Test
   public void stringsInListTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestNameSet");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestNameSet","name:chararray,names:bag{t:tuple(names_tuple:chararray)}");
   }
 
   @Test
   public void listInListTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestListInList");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestListInList","name:chararray,names:bag{t:tuple(names_bag:bag{t:tuple(names_tuple:chararray)})}");
   }
 
   @Test
   public void setInListTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInList");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInList","name:chararray,names:bag{t:tuple(names_bag:bag{t:tuple(names_tuple:chararray)})}");
   }
 
   @Test
   public void listInSetTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestListInSet");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestListInSet","name:chararray,names:bag{t:tuple(names_bag:bag{t:tuple(names_tuple:chararray)})})");
   }
 
   @Test
   public void setInSetTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInSet");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInSet","name:chararray,names:bag{t:tuple(names_bag:bag{t:tuple(names_tuple:chararray)})}");
   }
 
-  public void nestedInListTestHelper(String s) throws FrontendException {
+  /*
+  TODO: maps in elephantbird do not take advantage of the typed maps, and in general break
+  TODO: on moderately complicated schemas. need to fix that.
+
+  @Test
+  public void basicMapTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestMap","name:chararray,names:map[chararray]");
+  }
+
+  @Test
+  public void listInMapTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestListInMap","name:chararray,names:map[{(names_tuple:chararray)}]");
+  }
+
+  @Test
+  public void setInMapTest() throws FrontendException {
+      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInMap","name:chararray,names:map[{(names_tuple:chararray)}]");
+  }
+
+  @Test
+  public void mapInListTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestMapInList","name:chararray,names:bag{t:tuple(names_tuple:map[chararray])}");
+  }
+
+  @Test
+  public void mapInSetTest() throws FrontendException {
+      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInList","name:chararray,names:bag{t:tuple(names_tuple:map[chararray])}");
+  }
+  */
+
+  public void nestedInListTestHelper(String s, String expSchema) throws FrontendException {
     TypeRef typeRef_ = PigUtil.getThriftTypeRef(s);
     Schema schema=ThriftToPig.toSchema(typeRef_.getRawClass());
     Schema oldSchema = Schema.getPigSchema(new ResourceSchema(schema));
-    System.out.println(schema);//remove
-    System.out.println(oldSchema);//remove
-    assertTrue(schema.toString().equals(oldSchema.toString())); //this should be a direct equals, but there is a pig bug
+    assertTrue(Schema.equals(schema, oldSchema, false, true));
+    //this is necessary because in pig8, Utils.getSchemaFromString throws a ParseException,
+    //but this doesn't exist in Pig9
+    try {
+      Schema expectedSchema=Utils.getSchemaFromString(expSchema);
+      assertTrue(Schema.equals(schema, expectedSchema, false, true));
+    } catch (Exception e) {
+      System.out.println("Error thrown!");
+      System.out.println(e.getMessage());
+      System.out.println(e.getStackTrace());
+      assertTrue(false);
+    }
   }
 }

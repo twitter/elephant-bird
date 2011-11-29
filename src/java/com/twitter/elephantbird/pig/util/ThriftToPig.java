@@ -236,15 +236,13 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
     return schema;
   }
-
+  //TODO we should probably implement better naming, the current system is pretty nonsensical now
   private static FieldSchema singleFieldToFieldSchema(String fieldName, Field field) throws FrontendException {
     switch (field.getType()) {
       case TType.LIST:
-        Schema internalSchema=singleFieldToTupleSchema(fieldName, field.getListElemField());
-        return new FieldSchema(fieldName, internalSchema, DataType.BAG);
+        return new FieldSchema(fieldName, singleFieldToTupleSchema(fieldName + "_tuple", field.getListElemField()), DataType.BAG);
       case TType.SET:
-        Schema internalSchema2=singleFieldToTupleSchema(fieldName, field.getSetElemField());
-        return new FieldSchema(fieldName, internalSchema2, DataType.BAG);
+        return new FieldSchema(fieldName, singleFieldToTupleSchema(fieldName + "_tuple", field.getSetElemField()), DataType.BAG);
       case TType.MAP:
         // can not specify types for maps in Pig.
         if (field.getMapKeyField().getType() != TType.STRING
@@ -271,13 +269,6 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   }
 
   /**
-   * A helper function which wraps a FieldSchema in a tuple (for Pig bags) if our version of pig makes it necessary
-   */
-  private static Schema wrapInTupleIfPig9(FieldSchema fieldSchema) throws FrontendException {
-      return wrapInTupleIfPig9(new Schema(fieldSchema));
-  }
-
-  /**
    * Returns a schema with single tuple (for Pig bags).
    */
   private static Schema singleFieldToTupleSchema(String fieldName, Field field) throws FrontendException {
@@ -285,11 +276,11 @@ public class ThriftToPig<M extends TBase<?, ?>> {
       case TType.STRUCT:
         return wrapInTupleIfPig9(toSchema(field.gettStructDescriptor()));
       case TType.LIST:
-        return wrapInTupleIfPig9(singleFieldToFieldSchema(fieldName, field.getListElemField()));
+        return wrapInTupleIfPig9(new Schema(singleFieldToFieldSchema(fieldName, field)));
       case TType.SET:
-        return wrapInTupleIfPig9(singleFieldToFieldSchema(fieldName, field.getSetElemField()));
+        return wrapInTupleIfPig9(new Schema(singleFieldToFieldSchema(fieldName, field)));
       default:
-        return wrapInTupleIfPig9(new FieldSchema(fieldName, null, getPigDataType(field)));
+        return wrapInTupleIfPig9(new Schema(new FieldSchema(fieldName, null, getPigDataType(field))));
     }
   }
 
