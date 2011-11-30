@@ -3,12 +3,12 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -16,7 +16,9 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.Message;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
+import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -33,13 +35,15 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
    */
   private TypeRef<? extends Message> typeRef;
   private List<FieldDescriptor> msgFields;
+  private int numColumns;
 
   private BytesRefArrayWritable rowWritable = new BytesRefArrayWritable();
   private BytesRefWritable[] colValRefs;
   private ByteStream.Output byteStream = new ByteStream.Output();
   private CodedOutputStream protoStream = CodedOutputStream.newInstance(byteStream);
 
-  public RCFileProtobufOutputFormat() { // for MR
+  /** internal, for MR use only. */
+  public RCFileProtobufOutputFormat() {
   }
 
   public RCFileProtobufOutputFormat(TypeRef<? extends Message> typeRef) { // for PigLoader etc.
@@ -50,18 +54,31 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
   private void init() {
     Builder msgBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
     msgFields = msgBuilder.getDescriptorForType().getFields();
-    colValRefs = new BytesRefWritable[msgFields.size()];
+    numColumns = msgFields.size() + 1; // known fields + 1 for unknown fields
+    colValRefs = new BytesRefWritable[numColumns];
 
-    for (int i = 0; i < msgFields.size(); i++) {
+    for (int i = 0; i < numColumns; i++) {
       colValRefs[i] = new BytesRefWritable();
       rowWritable.set(i, colValRefs[i]);
     }
   }
 
-  private class ProtobufWriter extends RCFileOutputFormat.Writer{
+  protected ColumnarMetadata makeColumnarMetadata() {
+    ColumnarMetadata.Builder metadata = ColumnarMetadata.newBuilder();
+
+    metadata.setClassname(typeRef.getRawClass().getName());
+    for(FieldDescriptor fd : msgFields) {
+      metadata.addFieldId(fd.getNumber());
+    }
+    metadata.addFieldId(-1); // -1 for unknown fields
+
+    return metadata.build();
+  }
+
+  private class ProtobufWriter extends RCFileOutputFormat.Writer {
 
     ProtobufWriter(TaskAttemptContext job) throws IOException {
-      super(RCFileProtobufOutputFormat.this, job);
+      super(RCFileProtobufOutputFormat.this, job, makeColumnarMetadata());
     }
 
     @Override
@@ -74,15 +91,27 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
       int startPos = 0;
 
       // top level fields are split across the columns.
-      for (int i=0; i < msgFields.size(); i++) {
-        FieldDescriptor fd = msgFields.get(i);
-        if (msg.hasField(fd)) {
-          Protobufs.writeFieldNoTag(protoStream, fd, msg.getField(fd));
-          protoStream.flush();
+      for (int i=0; i < numColumns; i++) {
+
+        if (i < (numColumns - 1)) {
+
+          FieldDescriptor fd = msgFields.get(i);
+          if (msg.hasField(fd)) {
+            Protobufs.writeFieldNoTag(protoStream, fd, msg.getField(fd));
+          }
+
+        } else { // last column : write unknown fields, if there are any
+
+          msg.getUnknownFields().writeTo(protoStream); // could be empty
+          if (msg.getUnknownFields().getSerializedSize() > 0) {
+            ThriftToPig.LOG.info("XXXX : writing uknownfields of size " + msg.getUnknownFields().getSerializedSize());
+          }
         }
 
-        colValRefs[i].set(byteStream.getData(), startPos,
-            byteStream.getCount() - startPos);
+        protoStream.flush();
+        colValRefs[i].set(byteStream.getData(),
+                          startPos,
+                          byteStream.getCount() - startPos);
         startPos = byteStream.getCount();
       }
 
@@ -91,15 +120,14 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
   }
 
   /**
-   * Returns {@link RCFileProtobufOutputFormat} class.
-   * Sets an internal configuration in jobConf so that remote asks
-   * instantiate appropriate object for this generic class based on protoClass
+   * In addition to setting OutputFormat class to {@link RCFileProtobufOutputFormat},
+   * sets an internal configuration in jobConf so that remote tasks
+   * instantiate appropriate object for the protobuf class.
    */
-  public static <M extends Message> Class<RCFileProtobufOutputFormat>
-  getOutputFormatClass(Class<M> protoClass, Configuration jobConf) {
+  public static <M extends Message> void setOutputFormatClass(Class<M> protoClass, Job job) {
 
-    Protobufs.setClassConf(jobConf, RCFileProtobufOutputFormat.class, protoClass);
-    return RCFileProtobufOutputFormat.class;
+    Protobufs.setClassConf(job.getConfiguration(), RCFileProtobufOutputFormat.class, protoClass);
+    job.setOutputFormatClass(RCFileProtobufOutputFormat.class);
   }
 
 
@@ -111,7 +139,8 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
       typeRef = Protobufs.getTypeRef(job.getConfiguration(), RCFileProtobufOutputFormat.class);
       init();
     }
-    RCFileOutputFormat.setColumnNumber(job.getConfiguration(), msgFields.size());
+
+    RCFileOutputFormat.setColumnNumber(job.getConfiguration(), numColumns);
     return new ProtobufWriter(job);
   }
 

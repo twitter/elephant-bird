@@ -6,7 +6,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.io.RCFile;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.SequenceFile.Metadata;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -15,6 +17,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.twitter.data.proto.Misc.ColumnarMetadata;
+import com.twitter.elephantbird.util.Protobufs;
 
 /**
  * Hive's {@link org.apache.hadoop.hive.ql.io.RCFileOutputFormat} is written for
@@ -61,8 +66,9 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
     return conf.getInt(RCFile.COLUMN_NUMBER_CONF_STR, 0);
   }
 
-  public void setColumnInfo(){}
-  protected RCFile.Writer createRCFileWriter(TaskAttemptContext job) throws IOException {
+  protected RCFile.Writer createRCFileWriter(TaskAttemptContext job,
+                                             ColumnarMetadata columnInfo)
+                                             throws IOException {
     Configuration conf = job.getConfiguration();
 
     // override compression codec if set.
@@ -78,13 +84,18 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
       codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
     }
 
+    Metadata metadata = null;
+    if (columnInfo != null) {
+      metadata = new Metadata();
+      metadata.set(new Text(COLUMN_METADATA_PROTOBUF_KEY), Protobufs.toText(columnInfo));
+    }
+
     String ext = conf.get(EXTENSION_OVERRIDE_CONF, DEFAULT_EXTENSION);
     Path file = getDefaultWorkFile(job, ext.equalsIgnoreCase("none") ? null : ext);
 
     LOG.info("writing to rcfile " + file.toString());
 
-    // TODO add metadata
-    return new RCFile.Writer(file.getFileSystem(conf), conf, file, job, codec);
+    return new RCFile.Writer(file.getFileSystem(conf), conf, file, job, metadata, codec);
   }
 
   /**
@@ -94,8 +105,10 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
 
     private RCFile.Writer rcfile;
 
-    protected Writer(RCFileOutputFormat outputFormat, TaskAttemptContext job) throws IOException {
-      rcfile = outputFormat.createRCFileWriter(job);
+    protected Writer(RCFileOutputFormat outputFormat,
+                     TaskAttemptContext job,
+                     ColumnarMetadata columnInfo) throws IOException {
+      rcfile = outputFormat.createRCFileWriter(job, columnInfo);
     }
 
     @Override
@@ -113,6 +126,6 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
   @Override
   public RecordWriter<NullWritable, Writable> getRecordWriter(
       TaskAttemptContext job) throws IOException, InterruptedException {
-    return new Writer(this, job);
+    return new Writer(this, job, null);
   }
 }
