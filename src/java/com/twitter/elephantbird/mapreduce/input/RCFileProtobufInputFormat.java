@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Message;
-import com.google.protobuf.UnknownFieldSet;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
@@ -76,13 +75,11 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
   public class ProtobufReader extends HiveRCRecordReader {
 
     private Builder               msgBuilder;
-    private List<FieldDescriptor> msgFields;
-    private boolean               readUnknownFields = false;
-    private ColumnarMetadata      storedColInfo;
-    private List<FieldDescriptor> fieldsBeingRead = Lists.newArrayList();
+    private boolean               readUnknownsColumn = false;
+    private List<FieldDescriptor> knownRequiredFields = Lists.newArrayList();
     private ArrayList<Integer>    columnsBeingRead = Lists.newArrayList();
 
-    private Message currentValue;
+    private Message               currentValue;
 
     ProtobufReader() throws IOException {
       super();
@@ -100,7 +97,7 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
        */
       msgBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
       Descriptor msgDesc = msgBuilder.getDescriptorForType();
-      msgFields = msgDesc.getFields();
+      List<FieldDescriptor> msgFields = msgDesc.getFields();
 
       // set up conf to read all the columns
       Configuration conf = new Configuration(ctx.getConfiguration());
@@ -130,9 +127,9 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
         throw new IOException("could not find ColumnarMetadata in " + file);
       }
 
-      storedColInfo = Protobufs.mergeFromText(ColumnarMetadata.newBuilder(),
-                                              metadata.get(metadataKey)
-                                             ).build();
+      ColumnarMetadata storedInfo = Protobufs.mergeFromText(ColumnarMetadata.newBuilder(),
+                                                            metadata.get(metadataKey)
+                                                           ).build();
 
       // the actual columns that are read is the intersection
       // of currently required columns and columns written to the file
@@ -158,35 +155,39 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
         }
       }
 
-      List<Integer> storedFieldIds = storedColInfo.getFieldIdList();
+      List<Integer> storedFieldIds = storedInfo.getFieldIdList();
 
-      int idx = 0;
-      for(int sid : storedFieldIds) {
+      for(int i=0; i < storedFieldIds.size(); i++) {
+        int sid = storedFieldIds.get(i);
         if (sid > 0 && requiredFieldIds.contains(sid)) {
-          columnsBeingRead.add(idx++);
-          fieldsBeingRead.add(msgDesc.findFieldByNumber(sid));
+          columnsBeingRead.add(i);
+          knownRequiredFields.add(msgDesc.findFieldByNumber(sid));
         }
       }
 
-      // "unknown fields" column is required if any of the required fields
-      // is not in stored fields.
+      // unknown fields : the required fields that are not listed in storedFieldIds
+      String unknownFields = "";
       for(int rid : requiredFieldIds) {
         if (!storedFieldIds.contains(rid)) {
-          int last = storedFieldIds.size()-1;
-          if (storedFieldIds.get(last) < 0) { // normally true
-            LOG.info("will read unknown fields as " + rid + " is not one of the stored columns");
-            readUnknownFields = true;
-            columnsBeingRead.add(last);
-          }
+          unknownFields += " " + msgDesc.findFieldByNumber(rid).getName();
         }
+      }
+      if (unknownFields.length() > 0) {
+        int last = storedFieldIds.size() - 1;
+        LOG.info("unknown fields :" + unknownFields);
+        if (storedFieldIds.get(last) != -1) { // not expected
+          throw new IOException("No unknowns column in " + file);
+        }
+        readUnknownsColumn = true;
+        columnsBeingRead.add(last);
       }
 
       LOG.info(String.format(
-          "reading %d out of %d stored columns (%s including unknowns column) "
+          "reading %d %s out of %d stored columns "
           + "from %s. Number of required columns is %d.",
           columnsBeingRead.size(),
-          storedColInfo.getFieldIdCount(),
-          (readUnknownFields ? "" : "not"),
+          (readUnknownsColumn ? "(including unknowns column)" : ""),
+          storedInfo.getFieldIdCount(),
           file,
           requiredFieldIds.size()));
 
@@ -203,12 +204,12 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
     }
 
     /**
-     * Builds protobuf message from the raw bytes from RCFile reader.
+     * Builds protobuf message from the raw bytes returned by RCFile reader.
      */
     public Message getCurrentProtobufValue() throws IOException, InterruptedException {
       /* getCurrentValue() returns a BytesRefArrayWritable since this class
        * extends HiveRCRecordReader. Other option is to extend
-       * RecordReader directly and explicitly delegate the methods to
+       * RecordReader directly and explicitly delegate each of the methods to
        * HiveRCRecordReader
        */
       if (currentValue != null) {
@@ -221,22 +222,24 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
       }
 
       Builder builder = msgBuilder.clone();
-      for (int i=0; i<fieldsBeingRead.size(); i++) {
-        BytesRefWritable buf = byteRefs.get(i);
+
+      for (int i=0; i < knownRequiredFields.size(); i++) {
+        BytesRefWritable buf = byteRefs.get(columnsBeingRead.get(i));
         if (buf.getLength() > 0) {
           Protobufs.setFieldValue(
               CodedInputStream.newInstance(buf.getData(), buf.getStart(), buf.getLength()),
-              fieldsBeingRead.get(i),
+              knownRequiredFields.get(i),
               builder);
         }
       }
 
-      if (readUnknownFields) {
-        BytesRefWritable buf = byteRefs.get(columnsBeingRead.size()-1);
-        builder.setUnknownFields(
-            UnknownFieldSet.newBuilder().mergeFrom(
-                buf.getData(), buf.getStart(), buf.getLength()
-            ).build());
+      // parse unknowns column if required
+      if (readUnknownsColumn) {
+        int last = columnsBeingRead.get(columnsBeingRead.size() - 1);
+        BytesRefWritable buf = byteRefs.get(last);
+        if (buf.getLength() > 0) {
+          builder.mergeFrom(buf.getData(), buf.getStart(), buf.getLength());
+        }
       }
 
       currentValue = builder.build();
