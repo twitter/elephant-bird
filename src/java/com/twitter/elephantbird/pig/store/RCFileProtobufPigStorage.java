@@ -14,11 +14,13 @@ import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * TODO
- *  - javadoc
- *  - stats?
+ * StoreFunc for storing Protobuf in RCFiles. <p>
+ * Each of the top level fields is stored in a separate column.
+ * An extra column at the end is added for "unknown fields" in the protobuf.
+ * The protobuf field numbers stored in metadata in RCFiles.
  */
 public class RCFileProtobufPigStorage extends BaseStoreFunc {
+  // add stats?
 
   private TypeRef<? extends Message> typeRef;
   private Builder msgBuilder;

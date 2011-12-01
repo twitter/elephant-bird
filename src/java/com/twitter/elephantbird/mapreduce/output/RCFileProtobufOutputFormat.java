@@ -18,14 +18,15 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
-import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * TODO:
- *   - javadoc
- *   - stats
+ * OutputFormat or storing protobufs in RCFile.<p>
+ *
+ * Each of the top level fields is stored in a separate column.
+ * An extra column at the end is added for "unknown fields" in the protobuf.
+ * The protobuf field numbers stored in metadata in RCFiles.
  */
 public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
 
@@ -100,12 +101,8 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
             Protobufs.writeFieldNoTag(protoStream, fd, msg.getField(fd));
           }
 
-        } else { // last column : write unknown fields, if there are any
-
+        } else { // last column : write unknown fields
           msg.getUnknownFields().writeTo(protoStream); // could be empty
-          if (msg.getUnknownFields().getSerializedSize() > 0) {
-            ThriftToPig.LOG.info("XXXX : writing uknownfields of size " + msg.getUnknownFields().getSerializedSize());
-          }
         }
 
         protoStream.flush();
@@ -129,7 +126,6 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
     Protobufs.setClassConf(job.getConfiguration(), RCFileProtobufOutputFormat.class, protoClass);
     job.setOutputFormatClass(RCFileProtobufOutputFormat.class);
   }
-
 
   @Override
   public RecordWriter<NullWritable, Writable>
