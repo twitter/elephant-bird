@@ -97,7 +97,7 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
         if (i < (numColumns - 1)) {
 
           FieldDescriptor fd = msgFields.get(i);
-          if (msg.hasField(fd)) {
+          if (fd.isRepeated() || msg.hasField(fd)) {
             Protobufs.writeFieldNoTag(protoStream, fd, msg.getField(fd));
           }
 

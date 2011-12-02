@@ -103,7 +103,14 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
       Configuration conf = new Configuration(ctx.getConfiguration());
       ColumnProjectionUtils.setFullyReadColumns(conf);
 
-      Path file = ((FileSplit)split).getPath();
+      FileSplit fsplit = (FileSplit)split;
+      Path file = fsplit.getPath();
+
+      LOG.info(String.format("reading %s from %s:%d:%d"
+          , typeRef.getRawClass().getName()
+          , file.toString()
+          , fsplit.getStart()
+          , fsplit.getStart() + fsplit.getLength()));
 
       // read metadata from the file
 
@@ -183,12 +190,10 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
       }
 
       LOG.info(String.format(
-          "reading %d %s out of %d stored columns "
-          + "from %s. Number of required columns is %d.",
+          "reading %d%s out of %d stored columns for %d required columns",
           columnsBeingRead.size(),
-          (readUnknownsColumn ? "(including unknowns column)" : ""),
+          (readUnknownsColumn ? " (including unknowns column)" : ""),
           storedInfo.getFieldIdCount(),
-          file,
           requiredFieldIds.size()));
 
       ColumnProjectionUtils.setReadColumnIDs(ctx.getConfiguration(), columnsBeingRead);

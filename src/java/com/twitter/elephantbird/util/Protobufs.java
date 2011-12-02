@@ -320,49 +320,56 @@ public class Protobufs {
       @SuppressWarnings("unchecked")
       List<Object> values = (List<Object>) value;
       for(Object obj : values) {
-        writeFieldNoTag(output, fd, obj);
+        writeSingleFieldNoTag(output, fd, obj);
       }
     } else {
-      switch (fd.getType()) {
-      case DOUBLE:
-        output.writeDoubleNoTag((Double) value);    break;
-      case FLOAT:
-        output.writeFloatNoTag((Float) value);      break;
-      case INT64:
-      case UINT64:
-        output.writeInt64NoTag((Long) value);       break;
-      case INT32:
-        output.writeInt32NoTag((Integer) value);    break;
-      case FIXED64:
-        output.writeFixed64NoTag((Long) value);     break;
-      case FIXED32:
-        output.writeFixed32NoTag((Integer) value);  break;
-      case BOOL:
-        output.writeBoolNoTag((Boolean) value);     break;
-      case STRING:
-        output.writeStringNoTag((String) value);    break;
-      case GROUP:
-      case MESSAGE:
-        output.writeMessageNoTag((Message) value);  break;
-      case BYTES:
-        output.writeBytesNoTag((ByteString) value); break;
-      case UINT32:
-        output.writeUInt32NoTag((Integer) value);   break;
-      case ENUM:
-        output.writeEnumNoTag(((ProtocolMessageEnum) value).getNumber()); break;
-      case SFIXED32:
-        output.writeSFixed32NoTag((Integer) value); break;
-      case SFIXED64:
-        output.writeSFixed64NoTag((Long) value);    break;
-      case SINT32:
-        output.writeSInt32NoTag((Integer) value);   break;
-      case SINT64:
-        output.writeSInt64NoTag((Integer) value);   break;
+      writeSingleFieldNoTag(output, fd, value);
+    }
+  }
 
-      default:
-        throw new IllegalArgumentException("Unknown type " + fd.getType()
-                                           + " for " + fd.getFullName());
-      }
+  private static void writeSingleFieldNoTag(CodedOutputStream   output,
+                                            FieldDescriptor     fd,
+                                            Object              value)
+                                            throws IOException {
+    switch (fd.getType()) {
+    case DOUBLE:
+      output.writeDoubleNoTag((Double) value);    break;
+    case FLOAT:
+      output.writeFloatNoTag((Float) value);      break;
+    case INT64:
+    case UINT64:
+      output.writeInt64NoTag((Long) value);       break;
+    case INT32:
+      output.writeInt32NoTag((Integer) value);    break;
+    case FIXED64:
+      output.writeFixed64NoTag((Long) value);     break;
+    case FIXED32:
+      output.writeFixed32NoTag((Integer) value);  break;
+    case BOOL:
+      output.writeBoolNoTag((Boolean) value);     break;
+    case STRING:
+      output.writeStringNoTag((String) value);    break;
+    case GROUP:
+    case MESSAGE:
+      output.writeMessageNoTag((Message) value);  break;
+    case BYTES:
+      output.writeBytesNoTag((ByteString) value); break;
+    case UINT32:
+      output.writeUInt32NoTag((Integer) value);   break;
+    case ENUM:
+      output.writeEnumNoTag(((ProtocolMessageEnum) value).getNumber()); break;
+    case SFIXED32:
+      output.writeSFixed32NoTag((Integer) value); break;
+    case SFIXED64:
+      output.writeSFixed64NoTag((Long) value);    break;
+    case SINT32:
+      output.writeSInt32NoTag((Integer) value);   break;
+    case SINT64:
+      output.writeSInt64NoTag((Integer) value);   break;
+
+    default:
+      throw new IllegalArgumentException("Unknown type " + fd.getType()
+                                         + " for " + fd.getFullName());
     }
   }
 
