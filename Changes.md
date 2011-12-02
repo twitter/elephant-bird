@@ -1,6 +1,16 @@
 # Elephant Bird #
 
+### Version 2.1.3 ###
+
 ### Version 2.1.2 ###
+
+ISSUE 105. Fix ThriftToPig for Pig9 and nested containers (Jonathan Coveney)
+
+ISSUE 97.  MultiFormatLoader and MultiInputFormat (Raghu Angadi)
+
+ISSUE 92.  Projection support for Protobuf and Thrift loaders (Raghu Angadi)
+
+ISSUE 102. Handle null returned from JSON parser (Michael G. Noll)
 
 ### Version 2.1.1 ###
 

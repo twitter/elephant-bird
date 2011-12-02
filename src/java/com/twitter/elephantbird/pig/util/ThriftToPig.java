@@ -255,7 +255,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
     return schema;
   }
-
+  //TODO we should probably implement better naming, the current system is pretty nonsensical now
   private static FieldSchema singleFieldToFieldSchema(String fieldName, Field field) throws FrontendException {
     switch (field.getType()) {
       case TType.LIST:
@@ -277,33 +277,30 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   }
 
   /**
+   * A helper function which wraps a Schema in a tuple (for Pig bags) if our version of pig makes it necessary
+   */
+  private static Schema wrapInTupleIfPig9(Schema schema) throws FrontendException {
+      if (PigUtil.Pig9orNewer) {
+          return new Schema(new FieldSchema("t",schema,DataType.TUPLE));
+      } else {
+          return schema;
+      }
+  }
+
+  /**
    * Returns a schema with single tuple (for Pig bags).
    */
   private static Schema singleFieldToTupleSchema(String fieldName, Field field) throws FrontendException {
-
-    FieldSchema fieldSchema = null;
-
     switch (field.getType()) {
       case TType.STRUCT:
-        // wrapping STRUCT in a FieldSchema makes it impossible to
-        // access fields in PIG script (causes runtime error).
-        return toSchema(field.gettStructDescriptor());
+        return wrapInTupleIfPig9(toSchema(field.gettStructDescriptor()));
       case TType.LIST:
-        fieldSchema = singleFieldToFieldSchema(fieldName, field.getListElemField());
-        break;
+        return wrapInTupleIfPig9(new Schema(singleFieldToFieldSchema(fieldName, field)));
       case TType.SET:
-        fieldSchema = singleFieldToFieldSchema(fieldName, field.getSetElemField());
-        break;
+        return wrapInTupleIfPig9(new Schema(singleFieldToFieldSchema(fieldName, field)));
       default:
-        fieldSchema = new FieldSchema(fieldName, null, getPigDataType(field));
-        if ( PigUtil.Pig9orNewer ) { // bag needs tuples (PIG 0.8 implicitly added this wrapper)
-          fieldSchema = new FieldSchema( "t", new Schema(fieldSchema),  DataType.TUPLE );
-        }
+        return wrapInTupleIfPig9(new Schema(new FieldSchema(fieldName, null, getPigDataType(field))));
     }
-
-    Schema schema = new Schema();
-    schema.add(fieldSchema);
-    return schema;
   }
 
   private static byte getPigDataType(Field field) {
