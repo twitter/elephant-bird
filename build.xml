@@ -30,7 +30,7 @@
 
   <property name="test.include" value="Test*"/>
   <property name="test.classpath.id" value="test.classpath"/>
-  <property name="test.output" value="no"/>
+  <property name="test.output" value="yes"/>
   <property name="test.timeout" value="900000"/>
 
   <property name="test.junit.output.format" value="plain"/>
@@ -142,14 +142,14 @@
 
   <macrodef name="generate-thrift">
       <sequential>
-        <!-- ensure Thrift 0.5.x -->   
+        <!-- ensure Thrift 0.7.x -->   
         <exec executable="thrift" outputproperty="thrift.version.string">
           <arg value="-version"/>
         </exec>
-        <fail message="Thrift 0.5.x required for thrift support. The local version is '${thrift.version.string}'">
+        <fail message="Thrift 0.7.x required for thrift support. The local version is '${thrift.version.string}'">
           <condition> 
             <not> 
-              <contains string="${thrift.version.string}" substring="Thrift version 0.5."/>
+              <contains string="${thrift.version.string}" substring="Thrift version 0.7."/>
             </not>
           </condition>
         </fail>
@@ -278,4 +278,34 @@
     </junit>
     <fail if="tests.failed">Tests failed!</fail>
   </target>
+
+<!-- $ ant test-class -Dtest.class=com.twitter.elephantbird.pig.load.TestJsonLoader -->
+  <target name="test-class" depends="compile-java-tests" 
+                      description="Run unit tests">
+
+    <delete dir="${test.log.dir}"/>
+    <mkdir dir="${test.log.dir}"/>
+    <junit showoutput="${test.output}"
+      printsummary="${test.junit.printsummary}"
+      haltonfailure="${test.junit.haltonfailure}"
+      fork="yes"
+      forkmode="${test.junit.fork.mode}"
+      maxmemory="${test.junit.maxmemory}"
+      dir="${basedir}" timeout="${test.timeout}"
+      errorProperty="tests.failed" failureProperty="tests.failed">
+      <sysproperty key="test.build.data" value="${test.build.data}"/>
+      <sysproperty key="test.cache.data" value="${test.cache.data}"/>
+      <sysproperty key="test.debug.data" value="${test.debug.data}"/>
+      <sysproperty key="test.log.dir" value="${test.log.dir}"/>
+      <sysproperty key="test.source.dir" value="${test.src.dir}"/>
+      <sysproperty key="test.build.extraconf" value="${test.build.extraconf}" />
+      <sysproperty key="java.library.path" value="${test.library.path}"/>
+      <classpath refid="${test.classpath.id}"/>
+      <formatter type="${test.junit.output.format}" />
+			<test name="${test.class}" todir="${test.log.dir}"/>
+    </junit>
+    <fail if="tests.failed">Tests failed!</fail>
+  </target>
+
+
 </project>
