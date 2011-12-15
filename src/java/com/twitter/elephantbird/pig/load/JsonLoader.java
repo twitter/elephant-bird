@@ -91,15 +91,33 @@ public class JsonLoader extends PigStorage {
     counterHelper_.incrCounter(key, incr);
   }
 
+  private Object convertValue(Object value) {
+    if (value instanceof Map) {
+      Map<String, Object> res = Maps.newHashMap();
+      for (Object key: ((Map) value).keySet()) {
+        res.put(key.toString(), convertValue(((Map) value).get(key)));
+      }
+      return res;
+    }
+    else {
+      return value.toString();
+    }
+
+  }
+
   protected Tuple parseStringToTuple(String line) {
     try {
-      Map<String, String> values = Maps.newHashMap();
+      Map<String, Object> values = Maps.newHashMap();
       JSONObject jsonObj = (JSONObject)jsonParser_.parse(line);
+
       if (jsonObj != null) {
+
         for (Object key: jsonObj.keySet()) {
           Object value = jsonObj.get(key);
-          values.put(key.toString(), value != null ? value.toString() : null);
+          values.put(key.toString(), value != null ? convertValue(value) : null);
         }
+
+
       }
       else {
           // JSONParser#parse(String) may return a null reference, e.g. when
