@@ -38,11 +38,11 @@ import com.twitter.elephantbird.util.Protobufs;
 /**
  * Test RCFile loader and storage with Protobufs.
  */
-public class TestRCFileStorage {
+public class TestRCFileProtobufStorage {
 
   private PigServer pigServer;
   private final String testDir =
-    System.getProperty("test.build.data") + "/TestRCFileStorage";
+    System.getProperty("test.build.data") + "/TestRCFileProtobufStorage";
   private final File inputDir = new File(testDir, "in");
   private final File rcfile_in = new File(testDir, "rcfile_in");
 
