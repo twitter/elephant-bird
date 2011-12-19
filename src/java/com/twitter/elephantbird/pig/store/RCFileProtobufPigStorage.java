@@ -14,7 +14,7 @@ import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * StoreFunc for storing Protobuf in RCFiles. <p>
+ * StoreFunc for storing Protobuf messages in RCFiles. <p>
  * Each of the top level fields is stored in a separate column.
  * An extra column at the end is added for "unknown fields" in the protobuf.
  * The protobuf field numbers stored in metadata in RCFiles.

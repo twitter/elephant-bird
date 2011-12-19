@@ -22,11 +22,11 @@ import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * OutputFormat or storing protobufs in RCFile.<p>
+ * OutputFormat for storing protobufs in RCFile.<p>
  *
  * Each of the top level fields is stored in a separate column.
  * An extra column at the end is added for "unknown fields" in the protobuf.
- * The protobuf field numbers stored in metadata in RCFiles.
+ * The protobuf field numbers are stored in RCFile metadata.
  */
 public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
 

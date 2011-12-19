@@ -1,17 +1,15 @@
 package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.input.RCFileProtobufInputFormat;
+import com.twitter.elephantbird.pig.util.RCFileUtil;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -56,20 +54,8 @@ public class RCFileProtobufPigLoader extends LzoProtobufB64LinePigLoader<Message
   @Override
   public void setLocation(String location, Job job) throws IOException {
     super.setLocation(location, job);
-
-    // set required fields conf for RCFileProtobufInputFormat
-
-    if (requiredFieldList != null) {
-
-      List<Integer> indices = Lists.newArrayList();
-      for(RequiredField f : requiredFieldList.getFields()) {
-        indices.add(f.getIndex());
-      }
-
-      job.getConfiguration().set(
-              RCFileProtobufInputFormat.REQUIRED_PROTO_FIELD_INDICES_CONF,
-              Joiner.on(",").join(indices));
-    }
+    RCFileUtil.setRequiredFieldConf(job.getConfiguration(),
+                                    requiredFieldList);
   }
 
 }

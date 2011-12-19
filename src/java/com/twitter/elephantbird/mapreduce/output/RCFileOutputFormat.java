@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twitter.data.proto.Misc.ColumnarMetadata;
+import com.twitter.elephantbird.pig.util.RCFileUtil;
 import com.twitter.elephantbird.util.Protobufs;
 
 /**
@@ -39,8 +40,6 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
 
   public static String DEFAULT_EXTENSION = ".rc";
   public static String EXTENSION_OVERRIDE_CONF = "elephantbird.refile.output.filename.extension"; // "none" disables it.
-
-  public static String COLUMN_METADATA_PROTOBUF_KEY = "elephantbird.rcfile.column.info.protobuf";
 
   /**
    * set number of columns into the given configuration.
@@ -87,7 +86,7 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
     Metadata metadata = null;
     if (columnInfo != null) {
       metadata = new Metadata();
-      metadata.set(new Text(COLUMN_METADATA_PROTOBUF_KEY), Protobufs.toText(columnInfo));
+      metadata.set(new Text(RCFileUtil.COLUMN_METADATA_PROTOBUF_KEY), Protobufs.toText(columnInfo));
     }
 
     String ext = conf.get(EXTENSION_OVERRIDE_CONF, DEFAULT_EXTENSION);
