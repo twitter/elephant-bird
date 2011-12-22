@@ -15,6 +15,8 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
+import org.apache.pig.data.Tuple;
+import org.apache.pig.data.TupleFactory;
 import org.apache.pig.piggybank.storage.hiverc.HiveRCInputFormat;
 import org.apache.pig.piggybank.storage.hiverc.HiveRCRecordReader;
 import org.slf4j.Logger;
@@ -28,6 +30,7 @@ import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
+import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.RCFileUtil;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -59,12 +62,20 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
 
   public class ProtobufReader extends HiveRCRecordReader {
 
+    private final TupleFactory tf = TupleFactory.getInstance();
+    private final ProtobufToPig protoToPig = new ProtobufToPig();
+
     private Builder               msgBuilder;
     private boolean               readUnknownsColumn = false;
     private List<FieldDescriptor> knownRequiredFields = Lists.newArrayList();
     private ArrayList<Integer>    columnsBeingRead = Lists.newArrayList();
 
     private Message               currentValue;
+
+    /** is valid only after initialize() is called */
+    public boolean isReadingUnknonwsColumn() {
+      return readUnknownsColumn;
+    }
 
     @Override
     public void initialize(InputSplit split, TaskAttemptContext ctx)
@@ -165,6 +176,38 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
 
       currentValue = builder.build();
       return currentValue;
+    }
+
+    /**
+     * Returns a Tuple consisting of required fields with out creating
+     * a Protobuf message at the top level.
+     */
+    public Tuple getCurrentTupleValue() throws IOException, InterruptedException {
+
+      BytesRefArrayWritable byteRefs = getCurrentValue();
+      if (byteRefs == null) {
+        return null;
+      }
+
+      Tuple tuple = tf.newTuple(knownRequiredFields.size());
+
+      for (int i=0; i < knownRequiredFields.size(); i++) {
+        BytesRefWritable buf = byteRefs.get(columnsBeingRead.get(i));
+        if (buf.getLength() > 0) {
+          Object value = Protobufs.readFieldNoTag(
+              CodedInputStream.newInstance(buf.getData(), buf.getStart(), buf.getLength()),
+              knownRequiredFields.get(i),
+              msgBuilder);
+          tuple.set(i, protoToPig.fieldToPig(knownRequiredFields.get(i), value));
+        }
+      }
+
+      if (readUnknownsColumn) {
+        // we can handle this if needed.
+        throw new IOException("getCurrentTupleValue() is not supported when 'readUnknownColumns' is set");
+      }
+
+      return tuple;
     }
   }
 

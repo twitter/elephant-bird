@@ -6,6 +6,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.data.Tuple;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.input.RCFileProtobufInputFormat;
@@ -36,6 +37,26 @@ public class RCFileProtobufPigLoader extends LzoProtobufB64LinePigLoader<Message
     try {
       if (protoReader.nextKeyValue()) {
         return (M) protoReader.getCurrentProtobufValue();
+      }
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+
+    return null;
+  }
+
+
+  @Override
+  public Tuple getNext() throws IOException {
+    if (protoReader.isReadingUnknonwsColumn()) {
+      //do normal bytes -> protobuf message -> tuple
+      return super.getNext();
+    }
+
+    // otherwise bytes -> tuple
+    try {
+      if (protoReader.nextKeyValue()) {
+        return protoReader.getCurrentTupleValue();
       }
     } catch (InterruptedException e) {
       throw new IOException(e);
