@@ -13,6 +13,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.pig.data.Tuple;
+import org.apache.pig.data.TupleFactory;
 import org.apache.pig.piggybank.storage.hiverc.HiveRCInputFormat;
 import org.apache.pig.piggybank.storage.hiverc.HiveRCRecordReader;
 import org.apache.thrift.TBase;
@@ -26,6 +28,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.pig.util.RCFileUtil;
+import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.util.ThriftUtils;
@@ -69,6 +72,7 @@ public class RCFileThriftInputFormat extends HiveRCInputFormat {
 
   public class ThriftReader extends HiveRCRecordReader {
 
+    private final TupleFactory tf = TupleFactory.getInstance();
 
     private TStructDescriptor     tDesc;
     private boolean               readUnknownsColumn = false;
@@ -79,6 +83,11 @@ public class RCFileThriftInputFormat extends HiveRCInputFormat {
     private TBinaryProtocol tProto = new TBinaryProtocol(memTransport);
 
     private TBase<?, ?>     currentValue;
+
+    /** is valid only after initialize() is called */
+    public boolean isReadingUnknonwsColumn() {
+      return readUnknownsColumn;
+    }
 
     @Override
     public void initialize(InputSplit split, TaskAttemptContext ctx)
@@ -178,6 +187,37 @@ public class RCFileThriftInputFormat extends HiveRCInputFormat {
 
       currentValue = tObj;
       return currentValue;
+    }
+
+    /**
+     * Returns a Tuple consisting of required fields with out creating
+     * a Thrift message at the top level.
+     */
+    public Tuple getCurrentTupleValue() throws IOException, InterruptedException, TException {
+
+      BytesRefArrayWritable byteRefs = getCurrentValue();
+      if (byteRefs == null) {
+        return null;
+      }
+
+      Tuple tuple = tf.newTuple(knownRequiredFields.size());
+
+      for (int i=0; i < knownRequiredFields.size(); i++) {
+        BytesRefWritable buf = byteRefs.get(columnsBeingRead.get(i));
+        if (buf.getLength() > 0) {
+          memTransport.reset(buf.getData(), buf.getStart(), buf.getLength());
+
+          Field field = knownRequiredFields.get(i);
+          Object value = ThriftUtils.readFieldNoTag(tProto, field);
+          tuple.set(i, ThriftToPig.toPigObject(field, value, false));
+        }
+      }
+
+      if (readUnknownsColumn) {
+        throw new IOException("getCurrentTupleValue() is not supported when 'readUnknownColumns' is set");
+      }
+
+      return tuple;
     }
   }
 }

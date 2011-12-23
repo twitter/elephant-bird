@@ -6,6 +6,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 
@@ -34,6 +35,27 @@ public class RCFileThriftPigLoader extends LzoThriftB64LinePigLoader<TBase<?,?>>
     try {
       if (thriftReader.nextKeyValue()) {
         return (M) thriftReader.getCurrentThriftValue();
+      }
+    } catch (TException e) {
+      throw new IOException(e);
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+
+    return null;
+  }
+
+  @Override
+  public Tuple getNext() throws IOException {
+    if (thriftReader.isReadingUnknonwsColumn()) {
+      //do normal bytes -> thrift -> tuple
+      return super.getNext();
+    }
+
+    // otherwise bytes -> tuple
+    try {
+      if (thriftReader.nextKeyValue()) {
+        return thriftReader.getCurrentTupleValue();
       }
     } catch (TException e) {
       throw new IOException(e);

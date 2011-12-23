@@ -97,7 +97,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   }
 
   @SuppressWarnings("unchecked")
-  static Object toPigObject(Field field, Object value, boolean lazy) {
+  public static Object toPigObject(Field field, Object value, boolean lazy) {
     if (value == null) {
       return null;
     }
