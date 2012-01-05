@@ -8,6 +8,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -24,12 +25,14 @@ import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.StoreFunc;
 import org.apache.pig.StoreFuncInterface;
+import org.apache.pig.backend.hadoop.executionengine.util.MapRedUtil;
 import org.apache.pig.data.Tuple;
 
 import com.twitter.elephantbird.pig.load.SequenceFileLoader;
 import com.twitter.elephantbird.pig.util.GenericWritableConverter;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import com.twitter.elephantbird.pig.util.WritableConverter;
+import org.apache.pig.impl.util.UDFContext;
 
 /**
  * Pig StoreFunc supporting conversion between Pig tuples and arbitrary key-value pairs stored
@@ -194,6 +197,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
+    ensureUDFContext(job.getConfiguration());
     verifyWritableClass(keyClass, true, keyConverter);
     verifyWritableClass(valueClass, false, valueConverter);
     job.setOutputKeyClass(keyClass);
@@ -213,6 +217,14 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
       setCompression(new Path(location), job);
     }
   }
+
+  private void ensureUDFContext(Configuration conf) throws IOException {
+    if (UDFContext.getUDFContext().isUDFConfEmpty()
+      && conf.get("pig.udf.context") != null) {
+      MapRedUtil.setupUDFContext(conf);
+    }
+  }
+
 
   /**
    * Tests validity of Writable class, ensures consistent error message for both key and value
