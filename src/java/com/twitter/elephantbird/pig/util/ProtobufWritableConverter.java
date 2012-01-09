@@ -63,6 +63,9 @@ public class ProtobufWritableConverter<M extends Message> extends
     try {
       Class<?> extensionClass = Class.forName(protobufExtensionClassName);
       writable.setExtensionClass(extensionClass);
+      Method m = extensionClass.getMethod("getDescriptor", new Class[]{});
+      FileDescriptor fd = (FileDescriptor) m.invoke(null, new Object[]{});
+      extensionDescriptor = fd.getExtensions().get(0);
     } catch (Exception ex) {
       LOG.error(ex.toString(), ex);
     }
