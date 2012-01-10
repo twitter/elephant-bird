@@ -107,7 +107,7 @@ public class TStructDescriptor {
                              e.getValue().valueMetaData);
     }
     // make it immutable since users have access.
-    fields = ImmutableList.of(arr);
+    fields = ImmutableList.copyOf(arr);
   }
 
   /**
