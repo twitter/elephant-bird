@@ -12,9 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.input.LzoProtobufB64LineInputFormat;
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProjectedProtobufTupleFactory;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
@@ -85,11 +85,11 @@ public class LzoProtobufB64LinePigLoader<M extends Message> extends LzoBaseLoadF
   }
 
   @Override
-  public InputFormat<LongWritable, ProtobufWritable<M>> getInputFormat() throws IOException {
+  public InputFormat<LongWritable, BinaryWritable<M>> getInputFormat() throws IOException {
     if (typeRef == null) {
       LOG.error("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
     }
-    return new LzoProtobufB64LineInputFormat<M>(typeRef);
+    return new MultiInputFormat<M>(typeRef);
   }
 }

@@ -12,8 +12,8 @@ import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.thrift.TBase;
 
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
-import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
-import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProjectedThriftTupleFactory;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
@@ -59,7 +59,7 @@ public class LzoThriftB64LinePigLoader<M extends TBase<?, ?>> extends LzoBaseLoa
   }
 
   @Override
-  public InputFormat<LongWritable, ThriftWritable<M>> getInputFormat() throws IOException {
-    return new LzoThriftB64LineInputFormat<M>(typeRef_);
+  public InputFormat<LongWritable, BinaryWritable<M>> getInputFormat() throws IOException {
+    return new MultiInputFormat<M>(typeRef_);
   }
 }

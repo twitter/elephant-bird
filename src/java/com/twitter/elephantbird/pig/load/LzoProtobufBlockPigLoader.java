@@ -1,13 +1,6 @@
 package com.twitter.elephantbird.pig.load;
 
-import java.io.IOException;
-
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.InputFormat;
-
 import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockInputFormat;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 
 /**
  * Loader for LZO-compressed files written using the ProtobufBlockInputFormat<br>
@@ -28,10 +21,5 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends LzoProtobufB64
    */
   public LzoProtobufBlockPigLoader(String protoClassName) {
     super(protoClassName);
-  }
-
-  @Override
-  public InputFormat<LongWritable, ProtobufWritable<M>> getInputFormat() throws IOException {
-    return new LzoProtobufBlockInputFormat<M>(typeRef);
   }
 }
