@@ -28,9 +28,6 @@ public class LzoProtobufBlockPigLoaderGenerator extends ProtoCodeGenerator {
     sb.append("  public Lzo%sProtobufBlockPigLoader() {", descriptorProto_.getName()).endl();
     sb.append("    setTypeRef(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
     sb.append("  }").endl();
-    sb.append("  public InputFormat getInputFormat() {").endl();
-    sb.append("    return new Lzo%sProtobufBlockInputFormat();", descriptorProto_.getName()).endl();
-    sb.append("  }").endl();
     sb.append("}").endl();
     sb.endl();
 

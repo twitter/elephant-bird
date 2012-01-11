@@ -24,7 +24,7 @@ public class LzoProtobufBlockOutputFormatGenerator extends ProtoCodeGenerator {
 
     sb.append("public class Lzo%sProtobufBlockOutputFormat extends LzoProtobufBlockOutputFormat<%s> {", descriptorProto_.getName(), descriptorProto_.getName()).endl();
     sb.append("  public Lzo%sProtobufBlockOutputFormat() {", descriptorProto_.getName()).endl();
-    sb.append("    setTypeRef(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
+    sb.append("    super(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
     sb.append("  }").endl();
     sb.append("}").endl();
     sb.endl();

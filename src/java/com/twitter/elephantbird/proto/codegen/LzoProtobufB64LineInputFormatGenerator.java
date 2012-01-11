@@ -24,7 +24,7 @@ public class LzoProtobufB64LineInputFormatGenerator extends ProtoCodeGenerator {
 
     sb.append("public class Lzo%sProtobufB64LineInputFormat extends LzoProtobufB64LineInputFormat<%s> {", descriptorProto_.getName(), descriptorProto_.getName()).endl();
     sb.append("  public Lzo%sProtobufB64LineInputFormat() {", descriptorProto_.getName()).endl();
-    sb.append("    setTypeRef(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
+    sb.append("    super(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
     sb.append("  }").endl();
     sb.append("}").endl();
     sb.endl();
