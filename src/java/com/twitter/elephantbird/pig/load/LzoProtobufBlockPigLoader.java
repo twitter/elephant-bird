@@ -9,5 +9,7 @@ public class LzoProtobufBlockPigLoader<M extends Message> extends ProtobufPigLoa
 
   public LzoProtobufBlockPigLoader(String protoClassName) {
     super(protoClassName);
+    LOG.warn("LzoProtobufBlockPigLoader is deprecated and will be removed in future. " +
+             "please use ProtobufPigLoader");
   }
 }

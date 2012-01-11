@@ -93,7 +93,7 @@ public class ProtobufMRExample {
     job.setMapperClass(LzoMapper.class);
     job.setNumReduceTasks(0);
 
-    // input format is same for both B664Line or block:
+    // input format is same for both B64Line or block:
     MultiInputFormat.setInputFormatClass(Age.class, job);
     job.setOutputFormatClass(TextOutputFormat.class);
 

@@ -10,6 +10,8 @@ import org.apache.pig.ResourceSchema;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.thrift.TBase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
@@ -21,6 +23,7 @@ import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class ThriftPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
+  static final Logger LOG = LoggerFactory.getLogger(ThriftPigLoader.class);
 
   protected final TypeRef<M> typeRef;
   private ProjectedThriftTupleFactory<M> tupleTemplate;

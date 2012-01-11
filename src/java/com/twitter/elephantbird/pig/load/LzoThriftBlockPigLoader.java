@@ -9,5 +9,7 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends ThriftPigLoa
 
   public LzoThriftBlockPigLoader(String thriftClassName) {
     super(thriftClassName);
-  }
+    LOG.warn("LzoThriftBlockPigLoader is deprecated and will be removed in future " +
+             "please use ThriftPigLoader");
+ }
 }

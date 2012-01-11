@@ -27,7 +27,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * Initialize with a String argument that represents the full classpath of the protocol buffer class to be loaded.<br>
  */
 public class ProtobufPigLoader<M extends Message> extends LzoBaseLoadFunc {
-  private static final Logger LOG = LoggerFactory.getLogger(ProtobufPigLoader.class);
+  static final Logger LOG = LoggerFactory.getLogger(ProtobufPigLoader.class);
 
   protected TypeRef<M> typeRef = null;
   private final ProtobufToPig protoToPig = new ProtobufToPig();
