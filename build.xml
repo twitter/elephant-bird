@@ -129,7 +129,7 @@
   <macrodef name="generate-protobuf">
       <sequential>
         <mkdir dir="${src.gen.java.dir}" />
-        <property name="protoc.bin" value="protoc" />
+        <property name="protoc.bin" value="/home/angus/src/protobuf-2.4.1/bin/bin/protoc" />
         <apply executable="${protoc.bin}" failonerror="true" skipemptyfilesets="true" verbose="true">
           <env key="PATH" path="${env.PATH}:." />
           <arg value="--proto_path=${src.proto.dir}" />
