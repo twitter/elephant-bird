@@ -1,11 +1,16 @@
 package com.twitter.elephantbird.mapreduce.io;
 
+import java.lang.reflect.Field;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
+import com.google.protobuf.ExtensionRegistry;
+import com.google.protobuf.GeneratedMessage.GeneratedExtension;
+
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -17,6 +22,8 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
 
   private Message.Builder protoBuilder;
   private TypeRef<M> typeRef;
+  private Class<?> extensionClass;
+  private ExtensionRegistry registry;
 
   // limit the number of warnings in case of serialization errors.
   private static final int MAX_WARNINGS = 100;
@@ -36,6 +43,10 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   public static <M extends Message> ProtobufConverter<M> newInstance(Class<M> protoClass) {
     return new ProtobufConverter<M>(new TypeRef<M>(protoClass){});
   }
+  
+  public static <M extends Message> ProtobufConverter<M> newInstance(Class<M> protoClass, Class<?> extensionClass) {
+    return new ProtobufConverter<M>(new TypeRef<M>(protoClass){}, extensionClass);
+  }
 
   public static <M extends Message> ProtobufConverter<M> newInstance(TypeRef<M> typeRef) {
     return new ProtobufConverter<M>(typeRef);
@@ -44,6 +55,11 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   public ProtobufConverter(TypeRef<M> typeRef) {
     this.typeRef = typeRef;
   }
+  
+  public ProtobufConverter(TypeRef<M> typeRef, Class<?> extensionClass) {
+    this(typeRef);
+    this.extensionClass = extensionClass;
+  }
 
   @SuppressWarnings("unchecked")
   @Override
@@ -51,8 +67,28 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     try {
       if (protoBuilder == null) {
         protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+        if (extensionClass != null) {
+          GeneratedExtension extensionObj = null;
+          for(Field f:extensionClass.getFields()) {
+            if (GeneratedExtension.class.isAssignableFrom(f.getType())) {
+              try {
+                extensionObj = (GeneratedExtension) f.get(null);
+              } catch (IllegalAccessException ex) {
+              }
+              break;
+            }
+          }
+          if (extensionObj!=null) {
+            registry = ExtensionRegistry.newInstance();
+            registry.add(extensionObj);
+          }
+        }
       }
-      return  (M) protoBuilder.clone().mergeFrom(messageBuffer).build();
+      if (registry != null) {
+        return  (M) protoBuilder.clone().mergeFrom(messageBuffer, registry).build();
+      } else {
+        return  (M) protoBuilder.clone().mergeFrom(messageBuffer).build();
+      }
     } catch (InvalidProtocolBufferException e) {
       logWarning("Invalid Protobuf exception while building " + typeRef.getRawClass().getName(), e);
     } catch(UninitializedMessageException ume) {
