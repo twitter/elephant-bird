@@ -1,4 +1,5 @@
-raw_data = load '$INPUT_FILES' using com.twitter.elephantbird.examples.proto.pig.load.LzoPersonProtobufBlockPigLoader()
+raw_data = load '$INPUT_FILES' using com.twitter.elephantbird.pig.load.LzoProtobufBlockPigLoader('com.twitter.elephantbird.examples.proto.AddressBookProtos.Person')
+/**
       as (
         name: chararray,
         id: int,
@@ -9,7 +10,9 @@ raw_data = load '$INPUT_FILES' using com.twitter.elephantbird.examples.proto.pig
               type: chararray
           )
         }
-      );
+      )
 
+**/
+;
 
 

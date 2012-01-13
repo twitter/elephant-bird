@@ -42,10 +42,10 @@ public class MultiFormatLoader<M> extends FilterLoadFunc {
      */
     LoadFunc ldr;
     if (Message.class.isAssignableFrom(clazz)) {
-      ldr = new LzoProtobufB64LinePigLoader<Message>(className);
+      ldr = new ProtobufPigLoader<Message>(className);
 
     } else if (TBase.class.isAssignableFrom(clazz)) {
-      ldr = new LzoThriftB64LinePigLoader<TBase<?, ?>>(className);
+      ldr = new ThriftPigLoader<TBase<?, ?>>(className);
 
     } else {
       throw new RuntimeException(className + " is not a Protobuf or Thrift class");
