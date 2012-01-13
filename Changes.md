@@ -2,6 +2,14 @@
 
 ### Version 2.1.3 ###
 
+ISSUE 117. Add Cascading2 taps (Dmitriy Ryaboy)
+
+ISSUE 116. Use MultiInputFormat for Thrift and Protobuf Pig loaders (Raghu Angadi)
+
+ISSUE 115. Use guava-11.0 (Alex Levenson)
+
+ISSUE 112. Fix UDFContext handing in SequenceFileStorage (Ted Dunning)
+
 ### Version 2.1.2 ###
 
 ISSUE 105. Fix ThriftToPig for Pig9 and nested containers (Jonathan Coveney)
