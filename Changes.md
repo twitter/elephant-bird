@@ -2,11 +2,11 @@
 
 ### Version 2.1.4 ###
 
+ISSUE 116. Use MultiInputFormat for Thrift and Protobuf Pig loaders (Raghu Angadi)
+
 ### Version 2.1.3 ###
 
 ISSUE 117. Add Cascading2 taps (Dmitriy Ryaboy)
-
-ISSUE 116. Use MultiInputFormat for Thrift and Protobuf Pig loaders (Raghu Angadi)
 
 ISSUE 115. Use guava-11.0 (Alex Levenson)
 
