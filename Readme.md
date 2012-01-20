@@ -9,7 +9,7 @@ Version: 2.1.5
 1. git clone
 2. ant
 3. check out javadoc, etc.
-4. build examples: cd examples && ant;
+4. Play with the examples: ant examples
 
 Note: for any of the LZO-based code, make sure that the native LZO libraries are on your `java.library.path`.  Generally this is done by setting `JAVA_LIBRARY_PATH` in
 `pig-env.sh` or `hadoop-env.sh`.  You can also add lines like

@@ -17,7 +17,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.thrift.TBase;
 
 import com.google.protobuf.Message;
-import com.twitter.data.proto.BlockStorage.SerializedBlock;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
@@ -129,7 +128,7 @@ public class MultiInputFormat<M>
   }
 
   /**
-   * Checks to see if the input records are stored as {@link SerializedBlock}.
+   * Checks to see if the input records are stored as SerializedBlock.
    * The block format starts with {@link Protobufs#KNOWN_GOOD_POSITION_MARKER}.
    * Otherwise the input is assumed to be Base64 encoded lines.
    */
