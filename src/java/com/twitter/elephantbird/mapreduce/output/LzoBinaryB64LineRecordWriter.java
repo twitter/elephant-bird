@@ -3,8 +3,11 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.util.Codecs;
@@ -52,5 +55,12 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
                newThriftWriter(Class<M> tClass, DataOutputStream out) {
     return new LzoBinaryB64LineRecordWriter<M, ThriftWritable<M>>
                             (ThriftConverter.newInstance(tClass), out);
+  }
+
+  // for convenience
+  public static <M extends Message> LzoBinaryB64LineRecordWriter<M, ProtobufWritable<M>>
+               newProtobufWriter(Class<M> tClass, DataOutputStream out) {
+    return new LzoBinaryB64LineRecordWriter<M, ProtobufWritable<M>>
+                            (ProtobufConverter.newInstance(tClass), out);
   }
 }
