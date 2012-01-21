@@ -29,7 +29,7 @@ import com.twitter.elephantbird.thrift.test.TestPhoneType;
 /**
  * Test {@link MultiFormatLoader} using a Thrift struct.
  */
-public class TestMultiFormatLoader {
+public class TestThriftMultiFormatLoader {
   // create a directory with two lzo files, one in Base64Line format
   // and the other in Serialized blocks, and load them using
   // MultiFormatLoader
