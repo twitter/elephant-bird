@@ -17,7 +17,6 @@ import org.junit.Test;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
-import com.twitter.data.proto.tutorial.pig.piggybank.AddressBookProtobufBytesToTuple;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProjectedProtobufTupleFactory;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
@@ -33,7 +32,8 @@ public class TestProtoToPig {
 
     Tuple abProtoTuple = tf_.newTuple(new DataByteArray(abProto.toByteArray()));
 
-    AddressBookProtobufBytesToTuple abProtoToPig = new AddressBookProtobufBytesToTuple();
+    ProtobufBytesToTuple abProtoToPig =
+        new ProtobufBytesToTuple(AddressBook.class.getCanonicalName());
     Tuple abTuple = abProtoToPig.exec(abProtoTuple);
     assertEquals("{(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)}),(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)})}",
         abTuple.toDelimitedString(","));
