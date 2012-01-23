@@ -1,5 +1,5 @@
-<project name="elephant-bird" default="jar">
-    
+<project name="elephant-bird" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
+
   <property name="build.dir" location="${basedir}/build"/>
   <property name="javadoc.dir" location="javadoc" />
 
@@ -12,9 +12,6 @@
   <property name="src.gen.java.dir" location="${build.dir}/gen-java" /> 
   <property name="classes.dir" location="${build.dir}/classes" />
 
-  <property name="lib.dir" value="${basedir}/lib"/>
-
-  <property name="test.lib.dir" value="${lib.dir}"/>
   <property name="test.build.dir" value="${build.dir}/test"/>
   <property name="test.thrift.gen.java.dir" value="${test.build.dir}/thrift/gen-java"/>
   <property name="test.generated.dir" value="${test.build.dir}/src"/>
@@ -39,9 +36,15 @@
   <property name="thrift.version.expected" value="Thrift version 0.5.0"/>
   <property name="protobuf.version.expected" value="libprotoc 2.3.0"/>
 
+  <property name="compile.lib.dir" location="${build.dir}/lib/compile"/>
+  <property name="test.lib.dir" location="${build.dir}/lib/test"/>
+
   <property name="jar.name" value="elephant-bird"/>
   <property name="version" value="2.1.4-SNAPSHOT"/>
   <property name="jar.file" location="${build.dir}/${jar.name}-${version}.jar"/>
+
+  <property name="maven.repo" value="http://repo1.maven.org/maven2"/>
+  <property name="ivy.version" value="2.2.0"/>
 
   <macrodef name="_check_compiler">
     <attribute name="compiler"/>
@@ -82,7 +85,7 @@
     <ant dir="examples" target="clean" inheritAll="false"/>
   </target>
 
-  <target name="init">
+  <target name="bootstrap">
     <tstamp/>
     <mkdir dir="${build.dir}"/>
     <mkdir dir="${classes.dir}"/>
@@ -90,6 +93,30 @@
     <mkdir dir="${test.thrift.gen.java.dir}"/>
     <mkdir dir="${src.gen.java.dir}"/>
   </target>
+
+  <target name="init-ivy" depends="bootstrap" unless="init-ivy.complete">
+    <property name="ivy.settings.file" value="${basedir}/ivysettings.xml"/>
+    <get src="${maven.repo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"
+      dest="${build.dir}" usetimestamp="true"/>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant">
+      <classpath path="${build.dir}/ivy-${ivy.version}.jar"/>
+    </taskdef>
+    <property name="init-ivy.complete" value="true"/>
+  </target>
+
+  <target name="resolve" description="retrieve dependencies with ivy" depends="init-ivy">
+    <ivy:retrieve sync="true" type="jar"
+      pattern="${build.dir}/lib/[conf]/[organization]-[artifact]-[revision](-[classifier]).[ext]"/>
+    <property name="ivy.pom.version" value="${version}"/>
+    <ivy:makepom ivyfile="${basedir}/ivy.xml"
+                 pomfile="${build.dir}/${jar.name}-${version}.pom"/>
+  </target>
+
+  <target name="report" depends="resolve">
+    <ivy:report todir="${build.dir}"/>
+  </target>
+
+  <target name="init" depends="bootstrap, init-ivy"/>
 
   <!-- Protobuf generation is required at this time as generated classes are
        used directly by elephant-bird. -->
@@ -106,11 +133,11 @@
 
   <!-- Compilation targets -->
   <path id="compile.classpath">
-    <fileset dir="${lib.dir}"/>
+    <fileset dir="${compile.lib.dir}"/>
     <pathelement location="${classes.dir}"/>
   </path>
 
-  <target name="compile" depends="init, generate-protobuf">
+  <target name="compile" depends="init, resolve, generate-protobuf">
     <_javac srcDir="${src.gen.java.dir}"
             destDir="${classes.dir}"
             classPathRef="compile.classpath"/>
@@ -151,7 +178,7 @@
     <delete dir="${test.build.classes}"/>
     <mkdir dir="${test.build.classes}"/>
     <path id="compile.java.tests.classpath">
-      <fileset dir="${lib.dir}"/>
+      <fileset dir="${test.lib.dir}"/>
       <pathelement location="${classes.dir}"/>
     </path>
     <_javac srcDir="${test.src.dir}"
@@ -177,7 +204,7 @@
       <sysproperty key="test.source.dir" value="${test.src.dir}"/>
       <sysproperty key="java.library.path" value="${test.library.path}"/>
       <classpath>
-        <fileset dir="${lib.dir}"/>
+        <fileset dir="${test.lib.dir}"/>
         <pathelement location="${classes.dir}"/>
         <pathelement location="${test.build.classes}"/>
       </classpath>
@@ -217,7 +244,7 @@
 
   <target name="examples" depends="jar" description="Compile the examples">
     <ant dir="examples" inheritAll="false">
-      <property name="lib.dir" value="${lib.dir}"/>
+      <property name="lib.dir" value="${test.lib.dir}"/>
       <property name="jar.file" value="${jar.file}"/>
       <property name="version" value="${version}"/>
     </ant>
