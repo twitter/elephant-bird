@@ -5,6 +5,7 @@ import java.util.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.io.Writable;
 
@@ -32,4 +33,9 @@ public abstract class LzoProtobufHiveSerde implements SerDe {
     //serialization not supported
   }
 
+  @Override
+  public SerDeStats getSerDeStats() {
+    return null;
+    // stats not supported
+  }
 }
