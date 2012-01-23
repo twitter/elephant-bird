@@ -101,7 +101,7 @@ public class MultiInputFormat<M>
       case LZO_BLOCK:
         return new LzoProtobufBlockRecordReader(typeRef);
       case LZO_B64LINE:
-        return new LzoProtobufBlockRecordReader(typeRef);
+        return new LzoProtobufB64LineRecordReader(typeRef);
       }
     }
 
