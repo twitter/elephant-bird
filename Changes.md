@@ -8,7 +8,7 @@
 
 [ISSUE 120](https://github.com/kevinweil/elephant-bird/pull/120). Build improvements  (Travis Crawford)
 
-[ISSUE 119](https://github.com/kevinweil/elephant-bird/pull/119). Multi input format fix (Raghu Angadi)
+[ISSUE 119](https://github.com/kevinweil/elephant-bird/pull/119). Fix a regression from 2.1.4 related to the multi-loader (Raghu Angadi)
 
 ### Version 2.1.4 ###
 
