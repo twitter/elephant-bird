@@ -1,4 +1,9 @@
-<project name="elephant-bird" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="elephant-bird"
+         default="jar"
+         xmlns:ivy="antlib:org.apache.ivy.ant"
+         xmlns:artifact="artifact:org.apache.maven.artifact.ant">
+
+  <property file="${basedir}/libraries.properties"/>
 
   <property name="build.dir" location="${basedir}/build"/>
   <property name="javadoc.dir" location="javadoc" />
@@ -230,16 +235,14 @@
     </javadoc>
   </target>
 
-  <target name="maven-install" depends="jar"
-          description="Install release jar in local Maven repository">
-    <exec executable="mvn" failonerror="true">
-      <arg value="install:install-file" />
-      <arg value="-DgroupId=com.twitter" />
-      <arg value="-DartifactId=elephant-bird" />
-      <arg value="-Dversion=${version}" />
-      <arg value="-Dpackaging=jar" />
-      <arg value="-Dfile=${jar.file}" />
-    </exec>
+  <target name="publish" depends="jar">
+    <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
+             uri="artifact:org.apache.maven.artifact.ant"
+             classpath="${test.lib.dir}/org.apache.maven-maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
+    <artifact:deploy file="${jar.file}">
+      <artifact:remoteRepository url="file://${basedir}/repo"/>
+      <artifact:pom file="${build.dir}/${jar.name}-${version}.pom"/>
+    </artifact:deploy>
   </target>
 
   <target name="examples" depends="jar" description="Compile the examples">
