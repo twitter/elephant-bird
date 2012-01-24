@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <ivysettings>
+  <properties file="${basedir}/libraries.properties"/>
   <settings defaultResolver="elephant-bird-repos"/>
   <resolvers>
     <chain name="elephant-bird-repos" returnFirst="true">
