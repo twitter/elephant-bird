@@ -1,7 +1,7 @@
 #!/bin/bash
 
 JARS="../build/elephant-bird-${ELEPHANT_BIRD_VERSION}.jar"
-for f in $(/bin/ls ../lib/*.jar); do
+for f in $(/bin/ls ../build/lib/test/*.jar); do
   JARS=${JARS}:$f
 done
 
