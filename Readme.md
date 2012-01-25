@@ -28,13 +28,13 @@ NOTE: This is an experimental branch for working with Pig 0.8. It may not work. 
 
 Elephant Bird takes advantage of Github's raw interface and self-hosts a maven repository inside
 the git repo itself. To use the maven repo, simply add
-<code>https://raw.github.com/kevinweil/elephant-bird/repo</code> as a maven repo in the system
+<code>https://raw.github.com/kevinweil/elephant-bird/master/repo</code> as a maven repo in the system
 you use to manage dependencies.
 
 For example, with Ivy you would add the following resolver in <code>ivysettings.xml</code>:
 
     <ibiblio name="elephant-bird-repo" m2compatible="true"
-             root="https://raw.github.com/kevinweil/elephant-bird/repo"/>
+             root="https://raw.github.com/kevinweil/elephant-bird/master/repo"/>
 
 And include elephant-bird as a dependency in <code>ivy.xml</code>:
 
