@@ -20,7 +20,7 @@ import java.io.IOException;
  * @author Yifan Shi
  */
 public class DeprecatedLzoThriftB64LineOutputFormat<M extends TBase<?, ?>>
-    extends DeprecatedLzoOutputFormat<M, ThriftWritable<M>> {
+    extends DeprecatedLzoOutputFormat<NullWritable, ThriftWritable<M>> {
   @SuppressWarnings("unchecked")
   public static <M extends TBase<?, ?>> Class<DeprecatedLzoThriftB64LineOutputFormat>
      getOutputFormatClass(Class<M> thriftClass, Configuration jobConf) {
