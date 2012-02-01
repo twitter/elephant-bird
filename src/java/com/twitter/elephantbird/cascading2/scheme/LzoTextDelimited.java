@@ -1,13 +1,9 @@
 package com.twitter.elephantbird.cascading2.scheme;
 
-import com.hadoop.compression.lzo.LzopCodec;
-
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.TextOutputFormat;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedLzoTextInputFormat;
+import com.twitter.elephantbird.mapred.output.DeprecatedLzoTextOutputFormat;
 
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.hadoop.TextDelimited;
@@ -71,10 +67,6 @@ public class LzoTextDelimited extends TextDelimited {
 
   @Override
   public void sinkConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
-    conf.setOutputFormat(TextOutputFormat.class);
-    FileOutputFormat.setCompressOutput(conf, true);
-    FileOutputFormat.setOutputCompressorClass(conf, LzopCodec.class);
-    conf.setOutputKeyClass(Text.class);
-    conf.setOutputValueClass(Text.class);
+    conf.setOutputFormat(DeprecatedLzoTextOutputFormat.class);
   }
 }
