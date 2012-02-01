@@ -1,12 +1,9 @@
 package com.twitter.elephantbird.cascading2.scheme;
 
-import com.hadoop.compression.lzo.LzopCodec;
-
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobConf;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedLzoTextInputFormat;
+import com.twitter.elephantbird.mapred.output.DeprecatedLzoTextOutputFormat;
 
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.hadoop.TextLine;
@@ -51,6 +48,6 @@ public class LzoTextLine extends TextLine {
 
   @Override
   public void sinkConfInit(HadoopFlowProcess flowProcess, Tap tap, JobConf conf) {
-    conf.setOutputFormat(DeprectedLzoTextOutputFormat.class);
+    conf.setOutputFormat(DeprecatedLzoTextOutputFormat.class);
   }
 }
