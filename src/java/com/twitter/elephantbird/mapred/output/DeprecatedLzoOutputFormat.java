@@ -1,10 +1,9 @@
 package com.twitter.elephantbird.mapred.output;
 
 import com.hadoop.compression.lzo.LzopCodec;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
+import com.twitter.elephantbird.util.LzoUtils;
+
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobConf;
 
@@ -16,8 +15,8 @@ import java.io.IOException;
  *
  * @author Yifan Shi
  */
-public abstract class DeprecatedLzoOutputFormat <M, W>
-    extends FileOutputFormat<NullWritable, W> {
+public abstract class DeprecatedLzoOutputFormat <K, V>
+    extends FileOutputFormat<K, V> {
 
   /**
    * Helper method to create lzo output file needed to create RecordWriter
@@ -29,8 +28,7 @@ public abstract class DeprecatedLzoOutputFormat <M, W>
 
     Path file = getPathForCustomFile(job,  "part");
     file = file.suffix(codec.getDefaultExtension());
-    FileSystem fs = file.getFileSystem(job);
-    FSDataOutputStream fileOut = fs.create(file, false);
-    return new DataOutputStream(codec.createOutputStream(fileOut));
+
+    return LzoUtils.getIndexedLzoOutputStream(job, file);
   }
 }
