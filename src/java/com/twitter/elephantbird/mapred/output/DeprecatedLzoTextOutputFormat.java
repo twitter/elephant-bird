@@ -1,36 +1,32 @@
 package com.twitter.elephantbird.mapred.output;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordWriter;
-import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.hadoop.util.Progressable;
 
-public class DeprecatedLzoTextOutputFormat
-            extends DeprecatedLzoOutputFormat<NullWritable, Text> {
+import com.hadoop.compression.lzo.LzopCodec;
+import com.twitter.elephantbird.util.LzoUtils;
+
+@Deprecated
+public class DeprecatedLzoTextOutputFormat<K, V> extends TextOutputFormat<K, V> {
+
+  //non-deprecated LzoTextOutputFormat should also extend TextOutputFormat.
 
   @Override
-  public RecordWriter<NullWritable, Text> getRecordWriter(FileSystem ignored,
-      JobConf job, String name, Progressable progress) throws IOException {
+  public RecordWriter<K, V> getRecordWriter(FileSystem ignored, JobConf job,
+      String name, Progressable progress) throws IOException {
 
-    final DataOutputStream out = getOutputStream(job);
+    Path file = getPathForCustomFile(job,  "part");
+    file = file.suffix(LzopCodec.DEFAULT_LZO_EXTENSION);
 
-    return new RecordWriter<NullWritable, Text>() {
-
-      public void close(Reporter reporter) throws IOException {
-        out.close();
-      }
-
-      public void write(NullWritable key, Text value) throws IOException {
-        out.write(value.getBytes(), 0, value.getLength());
-        out.write('\n');
-      }
-    };
+    return new LineRecordWriter<K, V>(
+                  LzoUtils.getIndexedLzoOutputStream(job, file),
+                  job.get("mapred.textoutputformat.separator", "\t"));
   }
 
 }
