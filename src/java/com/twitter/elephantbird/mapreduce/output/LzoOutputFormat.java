@@ -2,11 +2,10 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+
 import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.elephantbird.util.LzoUtils;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.log4j.LogManager;
@@ -25,10 +24,9 @@ public abstract class LzoOutputFormat<K, V> extends FileOutputFormat<K, V> {
    */
   protected DataOutputStream getOutputStream(TaskAttemptContext job)
                   throws IOException, InterruptedException {
-    Configuration conf = job.getConfiguration();
-    LzopCodec codec = new LzopCodec();
-    Path path = getDefaultWorkFile(job, codec.getDefaultExtension());
 
-    return LzoUtils.getIndexedLzoOutputStream(conf, path);
+    return LzoUtils.getIndexedLzoOutputStream(
+                      job.getConfiguration(),
+                      getDefaultWorkFile(job, LzopCodec.DEFAULT_LZO_EXTENSION));
   }
 }
