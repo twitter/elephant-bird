@@ -24,6 +24,22 @@ more about that.
 
 NOTE: This is an experimental branch for working with Pig 0.8. It may not work. Caveat emptor.
 
+### Maven Repo
+
+Elephant Bird takes advantage of Github's raw interface and self-hosts a maven repository inside
+the git repo itself. To use the maven repo, simply add
+<code>https://raw.github.com/kevinweil/elephant-bird/master/repo</code> as a maven repo in the system
+you use to manage dependencies.
+
+For example, with Ivy you would add the following resolver in <code>ivysettings.xml</code>:
+
+    <ibiblio name="elephant-bird-repo" m2compatible="true"
+             root="https://raw.github.com/kevinweil/elephant-bird/master/repo"/>
+
+And include elephant-bird as a dependency in <code>ivy.xml</code>:
+
+    <dependency org="com.twitter" name="elephant-bird" rev="${elephant-bird.version}"/>
+
 ### Version compatibility ###
 
 1. Protocol Buffers 2.3 (not compatible with 2.4+)
@@ -31,14 +47,12 @@ NOTE: This is an experimental branch for working with Pig 0.8. It may not work. 
 4. Hive 0.7 (with HIVE-1616)
 5. Thrift 0.5
 
+### Protocol Buffer & Thrift compiler dependencies
 
-#### Building Without Protocol Buffers ####
-
-If you don't want to build elephant-bird with protobuf support or you don't have protobuf >= 2.3 available 
-(fedora for instance only provides 2.2), you can have ant exclude all classes that rely on protobuf by using ant noproto target
-
-for the default target this would be:
-<code><pre>ant noproto release-jar</pre></code>
+Elephant Bird requires protocol buffer compiler version 2.3 at build time, as generated
+classes are used internally. Thrift compiler version 0.5.0 is required to generate
+classes used in tests. As these are native-code tools they must be installed on the build
+machine (java library dependencies are pulled from maven repositories during the build).
 
 ### License ###
 
@@ -155,4 +169,5 @@ See git logs for credits.
 * Kevin Weil ([@kevinweil](http://twitter.com/kevinweil))
 * Dmitriy Ryaboy ([@squarecog](http://twitter.com/squarecog))
 * Raghu Angadi ([@raghuangadi](http://twitter.com/raghuangadi))
-* Andy Schlaikjer ([@sagemintblue])(http://twitter.com/sagemintblue))
+* Andy Schlaikjer ([@sagemintblue](http://twitter.com/sagemintblue))
+* Travis Crawford ([@tc](http://twitter.com/tc))
