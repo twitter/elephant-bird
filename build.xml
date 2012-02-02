@@ -235,14 +235,25 @@
     </javadoc>
   </target>
 
-  <target name="publish" depends="jar">
+  <target name="init-maven">
     <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
              uri="artifact:org.apache.maven.artifact.ant"
              classpath="${test.lib.dir}/org.apache.maven-maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
+  </target>
+
+  <target name="publish" depends="jar, init-maven"
+          description="publish to the in-git-repo maven repository">
     <artifact:deploy file="${jar.file}">
       <artifact:remoteRepository url="file://${basedir}/repo"/>
       <artifact:pom file="${build.dir}/${jar.name}-${version}.pom"/>
     </artifact:deploy>
+  </target>
+
+  <target name="install-local" depends="jar, init-maven"
+          description="install in your local user maven repository">
+    <artifact:install file="${jar.file}">
+      <artifact:pom file="${build.dir}/${jar.name}-${version}.pom"/>
+    </artifact:install>
   </target>
 
   <target name="examples" depends="jar" description="Compile the examples">
