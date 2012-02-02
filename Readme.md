@@ -156,9 +156,9 @@ For details of how the Pig integration with SequenceFiles works, please see java
 
 Bug fixes, features, and documentation improvements are welcome!
 
-Please fork the *eb-dev* branch and send us a pull request on github.
+Please fork the project and send us a pull request on github.
 
-We merge eb-dev into master every few weeks. The latest version on master is what we are actively running on Twitter's hadoop clusters daily, over hundreds of terabytes of data.
+Each new release since 2.1.3 has a *tag*. The latest version on master is what we are actively running on Twitter's hadoop clusters daily, over hundreds of terabytes of data.
 
 
 ### Contributors ###
