@@ -15,8 +15,6 @@ import com.twitter.elephantbird.util.LzoUtils;
 @Deprecated
 public class DeprecatedLzoTextOutputFormat<K, V> extends TextOutputFormat<K, V> {
 
-  //non-deprecated LzoTextOutputFormat should also extend TextOutputFormat.
-
   @Override
   public RecordWriter<K, V> getRecordWriter(FileSystem ignored, JobConf job,
       String name, Progressable progress) throws IOException {
