@@ -1,14 +1,28 @@
 # Elephant Bird #
 
+### Version 2.1.6 ###
+
+ISSUE 129. Add "install-local" ant target (Travis Crawford)
+
+ISSUE 127. Lzo text outputformat heirarchy (Raghu Angadi)
+
+ISSUE 126. Add protobuf-java-2.3.0.jar back as a checked-in library (Travis Crawford)
+
+ISSUE 125. Deprecated lzo output format update. (Raghu Angadi)
+
+ISSUE 123. Fix maven repo documentation (Travis Crawford)
+
+NO ISSUE. Upgrade hadoop-lzo to 0.4.15 (Raghu Angadi)
+
 ### Version 2.1.5 ###
 
-[ISSUE 122](https://github.com/kevinweil/elephant-bird/pull/122). Add maven repository support (Travis Crawford)
+ISSUE 122. Add maven repository support (Travis Crawford)
 
-[ISSUE 121](https://github.com/kevinweil/elephant-bird/pull/121). Add Ivy & POM file generation to Elephant Bird build (Travis Crawford)
+ISSUE 121. Add Ivy & POM file generation to Elephant Bird build (Travis Crawford)
 
-[ISSUE 120](https://github.com/kevinweil/elephant-bird/pull/120). Build improvements  (Travis Crawford)
+ISSUE 120. Build improvements  (Travis Crawford)
 
-[ISSUE 119](https://github.com/kevinweil/elephant-bird/pull/119). Fix a regression from 2.1.4 related to the multi-loader (Raghu Angadi)
+ISSUE 119. Fix a regression from 2.1.4 related to the multi-loader (Raghu Angadi)
 
 ### Version 2.1.4 ###
 
