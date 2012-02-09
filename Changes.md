@@ -4,8 +4,6 @@
 
 ISSUE 133. Downgrade cascading2 dependency to more stable version (Travis Crawford)
 
-
-
 ### Version 2.1.6 ###
 
 ISSUE 129. Add "install-local" ant target (Travis Crawford)
