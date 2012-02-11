@@ -1,8 +1,11 @@
 package com.twitter.elephantbird.mapreduce.input;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
@@ -17,7 +20,12 @@ public class  LzoProtobufB64LineRecordReader<M extends Message> extends LzoBinar
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LineRecordReader.class);
 
   public LzoProtobufB64LineRecordReader(TypeRef<M> typeRef) {
-    super(typeRef, new ProtobufWritable<M>(typeRef), ProtobufConverter.newInstance(typeRef));
+    this(typeRef, null);
+  }
+
+  public LzoProtobufB64LineRecordReader(TypeRef<M> typeRef, List<GeneratedExtension<M, ?>> protoExtensions) {
+    super(typeRef, new ProtobufWritable<M>(typeRef),
+        ProtobufConverter.newInstance(typeRef, protoExtensions));
     LOG.info("LzoProtobufB64LineRecordReader, type args are " + typeRef.getRawClass());
   }
 }

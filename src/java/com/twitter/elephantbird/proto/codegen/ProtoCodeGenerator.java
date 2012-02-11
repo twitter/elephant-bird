@@ -1,5 +1,7 @@
 package com.twitter.elephantbird.proto.codegen;
 
+import java.util.Set;
+
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
 
 /**
@@ -16,6 +18,8 @@ public abstract class ProtoCodeGenerator {
   protected String protoFilename_;
   protected String packageName_;
   protected DescriptorProto descriptorProto_;
+  protected Set<String> protoExtensionNames_;
+
 
   /**
    * Configure the class with the relevant protocol buffer info
@@ -29,10 +33,12 @@ public abstract class ProtoCodeGenerator {
    * in their .proto file, the value will be "com.something.mypackage" instead.
    * @param proto the descriptor for the proto itself.
    */
-  public void configure(String protoFilename, String packageName, DescriptorProto proto) {
+  public void configure(String protoFilename, String packageName,
+      DescriptorProto proto, Set<String> protoExtensionNames) {
     protoFilename_ = protoFilename;
     packageName_ = packageName;
     descriptorProto_ = proto;
+    protoExtensionNames_ = protoExtensionNames;
   }
 
   /**

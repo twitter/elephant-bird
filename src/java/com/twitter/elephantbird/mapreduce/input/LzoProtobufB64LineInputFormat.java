@@ -1,17 +1,19 @@
 package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
-
-import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
-import com.twitter.elephantbird.util.Protobufs;
-import com.twitter.elephantbird.util.TypeRef;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+
+import com.google.protobuf.GeneratedMessage.GeneratedExtension;
+import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * This is the base class for all base64 encoded, line-oriented protocol buffer based input formats.
@@ -29,18 +31,20 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFormat<LongWritable, ProtobufWritable<M>> {
 
   private TypeRef<M> typeRef_;
+  private List<GeneratedExtension<M, ?>> protoExtensions_;
 
   public LzoProtobufB64LineInputFormat() {
   }
 
   public LzoProtobufB64LineInputFormat(TypeRef<M> typeRef) {
-    super();
-    this.typeRef_ = typeRef;
+    this(typeRef, null);
   }
 
-  // should remove this.
-  protected void setTypeRef(TypeRef<M> typeRef) {
-    typeRef_ = typeRef;
+  public LzoProtobufB64LineInputFormat(TypeRef<M> typeRef,
+      List<GeneratedExtension<M, ?>> protoExtensions) {
+    super();
+    this.typeRef_ = typeRef;
+    this.protoExtensions_ = protoExtensions;
   }
 
   /**
@@ -55,6 +59,15 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFo
     return LzoProtobufB64LineInputFormat.class;
   }
 
+  public static <M extends Message> Class<LzoProtobufB64LineInputFormat>
+    getInputFormatClass(Class<M> protoClass, List<Class<?>> protoExtensionClasses,
+        Configuration jobConf) {
+
+    //TODO:
+
+    return null;
+  }
+
   public static<M extends Message> LzoProtobufB64LineInputFormat<M> newInstance(TypeRef<M> typeRef) {
     return new LzoProtobufB64LineInputFormat<M>(typeRef);
   }
@@ -65,6 +78,10 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFo
     if (typeRef_ == null) {
       typeRef_ = Protobufs.getTypeRef(taskAttempt.getConfiguration(), LzoProtobufB64LineInputFormat.class);
     }
-    return new LzoProtobufB64LineRecordReader<M>(typeRef_);
+
+    if(protoExtensions_ == null) {
+
+    }
+    return new LzoProtobufB64LineRecordReader<M>(typeRef_, protoExtensions_);
   }
 }

@@ -21,3 +21,4 @@ build
 *~
 .settings
 src/gen-piglet*
+src/gen-java

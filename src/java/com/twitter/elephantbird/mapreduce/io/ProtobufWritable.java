@@ -1,5 +1,8 @@
 package com.twitter.elephantbird.mapreduce.io;
 
+import java.util.List;
+
+import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -9,7 +12,7 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
 
-  private Class<?> protobufExtensionClass;
+  private List<GeneratedExtension<M, ?>> protoExtensions;
 
   public ProtobufWritable() {
     super(null, null);
@@ -23,6 +26,13 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
     super(message, new ProtobufConverter<M>(typeRef));
   }
 
+  public <N extends Message> ProtobufWritable(TypeRef<M> typeRef,
+      List<GeneratedExtension<M, ?>> protoExtensions) {
+    this(typeRef);
+    this.protoExtensions = protoExtensions;
+  }
+
+
   /**
    * Returns a ProtobufWritable for a given Protobuf class.
    */
@@ -30,16 +40,20 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
     return new ProtobufWritable<M>(new TypeRef<M>(tClass){});
   }
 
+  public static <M extends Message> ProtobufWritable<M> newInstance(
+      Class<M> tClass, List<GeneratedExtension<M, ?>> protoExtensions) {
+    return new ProtobufWritable<M>(new TypeRef<M>(tClass){}, protoExtensions);
+  }
+
   @Override
   protected BinaryConverter<M> getConverterFor(Class<M> clazz) {
-    if (protobufExtensionClass !=null) {
-      return ProtobufConverter.newInstance(clazz, protobufExtensionClass);
-    } else {
-      return ProtobufConverter.newInstance(clazz);
+    if (protoExtensions !=null) {
+      return ProtobufConverter.newInstance(clazz, protoExtensions);
     }
+    return ProtobufConverter.newInstance(clazz);
   }
-  
-  public void setExtensionClass(Class<?> protobufExtensionClass) {
-    this.protobufExtensionClass = protobufExtensionClass;
+
+  public void setExtensions(List<GeneratedExtension<M, ?>> protoExtensionClasses) {
+    this.protoExtensions = protoExtensionClasses;
   }
 }

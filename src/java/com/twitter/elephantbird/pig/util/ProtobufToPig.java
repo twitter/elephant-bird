@@ -1,19 +1,10 @@
 package com.twitter.elephantbird.pig.util;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.LinkedHashSet;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.EnumValueDescriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Message;
-import com.twitter.data.proto.Misc.CountedMap;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
@@ -26,6 +17,16 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Message;
+import com.twitter.data.proto.Misc.CountedMap;
 
 /**
  * A class for turning codegen'd protos into Pig Tuples and Schemas
@@ -278,7 +279,7 @@ public class ProtobufToPig {
    * @return the Schema for the nested message.
    * @throws FrontendException if Pig decides to.
    */
-  private FieldSchema singleFieldToFieldSchema(FieldDescriptor fieldDescriptor) throws FrontendException {
+  public FieldSchema singleFieldToFieldSchema(FieldDescriptor fieldDescriptor) throws FrontendException {
     assert fieldDescriptor.getType() != FieldDescriptor.Type.MESSAGE : "singleFieldToFieldSchema called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {

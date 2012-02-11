@@ -1,27 +1,21 @@
 package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Field;
-
-import com.google.common.base.Preconditions;
-import com.google.protobuf.Message;
-import com.google.protobuf.GeneratedMessage.GeneratedExtension;
-import com.google.protobuf.GeneratedMessage.ExtendableMessage;
-import com.google.protobuf.Descriptors.FileDescriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.Descriptor;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.GeneratedMessage.GeneratedExtension;
+import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -35,40 +29,49 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class ProtobufWritableConverter<M extends Message> extends
     AbstractWritableConverter<ProtobufWritable<M>> {
-    
+
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufWritableConverter.class);
-  
+
   protected final TypeRef<M> typeRef;
   protected final ProtobufToPig protobufToPig;
-  protected FieldDescriptor extensionDescriptor;
+  protected List<FieldDescriptor> extensionDescriptors;
 
   public ProtobufWritableConverter(String protobufClassName) {
+    this(protobufClassName, null);
+  }
+
+  public ProtobufWritableConverter(String protoClassName,
+      String[] protoExtensionNames) {
     super(new ProtobufWritable<M>());
-    int index = protobufClassName.indexOf(' ');
-    String protobufExtensionClassName = null;
-    if (index >=0) {
-      protobufExtensionClassName = protobufClassName.substring(index + 1);
-      protobufClassName = protobufClassName.substring(0, index);
-    }
-    Preconditions.checkNotNull(protobufClassName);
-    typeRef = PigUtil.getProtobufTypeRef(protobufClassName);
+
+    Preconditions.checkNotNull(protoClassName);
+    typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     protobufToPig = new ProtobufToPig();
-    if (protobufExtensionClassName !=null) {
-      setExtentionClassName(protobufExtensionClassName);
+    if (protoExtensionNames !=null) {
+      setExtentionNames(protoExtensionNames);
     }
     writable.setConverter(typeRef.getRawClass());
   }
-  
-  private void setExtentionClassName(String protobufExtensionClassName) {
-    try {
-      Class<?> extensionClass = Class.forName(protobufExtensionClassName);
-      writable.setExtensionClass(extensionClass);
-      Method m = extensionClass.getMethod("getDescriptor", new Class[]{});
-      FileDescriptor fd = (FileDescriptor) m.invoke(null, new Object[]{});
-      extensionDescriptor = fd.getExtensions().get(0);
-    } catch (Exception ex) {
-      LOG.error(ex.toString(), ex);
+
+  @SuppressWarnings("unchecked")
+  private void setExtentionNames(String[] protoExtensionNames) {
+    List<GeneratedExtension<M, ?>> protoExtensions = new ArrayList<GeneratedExtension<M,?>>();
+    List<FieldDescriptor> fds = new ArrayList<FieldDescriptor>();
+
+    for(String e: protoExtensionNames) {
+      String enclosingClassName = e.substring(0, e.lastIndexOf('.'));
+      String extensionName = e.substring(e.lastIndexOf('.') + 1);
+      try {
+        Class<?> enclosingClass = Class.forName(enclosingClassName);
+        GeneratedExtension<M, ?> extension = (GeneratedExtension<M, ?>) enclosingClass.getField(extensionName).get(null);
+        fds.add(extension.getDescriptor());
+        protoExtensions.add(extension);
+      } catch (Exception ex) {
+        LOG.error(ex.toString(), ex);
+      }
     }
+    writable.setExtensions(protoExtensions);
+    extensionDescriptors = fds;
   }
 
   @Override
@@ -83,9 +86,16 @@ public class ProtobufWritableConverter<M extends Message> extends
   @Override
   public ResourceFieldSchema getLoadSchema() throws IOException {
     Schema schema = protobufToPig.toSchema(Protobufs.getMessageDescriptor(typeRef.getRawClass()));
-    if (extensionDescriptor != null) {
-      FieldSchema extensionSchema = protobufToPig.messageToFieldSchema(extensionDescriptor);
-      schema.add(extensionSchema);
+    if (extensionDescriptors != null) {
+      for(FieldDescriptor fd: extensionDescriptors) {
+        FieldSchema fs = null;
+        if(fd.getType() == FieldDescriptor.Type.MESSAGE) {
+          fs = protobufToPig.messageToFieldSchema(fd);
+        } else {
+          fs = protobufToPig.singleFieldToFieldSchema(fd);
+        }
+        schema.add(fs);
+      }
     }
     return new ResourceFieldSchema(new FieldSchema(null, schema));
   }
@@ -98,6 +108,7 @@ public class ProtobufWritableConverter<M extends Message> extends
   @Override
   protected Tuple toTuple(ProtobufWritable<M> writable, ResourceFieldSchema schema)
       throws IOException {
+    //TODO:
     return protobufToPig.toTuple(writable.get());
   }
 
