@@ -24,7 +24,15 @@ public class LzoProtobufB64LineOutputFormatGenerator extends ProtoCodeGenerator 
 
     sb.append("public class Lzo%sProtobufB64LineOutputFormat extends LzoProtobufB64LineOutputFormat<%s> {", descriptorProto_.getName(), descriptorProto_.getName()).endl();
     sb.append("  public Lzo%sProtobufB64LineOutputFormat() {", descriptorProto_.getName()).endl();
-    sb.append("    setTypeRef(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
+
+    String extensionRegistry = "null";
+    if(protoExtensionRegistryName_ != null) {
+      extensionRegistry = String.format("new %s().getRealExtensionRegistry()",
+          protoExtensionRegistryName_);
+    }
+
+    sb.append("    super(new TypeRef<%s>(){}, %s);", descriptorProto_.getName(),
+        extensionRegistry).endl();
     sb.append("  }").endl();
     sb.append("}").endl();
     sb.endl();

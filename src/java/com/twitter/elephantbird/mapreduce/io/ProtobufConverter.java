@@ -1,12 +1,9 @@
 package com.twitter.elephantbird.mapreduce.io;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.ExtensionRegistry;
-import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
@@ -22,7 +19,6 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
 
   private Message.Builder protoBuilder;
   private TypeRef<M> typeRef;
-  private List<GeneratedExtension<M, ?>> protoExtensions;
   private ExtensionRegistry extensionRegistry;
 
   // limit the number of warnings in case of serialization errors.
@@ -51,23 +47,23 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   }
 
   public static <M extends Message> ProtobufConverter<M> newInstance(
-      Class<M> protoClass, List<GeneratedExtension<M, ?>> protoExtensions) {
+      Class<M> protoClass, ExtensionRegistry extensionRegistry) {
     return ProtobufConverter.newInstance(new TypeRef<M>(protoClass){},
-        protoExtensions);
+        extensionRegistry);
   }
 
   public static <M extends Message> ProtobufConverter<M> newInstance(
-      TypeRef<M> typeRef, List<GeneratedExtension<M, ?>> protoExtensions) {
-    return new ProtobufConverter<M>(typeRef, protoExtensions);
+      TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+    return new ProtobufConverter<M>(typeRef, extensionRegistry);
   }
 
   public ProtobufConverter(TypeRef<M> typeRef) {
-    this.typeRef = typeRef;
+    this(typeRef, null);
   }
 
-  public ProtobufConverter(TypeRef<M> typeRef, List<GeneratedExtension<M, ?>> protoExtensions) {
-    this(typeRef);
-    this.protoExtensions = protoExtensions;
+  public ProtobufConverter(TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+    this.typeRef = typeRef;
+    this.extensionRegistry = extensionRegistry;
   }
 
 
@@ -77,9 +73,6 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     try {
       if (protoBuilder == null) {
         protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
-      }
-      if (protoExtensions != null && extensionRegistry == null) {
-        initExtensionRegistry();
       }
 
       if (extensionRegistry != null) {
@@ -96,27 +89,27 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     return null;
   }
 
-  private void initExtensionRegistry() {
-    ExtensionRegistry registry = ExtensionRegistry.newInstance();
-    for(GeneratedExtension<M, ?> e: protoExtensions) {
-
-//      GeneratedExtension<M, ?> extensionObj = null;
-//      for(Field f: e.getFields()) {
-//        if (GeneratedExtension.class.isAssignableFrom(f.getType())) {
-//          try {
-//            extensionObj = (GeneratedExtension<M, ?>) f.get(null);
-//          } catch (IllegalAccessException ex) {
-//            logWarning("Fail to get protobuf extension field " + f.getName(), ex);
-//            continue;
-//          }
-//          registry.add(extensionObj);
-//        }
-//      }
-      registry.add(e);
-    }
-
-    extensionRegistry = registry;
-  }
+//  private void initExtensionRegistry() {
+//    ExtensionRegistry registry = ExtensionRegistry.newInstance();
+//    for(GeneratedExtension<M, ?> e: protoExtensions) {
+//
+////      GeneratedExtension<M, ?> extensionObj = null;
+////      for(Field f: e.getFields()) {
+////        if (GeneratedExtension.class.isAssignableFrom(f.getType())) {
+////          try {
+////            extensionObj = (GeneratedExtension<M, ?>) f.get(null);
+////          } catch (IllegalAccessException ex) {
+////            logWarning("Fail to get protobuf extension field " + f.getName(), ex);
+////            continue;
+////          }
+////          registry.add(extensionObj);
+////        }
+////      }
+//      registry.add(e);
+//    }
+//
+//    extensionRegistry = registry;
+//  }
 
   @Override
   public byte[] toBytes(M message) {
@@ -131,10 +124,10 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     ProtobufConverter<?> rhs = (ProtobufConverter<?>)obj;
     try {
       ret = typeRef.getType().equals(rhs.typeRef.getType());
-      if(protoExtensions != null) {
-        ret = protoExtensions.equals(rhs.protoExtensions);
+      if(extensionRegistry != null) {
+        ret = extensionRegistry.equals(rhs.extensionRegistry);
       } else {
-        ret = rhs.protoExtensions == null;
+        ret = rhs.extensionRegistry == null;
       }
     } catch (ClassCastException e) {
     }
@@ -145,8 +138,8 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   public int hashCode() {
 	int hashCode = 7;
 	hashCode = 31 * hashCode + typeRef.getType().hashCode();
-	hashCode = 31 * hashCode + (protoExtensions == null ? 0 :
-	  protoExtensions.hashCode());
+	hashCode = 31 * hashCode + (extensionRegistry == null ? 0 :
+	  extensionRegistry.hashCode());
 
 	return hashCode;
   }

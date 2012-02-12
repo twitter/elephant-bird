@@ -1,7 +1,6 @@
 package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
@@ -12,11 +11,15 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -34,44 +37,30 @@ public class ProtobufWritableConverter<M extends Message> extends
 
   protected final TypeRef<M> typeRef;
   protected final ProtobufToPig protobufToPig;
-  protected List<FieldDescriptor> extensionDescriptors;
+  protected ProtobufExtensionRegistry<M> protoExtensionRegistry;
 
   public ProtobufWritableConverter(String protobufClassName) {
     this(protobufClassName, null);
   }
 
   public ProtobufWritableConverter(String protoClassName,
-      String[] protoExtensionNames) {
+      String extensionRegistryClassName) {
     super(new ProtobufWritable<M>());
 
     Preconditions.checkNotNull(protoClassName);
     typeRef = PigUtil.getProtobufTypeRef(protoClassName);
     protobufToPig = new ProtobufToPig();
-    if (protoExtensionNames !=null) {
-      setExtentionNames(protoExtensionNames);
+
+    ExtensionRegistry extensionRegistry = null;
+    if(extensionRegistryClassName != null) {
+      @SuppressWarnings("unchecked")
+      Class<? extends ProtobufExtensionRegistry<M>> extRegClass =
+        (Class<? extends ProtobufExtensionRegistry<M>>) PigUtil.getClass(extensionRegistryClassName);
+      protoExtensionRegistry = Protobufs.safeNewInstance(extRegClass);
+      extensionRegistry = protoExtensionRegistry.getRealExtensionRegistry();
     }
+    writable.setExtensionRegistry(extensionRegistry);
     writable.setConverter(typeRef.getRawClass());
-  }
-
-  @SuppressWarnings("unchecked")
-  private void setExtentionNames(String[] protoExtensionNames) {
-    List<GeneratedExtension<M, ?>> protoExtensions = new ArrayList<GeneratedExtension<M,?>>();
-    List<FieldDescriptor> fds = new ArrayList<FieldDescriptor>();
-
-    for(String e: protoExtensionNames) {
-      String enclosingClassName = e.substring(0, e.lastIndexOf('.'));
-      String extensionName = e.substring(e.lastIndexOf('.') + 1);
-      try {
-        Class<?> enclosingClass = Class.forName(enclosingClassName);
-        GeneratedExtension<M, ?> extension = (GeneratedExtension<M, ?>) enclosingClass.getField(extensionName).get(null);
-        fds.add(extension.getDescriptor());
-        protoExtensions.add(extension);
-      } catch (Exception ex) {
-        LOG.error(ex.toString(), ex);
-      }
-    }
-    writable.setExtensions(protoExtensions);
-    extensionDescriptors = fds;
   }
 
   @Override
@@ -86,8 +75,17 @@ public class ProtobufWritableConverter<M extends Message> extends
   @Override
   public ResourceFieldSchema getLoadSchema() throws IOException {
     Schema schema = protobufToPig.toSchema(Protobufs.getMessageDescriptor(typeRef.getRawClass()));
-    if (extensionDescriptors != null) {
-      for(FieldDescriptor fd: extensionDescriptors) {
+
+    if (protoExtensionRegistry != null) {
+      List<FieldDescriptor> fds = Lists.transform(protoExtensionRegistry.getExtensions(),
+          new Function<GeneratedExtension<M, ?>, FieldDescriptor>() {
+        @Override
+        public FieldDescriptor apply(GeneratedExtension<M, ?> extension) {
+          return extension.getDescriptor();
+        }
+      });
+
+      for(FieldDescriptor fd: fds) {
         FieldSchema fs = null;
         if(fd.getType() == FieldDescriptor.Type.MESSAGE) {
           fs = protobufToPig.messageToFieldSchema(fd);

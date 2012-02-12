@@ -33,6 +33,11 @@ public class ProtogenHelper {
     return String.format("%s.%s.%s", packageName, protoFilename, protoName);
   }
 
+  public static String getProtoTypeFullName(String packageName,
+      String protoName) {
+    return String.format("%s.%s", packageName, protoName);
+  }
+
   public static String getProtoName(FileDescriptorProto fileDescriptorProto) {
       String protoName = ProtogenHelper.getProtoNameFromFilename(fileDescriptorProto.getName());
       if (fileDescriptorProto.getOptions().hasJavaOuterClassname()) {
@@ -48,16 +53,4 @@ public class ProtogenHelper {
       }
       return packageName;
   }
-
-//  public static String genProtoExtensionListCode(Collection<String> protoExtensionNames) {
-//    List<GeneratedExtension<Person, ?>> list = new ArrayList<GeneratedExtension<Person,?>>();
-//    List<GeneratedExtension<Person, ?>> ll = Arrays.asList(PersonExt.extInfo, AddressBookProtos.JustPersonExtExtEnclosingType.extExtInfo);
-//
-//    FormattingStringBuffer sb = new FormattingStringBuffer();
-//
-//    sb.append("new ArrayList<List<Generate, args)
-//
-//    return null;
-//  }
-
 }

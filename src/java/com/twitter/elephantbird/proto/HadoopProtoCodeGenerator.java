@@ -24,6 +24,7 @@ import com.google.protobuf.compiler.Plugin.CodeGeneratorRequest;
 import com.google.protobuf.compiler.Plugin.CodeGeneratorResponse;
 import com.google.protobuf.compiler.Plugin.CodeGeneratorResponse.File;
 import com.twitter.elephantbird.proto.codegen.ProtoCodeGenerator;
+import com.twitter.elephantbird.proto.codegen.ProtobufExtensionRegistryGenerator;
 import com.twitter.elephantbird.proto.util.ProtogenHelper;
 import com.twitter.elephantbird.util.Strings;
 
@@ -57,18 +58,21 @@ public class HadoopProtoCodeGenerator {
       }
       List<String> codeGenClasses = (List<String>)config.get(protoFileKey);
 
+      boolean enableProtoExtensionSupport = codeGenClasses.indexOf(
+          ProtobufExtensionRegistryGenerator.class.getName()) != -1;
+
       for (DescriptorProto descriptorProto: fileDescriptorProto.getMessageTypeList()) {
-        String fullClassName = ProtogenHelper.getProtoClassFullName(packageName, protoName, descriptorProto.getName());
+        String fullTypeName = ProtogenHelper.getProtoTypeFullName(packageName, descriptorProto.getName());
+        String protoExtensionRegistryName = null;
+        if(enableProtoExtensionSupport) {
+          protoExtensionRegistryName =
+            ProtobufExtensionRegistryGenerator.getProtobufExtensionRegistryClassName(
+              packageName, descriptorProto);
+        }
+
         List<ProtoCodeGenerator> codeGenerators = Lists.transform(codeGenClasses,
             createCodeGenerator(protoName, packageName, descriptorProto,
-                protoExtensionNames.get(fullClassName)));
-//        System.err.println("-----------------------------------------");
-//        System.err.println(descriptorProto);
-//        if(descriptorProto.getExtensionCount() > 0) {
-//          System.err.println("got extension");
-//          System.err.println(descriptorProto.getExtensionList());
-//        }
-//        System.err.println("-----------------------------------------");
+                protoExtensionNames.get(fullTypeName), protoExtensionRegistryName));
 
         for (ProtoCodeGenerator codeGenerator: codeGenerators) {
           System.err.println("Creating " + codeGenerator.getFilename());
@@ -78,12 +82,6 @@ public class HadoopProtoCodeGenerator {
                                       .build());
         }
       }
-//      System.err.println("---------extension list-----------------");
-//      for(FieldDescriptorProto e: fileDescriptorProto.getExtensionList()) {
-////        e.getDescriptorForType().getContainingType().getClass()
-//        System.err.println(e);
-//      }
-//      System.err.println("---------extension list-----------------");
     }
 
     CodeGeneratorResponse response = responseBuilder.build();
@@ -94,14 +92,15 @@ public class HadoopProtoCodeGenerator {
 
   private static Function<String, ProtoCodeGenerator> createCodeGenerator(
       final String protoFilename, final String packageName,
-      final DescriptorProto proto, final Set<String> protoExtensionNames) {
+      final DescriptorProto proto, final Set<String> protoExtensionNames,
+      final String protoExtensionRegistryName) {
     return new Function<String, ProtoCodeGenerator>() {
       @Override
       public ProtoCodeGenerator apply(String classname) {
         try {
           Class<? extends ProtoCodeGenerator> codeGenClass = Class.forName(classname).asSubclass(ProtoCodeGenerator.class);
           ProtoCodeGenerator codeGenerator = codeGenClass.newInstance();
-          codeGenerator.configure(protoFilename, packageName, proto, protoExtensionNames);
+          codeGenerator.configure(protoFilename, packageName, proto, protoExtensionNames, protoExtensionRegistryName);
           return codeGenerator;
         } catch (IllegalAccessException e) {
           throw new IllegalArgumentException("Couldn't instantiate class " + classname, e);
@@ -119,12 +118,12 @@ public class HadoopProtoCodeGenerator {
       CodeGeneratorRequest request) {
     Map<String, Set<String>> protoExtensionNames = new HashMap<String, Set<String>>();
     for(FileDescriptorProto e: request.getProtoFileList()) {
-      String enclosingName = ProtogenHelper.getPackageName(e) + "." + ProtogenHelper.getProtoName(e);
+      String enclosingClassName = ProtogenHelper.getPackageName(e) + "." + ProtogenHelper.getProtoName(e);
       for(DescriptorProto dp: e.getMessageTypeList()) {
-        populateProtobufExtensions(dp, protoExtensionNames, enclosingName);
+        populateProtobufExtensions(dp, protoExtensionNames, enclosingClassName);
       }
       for(FieldDescriptorProto extension: e.getExtensionList()) {
-        populateProtobufExtensions(extension, protoExtensionNames, enclosingName);
+        populateProtobufExtensions(extension, protoExtensionNames, enclosingClassName);
       }
     }
 
@@ -138,13 +137,6 @@ public class HadoopProtoCodeGenerator {
     for(FieldDescriptorProto fdp: descriptorProto.getExtensionList()) {
       HadoopProtoCodeGenerator.populateProtobufExtensions(fdp, protoExtensionNames,
           newEnclosingClassName);
-//      String extendee = HadoopProtoCodeGenerator.getExtendeeClassName(fdp);
-//      Set<String> classNames = protoExtensionNames.get(extendee);
-//      if(classNames == null) {
-//        classNames = new TreeSet<String>();
-//        protoExtensionNames.put(extendee, classNames);
-//      }
-//      classNames.add(newEnclosingClassName + "." + Strings.camelize(fdp.getName(), true));
     }
 
     for(DescriptorProto dp: descriptorProto.getNestedTypeList()) {
@@ -155,7 +147,7 @@ public class HadoopProtoCodeGenerator {
 
   private static void populateProtobufExtensions(FieldDescriptorProto fieldDescriptorProto,
       Map<String, Set<String>> protoExtensionNames, String enclosingClassName) {
-    String extendee = HadoopProtoCodeGenerator.getExtendeeClassName(fieldDescriptorProto);
+    String extendee = HadoopProtoCodeGenerator.getExtendeeFullName(fieldDescriptorProto);
     assert(extendee != null);
 
     Set<String> extensionNames = protoExtensionNames.get(extendee);
@@ -166,7 +158,7 @@ public class HadoopProtoCodeGenerator {
     extensionNames.add(enclosingClassName + "." + Strings.camelize(fieldDescriptorProto.getName(), true));
   }
 
-  private static String getExtendeeClassName(FieldDescriptorProto fieldDescriptorProto) {
+  private static String getExtendeeFullName(FieldDescriptorProto fieldDescriptorProto) {
     return StringUtils.removeStart(fieldDescriptorProto.getExtendee(), ".");
   }
 }

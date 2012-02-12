@@ -3,14 +3,14 @@ package com.twitter.elephantbird.pig.util;
 import java.io.IOException;
 import java.util.Map;
 
-import com.google.common.base.Preconditions;
-
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Writable;
 import org.apache.pig.LoadCaster;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Base LoadCaster implementation which simplifies conversion specification from Writable type to
@@ -28,6 +28,10 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   }
 
   public WritableLoadCaster() {
+  }
+
+  public void setWritable(W writable) {
+    this.writable = writable;
   }
 
   /**
@@ -77,7 +81,8 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   public Map<String, Object> bytesToMap(byte[] bytes) throws IOException {
     return toMap(writable = readFields(bytes, writable));
   }
-  
+
+  @Override
   public Map<String, Object> bytesToMap(byte[] bytes, ResourceFieldSchema schema) throws IOException {
     return toMap(writable = readFields(bytes, writable), schema);
   }
@@ -115,7 +120,7 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   protected Map<String, Object> toMap(W writable) throws IOException {
     throw new UnsupportedOperationException();
   }
-  
+
   protected Map<String, Object> toMap(W writable, ResourceFieldSchema schema) throws IOException {
     throw new UnsupportedOperationException();
   }

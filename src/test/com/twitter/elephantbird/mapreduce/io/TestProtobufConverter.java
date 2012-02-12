@@ -3,13 +3,11 @@ package com.twitter.elephantbird.mapreduce.io;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.twitter.data.proto.tutorial.AddressBookProtos;
@@ -44,14 +42,16 @@ public class TestProtobufConverter {
 //      System.out.println(e.getKey().getName());
 //    }
 
-    List<GeneratedExtension<Person, ?>> personExtensions =
-      new ArrayList<GeneratedExtension<Person, ?>>();
-    personExtensions.add(PersonExt.extInfo);
-    ProtobufConverter<Person> personConverter1 = ProtobufConverter.newInstance(
-        Person.class, personExtensions);
+    ExtensionRegistry personExtregistry = ExtensionRegistry.newInstance();
+    AddressBookProtos.registerAllExtensions(personExtregistry);
 
-//    System.out.println(converterWithExt.fromBytes(converterWithExt.toBytes(p1)));
-//    System.out.println(converterWithExt.fromBytes(converterWithExt.toBytes(p1)).getUnknownFields());
+    ProtobufConverter<Person> personConverter1 = ProtobufConverter.newInstance(
+        Person.class, personExtregistry);
+    System.out.println("----------------------------");
+    System.out.println(personConverter1.fromBytes(personConverter1.toBytes(p1)));
+    System.out.println("***********************************");
+    System.out.println(personConverter1.fromBytes(personConverter1.toBytes(p1)).getUnknownFields());
+    System.out.println("----------------------------");
     Person.Builder builder = Person.newBuilder();
     builder.mergeFrom(p1.toByteArray());
     Person pp = personConverter1.fromBytes(p1.toByteArray());
@@ -78,11 +78,10 @@ public class TestProtobufConverter {
     .setExtension(AddressBookProtos.name, "Private")
     .build();
 
-    List<GeneratedExtension<AddressBook, ?>> abExtensions =
-      new ArrayList<GeneratedExtension<AddressBook, ?>>();
-    abExtensions.add(AddressBookProtos.name);
+    ExtensionRegistry abExtRegistry = ExtensionRegistry.newInstance();
+    abExtRegistry.add(AddressBookProtos.name);
     ProtobufConverter<AddressBook> abConverter1 = ProtobufConverter.newInstance(
-        AddressBook.class, abExtensions);
+        AddressBook.class, abExtRegistry);
 
     try {
       System.out.println(PersonExt.class.getName());

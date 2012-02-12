@@ -1,8 +1,6 @@
 package com.twitter.elephantbird.mapreduce.io;
 
-import java.util.List;
-
-import com.google.protobuf.GeneratedMessage.GeneratedExtension;
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -12,24 +10,28 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
 
-  private List<GeneratedExtension<M, ?>> protoExtensions;
+  private ExtensionRegistry extensionRegistry;
 
   public ProtobufWritable() {
-    super(null, null);
+    this(null, null, null);
   }
 
   public ProtobufWritable(TypeRef<M> typeRef) {
-    this(null, typeRef);
+    this(null, typeRef, null);
   }
 
   public ProtobufWritable(M message, TypeRef<M> typeRef) {
-    super(message, new ProtobufConverter<M>(typeRef));
+    this(message, typeRef, null);
   }
 
-  public <N extends Message> ProtobufWritable(TypeRef<M> typeRef,
-      List<GeneratedExtension<M, ?>> protoExtensions) {
-    this(typeRef);
-    this.protoExtensions = protoExtensions;
+
+  public ProtobufWritable(TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+    this(null, typeRef, extensionRegistry);
+  }
+
+  public ProtobufWritable(M message, TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+    super(message, new ProtobufConverter<M>(typeRef, extensionRegistry));
+    this.extensionRegistry = extensionRegistry;
   }
 
 
@@ -41,19 +43,28 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
   }
 
   public static <M extends Message> ProtobufWritable<M> newInstance(
-      Class<M> tClass, List<GeneratedExtension<M, ?>> protoExtensions) {
-    return new ProtobufWritable<M>(new TypeRef<M>(tClass){}, protoExtensions);
+      Class<M> tClass, ExtensionRegistry extensionRegistry) {
+    return new ProtobufWritable<M>(new TypeRef<M>(tClass){}, extensionRegistry);
+  }
+
+  public static <M extends Message> ProtobufWritable<M> newInstance(TypeRef<M> typeRef) {
+    return new ProtobufWritable<M>(typeRef);
+  }
+
+  public static <M extends Message> ProtobufWritable<M> newInstance(
+      TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+    return new ProtobufWritable<M>(typeRef, extensionRegistry);
   }
 
   @Override
   protected BinaryConverter<M> getConverterFor(Class<M> clazz) {
-    if (protoExtensions !=null) {
-      return ProtobufConverter.newInstance(clazz, protoExtensions);
+    if (extensionRegistry !=null) {
+      return ProtobufConverter.newInstance(clazz, extensionRegistry);
     }
     return ProtobufConverter.newInstance(clazz);
   }
 
-  public void setExtensions(List<GeneratedExtension<M, ?>> protoExtensionClasses) {
-    this.protoExtensions = protoExtensionClasses;
+  public void setExtensionRegistry(ExtensionRegistry extensionRegistry) {
+    this.extensionRegistry = extensionRegistry;
   }
 }

@@ -1,7 +1,6 @@
 package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -9,9 +8,10 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import com.google.protobuf.GeneratedMessage.GeneratedExtension;
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -29,11 +29,11 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 
 public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFormat<LongWritable, ProtobufWritable<M>> {
-
   private TypeRef<M> typeRef_;
-  private List<GeneratedExtension<M, ?>> protoExtensions_;
+  private ExtensionRegistry extensionRegistry_;
 
   public LzoProtobufB64LineInputFormat() {
+    this(null, null);
   }
 
   public LzoProtobufB64LineInputFormat(TypeRef<M> typeRef) {
@@ -41,10 +41,10 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFo
   }
 
   public LzoProtobufB64LineInputFormat(TypeRef<M> typeRef,
-      List<GeneratedExtension<M, ?>> protoExtensions) {
+      ExtensionRegistry extensionRegistry) {
     super();
     this.typeRef_ = typeRef;
-    this.protoExtensions_ = protoExtensions;
+    this.extensionRegistry_ = extensionRegistry;
   }
 
   /**
@@ -55,21 +55,32 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFo
   @SuppressWarnings("rawtypes")
   public static <M extends Message> Class<LzoProtobufB64LineInputFormat>
      getInputFormatClass(Class<M> protoClass, Configuration jobConf) {
-    Protobufs.setClassConf(jobConf, LzoProtobufB64LineInputFormat.class, protoClass);
-    return LzoProtobufB64LineInputFormat.class;
+    return LzoProtobufB64LineInputFormat.getInputFormatClass(protoClass, null, jobConf);
   }
 
+  @SuppressWarnings("rawtypes")
   public static <M extends Message> Class<LzoProtobufB64LineInputFormat>
-    getInputFormatClass(Class<M> protoClass, List<Class<?>> protoExtensionClasses,
+    getInputFormatClass(Class<M> protoClass,
+        Class<? extends ProtobufExtensionRegistry<M>> extRegClass,
         Configuration jobConf) {
+    Protobufs.setClassConf(jobConf, LzoProtobufB64LineInputFormat.class, protoClass);
 
-    //TODO:
+    if(extRegClass != null) {
+      Protobufs.setExtensionRegistryClassConf(jobConf,
+          LzoProtobufB64LineInputFormat.class,
+          extRegClass);
+    }
 
-    return null;
+    return LzoProtobufB64LineInputFormat.class;
   }
 
   public static<M extends Message> LzoProtobufB64LineInputFormat<M> newInstance(TypeRef<M> typeRef) {
     return new LzoProtobufB64LineInputFormat<M>(typeRef);
+  }
+
+  public static <M extends Message> LzoProtobufB64LineInputFormat<M> newInstance(
+      TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+    return new LzoProtobufB64LineInputFormat<M>(typeRef, extensionRegistry);
   }
 
   @Override
@@ -79,9 +90,13 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends LzoInputFo
       typeRef_ = Protobufs.getTypeRef(taskAttempt.getConfiguration(), LzoProtobufB64LineInputFormat.class);
     }
 
-    if(protoExtensions_ == null) {
-
+    if(extensionRegistry_ == null) {
+      Class<? extends ProtobufExtensionRegistry<M>> extRegClass = Protobufs.getExtensionRegistryClassConf(
+          taskAttempt.getConfiguration(), LzoProtobufB64LineInputFormat.class);
+      if(extRegClass != null) {
+        extensionRegistry_ = Protobufs.safeNewInstance(extRegClass).getRealExtensionRegistry();
+      }
     }
-    return new LzoProtobufB64LineRecordReader<M>(typeRef_, protoExtensions_);
+    return new LzoProtobufB64LineRecordReader<M>(typeRef_, extensionRegistry_);
   }
 }

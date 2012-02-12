@@ -2,8 +2,8 @@ package com.twitter.elephantbird.mapreduce.io;
 
 import java.io.OutputStream;
 
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
-import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * A class to write blocks of protobuf data of type M.  To use, just instantiate
@@ -34,10 +34,21 @@ import com.twitter.elephantbird.util.TypeRef;
 public class ProtobufBlockWriter<M extends Message> extends BinaryBlockWriter<M> {
 
   public ProtobufBlockWriter(OutputStream out, Class<M> protoClass) {
-    super(out, protoClass, ProtobufConverter.newInstance(protoClass), DEFAULT_NUM_RECORDS_PER_BLOCK);
+    this(out, protoClass, null, DEFAULT_NUM_RECORDS_PER_BLOCK);
+  }
+
+  public ProtobufBlockWriter(OutputStream out, Class<M> protoClass,
+      ExtensionRegistry extensionRegistry) {
+    this(out, protoClass, extensionRegistry, DEFAULT_NUM_RECORDS_PER_BLOCK);
   }
 
   public ProtobufBlockWriter(OutputStream out, Class<M> protoClass, int numRecordsPerBlock) {
-    super(out, protoClass, ProtobufConverter.newInstance(protoClass), numRecordsPerBlock);
+    this(out, protoClass, null, numRecordsPerBlock);
+  }
+
+  public ProtobufBlockWriter(OutputStream out, Class<M> protoClass,
+      ExtensionRegistry extensionRegistry, int numRecordsPerBlock) {
+    super(out, protoClass, ProtobufConverter.newInstance(protoClass, extensionRegistry),
+        numRecordsPerBlock);
   }
 }
