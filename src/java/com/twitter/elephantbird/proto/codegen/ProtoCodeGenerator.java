@@ -18,8 +18,8 @@ public abstract class ProtoCodeGenerator {
   protected String protoFilename_;
   protected String packageName_;
   protected DescriptorProto descriptorProto_;
+  protected ProtoCodeGenOptions codeGenOptions_;
   protected Set<String> protoExtensionNames_;
-  protected String protoExtensionRegistryName_;
 
   /**
    * Configure the class with the relevant protocol buffer info
@@ -34,13 +34,13 @@ public abstract class ProtoCodeGenerator {
    * @param proto the descriptor for the proto itself.
    */
   public void configure(String protoFilename, String packageName,
-      DescriptorProto proto, Set<String> protoExtensionNames,
-      String protoExtensionRegistryName) {
+      DescriptorProto proto, ProtoCodeGenOptions codeGenOptions,
+      Set<String> protoExtensionNames) {
     protoFilename_ = protoFilename;
     packageName_ = packageName;
     descriptorProto_ = proto;
+    codeGenOptions_ = codeGenOptions;
     protoExtensionNames_ = protoExtensionNames;
-    protoExtensionRegistryName_ = protoExtensionRegistryName;
   }
 
   /**

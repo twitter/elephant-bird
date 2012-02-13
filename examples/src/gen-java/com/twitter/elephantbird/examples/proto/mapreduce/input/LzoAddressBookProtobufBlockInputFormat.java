@@ -6,7 +6,7 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class LzoAddressBookProtobufBlockInputFormat extends LzoProtobufBlockInputFormat<AddressBook> {
   public LzoAddressBookProtobufBlockInputFormat() {
-    setTypeRef(new TypeRef<AddressBook>(){});
+    super(new TypeRef<AddressBook>(){}, null);
   }
 }
 

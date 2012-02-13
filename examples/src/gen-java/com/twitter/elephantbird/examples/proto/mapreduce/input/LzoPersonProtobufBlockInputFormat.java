@@ -6,7 +6,7 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class LzoPersonProtobufBlockInputFormat extends LzoProtobufBlockInputFormat<Person> {
   public LzoPersonProtobufBlockInputFormat() {
-    setTypeRef(new TypeRef<Person>(){});
+    super(new TypeRef<Person>(){}, null);
   }
 }
 

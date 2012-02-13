@@ -7,9 +7,13 @@ public final class AddressBookProtos {
   private AddressBookProtos() {}
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registry.add(com.twitter.elephantbird.examples.proto.AddressBookProtos.name);
+    registry.add(com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.extInfo);
+    registry.add(com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.extExtInfo);
   }
   public static final class Person extends
-      com.google.protobuf.GeneratedMessage {
+      com.google.protobuf.GeneratedMessage.ExtendableMessage<
+        Person> {
     // Use Person.newBuilder() to construct.
     private Person() {
       initFields();
@@ -482,12 +486,15 @@ public final class AddressBookProtos {
       for (com.twitter.elephantbird.examples.proto.AddressBookProtos.Person.PhoneNumber element : getPhoneList()) {
         if (!element.isInitialized()) return false;
       }
+      if (!extensionsAreInitialized()) return false;
       return true;
     }
     
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
+      com.google.protobuf.GeneratedMessage.ExtendableMessage
+        .ExtensionWriter extensionWriter = newExtensionWriter();
       if (hasName()) {
         output.writeString(1, getName());
       }
@@ -500,6 +507,7 @@ public final class AddressBookProtos {
       for (com.twitter.elephantbird.examples.proto.AddressBookProtos.Person.PhoneNumber element : getPhoneList()) {
         output.writeMessage(4, element);
       }
+      extensionWriter.writeUntil(536870912, output);
       getUnknownFields().writeTo(output);
     }
     
@@ -525,6 +533,7 @@ public final class AddressBookProtos {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(4, element);
       }
+      size += extensionsSerializedSize();
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
@@ -605,7 +614,8 @@ public final class AddressBookProtos {
     public Builder toBuilder() { return newBuilder(this); }
     
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> {
+        com.google.protobuf.GeneratedMessage.ExtendableBuilder<
+          com.twitter.elephantbird.examples.proto.AddressBookProtos.Person, Builder> {
       private com.twitter.elephantbird.examples.proto.AddressBookProtos.Person result;
       
       // Construct using com.twitter.elephantbird.examples.proto.AddressBookProtos.Person.newBuilder()
@@ -702,6 +712,7 @@ public final class AddressBookProtos {
           }
           result.phone_.addAll(other.phone_);
         }
+        this.mergeExtensionFields(other);
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -874,7 +885,8 @@ public final class AddressBookProtos {
   }
   
   public static final class AddressBook extends
-      com.google.protobuf.GeneratedMessage {
+      com.google.protobuf.GeneratedMessage.ExtendableMessage<
+        AddressBook> {
     // Use AddressBook.newBuilder() to construct.
     private AddressBook() {
       initFields();
@@ -918,15 +930,19 @@ public final class AddressBookProtos {
       for (com.twitter.elephantbird.examples.proto.AddressBookProtos.Person element : getPersonList()) {
         if (!element.isInitialized()) return false;
       }
+      if (!extensionsAreInitialized()) return false;
       return true;
     }
     
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
+      com.google.protobuf.GeneratedMessage.ExtendableMessage
+        .ExtensionWriter extensionWriter = newExtensionWriter();
       for (com.twitter.elephantbird.examples.proto.AddressBookProtos.Person element : getPersonList()) {
         output.writeMessage(1, element);
       }
+      extensionWriter.writeUntil(536870912, output);
       getUnknownFields().writeTo(output);
     }
     
@@ -940,6 +956,7 @@ public final class AddressBookProtos {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, element);
       }
+      size += extensionsSerializedSize();
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
@@ -1020,7 +1037,8 @@ public final class AddressBookProtos {
     public Builder toBuilder() { return newBuilder(this); }
     
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> {
+        com.google.protobuf.GeneratedMessage.ExtendableBuilder<
+          com.twitter.elephantbird.examples.proto.AddressBookProtos.AddressBook, Builder> {
       private com.twitter.elephantbird.examples.proto.AddressBookProtos.AddressBook result;
       
       // Construct using com.twitter.elephantbird.examples.proto.AddressBookProtos.AddressBook.newBuilder()
@@ -1108,6 +1126,7 @@ public final class AddressBookProtos {
           }
           result.person_.addAll(other.person_);
         }
+        this.mergeExtensionFields(other);
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -1207,6 +1226,559 @@ public final class AddressBookProtos {
     // @@protoc_insertion_point(class_scope:com.twitter.elephantbird.examples.proto.AddressBook)
   }
   
+  public static final class PersonExt extends
+      com.google.protobuf.GeneratedMessage {
+    // Use PersonExt.newBuilder() to construct.
+    private PersonExt() {
+      initFields();
+    }
+    private PersonExt(boolean noInit) {}
+    
+    private static final PersonExt defaultInstance;
+    public static PersonExt getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public PersonExt getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.twitter.elephantbird.examples.proto.AddressBookProtos.internal_static_com_twitter_elephantbird_examples_proto_PersonExt_descriptor;
+    }
+    
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.twitter.elephantbird.examples.proto.AddressBookProtos.internal_static_com_twitter_elephantbird_examples_proto_PersonExt_fieldAccessorTable;
+    }
+    
+    public static final int EXT_INFO_FIELD_NUMBER = 1000;
+    public static final
+      com.google.protobuf.GeneratedMessage.GeneratedExtension<
+        com.twitter.elephantbird.examples.proto.AddressBookProtos.Person,
+        com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt> extInfo =
+          com.google.protobuf.GeneratedMessage
+            .newGeneratedExtension();
+    // optional string address = 1;
+    public static final int ADDRESS_FIELD_NUMBER = 1;
+    private boolean hasAddress;
+    private java.lang.String address_ = "";
+    public boolean hasAddress() { return hasAddress; }
+    public java.lang.String getAddress() { return address_; }
+    
+    private void initFields() {
+    }
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (hasAddress()) {
+        output.writeString(1, getAddress());
+      }
+      getUnknownFields().writeTo(output);
+    }
+    
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+    
+      size = 0;
+      if (hasAddress()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeStringSize(1, getAddress());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+    
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> {
+      private com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt result;
+      
+      // Construct using com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt();
+        return builder;
+      }
+      
+      protected com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.getDescriptor();
+      }
+      
+      public com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt getDefaultInstanceForType() {
+        return com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      public com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      private com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt buildParsed()
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt buildPartial() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt) {
+          return mergeFrom((com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+      
+      public Builder mergeFrom(com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt other) {
+        if (other == com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.getDefaultInstance()) return this;
+        if (other.hasAddress()) {
+          setAddress(other.getAddress());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+      
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder(
+            this.getUnknownFields());
+        while (true) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              this.setUnknownFields(unknownFields.build());
+              return this;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                this.setUnknownFields(unknownFields.build());
+                return this;
+              }
+              break;
+            }
+            case 10: {
+              setAddress(input.readString());
+              break;
+            }
+          }
+        }
+      }
+      
+      
+      // optional string address = 1;
+      public boolean hasAddress() {
+        return result.hasAddress();
+      }
+      public java.lang.String getAddress() {
+        return result.getAddress();
+      }
+      public Builder setAddress(java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasAddress = true;
+        result.address_ = value;
+        return this;
+      }
+      public Builder clearAddress() {
+        result.hasAddress = false;
+        result.address_ = getDefaultInstance().getAddress();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:com.twitter.elephantbird.examples.proto.PersonExt)
+    }
+    
+    static {
+      defaultInstance = new PersonExt(true);
+      com.twitter.elephantbird.examples.proto.AddressBookProtos.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:com.twitter.elephantbird.examples.proto.PersonExt)
+  }
+  
+  public static final class JustPersonExtExtEnclosingType extends
+      com.google.protobuf.GeneratedMessage {
+    // Use JustPersonExtExtEnclosingType.newBuilder() to construct.
+    private JustPersonExtExtEnclosingType() {
+      initFields();
+    }
+    private JustPersonExtExtEnclosingType(boolean noInit) {}
+    
+    private static final JustPersonExtExtEnclosingType defaultInstance;
+    public static JustPersonExtExtEnclosingType getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public JustPersonExtExtEnclosingType getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.twitter.elephantbird.examples.proto.AddressBookProtos.internal_static_com_twitter_elephantbird_examples_proto_JustPersonExtExtEnclosingType_descriptor;
+    }
+    
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.twitter.elephantbird.examples.proto.AddressBookProtos.internal_static_com_twitter_elephantbird_examples_proto_JustPersonExtExtEnclosingType_fieldAccessorTable;
+    }
+    
+    public static final int EXT_EXT_INFO_FIELD_NUMBER = 1001;
+    public static final
+      com.google.protobuf.GeneratedMessage.GeneratedExtension<
+        com.twitter.elephantbird.examples.proto.AddressBookProtos.Person,
+        java.lang.String> extExtInfo =
+          com.google.protobuf.GeneratedMessage
+            .newGeneratedExtension();
+    private void initFields() {
+    }
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      getUnknownFields().writeTo(output);
+    }
+    
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+    
+      size = 0;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+    
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> {
+      private com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType result;
+      
+      // Construct using com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType();
+        return builder;
+      }
+      
+      protected com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.getDescriptor();
+      }
+      
+      public com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType getDefaultInstanceForType() {
+        return com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      public com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      private com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType buildParsed()
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType buildPartial() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType) {
+          return mergeFrom((com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+      
+      public Builder mergeFrom(com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType other) {
+        if (other == com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+      
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder(
+            this.getUnknownFields());
+        while (true) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              this.setUnknownFields(unknownFields.build());
+              return this;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                this.setUnknownFields(unknownFields.build());
+                return this;
+              }
+              break;
+            }
+          }
+        }
+      }
+      
+      
+      // @@protoc_insertion_point(builder_scope:com.twitter.elephantbird.examples.proto.JustPersonExtExtEnclosingType)
+    }
+    
+    static {
+      defaultInstance = new JustPersonExtExtEnclosingType(true);
+      com.twitter.elephantbird.examples.proto.AddressBookProtos.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:com.twitter.elephantbird.examples.proto.JustPersonExtExtEnclosingType)
+  }
+  
+  public static final int NAME_FIELD_NUMBER = 1001;
+  public static final
+    com.google.protobuf.GeneratedMessage.GeneratedExtension<
+      com.twitter.elephantbird.examples.proto.AddressBookProtos.AddressBook,
+      java.lang.String> name =
+        com.google.protobuf.GeneratedMessage
+          .newGeneratedExtension();
   private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_twitter_elephantbird_examples_proto_Person_descriptor;
   private static
@@ -1222,6 +1794,16 @@ public final class AddressBookProtos {
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_twitter_elephantbird_examples_proto_AddressBook_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_twitter_elephantbird_examples_proto_PersonExt_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_com_twitter_elephantbird_examples_proto_PersonExt_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_twitter_elephantbird_examples_proto_JustPersonExtExtEnclosingType_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_com_twitter_elephantbird_examples_proto_JustPersonExtExtEnclosingType_fieldAccessorTable;
   
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -1232,17 +1814,25 @@ public final class AddressBookProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\022address_book.proto\022\'com.twitter.elepha" +
-      "ntbird.examples.proto\"\230\002\n\006Person\022\014\n\004name" +
+      "ntbird.examples.proto\"\243\002\n\006Person\022\014\n\004name" +
       "\030\001 \002(\t\022\n\n\002id\030\002 \002(\005\022\r\n\005email\030\003 \001(\t\022J\n\005pho" +
       "ne\030\004 \003(\0132;.com.twitter.elephantbird.exam" +
       "ples.proto.Person.PhoneNumber\032l\n\013PhoneNu" +
       "mber\022\016\n\006number\030\001 \002(\t\022M\n\004type\030\002 \001(\01629.com" +
       ".twitter.elephantbird.examples.proto.Per" +
       "son.PhoneType:\004HOME\"+\n\tPhoneType\022\n\n\006MOBI" +
-      "LE\020\000\022\010\n\004HOME\020\001\022\010\n\004WORK\020\002\"N\n\013AddressBook\022" +
-      "?\n\006person\030\001 \003(\0132/.com.twitter.elephantbi",
-      "rd.examples.proto.PersonB\023B\021AddressBookP" +
-      "rotos"
+      "LE\020\000\022\010\n\004HOME\020\001\022\010\n\004WORK\020\002*\t\010\350\007\020\200\200\200\200\002\"Y\n\013A" +
+      "ddressBook\022?\n\006person\030\001 \003(\0132/.com.twitter",
+      ".elephantbird.examples.proto.Person*\t\010\350\007" +
+      "\020\200\200\200\200\002\"\224\001\n\tPersonExt\022\017\n\007address\030\001 \001(\t2v\n" +
+      "\010ext_info\022/.com.twitter.elephantbird.exa" +
+      "mples.proto.Person\030\350\007 \001(\01322.com.twitter." +
+      "elephantbird.examples.proto.PersonExt\"g\n" +
+      "\035JustPersonExtExtEnclosingType2F\n\014ext_ex" +
+      "t_info\022/.com.twitter.elephantbird.exampl" +
+      "es.proto.Person\030\351\007 \001(\t:C\n\004name\0224.com.twi" +
+      "tter.elephantbird.examples.proto.Address" +
+      "Book\030\351\007 \001(\tB\023B\021AddressBookProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -1273,6 +1863,31 @@ public final class AddressBookProtos {
               new java.lang.String[] { "Person", },
               com.twitter.elephantbird.examples.proto.AddressBookProtos.AddressBook.class,
               com.twitter.elephantbird.examples.proto.AddressBookProtos.AddressBook.Builder.class);
+          internal_static_com_twitter_elephantbird_examples_proto_PersonExt_descriptor =
+            getDescriptor().getMessageTypes().get(2);
+          internal_static_com_twitter_elephantbird_examples_proto_PersonExt_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_com_twitter_elephantbird_examples_proto_PersonExt_descriptor,
+              new java.lang.String[] { "Address", },
+              com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.class,
+              com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.Builder.class);
+          com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.extInfo.internalInit(
+              com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.getDescriptor().getExtensions().get(0),
+              com.twitter.elephantbird.examples.proto.AddressBookProtos.PersonExt.class);
+          internal_static_com_twitter_elephantbird_examples_proto_JustPersonExtExtEnclosingType_descriptor =
+            getDescriptor().getMessageTypes().get(3);
+          internal_static_com_twitter_elephantbird_examples_proto_JustPersonExtExtEnclosingType_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_com_twitter_elephantbird_examples_proto_JustPersonExtExtEnclosingType_descriptor,
+              new java.lang.String[] { },
+              com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.class,
+              com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.Builder.class);
+          com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.extExtInfo.internalInit(
+              com.twitter.elephantbird.examples.proto.AddressBookProtos.JustPersonExtExtEnclosingType.getDescriptor().getExtensions().get(0),
+              java.lang.String.class);
+          com.twitter.elephantbird.examples.proto.AddressBookProtos.name.internalInit(
+              com.twitter.elephantbird.examples.proto.AddressBookProtos.getDescriptor().getExtensions().get(0),
+              java.lang.String.class);
           return null;
         }
       };

@@ -1,4 +1,4 @@
-package com.twitter.data.proto.tutorial;
+package com.twitter.elephantbird.examples.proto;
 
 // The sample protocol buffer file that Google uses in their examples at
 // http://code.google.com/p/protobuf.

@@ -28,9 +28,10 @@ public class LzoProtobufB64LineInputFormatGenerator extends ProtoCodeGenerator {
     sb.append("  public Lzo%sProtobufB64LineInputFormat() {", descriptorProto_.getName()).endl();
 
     String extensionRegistry = "null";
-    if(protoExtensionRegistryName_ != null) {
+    if(codeGenOptions_.isSupportProtobufExtension()) {
       extensionRegistry = String.format("new %s().getRealExtensionRegistry()",
-          protoExtensionRegistryName_);
+          ProtobufExtensionRegistryGenerator.getProtobufExtensionRegistryClassName(
+              packageName_, descriptorProto_));
     }
 
     sb.append("    super(new TypeRef<%s>(){}, %s);", descriptorProto_.getName(),

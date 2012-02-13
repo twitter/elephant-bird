@@ -6,7 +6,7 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class LzoPersonProtobufB64LineInputFormat extends LzoProtobufB64LineInputFormat<Person> {
   public LzoPersonProtobufB64LineInputFormat() {
-    setTypeRef(new TypeRef<Person>(){});
+    super(new TypeRef<Person>(){}, null);
   }
 }
 

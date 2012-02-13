@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +24,16 @@ import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
 import com.google.protobuf.compiler.Plugin.CodeGeneratorRequest;
 import com.google.protobuf.compiler.Plugin.CodeGeneratorResponse;
 import com.google.protobuf.compiler.Plugin.CodeGeneratorResponse.File;
+import com.twitter.elephantbird.proto.codegen.ProtoCodeGenOptions;
 import com.twitter.elephantbird.proto.codegen.ProtoCodeGenerator;
 import com.twitter.elephantbird.proto.codegen.ProtobufExtensionRegistryGenerator;
 import com.twitter.elephantbird.proto.util.ProtogenHelper;
 import com.twitter.elephantbird.util.Strings;
 
 public class HadoopProtoCodeGenerator {
+
+  private static final String BUILTIN_KEY_OPTIONS = "__options__";
+
   public static void main(String[] args) throws IOException, YamlException {
     if (args.length < 1) {
       System.err.println("Usage: " + HadoopProtoCodeGenerator.class + " config_file");
@@ -40,11 +45,19 @@ public class HadoopProtoCodeGenerator {
     YamlReader reader = new YamlReader(new InputStreamReader(new FileInputStream(args[0])));
     Map<String, Object> config = reader.read(Map.class);
 
+    ProtoCodeGenOptions codeGenOptions = new ProtoCodeGenOptions();
+    if(config.containsKey(BUILTIN_KEY_OPTIONS)) {
+      codeGenOptions.setOptions((Map<String, String>)config.get(BUILTIN_KEY_OPTIONS));
+    }
+
     BufferedInputStream inputStream = new BufferedInputStream(System.in);
     CodeGeneratorRequest request = CodeGeneratorRequest.parseFrom(inputStream);
     CodeGeneratorResponse.Builder responseBuilder = CodeGeneratorResponse.newBuilder();
 
-    Map<String, Set<String>> protoExtensionNames = buildProtobufExtensionNames(request);
+    Map<String, Set<String>> protoExtensionNames = Collections.emptyMap();
+    if(codeGenOptions.isSupportProtobufExtension()) {
+      protoExtensionNames = buildProtobufExtensionNames(request);
+    }
     System.err.println(protoExtensionNames);
 
     for (FileDescriptorProto fileDescriptorProto: request.getProtoFileList()) {
@@ -58,23 +71,22 @@ public class HadoopProtoCodeGenerator {
       }
       List<String> codeGenClasses = (List<String>)config.get(protoFileKey);
 
-      boolean enableProtoExtensionSupport = codeGenClasses.indexOf(
-          ProtobufExtensionRegistryGenerator.class.getName()) != -1;
+      if(codeGenOptions.isSupportProtobufExtension() && codeGenClasses.indexOf(
+          ProtobufExtensionRegistryGenerator.class.getName()) != -1) {
+        codeGenClasses.add(ProtobufExtensionRegistryGenerator.class.getName());
+      }
 
       for (DescriptorProto descriptorProto: fileDescriptorProto.getMessageTypeList()) {
         String fullTypeName = ProtogenHelper.getProtoTypeFullName(packageName, descriptorProto.getName());
-        String protoExtensionRegistryName = null;
-        if(enableProtoExtensionSupport) {
-          protoExtensionRegistryName =
-            ProtobufExtensionRegistryGenerator.getProtobufExtensionRegistryClassName(
-              packageName, descriptorProto);
-        }
 
         List<ProtoCodeGenerator> codeGenerators = Lists.transform(codeGenClasses,
             createCodeGenerator(protoName, packageName, descriptorProto,
-                protoExtensionNames.get(fullTypeName), protoExtensionRegistryName));
+                codeGenOptions, protoExtensionNames.get(fullTypeName)));
 
         for (ProtoCodeGenerator codeGenerator: codeGenerators) {
+          if(codeGenerator.getFilename() == null) {
+            continue;
+          }
           System.err.println("Creating " + codeGenerator.getFilename());
           responseBuilder.addFile(File.newBuilder()
                                       .setName(codeGenerator.getFilename())
@@ -92,15 +104,15 @@ public class HadoopProtoCodeGenerator {
 
   private static Function<String, ProtoCodeGenerator> createCodeGenerator(
       final String protoFilename, final String packageName,
-      final DescriptorProto proto, final Set<String> protoExtensionNames,
-      final String protoExtensionRegistryName) {
+      final DescriptorProto proto, final ProtoCodeGenOptions codeGenOptions,
+      final Set<String> protoExtensionNames) {
     return new Function<String, ProtoCodeGenerator>() {
       @Override
       public ProtoCodeGenerator apply(String classname) {
         try {
           Class<? extends ProtoCodeGenerator> codeGenClass = Class.forName(classname).asSubclass(ProtoCodeGenerator.class);
           ProtoCodeGenerator codeGenerator = codeGenClass.newInstance();
-          codeGenerator.configure(protoFilename, packageName, proto, protoExtensionNames, protoExtensionRegistryName);
+          codeGenerator.configure(protoFilename, packageName, proto, codeGenOptions, protoExtensionNames);
           return codeGenerator;
         } catch (IllegalAccessException e) {
           throw new IllegalArgumentException("Couldn't instantiate class " + classname, e);

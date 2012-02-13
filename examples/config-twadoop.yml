@@ -1,3 +1,6 @@
+__options__:
+  protobuf_extension_support: true        
+
 address_book:
   - com.twitter.elephantbird.proto.codegen.DeprecatedLzoProtobufBlockInputFormatGenerator
   - com.twitter.elephantbird.proto.codegen.LzoProtobufB64LineInputFormatGenerator
@@ -9,4 +12,3 @@ address_book:
   - com.twitter.elephantbird.proto.codegen.LzoProtobufHiveSerdeGenerator  
   - com.twitter.elephantbird.proto.codegen.ProtobufWritableGenerator
   - com.twitter.elephantbird.proto.codegen.ProtobufBytesToPigTupleGenerator
-  - com.twitter.elephantbird.proto.codegen.ProtobufExtensionRegistryGenerator

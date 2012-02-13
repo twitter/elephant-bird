@@ -10,6 +10,9 @@ public class ProtobufExtensionRegistryGenerator extends ProtoCodeGenerator {
   public String getFilename() {
     String className = ProtobufExtensionRegistryGenerator.getProtobufExtensionRegistryClassName(
         packageName_, descriptorProto_);
+    if(!codeGenOptions_.isSupportProtobufExtension()) {
+      return null;
+    }
     return  String.format("%s.java", className.replaceAll("\\.", "/"));
   }
 
