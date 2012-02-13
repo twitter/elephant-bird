@@ -1,6 +1,8 @@
+com.twitter.cascading2.io.protobuf
 com.twitter.data.proto
 com.twitter.data.proto.tutorial
 com.twitter.data.proto.tutorial.thrift
+com.twitter.elephantbird.cascading2.scheme
 com.twitter.elephantbird.examples.proto
 com.twitter.elephantbird.hive.serde
 com.twitter.elephantbird.mapred.input

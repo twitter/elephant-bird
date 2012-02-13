@@ -1,18 +1,10 @@
 package com.twitter.elephantbird.mapreduce.input;
 
-import java.io.IOException;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
-import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -28,9 +20,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * for more information on error handling.
  */
 
-public class LzoProtobufBlockInputFormat<M extends Message> extends LzoInputFormat<LongWritable, ProtobufWritable<M>> {
-  private TypeRef<M> typeRef_;
-  private ExtensionRegistry extensionRegistry_;
+public class LzoProtobufBlockInputFormat<M extends Message> extends MultiInputFormat<M> {
 
   public LzoProtobufBlockInputFormat() {
     this(null, null);
@@ -42,15 +32,15 @@ public class LzoProtobufBlockInputFormat<M extends Message> extends LzoInputForm
 
   public LzoProtobufBlockInputFormat(TypeRef<M> typeRef,
       ExtensionRegistry extensionRegistry) {
-    typeRef_ = typeRef;
-    extensionRegistry_ = extensionRegistry;
+    super(typeRef, extensionRegistry);
   }
-
 
   /**
    * Returns {@link LzoProtobufBlockInputFormat} class.
    * Sets an internal configuration in jobConf so that remote Tasks
    * instantiate appropriate object based on protoClass.
+   *
+   * @Deprecated Use {@link MultiInputFormat#setInputFormatClass(Class, org.apache.hadoop.mapreduce.Job)
    */
   @SuppressWarnings("rawtypes")
   public static <M extends Message> Class<LzoProtobufBlockInputFormat>
@@ -63,12 +53,10 @@ public class LzoProtobufBlockInputFormat<M extends Message> extends LzoInputForm
     getInputFormatClass(Class<M> protoClass,
         Class<? extends ProtobufExtensionRegistry<M>> extRegClass,
         Configuration jobConf) {
-    Protobufs.setClassConf(jobConf, LzoProtobufBlockInputFormat.class, protoClass);
+    setClassConf(protoClass, jobConf);
 
     if(extRegClass != null) {
-      Protobufs.setExtensionRegistryClassConf(jobConf,
-          LzoProtobufBlockInputFormat.class,
-          extRegClass);
+      setExtensionRegistryClassConf(extRegClass, jobConf);
     }
     return LzoProtobufBlockInputFormat.class;
   }
@@ -80,23 +68,5 @@ public class LzoProtobufBlockInputFormat<M extends Message> extends LzoInputForm
   public static <M extends Message> LzoProtobufBlockInputFormat<M> newInstance(
       TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
     return new LzoProtobufBlockInputFormat<M>(typeRef, extensionRegistry);
-  }
-
-  @Override
-  public RecordReader<LongWritable, ProtobufWritable<M>> createRecordReader(InputSplit split,
-      TaskAttemptContext taskAttempt) throws IOException, InterruptedException {
-    if (typeRef_ == null) {
-      typeRef_ = Protobufs.getTypeRef(taskAttempt.getConfiguration(), LzoProtobufBlockInputFormat.class);
-    }
-
-    if(extensionRegistry_ == null) {
-      Class<? extends ProtobufExtensionRegistry<M>> extRegClass = Protobufs.getExtensionRegistryClassConf(
-          taskAttempt.getConfiguration(), LzoProtobufBlockInputFormat.class);
-      if(extRegClass != null) {
-        extensionRegistry_ = Protobufs.safeNewInstance(extRegClass).getRealExtensionRegistry();
-      }
-    }
-
-    return new LzoProtobufBlockRecordReader<M>(typeRef_, extensionRegistry_);
   }
 }

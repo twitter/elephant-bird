@@ -16,9 +16,10 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.thrift.TBase;
 
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
-import com.twitter.data.proto.BlockStorage.SerializedBlock;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -41,13 +42,23 @@ public class MultiInputFormat<M>
   // TODO need handle multiple input formats in a job better.
   //      might be better to store classname in the input split rather than in config.
   private static String CLASS_CONF_KEY = "elephantbird.class.for.MultiInputFormat";
+  private static final String EXTENSION_REGISTRY_CLASS_CONF_KEY =
+    "elephantbird.extension.registry.class.for.MultiInputFormat";
+
 
   private TypeRef<M> typeRef;
+  private ExtensionRegistry extensionRegistry;
 
   public MultiInputFormat() {}
 
   public MultiInputFormat(TypeRef<M> typeRef) {
     this.typeRef = typeRef;
+  }
+
+  public MultiInputFormat(TypeRef<M> typeRef,
+      ExtensionRegistry extensionRegistry) {
+    this(typeRef);
+    this.extensionRegistry = extensionRegistry;
   }
 
   private static enum Format {
@@ -62,8 +73,29 @@ public class MultiInputFormat<M>
    */
   public static void setInputFormatClass(Class<?> clazz, Job job) {
     job.setInputFormatClass(MultiInputFormat.class);
-    HadoopUtils.setInputFormatClass(job.getConfiguration(), CLASS_CONF_KEY, clazz);
+    setClassConf(clazz, job.getConfiguration());
   }
+
+  public static void setInputFormatClass(Class<?> clazz,
+      Class<? extends ProtobufExtensionRegistry<?>> extRegClass, Job job) {
+    MultiInputFormat.setInputFormatClass(clazz, job);
+    MultiInputFormat.setExtensionRegistryClassConf(extRegClass,
+        job.getConfiguration());
+  }
+
+  /**
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the input format correctly.
+   */
+  protected static void setClassConf(Class<?> clazz, Configuration conf) {
+    HadoopUtils.setInputFormatClass(conf, CLASS_CONF_KEY, clazz);
+  }
+
+  protected static void setExtensionRegistryClassConf(
+      Class<? extends ProtobufExtensionRegistry<?>> clazz, Configuration conf) {
+    HadoopUtils.setInputFormatClass(conf, EXTENSION_REGISTRY_CLASS_CONF_KEY, clazz);
+  }
+
 
   @SuppressWarnings("unchecked") // return type is runtime dependent
   @Override
@@ -74,6 +106,11 @@ public class MultiInputFormat<M>
     if (typeRef == null) {
       setTypeRef(conf);
     }
+
+    if(extensionRegistry == null) {
+      extensionRegistry = MultiInputFormat.getExtensionRegistry(conf);
+    }
+
     Class<?> recordClass = typeRef.getRawClass();
 
     Format fileFormat = determineFileFormat(split, conf);
@@ -92,9 +129,9 @@ public class MultiInputFormat<M>
     if (Message.class.isAssignableFrom(recordClass)) {
       switch (fileFormat) {
       case LZO_BLOCK:
-        return new LzoProtobufBlockRecordReader(typeRef);
+        return new LzoProtobufBlockRecordReader(typeRef, extensionRegistry);
       case LZO_B64LINE:
-        return new LzoProtobufBlockRecordReader(typeRef);
+        return new LzoProtobufB64LineRecordReader(typeRef, extensionRegistry);
       }
     }
 
@@ -120,8 +157,23 @@ public class MultiInputFormat<M>
     typeRef = new TypeRef<M>(clazz){};
   }
 
+  private static ExtensionRegistry getExtensionRegistry(Configuration conf) {
+    String className = conf.get(EXTENSION_REGISTRY_CLASS_CONF_KEY);
+
+    if(className == null) {
+      return null;
+    }
+
+    try {
+      return ((ProtobufExtensionRegistry<?>) conf.getClassByName(
+          className).newInstance()).getRealExtensionRegistry();
+    } catch (Exception e) {
+      throw new RuntimeException("failed to instantiate class '" + className + "'", e);
+    }
+  }
+
   /**
-   * Checks to see if the input records are stored as {@link SerializedBlock}.
+   * Checks to see if the input records are stored as SerializedBlock.
    * The block format starts with {@link Protobufs#KNOWN_GOOD_POSITION_MARKER}.
    * Otherwise the input is assumed to be Base64 encoded lines.
    */

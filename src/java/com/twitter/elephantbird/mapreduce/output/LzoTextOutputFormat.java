@@ -1,30 +1,29 @@
 package com.twitter.elephantbird.mapreduce.output;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-public class LzoTextOutputFormat extends LzoOutputFormat<NullWritable, Text> {
+import com.hadoop.compression.lzo.LzopCodec;
+import com.twitter.elephantbird.util.LzoUtils;
+
+public class LzoTextOutputFormat<K, V> extends TextOutputFormat<K, V>  {
 
   @Override
-  public RecordWriter<NullWritable, Text> getRecordWriter(TaskAttemptContext job)
-                                           throws IOException, InterruptedException {
-    final DataOutputStream out = getOutputStream(job);
+  public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job)
+      throws IOException, InterruptedException {
 
-    return new RecordWriter<NullWritable, Text>() {
+    Configuration conf = job.getConfiguration();
+    Path path = getDefaultWorkFile(job, LzopCodec.DEFAULT_LZO_EXTENSION);
 
-      public void close(TaskAttemptContext context) throws IOException, InterruptedException {
-        out.close();
-      }
-
-      public void write(NullWritable key, Text value) throws IOException, InterruptedException {
-        out.write(value.getBytes(), 0, value.getLength());
-        out.write('\n');
-      }
-    };
+    return new LineRecordWriter<K, V>(
+                   LzoUtils.getIndexedLzoOutputStream(conf, path),
+                   conf.get("mapred.textoutputformat.separator", "\t")
+                   );
   }
+
 }

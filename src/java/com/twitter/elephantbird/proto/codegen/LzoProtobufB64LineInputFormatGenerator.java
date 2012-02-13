@@ -33,9 +33,9 @@ public class LzoProtobufB64LineInputFormatGenerator extends ProtoCodeGenerator {
           ProtobufExtensionRegistryGenerator.getProtobufExtensionRegistryClassName(
               packageName_, descriptorProto_));
     }
-
     sb.append("    super(new TypeRef<%s>(){}, %s);", descriptorProto_.getName(),
         extensionRegistry).endl();
+
     sb.append("  }").endl();
     sb.append("}").endl();
     sb.endl();

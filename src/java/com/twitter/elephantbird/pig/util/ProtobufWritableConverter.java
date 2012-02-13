@@ -106,7 +106,6 @@ public class ProtobufWritableConverter<M extends Message> extends
   @Override
   protected Tuple toTuple(ProtobufWritable<M> writable, ResourceFieldSchema schema)
       throws IOException {
-    //TODO:
     return protobufToPig.toTuple(writable.get());
   }
 

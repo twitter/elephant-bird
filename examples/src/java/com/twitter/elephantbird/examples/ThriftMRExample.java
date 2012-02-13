@@ -18,8 +18,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import com.twitter.elephantbird.examples.thrift.Age;
-import com.twitter.elephantbird.mapreduce.input.LzoThriftB64LineInputFormat;
-import com.twitter.elephantbird.mapreduce.input.LzoThriftBlockInputFormat;
+import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoThriftB64LineOutputFormat;
 import com.twitter.elephantbird.mapreduce.output.LzoThriftBlockOutputFormat;
@@ -91,11 +90,8 @@ public class ThriftMRExample {
     job.setMapperClass(LzoMapper.class);
     job.setNumReduceTasks(0);
 
-    if (conf.get("thrift.test.format", "B64Line").equals("Block")) {
-      job.setInputFormatClass(LzoThriftBlockInputFormat.getInputFormatClass(Age.class, job.getConfiguration()));
-    } else {
-      job.setInputFormatClass(LzoThriftB64LineInputFormat.getInputFormatClass(Age.class, job.getConfiguration()));
-    }
+    // input format is same for both B64Line and Block formats
+    MultiInputFormat.setInputFormatClass(Age.class, job);
     job.setOutputFormatClass(TextOutputFormat.class);
 
     FileInputFormat.setInputPaths(job, new Path(args[0]));

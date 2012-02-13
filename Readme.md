@@ -1,6 +1,6 @@
 # Elephant Bird #
 
-Version: 2.1.2
+Version: 2.1.7
 
 #### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
 
@@ -9,7 +9,7 @@ Version: 2.1.2
 1. git clone
 2. ant
 3. check out javadoc, etc.
-4. build examples: cd examples && ant;
+4. Play with the examples: ant examples
 
 Note: for any of the LZO-based code, make sure that the native LZO libraries are on your `java.library.path`.  Generally this is done by setting `JAVA_LIBRARY_PATH` in
 `pig-env.sh` or `hadoop-env.sh`.  You can also add lines like
@@ -24,6 +24,22 @@ more about that.
 
 NOTE: This is an experimental branch for working with Pig 0.8. It may not work. Caveat emptor.
 
+### Maven Repo
+
+Elephant Bird takes advantage of Github's raw interface and self-hosts a maven repository inside
+the git repo itself. To use the maven repo, simply add
+<code>https://raw.github.com/kevinweil/elephant-bird/master/repo</code> as a maven repo in the system
+you use to manage dependencies.
+
+For example, with Ivy you would add the following resolver in <code>ivysettings.xml</code>:
+
+    <ibiblio name="elephant-bird-repo" m2compatible="true"
+             root="https://raw.github.com/kevinweil/elephant-bird/master/repo"/>
+
+And include elephant-bird as a dependency in <code>ivy.xml</code>:
+
+    <dependency org="com.twitter" name="elephant-bird" rev="${elephant-bird.version}"/>
+
 ### Version compatibility ###
 
 1. Protocol Buffers 2.3 (not compatible with 2.4+)
@@ -31,14 +47,12 @@ NOTE: This is an experimental branch for working with Pig 0.8. It may not work. 
 4. Hive 0.7 (with HIVE-1616)
 5. Thrift 0.5
 
+### Protocol Buffer & Thrift compiler dependencies
 
-#### Building Without Protocol Buffers ####
-
-If you don't want to build elephant-bird with protobuf support or you don't have protobuf >= 2.3 available 
-(fedora for instance only provides 2.2), you can have ant exclude all classes that rely on protobuf by using ant noproto target
-
-for the default target this would be:
-<code><pre>ant noproto release-jar</pre></code>
+Elephant Bird requires protocol buffer compiler version 2.3 at build time, as generated
+classes are used internally. Thrift compiler version 0.5.0 is required to generate
+classes used in tests. As these are native-code tools they must be installed on the build
+machine (java library dependencies are pulled from maven repositories during the build).
 
 ### License ###
 
@@ -142,9 +156,9 @@ For details of how the Pig integration with SequenceFiles works, please see java
 
 Bug fixes, features, and documentation improvements are welcome!
 
-Please fork the *eb-dev* branch and send us a pull request on github.
+Please fork the project and send us a pull request on github.
 
-We merge eb-dev into master every few weeks. The latest version on master is what we are actively running on Twitter's hadoop clusters daily, over hundreds of terabytes of data.
+Each new release since 2.1.3 has a *tag*. The latest version on master is what we are actively running on Twitter's hadoop clusters daily, over hundreds of terabytes of data.
 
 
 ### Contributors ###
@@ -155,4 +169,5 @@ See git logs for credits.
 * Kevin Weil ([@kevinweil](http://twitter.com/kevinweil))
 * Dmitriy Ryaboy ([@squarecog](http://twitter.com/squarecog))
 * Raghu Angadi ([@raghuangadi](http://twitter.com/raghuangadi))
-* Andy Schlaikjer ([@sagemintblue])(http://twitter.com/sagemintblue))
+* Andy Schlaikjer ([@sagemintblue](http://twitter.com/sagemintblue))
+* Travis Crawford ([@tc](http://twitter.com/tc))
