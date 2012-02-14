@@ -1,4 +1,4 @@
-package com.twitter.cascading2.io.protobuf;
+package com.twitter.elephantbird.cascading2.io.protobuf;
 
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
