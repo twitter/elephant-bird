@@ -64,6 +64,18 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
     this.valueSchema = valueSchema;
   }
 
+  protected void registerReadQuery(String writableConverterClassArgs, String valueSchema)
+      throws IOException {
+    pigServer.registerQuery(String.format("A = LOAD 'file:%s' USING %s('-c %s', '-c %s %s')%s;",
+        tempFilename, SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
+        writableConverterClass.getName(), writableConverterClassArgs, valueSchema == null
+            || valueSchema.isEmpty() ? "" : String.format(" AS (key: int, val: %s)", valueSchema)));
+  }
+
+  protected void registerReadQuery() throws IOException {
+    registerReadQuery(writableConverterArguments, valueSchema);
+  }
+
   @Before
   public void setup() throws IOException {
     // create local Pig server
@@ -147,7 +159,7 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
     validate(pigServer.openIterator("A"));
   }
 
-  protected void validate(final Iterator<Tuple> it) throws ExecException {
+  protected void validate(String[] expected, Iterator<Tuple> it) throws ExecException {
     int tupleCount = 0;
     for (; it.hasNext(); ++tupleCount) {
       final Tuple tuple = it.next();
@@ -158,5 +170,9 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
       Assert.assertEquals(expected[tupleCount], value.toString());
     }
     Assert.assertEquals(data.length, tupleCount);
+  }
+
+  protected void validate(Iterator<Tuple> it) throws ExecException {
+    validate(expected, it);
   }
 }
