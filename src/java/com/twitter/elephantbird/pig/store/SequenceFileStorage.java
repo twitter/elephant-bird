@@ -32,6 +32,8 @@ import com.twitter.elephantbird.pig.load.SequenceFileLoader;
 import com.twitter.elephantbird.pig.util.GenericWritableConverter;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import com.twitter.elephantbird.pig.util.WritableConverter;
+
+import org.apache.pig.impl.PigContext;
 import org.apache.pig.impl.util.UDFContext;
 
 /**
@@ -162,7 +164,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
       return null;
     }
     try {
-      return (Class<W>) Class.forName(writableClassName);
+      return PigContext.resolveClassName(writableClassName);
     } catch (Exception e) {
       throw new IOException(String.format("Failed to load Writable class '%s'", writableClassName),
           e);
@@ -195,6 +197,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     return LoadFunc.getAbsolutePath(location, cwd);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
     ensureUDFContext(job.getConfiguration());
@@ -206,12 +209,8 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     if ("true".equals(job.getConfiguration().get("output.compression.enabled"))) {
       FileOutputFormat.setCompressOutput(job, true);
       String codec = job.getConfiguration().get("output.compression.codec");
-      try {
-        FileOutputFormat.setOutputCompressorClass(job,
-            Class.forName(codec).asSubclass(CompressionCodec.class));
-      } catch (ClassNotFoundException e) {
-        throw new RuntimeException("Class not found: " + codec);
-      }
+      FileOutputFormat.setOutputCompressorClass(job,
+          PigContext.resolveClassName(codec).asSubclass(CompressionCodec.class));
     } else {
       // This makes it so that storing to a directory ending with ".gz" or ".bz2" works.
       setCompression(new Path(location), job);
