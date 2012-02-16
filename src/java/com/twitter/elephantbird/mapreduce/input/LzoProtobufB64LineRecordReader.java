@@ -3,10 +3,10 @@ package com.twitter.elephantbird.mapreduce.input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -21,7 +21,7 @@ public class  LzoProtobufB64LineRecordReader<M extends Message> extends LzoBinar
     this(typeRef, null);
   }
 
-  public LzoProtobufB64LineRecordReader(TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+  public LzoProtobufB64LineRecordReader(TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     super(typeRef, new ProtobufWritable<M>(typeRef, extensionRegistry),
         ProtobufConverter.newInstance(typeRef, extensionRegistry));
     LOG.info("LzoProtobufB64LineRecordReader, type args are " + typeRef.getRawClass());

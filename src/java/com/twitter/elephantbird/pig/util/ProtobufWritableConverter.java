@@ -1,22 +1,15 @@
 package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.ExtensionRegistry;
-import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
@@ -37,7 +30,7 @@ public class ProtobufWritableConverter<M extends Message> extends
 
   protected final TypeRef<M> typeRef;
   protected final ProtobufToPig protobufToPig;
-  protected ProtobufExtensionRegistry<M> protoExtensionRegistry;
+  private ProtobufExtensionRegistry extensionRegistry;
 
   public ProtobufWritableConverter(String protobufClassName) {
     this(protobufClassName, null);
@@ -48,17 +41,13 @@ public class ProtobufWritableConverter<M extends Message> extends
     super(new ProtobufWritable<M>());
 
     Preconditions.checkNotNull(protoClassName);
+
     typeRef = PigUtil.getProtobufTypeRef(protoClassName);
+    if(extensionRegistryClassName != null) {
+      extensionRegistry = Protobufs.getExtensionRegistry(extensionRegistryClassName);
+    }
     protobufToPig = new ProtobufToPig();
 
-    ExtensionRegistry extensionRegistry = null;
-    if(extensionRegistryClassName != null) {
-      @SuppressWarnings("unchecked")
-      Class<? extends ProtobufExtensionRegistry<M>> extRegClass =
-        (Class<? extends ProtobufExtensionRegistry<M>>) PigUtil.getClass(extensionRegistryClassName);
-      protoExtensionRegistry = Protobufs.safeNewInstance(extRegClass);
-      extensionRegistry = protoExtensionRegistry.getRealExtensionRegistry();
-    }
     writable.setExtensionRegistry(extensionRegistry);
     writable.setConverter(typeRef.getRawClass());
   }
@@ -74,28 +63,9 @@ public class ProtobufWritableConverter<M extends Message> extends
 
   @Override
   public ResourceFieldSchema getLoadSchema() throws IOException {
-    Schema schema = protobufToPig.toSchema(Protobufs.getMessageDescriptor(typeRef.getRawClass()));
-
-    if (protoExtensionRegistry != null) {
-      List<FieldDescriptor> fds = Lists.transform(protoExtensionRegistry.getExtensions(),
-          new Function<GeneratedExtension<M, ?>, FieldDescriptor>() {
-        @Override
-        public FieldDescriptor apply(GeneratedExtension<M, ?> extension) {
-          return extension.getDescriptor();
-        }
-      });
-
-      for(FieldDescriptor fd: fds) {
-        FieldSchema fs = null;
-        if(fd.getType() == FieldDescriptor.Type.MESSAGE) {
-          fs = protobufToPig.messageToFieldSchema(fd);
-        } else {
-          fs = protobufToPig.singleFieldToFieldSchema(fd);
-        }
-        schema.add(fs);
-      }
-    }
-    return new ResourceFieldSchema(new FieldSchema(null, schema));
+    return new ResourceFieldSchema(new FieldSchema(null,
+        protobufToPig.toSchema(Protobufs.getMessageDescriptor(
+            typeRef.getRawClass()), extensionRegistry)));
   }
 
   @Override
@@ -106,12 +76,13 @@ public class ProtobufWritableConverter<M extends Message> extends
   @Override
   protected Tuple toTuple(ProtobufWritable<M> writable, ResourceFieldSchema schema)
       throws IOException {
-    return protobufToPig.toTuple(writable.get());
+    return protobufToPig.toTuple(writable.get(), extensionRegistry);
   }
 
   @Override
   protected ProtobufWritable<M> toWritable(Tuple value) throws IOException {
-    writable.set(PigToProtobuf.tupleToMessage(typeRef.getRawClass(), value));
+    writable.set(PigToProtobuf.tupleToMessage(typeRef.getRawClass(), value,
+        extensionRegistry));
     return writable;
   }
 }

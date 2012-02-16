@@ -20,7 +20,8 @@ public class TestPigToProto {
   @Test
   public void testPigToProto() throws ExecException, TException {
     Tuple abTuple = Fixtures.buildAddressBookTuple();
-    Message proto = PigToProtobuf.tupleToMessage(AddressBook.newBuilder(), abTuple);
+    Message proto = PigToProtobuf.tupleToMessage(AddressBook.newBuilder(), abTuple,
+        new Fixtures.AddressBookExtensionRegistry());
     assertEquals(Fixtures.buildAddressBookProto(), proto);
 
     // test with OneOfEach.
@@ -29,7 +30,7 @@ public class TestPigToProto {
     //tuple from Thrift ooe :
     Tuple tuple_ooe = ThriftToPig.newInstance(thrift.test.OneOfEach.class).getPigTuple(thrift_ooe);
 
-    assertEquals(proto_ooe, PigToProtobuf.tupleToMessage(OneOfEach.class, tuple_ooe));
+    assertEquals(proto_ooe, PigToProtobuf.tupleToMessage(OneOfEach.class, tuple_ooe, null));
 
   }
 }

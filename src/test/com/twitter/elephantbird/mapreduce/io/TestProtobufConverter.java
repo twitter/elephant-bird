@@ -16,11 +16,22 @@ import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneNumber;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneType;
 import com.twitter.data.proto.tutorial.AddressBookProtos.PersonExt;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 
 public class TestProtobufConverter {
 
   @Before
   public void setUp() throws Exception {
+//    Person.Builder builder = Person.newBuilder();
+//    FieldDescriptor fd = Person.getDescriptor().findFieldByName("id");
+//    builder.setField(fd, 12);
+//    fd = Person.getDescriptor().findFieldByName("name");
+//    builder.setField(fd, "name");
+//    builder.setField(AddressBookProtos.PersonExt.extInfo.getDescriptor(),
+//        AddressBookProtos.PersonExt.newBuilder().build());
+//
+//    System.out.println(builder.build());
+
   }
 
   @After
@@ -42,11 +53,11 @@ public class TestProtobufConverter {
 //      System.out.println(e.getKey().getName());
 //    }
 
-    ExtensionRegistry personExtregistry = ExtensionRegistry.newInstance();
-    AddressBookProtos.registerAllExtensions(personExtregistry);
+    ProtobufExtensionRegistry extensionRegistry = new ProtobufExtensionRegistry();
+    extensionRegistry.addExtension(PersonExt.extInfo);
 
     ProtobufConverter<Person> personConverter1 = ProtobufConverter.newInstance(
-        Person.class, personExtregistry);
+        Person.class, extensionRegistry);
     System.out.println("----------------------------");
     System.out.println(personConverter1.fromBytes(personConverter1.toBytes(p1)));
     System.out.println("***********************************");
@@ -81,7 +92,7 @@ public class TestProtobufConverter {
     ExtensionRegistry abExtRegistry = ExtensionRegistry.newInstance();
     abExtRegistry.add(AddressBookProtos.name);
     ProtobufConverter<AddressBook> abConverter1 = ProtobufConverter.newInstance(
-        AddressBook.class, abExtRegistry);
+        AddressBook.class);
 
     try {
       System.out.println(PersonExt.class.getName());

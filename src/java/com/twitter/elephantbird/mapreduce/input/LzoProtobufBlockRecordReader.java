@@ -3,10 +3,10 @@ package com.twitter.elephantbird.mapreduce.input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -20,7 +20,7 @@ public class LzoProtobufBlockRecordReader<M extends Message> extends LzoBinaryBl
     this(typeRef, null);
   }
 
-  public LzoProtobufBlockRecordReader(TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+  public LzoProtobufBlockRecordReader(TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     // input stream for the reader will be set by LzoBinaryBlockRecordReader
     super(typeRef, new ProtobufBlockReader<M>(null, typeRef, extensionRegistry),
         new ProtobufWritable<M>(typeRef, extensionRegistry));

@@ -3,10 +3,14 @@ package com.twitter.elephantbird.mapreduce.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.ExtensionRegistry;
+import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -38,22 +42,22 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
    */
   public static <M extends Message> ProtobufConverter<M> newInstance(
       Class<M> protoClass) {
-    return ProtobufConverter.newInstance(protoClass, null);
+    return ProtobufConverter.newInstance(new TypeRef<M>(protoClass){});
   }
 
   public static <M extends Message> ProtobufConverter<M> newInstance(
       TypeRef<M> typeRef) {
-    return ProtobufConverter.newInstance(typeRef, null);
+    return new ProtobufConverter<M>(typeRef);
   }
 
   public static <M extends Message> ProtobufConverter<M> newInstance(
-      Class<M> protoClass, ExtensionRegistry extensionRegistry) {
+      Class<M> protoClass, ProtobufExtensionRegistry extensionRegistry) {
     return ProtobufConverter.newInstance(new TypeRef<M>(protoClass){},
         extensionRegistry);
   }
 
   public static <M extends Message> ProtobufConverter<M> newInstance(
-      TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+      TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     return new ProtobufConverter<M>(typeRef, extensionRegistry);
   }
 
@@ -61,9 +65,13 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     this(typeRef, null);
   }
 
-  public ProtobufConverter(TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+  public ProtobufConverter(TypeRef<M> typeRef, ProtobufExtensionRegistry protoExtensionRegistry) {
     this.typeRef = typeRef;
-    this.extensionRegistry = extensionRegistry;
+    protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+    if(protoExtensionRegistry != null) {
+      this.extensionRegistry = ProtobufConverter.getRealExtensionRegistry(
+          protoBuilder.getDescriptorForType(), protoExtensionRegistry);
+    }
   }
 
 
@@ -88,6 +96,46 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     }
     return null;
   }
+
+  private static ExtensionRegistry getRealExtensionRegistry(Descriptor descriptor,
+      ProtobufExtensionRegistry protoExtensionRegistry) {
+    ExtensionRegistry extReg = ExtensionRegistry.newInstance();
+    ProtobufConverter.populateRealExtensionRegistry(extReg, descriptor, protoExtensionRegistry);
+    return extReg;
+  }
+
+  private static void populateRealExtensionRegistry(
+      ExtensionRegistry realExtensionRegistry,
+      FieldDescriptor fieldDescriptor,
+      ProtobufExtensionRegistry protoExtensionRegistry) {
+    assert(fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE);
+
+    for(GeneratedExtension<?, ?> e: protoExtensionRegistry.getExtensions(fieldDescriptor)) {
+      realExtensionRegistry.add(e);
+    }
+
+    for(FieldDescriptor e: fieldDescriptor.getMessageType().getFields()) {
+      if(e.getType() == FieldDescriptor.Type.MESSAGE) {
+        populateRealExtensionRegistry(realExtensionRegistry, e, protoExtensionRegistry);
+      }
+    }
+  }
+
+  private static void populateRealExtensionRegistry(
+      ExtensionRegistry realExtensionRegistry,
+      Descriptor descriptor,
+      ProtobufExtensionRegistry protoExtensionRegistry) {
+    for(GeneratedExtension<?, ?> e: protoExtensionRegistry.getExtensions(descriptor)) {
+      realExtensionRegistry.add(e);
+    }
+
+    for(FieldDescriptor e: descriptor.getFields()) {
+      if(e.getType() == FieldDescriptor.Type.MESSAGE) {
+        populateRealExtensionRegistry(realExtensionRegistry, e, protoExtensionRegistry);
+      }
+    }
+  }
+
 
 //  private void initExtensionRegistry() {
 //    ExtensionRegistry registry = ExtensionRegistry.newInstance();

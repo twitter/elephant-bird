@@ -1,7 +1,7 @@
 package com.twitter.elephantbird.mapreduce.io;
 
-import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -10,7 +10,7 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
 
-  private ExtensionRegistry extensionRegistry;
+  private ProtobufExtensionRegistry extensionRegistry;
 
   public ProtobufWritable() {
     this(null, null, null);
@@ -25,11 +25,11 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
   }
 
 
-  public ProtobufWritable(TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+  public ProtobufWritable(TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     this(null, typeRef, extensionRegistry);
   }
 
-  public ProtobufWritable(M message, TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+  public ProtobufWritable(M message, TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     super(message, new ProtobufConverter<M>(typeRef, extensionRegistry));
     this.extensionRegistry = extensionRegistry;
   }
@@ -43,7 +43,7 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
   }
 
   public static <M extends Message> ProtobufWritable<M> newInstance(
-      Class<M> tClass, ExtensionRegistry extensionRegistry) {
+      Class<M> tClass, ProtobufExtensionRegistry extensionRegistry) {
     return new ProtobufWritable<M>(new TypeRef<M>(tClass){}, extensionRegistry);
   }
 
@@ -52,7 +52,7 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
   }
 
   public static <M extends Message> ProtobufWritable<M> newInstance(
-      TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+      TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     return new ProtobufWritable<M>(typeRef, extensionRegistry);
   }
 
@@ -64,7 +64,7 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
     return ProtobufConverter.newInstance(clazz);
   }
 
-  public void setExtensionRegistry(ExtensionRegistry extensionRegistry) {
+  public void setExtensionRegistry(ProtobufExtensionRegistry extensionRegistry) {
     this.extensionRegistry = extensionRegistry;
   }
 }

@@ -2,7 +2,6 @@ package com.twitter.elephantbird.mapreduce.input;
 
 import org.apache.hadoop.conf.Configuration;
 
-import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.TypeRef;
@@ -31,7 +30,7 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends MultiInput
   }
 
   public LzoProtobufB64LineInputFormat(TypeRef<M> typeRef,
-      ExtensionRegistry extensionRegistry) {
+      ProtobufExtensionRegistry extensionRegistry) {
     super(typeRef, extensionRegistry);
   }
 
@@ -51,7 +50,7 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends MultiInput
   @SuppressWarnings("rawtypes")
   public static <M extends Message> Class<LzoProtobufB64LineInputFormat>
     getInputFormatClass(Class<M> protoClass,
-        Class<? extends ProtobufExtensionRegistry<M>> extRegClass,
+        Class<? extends ProtobufExtensionRegistry> extRegClass,
         Configuration jobConf) {
     setClassConf(protoClass, jobConf);
     if(extRegClass != null) {
@@ -65,7 +64,7 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends MultiInput
   }
 
   public static <M extends Message> LzoProtobufB64LineInputFormat<M> newInstance(
-      TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+      TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     return new LzoProtobufB64LineInputFormat<M>(typeRef, extensionRegistry);
   }
 }

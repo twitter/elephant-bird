@@ -6,7 +6,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
@@ -25,7 +24,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFormat<M, ProtobufWritable<M>> {
 
   protected TypeRef<M> typeRef_;
-  protected ExtensionRegistry extensionRegistry_;
+  protected ProtobufExtensionRegistry extensionRegistry_;
 
   public LzoProtobufBlockOutputFormat() {
     this(null, null);
@@ -36,7 +35,7 @@ public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFo
   }
 
   public LzoProtobufBlockOutputFormat(TypeRef<M> typeRef,
-      ExtensionRegistry extensionRegistry) {
+      ProtobufExtensionRegistry extensionRegistry) {
     typeRef_ = typeRef;
     extensionRegistry_ = extensionRegistry;
   }
@@ -56,7 +55,7 @@ public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFo
   @SuppressWarnings("rawtypes")
   public static <M extends Message> Class<LzoProtobufBlockOutputFormat>
     getOutputFormatClass(Class<M> protoClass,
-        Class<? extends ProtobufExtensionRegistry<M>> extRegClass,
+        Class<? extends ProtobufExtensionRegistry> extRegClass,
         Configuration jobConf) {
     Protobufs.setClassConf(jobConf, LzoProtobufBlockOutputFormat.class, protoClass);
 
@@ -73,7 +72,7 @@ public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFo
   }
 
   public static <M extends Message> LzoProtobufBlockOutputFormat<M> newInstance(
-      TypeRef<M> typeRef, ExtensionRegistry extensionRegistry) {
+      TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     return new LzoProtobufBlockOutputFormat<M>(typeRef, extensionRegistry);
   }
 
@@ -85,10 +84,10 @@ public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFo
     }
 
     if(extensionRegistry_ == null) {
-      Class<? extends ProtobufExtensionRegistry<M>> factoryClass = Protobufs.getExtensionRegistryClassConf(
+      Class<? extends ProtobufExtensionRegistry> factoryClass = Protobufs.getExtensionRegistryClassConf(
           job.getConfiguration(), LzoProtobufBlockOutputFormat.class);
       if(factoryClass != null) {
-        extensionRegistry_ = Protobufs.safeNewInstance(factoryClass).getRealExtensionRegistry();
+        extensionRegistry_ = Protobufs.safeNewInstance(factoryClass);
       }
     }
 

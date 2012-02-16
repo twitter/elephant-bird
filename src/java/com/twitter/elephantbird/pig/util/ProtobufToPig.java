@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.pig.util;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,8 @@ import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.Misc.CountedMap;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
+import com.twitter.elephantbird.util.Protobufs;
 
 /**
  * A class for turning codegen'd protos into Pig Tuples and Schemas
@@ -50,6 +53,7 @@ public class ProtobufToPig {
   public ProtobufToPig(CoercionLevel coercionLevel) {
     coercionLevel_ = coercionLevel;
   }
+
   /**
    * Turn a generic message into a Tuple.  Individual fields that are enums
    * are converted into their string equivalents.  Fields that are not filled
@@ -58,7 +62,7 @@ public class ProtobufToPig {
    * @param msg the protobuf message
    * @return a pig tuple representing the message.
    */
-  public Tuple toTuple(Message msg) {
+  public Tuple toTuple(Message msg, ProtobufExtensionRegistry extensionRegistry) {
     if (msg == null) {
       // Pig tuples deal gracefully with nulls.
       // Also, we can be called with null here in recursive calls.
@@ -68,7 +72,10 @@ public class ProtobufToPig {
     Descriptor msgDescriptor = msg.getDescriptorForType();
     Set<FieldDescriptor> fdSet = new LinkedHashSet<FieldDescriptor>();
     fdSet.addAll(msgDescriptor.getFields());
-    fdSet.addAll(msg.getAllFields().keySet());
+    if(extensionRegistry != null) {
+      fdSet.addAll(extensionRegistry.getExtensionDescriptorFields(msgDescriptor));
+    }
+//    fdSet.addAll(msg.getAllFields().keySet());
     Tuple tuple = tupleFactory_.newTuple(fdSet.size());
     int curField = 0;
     try {
@@ -80,9 +87,9 @@ public class ProtobufToPig {
         if (fieldValue == null) {
           tuple.set(curField++, null);
         } else if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-          tuple.set(curField++, messageToTuple(fieldDescriptor, fieldValue));
+          tuple.set(curField++, messageToTuple(fieldDescriptor, fieldValue, extensionRegistry));
         } else {
-          tuple.set(curField++, singleFieldToTuple(fieldDescriptor, fieldValue));
+          tuple.set(curField++, singleFieldToTuple(fieldDescriptor, fieldValue, extensionRegistry));
         }
       }
     } catch (ExecException e) {
@@ -97,11 +104,12 @@ public class ProtobufToPig {
    * or {@link #singleFieldToTuple(FieldDescriptor, Object)} depending
    * on whether the field is a Message or a simple field.
    */
-  protected Object fieldToPig(FieldDescriptor fieldDescriptor, Object fieldValue) {
+  protected Object fieldToPig(FieldDescriptor fieldDescriptor, Object fieldValue,
+      ProtobufExtensionRegistry extensionRegistry) {
     if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-      return messageToTuple(fieldDescriptor, fieldValue);
+      return messageToTuple(fieldDescriptor, fieldValue, extensionRegistry);
     } else {
-      return singleFieldToTuple(fieldDescriptor, fieldValue);
+      return singleFieldToTuple(fieldDescriptor, fieldValue, extensionRegistry);
     }
   }
 
@@ -112,8 +120,8 @@ public class ProtobufToPig {
    * @param fieldValue the object representing the value of this field, possibly null.
    * @return the object representing fieldValue in Pig -- either a bag or a tuple.
    */
-  @SuppressWarnings("unchecked")
-  protected Object messageToTuple(FieldDescriptor fieldDescriptor, Object fieldValue) {
+  protected Object messageToTuple(FieldDescriptor fieldDescriptor,
+      Object fieldValue, ProtobufExtensionRegistry extensionRegistry) {
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToTuple called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {
@@ -135,12 +143,12 @@ public class ProtobufToPig {
       } else {
         DataBag bag = bagFactory_.newDefaultBag();
         for (Message m : messageList) {
-          bag.add(new ProtobufTuple(m));
+          bag.add(new ProtobufTuple(m, extensionRegistry));
         }
         return bag;
       }
     } else {
-      return new ProtobufTuple((Message)fieldValue);
+      return new ProtobufTuple((Message)fieldValue, extensionRegistry);
     }
   }
 
@@ -153,7 +161,9 @@ public class ProtobufToPig {
    * @throws ExecException if Pig decides to.  Shouldn't happen because we won't walk off the end of a tuple's field set.
    */
   @SuppressWarnings("unchecked")
-  protected Object singleFieldToTuple(FieldDescriptor fieldDescriptor, Object fieldValue) {
+  protected Object singleFieldToTuple(FieldDescriptor fieldDescriptor,
+      Object fieldValue,
+      @SuppressWarnings("unused") ProtobufExtensionRegistry extensionRegistry) {
     assert fieldDescriptor.getType() != FieldDescriptor.Type.MESSAGE : "messageToFieldSchema called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {
@@ -225,20 +235,24 @@ public class ProtobufToPig {
    * @param msgDescriptor the descriptor for the given message type.
    * @return a pig schema representing the message.
    */
-  public Schema toSchema(Descriptor msgDescriptor) {
+  public Schema toSchema(Descriptor msgDescriptor, ProtobufExtensionRegistry extensionRegistry) {
     Schema schema = new Schema();
-
+    List<FieldDescriptor> fieldDescriptors = new ArrayList<FieldDescriptor>(
+        msgDescriptor.getFields());
+    if(extensionRegistry != null) {
+      fieldDescriptors.addAll(extensionRegistry.getExtensionDescriptorFields(msgDescriptor));
+    }
     try {
       // Walk through all the possible fields in the message.
-      for (FieldDescriptor fieldDescriptor : msgDescriptor.getFields()) {
+      for (FieldDescriptor fieldDescriptor : fieldDescriptors) {
         if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-          schema.add(messageToFieldSchema(fieldDescriptor));
+          schema.add(messageToFieldSchema(fieldDescriptor, extensionRegistry));
         } else {
-          schema.add(singleFieldToFieldSchema(fieldDescriptor));
+          schema.add(singleFieldToFieldSchema(fieldDescriptor, extensionRegistry));
         }
       }
     } catch (FrontendException e) {
-      LOG.warn("Could not convert descriptor " + msgDescriptor + " to schema", e);
+      LOG.warn("Could not convert descriptor to schema", e);
     }
 
     return schema;
@@ -251,7 +265,8 @@ public class ProtobufToPig {
    * @return the Schema for the nested message.
    * @throws FrontendException if Pig decides to.
    */
-  public FieldSchema messageToFieldSchema(FieldDescriptor fieldDescriptor) throws FrontendException {
+  public FieldSchema messageToFieldSchema(FieldDescriptor fieldDescriptor,
+      ProtobufExtensionRegistry extensionRegistry) throws FrontendException {
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToFieldSchema called with field of type " + fieldDescriptor.getType();
 
     // Since protobufs do not have a map type, we use CountedMap to fake it.  Whenever the protobuf has a repeated CountedMap in it,
@@ -261,7 +276,7 @@ public class ProtobufToPig {
       return new FieldSchema(fieldDescriptor.getName(), null, DataType.MAP);
     }
 
-    Schema innerSchema = toSchema(fieldDescriptor.getMessageType());
+    Schema innerSchema = toSchema(fieldDescriptor.getMessageType(), extensionRegistry);
 
     if (fieldDescriptor.isRepeated()) {
       Schema tupleSchema = new Schema();
@@ -279,7 +294,8 @@ public class ProtobufToPig {
    * @return the Schema for the nested message.
    * @throws FrontendException if Pig decides to.
    */
-  public FieldSchema singleFieldToFieldSchema(FieldDescriptor fieldDescriptor) throws FrontendException {
+  public FieldSchema singleFieldToFieldSchema(FieldDescriptor fieldDescriptor,
+      @SuppressWarnings("unused") ProtobufExtensionRegistry extensionRegistry) throws FrontendException {
     assert fieldDescriptor.getType() != FieldDescriptor.Type.MESSAGE : "singleFieldToFieldSchema called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {
@@ -338,13 +354,14 @@ public class ProtobufToPig {
    * is being generated as well, and so doesn't exist in compiled form.
    * @return a pig script that can load the given message.
    */
-  public String toPigScript(Descriptor msgDescriptor, String loaderClassName) {
+  public String toPigScript(Descriptor msgDescriptor,
+      ProtobufExtensionRegistry extensionRegistry, String loaderClassName) {
     StringBuffer sb = new StringBuffer();
     final int initialTabOffset = 3;
 
     sb.append("raw_data = load '$INPUT_FILES' using " + loaderClassName + "()").append("\n");
     sb.append(tabs(initialTabOffset)).append("as (").append("\n");
-    sb.append(toPigScriptInternal(msgDescriptor, initialTabOffset));
+    sb.append(toPigScriptInternal(msgDescriptor, initialTabOffset, extensionRegistry));
     sb.append(tabs(initialTabOffset)).append(");").append("\n").append("\n");
 
     return sb.toString();
@@ -358,7 +375,9 @@ public class ProtobufToPig {
    * @param params
    * @return a pig script that can load the given message.
    */
-  public String toPigScript(Descriptor msgDescriptor, String loaderClassName, String... params) {
+  public String toPigScript(Descriptor msgDescriptor,
+      ProtobufExtensionRegistry extensionRegistry,
+      String loaderClassName, String... params) {
     StringBuffer sb = new StringBuffer();
     final int initialTabOffset = 3;
 
@@ -372,7 +391,7 @@ public class ProtobufToPig {
     sb.append(paramString).append(")").append("\n");
     sb.append("/**\n");
     sb.append(tabs(initialTabOffset)).append("as (").append("\n");
-    sb.append(toPigScriptInternal(msgDescriptor, initialTabOffset));
+    sb.append(toPigScriptInternal(msgDescriptor, initialTabOffset, extensionRegistry));
     sb.append(tabs(initialTabOffset)).append(")").append("\n").append("\n");
     sb.append("**/\n;\n");
     return sb.toString();
@@ -385,17 +404,21 @@ public class ProtobufToPig {
    * @param numTabs the tab depth at the current point in the recursion, for pretty printing.
    * @return a pig schema representing the message.
    */
-  private StringBuffer toPigScriptInternal(Descriptor msgDescriptor, int numTabs) {
+  private StringBuffer toPigScriptInternal(Descriptor msgDescriptor, int numTabs,
+      ProtobufExtensionRegistry extensionRegistry) {
     StringBuffer sb = new StringBuffer();
+    List<FieldDescriptor> fieldDescriptors = Protobufs.getMessageAllFields(
+        msgDescriptor, extensionRegistry);
+
     try {
       // Walk through all the possible fields in the message.
-      for (FieldDescriptor fieldDescriptor : msgDescriptor.getFields()) {
+      for (FieldDescriptor fieldDescriptor : fieldDescriptors) {
         // We have to add a comma after every line EXCEPT for the last, or Pig gets mad.
         boolean isLast = (fieldDescriptor == msgDescriptor.getFields().get(msgDescriptor.getFields().size() - 1));
         if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-          sb.append(messageToPigScript(fieldDescriptor, numTabs + 1, isLast));
+          sb.append(messageToPigScript(fieldDescriptor, numTabs + 1, isLast, extensionRegistry));
         } else {
-          sb.append(singleFieldToPigScript(fieldDescriptor, numTabs + 1, isLast));
+          sb.append(singleFieldToPigScript(fieldDescriptor, numTabs + 1, isLast, extensionRegistry));
         }
       }
     } catch (FrontendException e) {
@@ -413,7 +436,8 @@ public class ProtobufToPig {
    * @return the pig script load schema for the nested message.
    * @throws FrontendException if Pig decides to.
    */
-  private StringBuffer messageToPigScript(FieldDescriptor fieldDescriptor, int numTabs, boolean isLast) throws FrontendException {
+  private StringBuffer messageToPigScript(FieldDescriptor fieldDescriptor,
+      int numTabs, boolean isLast, ProtobufExtensionRegistry extensionRegistry) throws FrontendException {
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToPigScript called with field of type " + fieldDescriptor.getType();
 
     // Since protobufs do not have a map type, we use CountedMap to fake it.  Whenever the protobuf has a repeated CountedMap in it,
@@ -427,12 +451,12 @@ public class ProtobufToPig {
     if (fieldDescriptor.isRepeated()) {
       return new StringBuffer().append(tabs(numTabs)).append(fieldDescriptor.getName()).append(": bag {").append("\n")
           .append(tabs(numTabs + 1)).append(fieldDescriptor.getName()).append("_tuple: tuple (").append("\n")
-          .append(toPigScriptInternal(fieldDescriptor.getMessageType(), numTabs + 2))
+          .append(toPigScriptInternal(fieldDescriptor.getMessageType(), numTabs + 2, extensionRegistry))
           .append(tabs(numTabs + 1)).append(")").append("\n")
           .append(tabs(numTabs)).append("}").append(isLast ? "" : ",").append("\n");
     } else {
       return new StringBuffer().append(tabs(numTabs)).append(fieldDescriptor.getName()).append(": tuple (").append("\n")
-          .append(toPigScriptInternal(fieldDescriptor.getMessageType(), numTabs + 1))
+          .append(toPigScriptInternal(fieldDescriptor.getMessageType(), numTabs + 1, extensionRegistry))
           .append(tabs(numTabs)).append(")").append(isLast ? "" : ",").append("\n");
     }
   }
@@ -445,7 +469,9 @@ public class ProtobufToPig {
    * @return the pig script load string for the nested message.
    * @throws FrontendException if Pig decides to.
    */
-  private StringBuffer singleFieldToPigScript(FieldDescriptor fieldDescriptor, int numTabs, boolean isLast) throws FrontendException {
+  private StringBuffer singleFieldToPigScript(FieldDescriptor fieldDescriptor,
+      int numTabs, boolean isLast,
+      @SuppressWarnings("unused") ProtobufExtensionRegistry extensionRegistry) throws FrontendException {
     assert fieldDescriptor.getType() != FieldDescriptor.Type.MESSAGE : "singleFieldToPigScript called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {

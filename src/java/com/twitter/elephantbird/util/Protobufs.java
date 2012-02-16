@@ -2,10 +2,12 @@ package com.twitter.elephantbird.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +18,13 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.DynamicMessage;
-import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
+import com.twitter.elephantbird.proto.util.ProtogenHelper;
 
 public class Protobufs {
   private static final Logger LOG = LoggerFactory.getLogger(Protobufs.class);
@@ -274,7 +277,7 @@ public class Protobufs {
   }
 
   @SuppressWarnings("unchecked")
-  public static <M extends Message> Class<? extends ProtobufExtensionRegistry<M>> getExtensionRegistryClassConf(
+  public static <M extends Message> Class<? extends ProtobufExtensionRegistry> getExtensionRegistryClassConf(
       Configuration jobConf, Class<?> genericClass) {
     String className = jobConf.get(
         EXTENSION_REGISTRY_CLASS_CONF_PREFIX + genericClass.getName());
@@ -282,14 +285,14 @@ public class Protobufs {
       return null;
     }
     try {
-      return (Class<? extends ProtobufExtensionRegistry<M>>) Class.forName(className);
+      return (Class<? extends ProtobufExtensionRegistry>) Class.forName(className);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   public static <M extends Message> void setExtensionRegistryClassConf(Configuration jobConf,
-      Class<?> genericClass, Class<? extends ProtobufExtensionRegistry<M>> extRegClass) {
+      Class<?> genericClass, Class<? extends ProtobufExtensionRegistry> extRegClass) {
     HadoopUtils.setInputFormatClass(jobConf,
         EXTENSION_REGISTRY_CLASS_CONF_PREFIX + genericClass.getName(),
         extRegClass);
@@ -305,16 +308,49 @@ public class Protobufs {
     }
   }
 
-  public static void registerAllExtensions(Collection<Class<?>> protoJavaOuterClasses,
-      ExtensionRegistry registry) {
-    for(Class<?> claz: protoJavaOuterClasses) {
-      try {
-        Method method = claz.getMethod("registerAllExtensions",
-            new Class[] {ExtensionRegistry.class});
-        method.invoke(null, new Object[]{registry});
-      } catch (Exception e) {
-        throw new IllegalArgumentException(e);
-      }
-    }
+  public static ProtobufExtensionRegistry getExtensionRegistry(
+      String extensionRegistryClassName) {
+    @SuppressWarnings("unchecked")
+    Class<? extends ProtobufExtensionRegistry> extRegClass =
+      (Class<? extends ProtobufExtensionRegistry>)
+      Protobufs.getInnerClass(extensionRegistryClassName);
+    return Protobufs.safeNewInstance(extRegClass);
   }
+
+  public static List<FieldDescriptor> getMessageAllFields(Descriptor descriptor,
+      ProtobufExtensionRegistry extensionRegistry) {
+    List<FieldDescriptor> extensionFds = Collections.emptyList();
+    if(extensionRegistry != null) {
+      extensionFds = extensionRegistry.getExtensionDescriptorFields(descriptor);
+    }
+
+    List<FieldDescriptor> ret = new ArrayList<FieldDescriptor>(descriptor.getFields().size() +
+        extensionFds.size());
+    ret.addAll(descriptor.getFields());
+    ret.addAll(extensionFds);
+
+    return ret;
+  }
+
+  public static String getProtoClassName(Descriptor descriptor) {
+    FileDescriptor fileDescriptor = descriptor.getFile();
+    String packageName = fileDescriptor.getPackage();
+
+    String className = StringUtils.removeStart(descriptor.getFullName(),
+        fileDescriptor.getPackage() + ".").replace('.', '$');
+
+    String javaPackageName = packageName;
+    if(fileDescriptor.getOptions().hasJavaPackage()) {
+      javaPackageName = fileDescriptor.getOptions().getJavaPackage();
+    }
+
+    String outerClassName = null;
+    if(fileDescriptor.getOptions().hasJavaOuterClassname()) {
+      outerClassName = fileDescriptor.getOptions().getJavaOuterClassname();
+    } else {
+      outerClassName = ProtogenHelper.getProtoNameFromFilename(fileDescriptor.getName());
+    }
+    return String.format("%s.%s$%s", javaPackageName, outerClassName, className);
+  }
+
 }

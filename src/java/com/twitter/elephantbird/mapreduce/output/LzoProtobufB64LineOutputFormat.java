@@ -6,7 +6,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
@@ -24,7 +23,7 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutputFormat<M, ProtobufWritable<M>> {
   protected TypeRef<M> typeRef_;
-  protected ExtensionRegistry extensionRegistry_;
+  protected ProtobufExtensionRegistry extensionRegistry_;
 
   public LzoProtobufB64LineOutputFormat() {
     this(null, null);
@@ -35,7 +34,7 @@ public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutput
   }
 
   public LzoProtobufB64LineOutputFormat(TypeRef<M> typeRef,
-      ExtensionRegistry extensionRegistry) {
+      ProtobufExtensionRegistry extensionRegistry) {
     typeRef_ = typeRef;
     extensionRegistry_ = extensionRegistry;
   }
@@ -54,7 +53,7 @@ public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutput
   @SuppressWarnings("rawtypes")
   public static <M extends Message> Class<LzoProtobufB64LineOutputFormat>
     getOutputFormatClass(Class<M> protoClass,
-        Class<? extends ProtobufExtensionRegistry<M>> extRegClass,
+        Class<? extends ProtobufExtensionRegistry> extRegClass,
         Configuration jobConf) {
     Protobufs.setClassConf(jobConf, LzoProtobufB64LineOutputFormat.class, protoClass);
 
@@ -75,10 +74,10 @@ public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutput
     }
 
     if(extensionRegistry_ == null) {
-      Class<? extends ProtobufExtensionRegistry<M>> extRegClass = Protobufs.getExtensionRegistryClassConf(
+      Class<? extends ProtobufExtensionRegistry> extRegClass = Protobufs.getExtensionRegistryClassConf(
           job.getConfiguration(), LzoProtobufB64LineOutputFormat.class);
       if(extRegClass != null) {
-        extensionRegistry_ = Protobufs.safeNewInstance(extRegClass).getRealExtensionRegistry();
+        extensionRegistry_ = Protobufs.safeNewInstance(extRegClass);
       }
     }
 

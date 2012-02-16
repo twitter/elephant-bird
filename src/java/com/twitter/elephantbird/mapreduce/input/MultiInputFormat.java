@@ -16,7 +16,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.thrift.TBase;
 
-import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
@@ -47,7 +46,7 @@ public class MultiInputFormat<M>
 
 
   private TypeRef<M> typeRef;
-  private ExtensionRegistry extensionRegistry;
+  private ProtobufExtensionRegistry extensionRegistry;
 
   public MultiInputFormat() {}
 
@@ -56,7 +55,7 @@ public class MultiInputFormat<M>
   }
 
   public MultiInputFormat(TypeRef<M> typeRef,
-      ExtensionRegistry extensionRegistry) {
+      ProtobufExtensionRegistry extensionRegistry) {
     this(typeRef);
     this.extensionRegistry = extensionRegistry;
   }
@@ -77,7 +76,7 @@ public class MultiInputFormat<M>
   }
 
   public static void setInputFormatClass(Class<?> clazz,
-      Class<? extends ProtobufExtensionRegistry<?>> extRegClass, Job job) {
+      Class<? extends ProtobufExtensionRegistry> extRegClass, Job job) {
     MultiInputFormat.setInputFormatClass(clazz, job);
     MultiInputFormat.setExtensionRegistryClassConf(extRegClass,
         job.getConfiguration());
@@ -92,7 +91,7 @@ public class MultiInputFormat<M>
   }
 
   protected static void setExtensionRegistryClassConf(
-      Class<? extends ProtobufExtensionRegistry<?>> clazz, Configuration conf) {
+      Class<? extends ProtobufExtensionRegistry> clazz, Configuration conf) {
     HadoopUtils.setInputFormatClass(conf, EXTENSION_REGISTRY_CLASS_CONF_KEY, clazz);
   }
 
@@ -157,7 +156,7 @@ public class MultiInputFormat<M>
     typeRef = new TypeRef<M>(clazz){};
   }
 
-  private static ExtensionRegistry getExtensionRegistry(Configuration conf) {
+  private static ProtobufExtensionRegistry getExtensionRegistry(Configuration conf) {
     String className = conf.get(EXTENSION_REGISTRY_CLASS_CONF_KEY);
 
     if(className == null) {
@@ -165,8 +164,7 @@ public class MultiInputFormat<M>
     }
 
     try {
-      return ((ProtobufExtensionRegistry<?>) conf.getClassByName(
-          className).newInstance()).getRealExtensionRegistry();
+      return ((ProtobufExtensionRegistry) conf.getClassByName(className).newInstance());
     } catch (Exception e) {
       throw new RuntimeException("failed to instantiate class '" + className + "'", e);
     }

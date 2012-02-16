@@ -9,9 +9,10 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
-import com.twitter.elephantbird.pig.util.PigUtil;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -28,24 +29,20 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
   private TypeRef<M> typeRef_ = null;
+  private ProtobufExtensionRegistry extensionRegistry_ = null;
   private ProtobufConverter<M> protoConverter_ = null;
   private final ProtobufToPig protoToPig_ = new ProtobufToPig();
 
   public ProtobufBytesToTuple() {}
 
   public ProtobufBytesToTuple(String protoClassName) {
-    TypeRef<M> typeRef = PigUtil.getProtobufTypeRef(protoClassName);
-    setTypeRef(typeRef);
+    this(protoClassName, null);
   }
 
-  /**
-   * Set the type parameter so it doesn't get erased by Java. Must be called during
-   * initialization.
-   * @param typeRef
-   */
-  public void setTypeRef(TypeRef<M> typeRef) {
-    typeRef_ = typeRef;
-    protoConverter_ = ProtobufConverter.newInstance(typeRef);
+  public ProtobufBytesToTuple(String protoClassName, ProtobufExtensionRegistry extensionRegistry) {
+    typeRef_ = PigUtil.getProtobufTypeRef(protoClassName);
+    extensionRegistry_ = extensionRegistry;
+    protoConverter_ = ProtobufConverter.newInstance(typeRef_, extensionRegistry_);
   }
 
   @Override
@@ -56,7 +53,7 @@ public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
     try {
       DataByteArray bytes = (DataByteArray) input.get(0);
       M value_ = protoConverter_.fromBytes(bytes.get());
-      return new ProtobufTuple(value_);
+      return new ProtobufTuple(value_, extensionRegistry_);
     } catch (IOException e) {
       return null;
     }
@@ -64,6 +61,7 @@ public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
 
   @Override
   public Schema outputSchema(Schema input) {
-    return protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass()));
+    return protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass()),
+        extensionRegistry_);
   }
 }
