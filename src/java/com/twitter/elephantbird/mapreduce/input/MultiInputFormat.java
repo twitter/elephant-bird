@@ -150,7 +150,7 @@ public class MultiInputFormat<M>
      */
 
     // most of the cost is opening the file and
-    // reading first lzo block (about 256k of compressed data)
+    // reading first lzo block (about 256k of uncompressed data)
 
     CompressionCodec codec = new CompressionCodecFactory(conf).getCodec(file);
     if (codec == null) {
