@@ -36,11 +36,19 @@ public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
   public ProtobufBytesToTuple() {}
 
   public ProtobufBytesToTuple(String protoClassName) {
-    this(protoClassName, null);
+    this(PigUtil.<M>getProtobufTypeRef(protoClassName), null);
+  }
+
+  public ProtobufBytesToTuple(TypeRef<M> typeRef) {
+    this(typeRef, null);
   }
 
   public ProtobufBytesToTuple(String protoClassName, ProtobufExtensionRegistry extensionRegistry) {
-    typeRef_ = PigUtil.getProtobufTypeRef(protoClassName);
+    this(PigUtil.<M>getProtobufTypeRef(protoClassName), extensionRegistry);
+  }
+
+  public ProtobufBytesToTuple(TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
+    typeRef_ = typeRef;
     extensionRegistry_ = extensionRegistry;
     protoConverter_ = ProtobufConverter.newInstance(typeRef_, extensionRegistry_);
   }

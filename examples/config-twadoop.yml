@@ -1,5 +1,5 @@
 __options__:
-  protobuf_extension_support: true        
+  protobuf_extension_support: true
 
 address_book:
   - com.twitter.elephantbird.proto.codegen.DeprecatedLzoProtobufBlockInputFormatGenerator

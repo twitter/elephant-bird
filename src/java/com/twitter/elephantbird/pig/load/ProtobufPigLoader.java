@@ -48,7 +48,18 @@ public class ProtobufPigLoader<M extends Message> extends LzoBaseLoadFunc {
     if(extensionRegistryClassName != null) {
       extensionRegistry = Protobufs.getExtensionRegistry(extensionRegistryClassName);
     }
+
   }
+
+  public ProtobufPigLoader(TypeRef<M> typeRef) {
+    this(typeRef, null);
+  }
+
+  public ProtobufPigLoader(TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
+    this.typeRef = typeRef;
+    this.extensionRegistry = extensionRegistry;
+  }
+
 
   @Override
   public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)

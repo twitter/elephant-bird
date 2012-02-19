@@ -62,6 +62,10 @@ public class ProtobufToPig {
    * @param msg the protobuf message
    * @return a pig tuple representing the message.
    */
+  public Tuple toTuple(Message msg) {
+    return toTuple(msg, null);
+  }
+
   public Tuple toTuple(Message msg, ProtobufExtensionRegistry extensionRegistry) {
     if (msg == null) {
       // Pig tuples deal gracefully with nulls.
@@ -235,6 +239,10 @@ public class ProtobufToPig {
    * @param msgDescriptor the descriptor for the given message type.
    * @return a pig schema representing the message.
    */
+  public Schema toSchema(Descriptor msgDescriptor) {
+    return toSchema(msgDescriptor, null);
+  }
+
   public Schema toSchema(Descriptor msgDescriptor, ProtobufExtensionRegistry extensionRegistry) {
     Schema schema = new Schema();
     List<FieldDescriptor> fieldDescriptors = new ArrayList<FieldDescriptor>(
@@ -265,6 +273,10 @@ public class ProtobufToPig {
    * @return the Schema for the nested message.
    * @throws FrontendException if Pig decides to.
    */
+  public FieldSchema messageToFieldSchema(FieldDescriptor fieldDescriptor) throws FrontendException {
+    return messageToFieldSchema(fieldDescriptor, null);
+  }
+
   public FieldSchema messageToFieldSchema(FieldDescriptor fieldDescriptor,
       ProtobufExtensionRegistry extensionRegistry) throws FrontendException {
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToFieldSchema called with field of type " + fieldDescriptor.getType();
@@ -294,6 +306,11 @@ public class ProtobufToPig {
    * @return the Schema for the nested message.
    * @throws FrontendException if Pig decides to.
    */
+  public FieldSchema singleFieldToFieldSchema(FieldDescriptor fieldDescriptor) throws FrontendException {
+    return singleFieldToFieldSchema(fieldDescriptor, null);
+  }
+
+
   public FieldSchema singleFieldToFieldSchema(FieldDescriptor fieldDescriptor,
       @SuppressWarnings("unused") ProtobufExtensionRegistry extensionRegistry) throws FrontendException {
     assert fieldDescriptor.getType() != FieldDescriptor.Type.MESSAGE : "singleFieldToFieldSchema called with field of type " + fieldDescriptor.getType();
@@ -354,6 +371,10 @@ public class ProtobufToPig {
    * is being generated as well, and so doesn't exist in compiled form.
    * @return a pig script that can load the given message.
    */
+  public String toPigScript(Descriptor msgDescriptor, String loaderClassName) {
+    return toPigScript(msgDescriptor, null, loaderClassName);
+  }
+
   public String toPigScript(Descriptor msgDescriptor,
       ProtobufExtensionRegistry extensionRegistry, String loaderClassName) {
     StringBuffer sb = new StringBuffer();
@@ -375,6 +396,11 @@ public class ProtobufToPig {
    * @param params
    * @return a pig script that can load the given message.
    */
+  public String toPigScript(Descriptor msgDescriptor,
+      String loaderClassName, String... params) {
+    return toPigScript(msgDescriptor, null, loaderClassName, params);
+  }
+
   public String toPigScript(Descriptor msgDescriptor,
       ProtobufExtensionRegistry extensionRegistry,
       String loaderClassName, String... params) {

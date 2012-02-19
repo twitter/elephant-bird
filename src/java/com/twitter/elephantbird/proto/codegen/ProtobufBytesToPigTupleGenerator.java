@@ -20,11 +20,24 @@ public class ProtobufBytesToPigTupleGenerator extends ProtoCodeGenerator {
 
     sb.append("import %s.%s.%s;", packageName_, protoFilename_, descriptorProto_.getName()).endl();
     sb.append("import %s;", ProtobufBytesToTuple.class.getName()).endl();
-    sb.append("import %s;", TypeRef.class.getName()).endl().endl();
+    sb.append("import %s;", TypeRef.class.getName()).endl();
+    if(codeGenOptions_.isSupportExtension()) {
+      sb.append("import %s;", ProtobufExtensionRegistryGenerator.getGenClassName(
+          packageName_, protoFilename_, true)).endl();
+    }
+    sb.endl();
 
     sb.append("public class %sProtobufBytesToTuple extends ProtobufBytesToTuple<%s> {", descriptorProto_.getName(), descriptorProto_.getName()).endl();
     sb.append("  public %sProtobufBytesToTuple() {", descriptorProto_.getName()).endl();
-    sb.append("    setTypeRef(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
+
+    if(codeGenOptions_.isSupportExtension()) {
+      String extRegClassName = ProtobufExtensionRegistryGenerator.getGenClassName(
+          packageName_, protoFilename_, false);
+      sb.append("    super(new TypeRef<%s>(){}, %s.getInstance());",
+          descriptorProto_.getName(), extRegClassName).endl();
+    } else {
+      sb.append("    super(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
+    }
     sb.append("  }").endl();
     sb.append("}").endl();
     sb.endl();

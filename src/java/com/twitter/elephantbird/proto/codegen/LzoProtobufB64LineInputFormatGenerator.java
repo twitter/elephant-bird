@@ -21,21 +21,22 @@ public class LzoProtobufB64LineInputFormatGenerator extends ProtoCodeGenerator {
     sb.append("import %s.%s.%s;", packageName_, protoFilename_, descriptorProto_.getName()).endl();
     sb.append("import %s;", LzoProtobufB64LineInputFormat.class.getName()).endl();
     sb.append("import %s;", TypeRef.class.getName()).endl();
-
+    if(codeGenOptions_.isSupportExtension()) {
+      sb.append("import %s;", ProtobufExtensionRegistryGenerator.getGenClassName(
+          packageName_, protoFilename_, true)).endl();
+    }
     sb.endl();
 
     sb.append("public class Lzo%sProtobufB64LineInputFormat extends LzoProtobufB64LineInputFormat<%s> {", descriptorProto_.getName(), descriptorProto_.getName()).endl();
     sb.append("  public Lzo%sProtobufB64LineInputFormat() {", descriptorProto_.getName()).endl();
-
-    String extensionRegistry = "null";
-    if(codeGenOptions_.isSupportProtobufExtension()) {
-      extensionRegistry = String.format("new %s().getRealExtensionRegistry()",
-          ProtobufExtensionRegistryGenerator.getProtobufExtensionRegistryClassName(
-              packageName_, descriptorProto_));
+    if(codeGenOptions_.isSupportExtension()) {
+      String extRegClassName = ProtobufExtensionRegistryGenerator.getGenClassName(
+          packageName_, protoFilename_, false);
+      sb.append("    super(new TypeRef<%s>(){}, %s.getInstance());",
+          descriptorProto_.getName(), extRegClassName).endl();
+    } else {
+      sb.append("    super(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
     }
-    sb.append("    super(new TypeRef<%s>(){}, %s);", descriptorProto_.getName(),
-        extensionRegistry).endl();
-
     sb.append("  }").endl();
     sb.append("}").endl();
     sb.endl();

@@ -3,6 +3,7 @@ package com.twitter.elephantbird.util;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.ExtensionRegistryLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
@@ -198,9 +200,48 @@ public class Protobufs {
     return null;
   }
 
-  public static DynamicMessage parseDynamicFrom(Class<? extends Message> protoClass, byte[] messageBytes) {
+  @SuppressWarnings("unchecked")
+  public static <M extends Message> M parseFrom(Class<M> protoClass,
+      ProtobufExtensionRegistry extensionRegistry, byte[] messageBytes) {
+    ExtensionRegistryLite extReg = null;
+    if(extensionRegistry != null) {
+      extReg = extensionRegistry.getExtensionRegistry();
+    }
     try {
-      return DynamicMessage.parseFrom(getMessageDescriptor(protoClass), messageBytes);
+      if(extReg != null) {
+        Method parseFrom = protoClass.getMethod("parseFrom",
+            new Class[] { byte[].class, ExtensionRegistryLite.class });
+        return (M)parseFrom.invoke(null, new Object[] { messageBytes, extReg });
+      }
+      Method parseFrom = protoClass.getMethod("parseFrom", new Class[] { byte[].class });
+      return (M)parseFrom.invoke(null, new Object[] { messageBytes});
+    } catch (NoSuchMethodException e) {
+      LOG.error("Could not find method parseFrom in class " + protoClass, e);
+      throw new IllegalArgumentException(e);
+    } catch (IllegalAccessException e) {
+      LOG.error("Could not access method parseFrom in class " + protoClass, e);
+      throw new IllegalArgumentException(e);
+    } catch (InvocationTargetException e) {
+      LOG.error("Error invoking method parseFrom in class " + protoClass, e);
+    }
+
+    return null;
+  }
+
+
+  public static DynamicMessage parseDynamicFrom(Class<? extends Message> protoClass, byte[] messageBytes) {
+    return Protobufs.parseDynamicFrom(protoClass, null, messageBytes);
+  }
+
+  public static DynamicMessage parseDynamicFrom(Class<? extends Message> protoClass,
+      ProtobufExtensionRegistry extensionRegistry, byte[] messageBytes) {
+    Descriptor descriptor = getMessageDescriptor(protoClass);
+    try {
+      if(extensionRegistry != null) {
+        return DynamicMessage.parseFrom(descriptor, messageBytes,
+            extensionRegistry.getExtensionRegistry());
+      }
+      return DynamicMessage.parseFrom(descriptor, messageBytes);
     } catch (InvalidProtocolBufferException e) {
       LOG.error("Protocol buffer parsing error in parseDynamicFrom", e);
     } catch(UninitializedMessageException ume) {
@@ -319,7 +360,7 @@ public class Protobufs {
 
   public static List<FieldDescriptor> getMessageAllFields(Descriptor descriptor,
       ProtobufExtensionRegistry extensionRegistry) {
-    List<FieldDescriptor> extensionFds = Collections.emptyList();
+    Collection<FieldDescriptor> extensionFds = Collections.emptyList();
     if(extensionRegistry != null) {
       extensionFds = extensionRegistry.getExtensionDescriptorFields(descriptor);
     }

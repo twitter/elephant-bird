@@ -69,8 +69,9 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     this.typeRef = typeRef;
     protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
     if(protoExtensionRegistry != null) {
-      this.extensionRegistry = ProtobufConverter.getRealExtensionRegistry(
-          protoBuilder.getDescriptorForType(), protoExtensionRegistry);
+//      this.extensionRegistry = ProtobufConverter.getRealExtensionRegistry(
+//          protoBuilder.getDescriptorForType(), protoExtensionRegistry);
+      this.extensionRegistry = protoExtensionRegistry.getExtensionRegistry();
     }
   }
 
@@ -135,29 +136,6 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
       }
     }
   }
-
-
-//  private void initExtensionRegistry() {
-//    ExtensionRegistry registry = ExtensionRegistry.newInstance();
-//    for(GeneratedExtension<M, ?> e: protoExtensions) {
-//
-////      GeneratedExtension<M, ?> extensionObj = null;
-////      for(Field f: e.getFields()) {
-////        if (GeneratedExtension.class.isAssignableFrom(f.getType())) {
-////          try {
-////            extensionObj = (GeneratedExtension<M, ?>) f.get(null);
-////          } catch (IllegalAccessException ex) {
-////            logWarning("Fail to get protobuf extension field " + f.getName(), ex);
-////            continue;
-////          }
-////          registry.add(extensionObj);
-////        }
-////      }
-//      registry.add(e);
-//    }
-//
-//    extensionRegistry = registry;
-//  }
 
   @Override
   public byte[] toBytes(M message) {

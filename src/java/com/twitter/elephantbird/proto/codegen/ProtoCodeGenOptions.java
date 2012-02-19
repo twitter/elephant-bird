@@ -3,33 +3,32 @@ package com.twitter.elephantbird.proto.codegen;
 import java.util.Map;
 
 public class ProtoCodeGenOptions {
-  public static final String OPTION_PROTOBUF_EXTENSION_SUPPORT =
+  public static final String EXTENSION_SUPPORT =
     "protobuf_extension_support";
-  public static final String OPTION_PROTOBUF_EXTENSION_CLASSNAME =
-    "protobuf_extension_class_name";
 
-  private boolean supportProtobufExtension_ = false;
-  private String protobufExtensionClassName_;
+  private boolean supportExtension_ = false;
 
   public ProtoCodeGenOptions() {
   }
 
   public void setOptions(Map<String, String> options) {
-    if(options.containsKey(OPTION_PROTOBUF_EXTENSION_SUPPORT)) {
-      supportProtobufExtension_ = options.get(OPTION_PROTOBUF_EXTENSION_SUPPORT)=="true";
-      protobufExtensionClassName_ = options.get(OPTION_PROTOBUF_EXTENSION_CLASSNAME);
+    if(options.containsKey(EXTENSION_SUPPORT)) {
+      supportExtension_ = options.get(EXTENSION_SUPPORT).equals("true");
     }
   }
 
-  public void setSupportProtobufExtension(boolean supportProtobufExtension) {
-    supportProtobufExtension_ = supportProtobufExtension;
+  public void setSupportExtension(boolean supportExtension) {
+    supportExtension_ = supportExtension;
   }
 
-  public boolean isSupportProtobufExtension() {
-    return supportProtobufExtension_;
+  public boolean isSupportExtension() {
+    return supportExtension_;
   }
 
-  public String getProtobufExtensionRegistryClassName() {
-    return protobufExtensionClassName_;
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(EXTENSION_SUPPORT + ": " + supportExtension_);
+    return sb.toString();
   }
 }

@@ -5,18 +5,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
@@ -54,11 +52,10 @@ public class HadoopProtoCodeGenerator {
     CodeGeneratorRequest request = CodeGeneratorRequest.parseFrom(inputStream);
     CodeGeneratorResponse.Builder responseBuilder = CodeGeneratorResponse.newBuilder();
 
-    Map<String, Set<String>> protoExtensionNames = Collections.emptyMap();
-    if(codeGenOptions.isSupportProtobufExtension()) {
-      protoExtensionNames = buildProtobufExtensionNames(request);
+    Set<String> extensionNames = Collections.emptySet();
+    if(codeGenOptions.isSupportExtension()) {
+      extensionNames = HadoopProtoCodeGenerator.getAllExtensionNames(request);
     }
-    System.err.println(protoExtensionNames);
 
     for (FileDescriptorProto fileDescriptorProto: request.getProtoFileList()) {
       String protoName = ProtogenHelper.getProtoName(fileDescriptorProto);
@@ -69,19 +66,23 @@ public class HadoopProtoCodeGenerator {
         System.err.println("No matching config file entries for key " + protoFileKey + ".");
         continue;
       }
-      List<String> codeGenClasses = (List<String>)config.get(protoFileKey);
 
-      if(codeGenOptions.isSupportProtobufExtension() && codeGenClasses.indexOf(
-          ProtobufExtensionRegistryGenerator.class.getName()) != -1) {
-        codeGenClasses.add(ProtobufExtensionRegistryGenerator.class.getName());
+      if(codeGenOptions.isSupportExtension()) {
+        ProtobufExtensionRegistryGenerator extRegGenerator =
+          new ProtobufExtensionRegistryGenerator(extensionNames);
+        extRegGenerator.configure(protoName, packageName, null, codeGenOptions);
+        System.err.println("Creating " + extRegGenerator.getFilename());
+        responseBuilder.addFile(File.newBuilder()
+            .setName(extRegGenerator.getFilename())
+            .setContent(extRegGenerator.generateCode())
+            .build());
       }
 
-      for (DescriptorProto descriptorProto: fileDescriptorProto.getMessageTypeList()) {
-        String fullTypeName = ProtogenHelper.getProtoTypeFullName(packageName, descriptorProto.getName());
+      List<String> codeGenClasses = (List<String>)config.get(protoFileKey);
 
+      for (DescriptorProto descriptorProto: fileDescriptorProto.getMessageTypeList()) {
         List<ProtoCodeGenerator> codeGenerators = Lists.transform(codeGenClasses,
-            createCodeGenerator(protoName, packageName, descriptorProto,
-                codeGenOptions, protoExtensionNames.get(fullTypeName)));
+            createCodeGenerator(protoName, packageName, descriptorProto, codeGenOptions));
 
         for (ProtoCodeGenerator codeGenerator: codeGenerators) {
           if(codeGenerator.getFilename() == null) {
@@ -104,15 +105,14 @@ public class HadoopProtoCodeGenerator {
 
   private static Function<String, ProtoCodeGenerator> createCodeGenerator(
       final String protoFilename, final String packageName,
-      final DescriptorProto proto, final ProtoCodeGenOptions codeGenOptions,
-      final Set<String> protoExtensionNames) {
+      final DescriptorProto proto, final ProtoCodeGenOptions codeGenOptions) {
     return new Function<String, ProtoCodeGenerator>() {
       @Override
       public ProtoCodeGenerator apply(String classname) {
         try {
           Class<? extends ProtoCodeGenerator> codeGenClass = Class.forName(classname).asSubclass(ProtoCodeGenerator.class);
           ProtoCodeGenerator codeGenerator = codeGenClass.newInstance();
-          codeGenerator.configure(protoFilename, packageName, proto, codeGenOptions, protoExtensionNames);
+          codeGenerator.configure(protoFilename, packageName, proto, codeGenOptions);
           return codeGenerator;
         } catch (IllegalAccessException e) {
           throw new IllegalArgumentException("Couldn't instantiate class " + classname, e);
@@ -126,51 +126,39 @@ public class HadoopProtoCodeGenerator {
   }
 
 
-  private static Map<String, Set<String>> buildProtobufExtensionNames(
-      CodeGeneratorRequest request) {
-    Map<String, Set<String>> protoExtensionNames = new HashMap<String, Set<String>>();
+  private static Set<String> getAllExtensionNames(CodeGeneratorRequest request) {
+    Set<String> extensionNames = new HashSet<String>();
     for(FileDescriptorProto e: request.getProtoFileList()) {
       String enclosingClassName = ProtogenHelper.getPackageName(e) + "." + ProtogenHelper.getProtoName(e);
       for(DescriptorProto dp: e.getMessageTypeList()) {
-        populateProtobufExtensions(dp, protoExtensionNames, enclosingClassName);
+        HadoopProtoCodeGenerator.populateExtensionNames(extensionNames, dp, enclosingClassName);
       }
-      for(FieldDescriptorProto extension: e.getExtensionList()) {
-        populateProtobufExtensions(extension, protoExtensionNames, enclosingClassName);
+      for(FieldDescriptorProto fdp: e.getExtensionList()) {
+        HadoopProtoCodeGenerator.populateExtensionNames(extensionNames, fdp, enclosingClassName);
       }
     }
 
-    return protoExtensionNames;
+    return extensionNames;
   }
 
-  private static void populateProtobufExtensions(DescriptorProto descriptorProto,
-      Map<String, Set<String>> protoExtensionNames, String enclosingClassName) {
+  private static void populateExtensionNames(Set<String> extensionNames,
+      DescriptorProto descriptorProto,String enclosingClassName) {
     String newEnclosingClassName = enclosingClassName + "." + descriptorProto.getName();
 
     for(FieldDescriptorProto fdp: descriptorProto.getExtensionList()) {
-      HadoopProtoCodeGenerator.populateProtobufExtensions(fdp, protoExtensionNames,
+      HadoopProtoCodeGenerator.populateExtensionNames(extensionNames, fdp,
           newEnclosingClassName);
     }
 
     for(DescriptorProto dp: descriptorProto.getNestedTypeList()) {
-      HadoopProtoCodeGenerator.populateProtobufExtensions(dp, protoExtensionNames,
+      HadoopProtoCodeGenerator.populateExtensionNames(extensionNames, dp,
           newEnclosingClassName);
     }
   }
 
-  private static void populateProtobufExtensions(FieldDescriptorProto fieldDescriptorProto,
-      Map<String, Set<String>> protoExtensionNames, String enclosingClassName) {
-    String extendee = HadoopProtoCodeGenerator.getExtendeeFullName(fieldDescriptorProto);
-    assert(extendee != null);
-
-    Set<String> extensionNames = protoExtensionNames.get(extendee);
-    if(extensionNames == null) {
-      extensionNames = new TreeSet<String>();
-      protoExtensionNames.put(extendee, extensionNames);
-    }
+  private static void populateExtensionNames(Set<String> extensionNames,
+      FieldDescriptorProto fieldDescriptorProto, String enclosingClassName) {
+    Preconditions.checkArgument(!fieldDescriptorProto.getExtendee().isEmpty());
     extensionNames.add(enclosingClassName + "." + Strings.camelize(fieldDescriptorProto.getName(), true));
-  }
-
-  private static String getExtendeeFullName(FieldDescriptorProto fieldDescriptorProto) {
-    return StringUtils.removeStart(fieldDescriptorProto.getExtendee(), ".");
   }
 }

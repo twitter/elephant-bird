@@ -54,6 +54,10 @@ public class PigToProtobuf {
 
   public PigToProtobuf() {}
 
+  public static <M extends Message> M tupleToMessage(Class<M> protoClass, Tuple tuple) {
+    return tupleToMessage(protoClass, tuple, null);
+  }
+
   @SuppressWarnings("unchecked")
   public static <M extends Message> M tupleToMessage(Class<M> protoClass,
       Tuple tuple, ProtobufExtensionRegistry extensionRegistry) {
@@ -67,6 +71,9 @@ public class PigToProtobuf {
    * @param tuple the tuple
    * @return a message representing the given tuple
    */
+  public static Message tupleToMessage(Builder builder, Tuple tuple) {
+    return PigToProtobuf.tupleToMessage(builder, tuple, null);
+  }
 
   public static Message tupleToMessage(Builder builder, Tuple tuple,
       ProtobufExtensionRegistry extensionRegistry) {
