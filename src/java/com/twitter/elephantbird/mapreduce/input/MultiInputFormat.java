@@ -85,16 +85,6 @@ public class MultiInputFormat<M>
 
     Format fileFormat = determineFileFormat(split, conf);
 
-    // Thrift
-    if (TBase.class.isAssignableFrom(recordClass)) {
-      switch (fileFormat) {
-      case LZO_BLOCK:
-        return new LzoThriftBlockRecordReader(typeRef);
-      case LZO_B64LINE:
-        return new LzoThriftB64LineRecordReader(typeRef);
-      }
-    }
-
     // Protobuf
     if (Message.class.isAssignableFrom(recordClass)) {
       switch (fileFormat) {
@@ -102,6 +92,22 @@ public class MultiInputFormat<M>
         return new LzoProtobufBlockRecordReader(typeRef);
       case LZO_B64LINE:
         return new LzoProtobufB64LineRecordReader(typeRef);
+      }
+    }
+
+    /* when types other than protobuf and thrift are supported,
+     * should use Class.forName("org.apache.thrift.TBase") instead
+     * of TBase.class so the we don't require thrift in classpath
+     * unless the recordClass is a thrift class.
+     */
+
+    // Thrift
+    if (TBase.class.isAssignableFrom(recordClass)) {
+      switch (fileFormat) {
+      case LZO_BLOCK:
+        return new LzoThriftBlockRecordReader(typeRef);
+      case LZO_B64LINE:
+        return new LzoThriftB64LineRecordReader(typeRef);
       }
     }
 
@@ -144,7 +150,7 @@ public class MultiInputFormat<M>
      */
 
     // most of the cost is opening the file and
-    // reading first lzo block (about 256k of compressed data)
+    // reading first lzo block (about 256k of uncompressed data)
 
     CompressionCodec codec = new CompressionCodecFactory(conf).getCodec(file);
     if (codec == null) {
