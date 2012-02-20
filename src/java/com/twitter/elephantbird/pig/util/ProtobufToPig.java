@@ -88,9 +88,7 @@ public class ProtobufToPig {
         // Get the set value, or the default value, or null.
         Object fieldValue = getFieldValue(msg, fieldDescriptor);
 
-        if (fieldValue == null) {
-          tuple.set(curField++, null);
-        } else if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
+        if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
           tuple.set(curField++, messageToTuple(fieldDescriptor, fieldValue, extensionRegistry));
         } else {
           tuple.set(curField++, singleFieldToTuple(fieldDescriptor, fieldValue, extensionRegistry));

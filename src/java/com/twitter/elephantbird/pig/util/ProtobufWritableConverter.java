@@ -38,11 +38,11 @@ public class ProtobufWritableConverter<M extends Message> extends
 
   public ProtobufWritableConverter(String protoClassName,
       String extensionRegistryClassName) {
-    super(new ProtobufWritable<M>());
-
     Preconditions.checkNotNull(protoClassName);
 
     typeRef = PigUtil.getProtobufTypeRef(protoClassName);
+    setWritable(new ProtobufWritable<M>(typeRef));
+
     if(extensionRegistryClassName != null) {
       extensionRegistry = Protobufs.getExtensionRegistry(extensionRegistryClassName);
     }
@@ -58,6 +58,7 @@ public class ProtobufWritableConverter<M extends Message> extends
       return;
     }
     super.initialize(writableClass);
+    writable.setExtensionRegistry(extensionRegistry);
     writable.setConverter(typeRef.getRawClass());
   }
 

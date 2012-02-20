@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 
@@ -31,9 +30,8 @@ public class ProtobufTuple extends AbstractLazyTuple {
 
     fieldDescriptors_ = new ArrayList<FieldDescriptor>(msg.getDescriptorForType().getFields());
     if(extensionRegistry_ != null) {
-      for(GeneratedExtension<?, ?> e: extensionRegistry_.getExtensions(msg.getDescriptorForType())) {
-        fieldDescriptors_.add(e.getDescriptor());
-      }
+      fieldDescriptors_.addAll(extensionRegistry_.getExtensionDescriptorFields(
+          msg.getDescriptorForType()));
     }
     protoSize_ = fieldDescriptors_.size();
     protoConv_ = new ProtobufToPig();
