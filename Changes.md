@@ -1,5 +1,11 @@
 # Elephant Bird #
 
+### Version 2.1.8 ###
+
+ISSUE 137. Fixes the namespace in cascading2 protobufs (Oscar Boykin)
+
+ISSUE 135. port index file handling from LzoInputFormat to its Deprecated sibling. (Raghu Angadi)
+
 ### Version 2.1.7 ###
 
 ISSUE 133. Downgrade cascading2 dependency to more stable version (Travis Crawford)

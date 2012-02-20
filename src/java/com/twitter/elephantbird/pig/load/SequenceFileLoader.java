@@ -7,10 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -41,9 +37,13 @@ import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.PigContext;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.UDFContext;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileInputFormat;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 import com.twitter.elephantbird.pig.util.TextConverter;
@@ -204,7 +204,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
 
       // get converter class
       Class<WritableConverter<T>> converterClass =
-          (Class<WritableConverter<T>>) Class.forName(converterClassName);
+          PigContext.resolveClassName(converterClassName);
 
       // construct converter instance
       if (converterArgs == null || converterArgs.length == 0) {

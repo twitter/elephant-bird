@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <ivy-module version="2.0">
   <info organisation="com.twitter" module="elephant-bird"/>
-  <configurations defaultconf="compile" defaultconfmapping="compile->*;test->*">
+  <configurations defaultconf="compile" defaultconfmapping="compile->*,!javadoc,!sources;test->*,!javadoc,!sources">
     <conf name="compile"/>
     <conf name="test" extends="compile"/>
   </configurations>
@@ -34,6 +34,9 @@
     <dependency org="org.apache.thrift" name="thrift-test"
                 rev="${thrift-test.version}" conf="test"/>
     <dependency org="yamlbeans" name="yamlbeans" rev="${yamlbeans.version}"/>
+    <dependency org="org.apache.mahout" name="mahout-collections" rev="${mahout-collections.version}" transitive="false"/>
+    <dependency org="org.apache.mahout" name="mahout-core" rev="${mahout.version}" transitive="false"/>
+    <dependency org="org.apache.mahout" name="mahout-math" rev="${mahout.version}" transitive="false"/>
     <exclude org="javax.jms"/>
     <exclude org="com.sun.jdmk"/>
     <exclude org="com.sun.jmx"/>
