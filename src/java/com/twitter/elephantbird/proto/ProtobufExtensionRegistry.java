@@ -1,9 +1,10 @@
 package com.twitter.elephantbird.proto;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -72,8 +73,8 @@ public class ProtobufExtensionRegistry {
     return getExtensions(fieldDescriptor.getMessageType().getFullName());
   }
 
-  public Set<FieldDescriptor> getExtensionDescriptorFields(String protoFullName) {
-    return new HashSet<FieldDescriptor>(Collections2.transform(getExtensions(protoFullName),
+  public List<FieldDescriptor> getExtensionDescriptorFields(String protoFullName) {
+    return new ArrayList<FieldDescriptor>(Collections2.transform(getExtensions(protoFullName),
         new Function<GeneratedExtension<?, ?>, FieldDescriptor>() {
       @Override
       public FieldDescriptor apply(GeneratedExtension<?, ?> extension) {
@@ -82,11 +83,11 @@ public class ProtobufExtensionRegistry {
     }));
   }
 
-  public Set<FieldDescriptor> getExtensionDescriptorFields(Descriptor descriptor) {
+  public List<FieldDescriptor> getExtensionDescriptorFields(Descriptor descriptor) {
     return getExtensionDescriptorFields(descriptor.getFullName());
   }
 
-  public Set<FieldDescriptor> getExtensionDescriptorFields(FieldDescriptor fieldDescriptor) {
+  public List<FieldDescriptor> getExtensionDescriptorFields(FieldDescriptor fieldDescriptor) {
     Preconditions.checkArgument(fieldDescriptor.getType()==FieldDescriptor.Type.MESSAGE,
         fieldDescriptor + " must be message descriptor");
     return getExtensionDescriptorFields(fieldDescriptor.getMessageType().getFullName());
