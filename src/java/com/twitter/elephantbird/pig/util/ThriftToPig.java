@@ -25,7 +25,7 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TType;
 
 import com.google.common.collect.Lists;
-import com.twitter.elephantbird.pig.load.LzoThriftB64LinePigLoader;
+import com.twitter.elephantbird.pig.load.ThriftPigLoader;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.util.ThriftUtils;
@@ -97,7 +97,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   }
 
   @SuppressWarnings("unchecked")
-  static Object toPigObject(Field field, Object value, boolean lazy) {
+  public static Object toPigObject(Field field, Object value, boolean lazy) {
     if (value == null) {
       return null;
     }
@@ -441,7 +441,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     if (args.length > 0) {
       Class<? extends TBase<?, ?>> tClass = ThriftUtils.getTypeRef(args[0]).getRawClass();
       System.out.println(args[0] + " : " + toSchema(tClass).toString());
-      System.out.println(toPigScript(tClass, LzoThriftB64LinePigLoader.class));
+      System.out.println(toPigScript(tClass, ThriftPigLoader.class));
     }
   }
 }

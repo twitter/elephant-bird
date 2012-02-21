@@ -1,2 +1,10 @@
-for f in ../dist/elephant-bird-*.jar; do JAR=$f; done
-/usr/bin/java -cp ../lib/*:$JAR com.twitter.elephantbird.proto.HadoopProtoCodeGenerator config-twadoop.yml -
+#!/bin/bash
+
+JARS="../build/elephant-bird-${ELEPHANT_BIRD_VERSION}.jar"
+for f in $(/bin/ls ../build/lib/test/*.jar); do
+  JARS=${JARS}:$f
+done
+
+/usr/bin/java -cp ${JARS} \
+  com.twitter.elephantbird.proto.HadoopProtoCodeGenerator \
+  config-twadoop.yml -

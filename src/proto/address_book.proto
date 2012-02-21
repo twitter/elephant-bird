@@ -28,3 +28,10 @@ message Person {
 message AddressBook {
   repeated Person person = 1;
 }
+
+// used testing handling of unknown fields
+message PersonWithoutEmail {
+  required string name = 1;
+  required int32 id = 2;
+  repeated Person.PhoneNumber phone = 4;
+}

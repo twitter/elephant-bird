@@ -17,7 +17,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.thrift.TBase;
 
 import com.google.protobuf.Message;
-import com.twitter.data.proto.BlockStorage.SerializedBlock;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
@@ -62,7 +61,15 @@ public class MultiInputFormat<M>
    */
   public static void setInputFormatClass(Class<?> clazz, Job job) {
     job.setInputFormatClass(MultiInputFormat.class);
-    HadoopUtils.setInputFormatClass(job.getConfiguration(), CLASS_CONF_KEY, clazz);
+    setClassConf(clazz, job.getConfiguration());
+  }
+
+  /**
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the input format correctly.
+   */
+  protected static void setClassConf(Class<?> clazz, Configuration conf) {
+    HadoopUtils.setInputFormatClass(conf, CLASS_CONF_KEY, clazz);
   }
 
   @SuppressWarnings("unchecked") // return type is runtime dependent
@@ -78,6 +85,22 @@ public class MultiInputFormat<M>
 
     Format fileFormat = determineFileFormat(split, conf);
 
+    // Protobuf
+    if (Message.class.isAssignableFrom(recordClass)) {
+      switch (fileFormat) {
+      case LZO_BLOCK:
+        return new LzoProtobufBlockRecordReader(typeRef);
+      case LZO_B64LINE:
+        return new LzoProtobufB64LineRecordReader(typeRef);
+      }
+    }
+
+    /* when types other than protobuf and thrift are supported,
+     * should use Class.forName("org.apache.thrift.TBase") instead
+     * of TBase.class so the we don't require thrift in classpath
+     * unless the recordClass is a thrift class.
+     */
+
     // Thrift
     if (TBase.class.isAssignableFrom(recordClass)) {
       switch (fileFormat) {
@@ -85,16 +108,6 @@ public class MultiInputFormat<M>
         return new LzoThriftBlockRecordReader(typeRef);
       case LZO_B64LINE:
         return new LzoThriftB64LineRecordReader(typeRef);
-      }
-    }
-
-    // Protobuf
-    if (Message.class.isAssignableFrom(recordClass)) {
-      switch (fileFormat) {
-      case LZO_BLOCK:
-        return new LzoProtobufBlockRecordReader(typeRef);
-      case LZO_B64LINE:
-        return new LzoProtobufBlockRecordReader(typeRef);
       }
     }
 
@@ -121,7 +134,7 @@ public class MultiInputFormat<M>
   }
 
   /**
-   * Checks to see if the input records are stored as {@link SerializedBlock}.
+   * Checks to see if the input records are stored as SerializedBlock.
    * The block format starts with {@link Protobufs#KNOWN_GOOD_POSITION_MARKER}.
    * Otherwise the input is assumed to be Base64 encoded lines.
    */
@@ -137,7 +150,7 @@ public class MultiInputFormat<M>
      */
 
     // most of the cost is opening the file and
-    // reading first lzo block (about 256k of compressed data)
+    // reading first lzo block (about 256k of uncompressed data)
 
     CompressionCodec codec = new CompressionCodecFactory(conf).getCodec(file);
     if (codec == null) {

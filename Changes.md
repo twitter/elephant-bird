@@ -1,6 +1,50 @@
 # Elephant Bird #
 
+### Version 2.1.8 ###
+
+ISSUE 137. Fixes the namespace in cascading2 protobufs (Oscar Boykin)
+
+ISSUE 135. port index file handling from LzoInputFormat to its Deprecated sibling. (Raghu Angadi)
+
+### Version 2.1.7 ###
+
+ISSUE 133. Downgrade cascading2 dependency to more stable version (Travis Crawford)
+
+### Version 2.1.6 ###
+
+ISSUE 129. Add "install-local" ant target (Travis Crawford)
+
+ISSUE 127. Lzo text outputformat heirarchy (Raghu Angadi)
+
+ISSUE 126. Add protobuf-java-2.3.0.jar back as a checked-in library (Travis Crawford)
+
+ISSUE 125. Deprecated lzo output format update. (Raghu Angadi)
+
+ISSUE 123. Fix maven repo documentation (Travis Crawford)
+
+NO ISSUE. Upgrade hadoop-lzo to 0.4.15 (Raghu Angadi)
+
+### Version 2.1.5 ###
+
+ISSUE 122. Add maven repository support (Travis Crawford)
+
+ISSUE 121. Add Ivy & POM file generation to Elephant Bird build (Travis Crawford)
+
+ISSUE 120. Build improvements  (Travis Crawford)
+
+ISSUE 119. Fix a regression from 2.1.4 related to the multi-loader (Raghu Angadi)
+
+### Version 2.1.4 ###
+
+ISSUE 116. Use MultiInputFormat for Thrift and Protobuf Pig loaders (Raghu Angadi)
+
 ### Version 2.1.3 ###
+
+ISSUE 117. Add Cascading2 taps (Dmitriy Ryaboy)
+
+ISSUE 115. Use guava-11.0 (Alex Levenson)
+
+ISSUE 112. Fix UDFContext handing in SequenceFileStorage (Ted Dunning)
 
 ### Version 2.1.2 ###
 

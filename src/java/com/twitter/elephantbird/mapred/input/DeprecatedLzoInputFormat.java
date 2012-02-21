@@ -13,10 +13,8 @@ import org.apache.hadoop.mapred.JobConf;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -33,13 +31,11 @@ import java.util.Map;
 
 @SuppressWarnings("deprecation")
 public abstract class DeprecatedLzoInputFormat<K, V> extends FileInputFormat<K, V> {
-  private final Map<Path, LzoIndex> indexes_ = new HashMap<Path, LzoIndex>();
 
   @Override
   protected FileStatus[] listStatus(JobConf conf) throws IOException {
     List<FileStatus> files = new ArrayList<FileStatus>(Arrays.asList(super.listStatus(conf)));
 
-    FileSystem fs = FileSystem.get(conf);
     String fileExtension = new LzopCodec().getDefaultExtension();
 
     Iterator<FileStatus> it = files.iterator();
@@ -50,10 +46,6 @@ public abstract class DeprecatedLzoInputFormat<K, V> extends FileInputFormat<K, 
       if (!file.toString().endsWith(fileExtension)) {
         // Get rid of non-LZO files.
         it.remove();
-      } else {
-        // Store index files.
-        LzoIndex index = LzoIndex.readIndex(fs, file);
-        indexes_.put(file, index);
       }
     }
 
@@ -62,9 +54,11 @@ public abstract class DeprecatedLzoInputFormat<K, V> extends FileInputFormat<K, 
 
   @Override
   protected boolean isSplitable(FileSystem fs, Path filename) {
-    // LZO files are splittable precisely there is a corresponding index file.
-    LzoIndex index = indexes_.get(filename);
-    return !index.isEmpty();
+    try {
+      return fs.exists(filename.suffix(LzoIndex.LZO_INDEX_SUFFIX));
+    } catch (IOException e) { // not expected
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -73,11 +67,23 @@ public abstract class DeprecatedLzoInputFormat<K, V> extends FileInputFormat<K, 
 
     // Find new starts/ends of the filesplit that align with the LZO blocks.
     List<FileSplit> result = new ArrayList<FileSplit>();
-    FileSystem fs = FileSystem.get(conf);
+
+    Path prevFile = null;
+    LzoIndex prevIndex = null;
 
     for (FileSplit fileSplit : splits) {
       Path file = fileSplit.getPath();
-      LzoIndex index = indexes_.get(file);
+      FileSystem fs = file.getFileSystem(conf);
+
+      LzoIndex index; // reuse index for files with multiple blocks.
+      if (file.equals(prevFile)) {
+        index = prevIndex;
+      } else {
+        index = LzoIndex.readIndex(fs, file);
+        prevFile = file;
+        prevIndex = index;
+      }
+
       if (index == null) {
         // Each LZO file gets a (possibly empty) index in the map, so this shouldn't happen.
         throw new IOException("Index not found for " + file);

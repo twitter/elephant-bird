@@ -1,14 +1,13 @@
-<project name="elephant-bird" default="release-jar" basedir=".">
-    
-  <!-- Global properties for this build -->
-  <property name="jar.name" value="elephant-bird" />
-  <property name="version" value="2.1.3-SNAPSHOT" />
+<project name="elephant-bird"
+         default="jar"
+         xmlns:ivy="antlib:org.apache.ivy.ant"
+         xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
-  <!-- Directories -->
-  <property name="build.dir" location="build" />
+  <property file="${basedir}/libraries.properties"/>
+
+  <property name="build.dir" location="${basedir}/build"/>
   <property name="javadoc.dir" location="javadoc" />
-  <property name="dist.dir"  location="dist" />
-  
+
   <property name="src.dir" location="src" />
   <property name="src.java.dir" location="${src.dir}/java" />
   <property name="src.proto.dir" location="${src.dir}/proto" />
@@ -18,18 +17,14 @@
   <property name="src.gen.java.dir" location="${build.dir}/gen-java" /> 
   <property name="classes.dir" location="${build.dir}/classes" />
 
-  <property name="lib.dir" value="${basedir}/lib"/>
-
-
-  <property name="test.lib.dir" value="${lib.dir}"/>
-  <property name="test.build.dir" value="${build.dir}/test"/>  
+  <property name="test.build.dir" value="${build.dir}/test"/>
+  <property name="test.thrift.gen.java.dir" value="${test.build.dir}/thrift/gen-java"/>
   <property name="test.generated.dir" value="${test.build.dir}/src"/>
   <property name="test.build.data" value="${test.build.dir}/data"/>
   <property name="test.log.dir" value="${test.build.dir}/logs"/>
   <property name="test.build.classes" value="${test.build.dir}/classes"/>
 
   <property name="test.include" value="Test*"/>
-  <property name="test.classpath.id" value="test.classpath"/>
   <property name="test.output" value="no"/>
   <property name="test.timeout" value="900000"/>
 
@@ -38,239 +33,189 @@
   <property name="test.junit.fork.mode" value="perBatch" />
   <property name="test.junit.haltonfailure" value="no" />
   <property name="test.junit.maxmemory" value="512m" />
-  <property name="javac.debug" value="on"/>
-  <property name="javac.optimize" value="on"/>
+  <!-- Set to enable LZO tests. For example:
+  $ ant -Dtest.library.path=/path/to/libgplcompression/lib/native/Mac_OS_X-x86_64-64 test
+  -->
   <property name="test.library.path" value="none"/>
-	
-  <path id="test.classpath">
-      <pathelement location="${classes.dir}"/>
-      <pathelement location="${test.build.classes}"/>
-      <pathelement location="${basedir}/bin}"/>
-      <fileset dir="${test.lib.dir}">
-          <include name="**/*.jar"/>
-      </fileset>
-  </path>
-  
-  <target name="debug" description="sets properties for debugging (logging on, debug symbols, etc)">
-	<echo message="Building in debug mode..."/>
-	<property name="compile.mode" value="debug"/>
-  </target>
 
-  <target name="release" description="sets properties for release builds.">
-	<echo message="Building in release mode..."/>
-	<property name="compile.mode" value="release"/>
-  </target>
+  <property name="thrift.version.expected" value="Thrift version 0.5.0"/>
+  <property name="protobuf.version.expected" value="libprotoc 2.3.0"/>
 
-  <target name="noproto" depends="init">
-   <echo message="building without protobuf support" />
-   <property name="noprotobuf" value="yes" />
-   <compile-noprotobuf />
-  </target>
+  <property name="compile.lib.dir" location="${build.dir}/lib/compile"/>
+  <property name="test.lib.dir" location="${build.dir}/lib/test"/>
 
-  <target name="nonothing" depends="init">
-   <echo message="building without protobuf and thrift support" />
-   <property name="noprotobuf" value="yes" />
-   <property name="nothrift" value="yes" />
-   <compile-nonothing />
-  </target>
+  <property name="jar.name" value="elephant-bird"/>
+  <property name="version" value="2.1.8"/>
+  <property name="jar.file" location="${build.dir}/${jar.name}-${version}.jar"/>
 
+  <property name="maven.repo" value="http://repo1.maven.org/maven2"/>
+  <property name="ivy.version" value="2.2.0"/>
 
-  
-  <target name="init">
-    <tstamp/>
-    <!-- Create the build directory structure used by compile -->
-    <mkdir dir="${build.dir}" />
-    <mkdir dir="${classes.dir}" />
-    <mkdir dir="${test.build.dir}" />
-  </target>
-
-  <macrodef name="compile-noprotobuf">
-   <sequential>
-    <!-- Compile the java code from ${src.java} into ${build} -->
-    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${javac.debug}" optimize="${javac.optimize}" excludes="**/*Protobuf*, **/proto/">
-      <classpath>
-        <fileset dir="lib">
-          <include name="**/*.jar"/>
-        </fileset>
-      </classpath>
-    </javac>
-   </sequential>
-  </macrodef>
-
-  <macrodef name="compile-nonothing">
-   <sequential>
-    <!-- Compile the java code from ${src.java} into ${build} -->
-    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${javac.debug}" optimize="${javac.optimize}" excludes="**/*Protobuf*, **/proto/, **/*Thrift*, **/thrift/, **/*Binary*" >
-      <classpath>
-        <fileset dir="lib">
-          <include name="**/*.jar"/>
-        </fileset>
-      </classpath>
-    </javac>
-   </sequential>
-  </macrodef>
-    
-  <macrodef name="compile-java-protobuf">
-   <sequential>
-    <!-- Compile the java code from ${src.java} into ${build} -->
-    <javac srcdir="${src.java.dir}" destdir="${classes.dir}" debug="${javac.debug}" optimize="${javac.optimize}" includes="**/*Protobuf*, **/proto/">
-      <classpath>
-        <fileset dir="lib">
-          <include name="**/*.jar"/>
-        </fileset>
-      </classpath>
-    </javac>
-   </sequential>
-  </macrodef>
-
-  <target name="compile" depends="init, compile-protobuf" description="compile the source">
-   <compile-noprotobuf />
-  </target>
-    
-  <macrodef name="generate-protobuf">
-      <sequential>
-        <mkdir dir="${src.gen.java.dir}" />
-        <property name="protoc.bin" value="protoc" />
-        <apply executable="${protoc.bin}" failonerror="true" skipemptyfilesets="true" verbose="true">
-          <env key="PATH" path="${env.PATH}:." />
-          <arg value="--proto_path=${src.proto.dir}" />
-          <arg value="--java_out=${src.gen.java.dir}" />
-          <fileset dir="${src.proto.dir}" includes="**/*.proto" />
-        </apply>
-      </sequential>
-    </macrodef>
-
-  <macrodef name="generate-thrift">
-      <sequential>
-        <!-- ensure Thrift 0.5.x -->   
-        <exec executable="thrift" outputproperty="thrift.version.string">
-          <arg value="-version"/>
-        </exec>
-        <fail message="Thrift 0.5.x required for thrift support. The local version is '${thrift.version.string}'">
-          <condition> 
-            <not> 
-              <contains string="${thrift.version.string}" substring="Thrift version 0.5."/>
-            </not>
-          </condition>
-        </fail>
-        <mkdir dir="${src.gen.java.dir}" />
-        <apply executable="thrift" failonerror="true" skipemptyfilesets="true" verbose="true">
-          <env key="PATH" path="${env.PATH}:." />
-          <arg value="--gen" />
-          <arg value="java" />
-          <arg value="-o" />
-          <arg value="${src.gen.java.dir}/.." />
-          <fileset dir="${src.thrift.dir}" includes="**/*.thrift" />
-        </apply>
-      </sequential>
-    </macrodef>
-
-  <macrodef name="compile-generated-protobuf">
+  <macrodef name="_check_compiler">
+    <attribute name="compiler"/>
+    <attribute name="versionArg"/>
+    <attribute name="versionExpected"/>
     <sequential>
-      <javac srcdir="${src.gen.java.dir}" destdir="${classes.dir}" deprecation="on">
-        <classpath>
-          <fileset dir="${lib.dir}">
-            <include name="**/*.jar"/>
-          </fileset>
-        </classpath>
-        <include name="**/*.java" />
-      </javac>
+      <exec executable="@{compiler}" outputproperty="@{compiler}.version.actual">
+        <arg value="@{versionArg}"/>
+      </exec>
+      <fail message="Expected @{compiler} @{versionExpected} but you have ${@{compiler}.version.actual}">
+        <condition>
+          <not>
+            <contains string="${@{compiler}.version.actual}" substring="@{versionExpected}"/>
+          </not>
+        </condition>
+      </fail>
     </sequential>
   </macrodef>
 
-  <target name="compile-protobuf" depends="init" unless="noprotobuf">
-    <generate-thrift />
-    <generate-protobuf />
-    <compile-generated-protobuf />
-    <compile-java-protobuf />
-  </target>
+  <macrodef name="_javac">
+    <attribute name="srcDir"/>
+    <attribute name="destDir"/>
+    <attribute name="classPathRef"/>
+    <sequential>
+      <!-- debuglevel="lines,source" puts line numbers in stack traces -->
+      <javac
+          srcdir="@{srcDir}"
+          destdir="@{destDir}"
+          classpathref="@{classPathRef}"
+          fork="true"
+          debug="on"
+          debuglevel="lines,source"/>
+    </sequential>
+  </macrodef>
   
+  <target name="clean" description="clean up">
+    <delete dir="${build.dir}"/>
+    <ant dir="examples" target="clean" inheritAll="false"/>
+  </target>
+
+  <target name="bootstrap">
+    <tstamp/>
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${classes.dir}"/>
+    <mkdir dir="${test.build.dir}"/>
+    <mkdir dir="${test.thrift.gen.java.dir}"/>
+    <mkdir dir="${src.gen.java.dir}"/>
+  </target>
+
+  <target name="init-ivy" depends="bootstrap" unless="init-ivy.complete">
+    <property name="ivy.settings.file" value="${basedir}/ivysettings.xml"/>
+    <get src="${maven.repo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"
+      dest="${build.dir}" usetimestamp="true"/>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant">
+      <classpath path="${build.dir}/ivy-${ivy.version}.jar"/>
+    </taskdef>
+    <property name="init-ivy.complete" value="true"/>
+  </target>
+
+  <target name="resolve" description="retrieve dependencies with ivy" depends="init-ivy">
+    <ivy:retrieve sync="true" type="jar"
+      pattern="${build.dir}/lib/[conf]/[organization]-[artifact]-[revision](-[classifier]).[ext]"/>
+    <property name="ivy.pom.version" value="${version}"/>
+    <ivy:makepom ivyfile="${basedir}/ivy.xml"
+                 pomfile="${build.dir}/${jar.name}-${version}.pom"/>
+  </target>
+
+  <target name="report" depends="resolve">
+    <ivy:report todir="${build.dir}"/>
+  </target>
+
+  <target name="init" depends="bootstrap, init-ivy"/>
+
+  <!-- Protobuf generation is required at this time as generated classes are
+       used directly by elephant-bird. -->
+  <target name="generate-protobuf" depends="init">
+    <_check_compiler compiler="protoc"
+                     versionArg="--version"
+                     versionExpected="${protobuf.version.expected}"/>
+    <apply executable="protoc" failonerror="true" skipemptyfilesets="true" verbose="true">
+      <arg value="--proto_path=${src.proto.dir}"/>
+      <arg value="--java_out=${src.gen.java.dir}"/>
+      <fileset dir="${src.proto.dir}" includes="**/*.proto"/>
+    </apply>
+  </target>
+
+  <!-- Compilation targets -->
+  <path id="compile.classpath">
+    <fileset dir="${compile.lib.dir}"/>
+    <pathelement location="${classes.dir}"/>
+  </path>
+
+  <target name="compile" depends="init, resolve, generate-protobuf">
+    <_javac srcDir="${src.gen.java.dir}"
+            destDir="${classes.dir}"
+            classPathRef="compile.classpath"/>
+    <_javac srcDir="${src.java.dir}"
+            destDir="${classes.dir}"
+            classPathRef="compile.classpath"/>
+  </target>
 
   <target name="jar" depends="compile" description="generate the distribution">
-    <property name="jar.file" value="${dist.dir}/${jar.name}-${version}.jar" />
-    <!-- Create the distribution directory -->
-    <mkdir dir="${dist.dir}"/>
-	<!-- Delete the old jar file -->
-	<delete file="${jar.file}"/>
     <jar jarfile="${jar.file}">
       <fileset dir="${classes.dir}"/>
     </jar>
   </target>
   
-  <target name="javadoc" depends="compile" description="generate documentation" >
-    <delete dir="${javadoc.dir}" />
-    <javadoc destdir="${javadoc.dir}">
-      <fileset dir="${src.java.dir}" />
-      <fileset dir="${src.gen.java.dir}" />
-      <classpath>
-        <fileset dir="${lib.dir}">
-          <include name="**/*.jar"/>
-        </fileset>
-      </classpath>
-    </javadoc>
+  <!-- Test targets -->
+  <!-- Thrift code generation is required for tests. -->
+  <target name="generate-thrift" depends="init">
+    <_check_compiler compiler="thrift"
+                     versionArg="-version"
+                     versionExpected="${thrift.version.expected}"/>
+    <apply executable="thrift" failonerror="true" skipemptyfilesets="true" verbose="true">
+      <arg value="--gen"/>
+      <arg value="java"/>
+      <arg value="-o"/>
+      <!-- Thrift creates gen-java in the output directory. -->
+      <arg value="${test.thrift.gen.java.dir}/.."/>
+      <fileset dir="${src.thrift.dir}" includes="**/*.thrift"/>
+    </apply>
   </target>
 
-  <target name="debug-jar" description="Build debug and jar" depends="debug,jar"/>
-  <target name="release-jar" description="Build release and jar" depends="release,jar"/>
-
-  <target name="maven-install" description="Install release jar in local Maven repository" depends="release-jar">
-    <exec executable="mvn" failonerror="true">
-      <arg value="install:install-file" />
-      <arg value="-DgroupId=com.twitter" />
-      <arg value="-DartifactId=elephant-bird" />
-      <arg value="-Dversion=${version}" />
-      <arg value="-Dpackaging=jar" />
-      <arg value="-Dfile=${jar.file}" />
-    </exec>
-  </target>
-
-  <target name="clean" description="clean up">
-    <!-- Delete the ${build} and ${dist} directory trees -->
-    <delete dir="${build.dir}"/>
-    <delete dir="${classes.dir}" />
-    <delete dir="${dist.dir}"/>
-  </target>
-
-  <target name="examples" depends="jar" description="Compile the examples">
-    <ant dir="examples" />
-  </target>
-
-  <target name="compile-java-tests" depends="compile, compile-protobuf, examples" >
-    <echo message="classes dir: ${classes.dir}" /> 
-	<delete dir="${test.build.classes}"/>
-    <mkdir dir="${test.build.classes}"/>
-    <javac srcdir="${test.src.dir}" destdir="${test.build.classes}" deprecation="on" debug="${javac.debug}" optimize="${javac.optimize}">
-      <classpath refid="${test.classpath.id}"/>
-      <include name="**/*.java" />
-    </javac>
+  <target name="compile-thrift" depends="generate-thrift">
+    <_javac srcDir="${test.thrift.gen.java.dir}"
+            destDir="${classes.dir}"
+            classPathRef="compile.classpath"/>
   </target>
   
-  <target name="test" depends="compile-java-tests" 
-                      description="Run unit tests">
-
+  <target name="compile-java-tests" depends="compile, compile-thrift">
+    <delete dir="${test.build.classes}"/>
+    <mkdir dir="${test.build.classes}"/>
+    <path id="compile.java.tests.classpath">
+      <fileset dir="${test.lib.dir}"/>
+      <pathelement location="${classes.dir}"/>
+    </path>
+    <_javac srcDir="${test.src.dir}"
+            destDir="${test.build.classes}"
+            classPathRef="compile.java.tests.classpath"/>
+  </target>
+  
+  <target name="test" depends="jar, compile-java-tests" description="Run unit tests">
     <delete dir="${test.log.dir}"/>
     <mkdir dir="${test.log.dir}"/>
     <junit showoutput="${test.output}"
-      printsummary="${test.junit.printsummary}"
-      haltonfailure="${test.junit.haltonfailure}"
-      fork="yes"
-      forkmode="${test.junit.fork.mode}"
-      maxmemory="${test.junit.maxmemory}"
-      dir="${basedir}" timeout="${test.timeout}"
-      errorProperty="tests.failed" failureProperty="tests.failed">
+           printsummary="${test.junit.printsummary}"
+           haltonfailure="${test.junit.haltonfailure}"
+           fork="yes"
+           forkmode="${test.junit.fork.mode}"
+           maxmemory="${test.junit.maxmemory}"
+           dir="${basedir}"
+           timeout="${test.timeout}"
+           errorProperty="tests.failed"
+           failureProperty="tests.failed">
       <sysproperty key="test.build.data" value="${test.build.data}"/>
-      <sysproperty key="test.cache.data" value="${test.cache.data}"/>
-      <sysproperty key="test.debug.data" value="${test.debug.data}"/>
       <sysproperty key="test.log.dir" value="${test.log.dir}"/>
       <sysproperty key="test.source.dir" value="${test.src.dir}"/>
-      <sysproperty key="test.build.extraconf" value="${test.build.extraconf}" />
       <sysproperty key="java.library.path" value="${test.library.path}"/>
-      <classpath refid="${test.classpath.id}"/>
+      <classpath>
+        <fileset dir="${test.lib.dir}"/>
+        <pathelement location="${classes.dir}"/>
+        <pathelement location="${test.build.classes}"/>
+      </classpath>
       <formatter type="${test.junit.output.format}" />
       <batchtest todir="${test.log.dir}" unless="testcase">
-        <fileset dir="${test.src.dir}"
-         includes="**/${test.include}.java"
-         excludes="**/${test.exclude}.java" />
+        <fileset dir="${test.src.dir}" includes="**/${test.include}.java"/>
       </batchtest>
       <batchtest todir="${test.log.dir}" if="testcase">
         <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
@@ -278,4 +223,45 @@
     </junit>
     <fail if="tests.failed">Tests failed!</fail>
   </target>
+
+  <!-- Misc. targets -->
+  <target name="javadoc" depends="generate-protobuf" description="generate documentation">
+    <delete dir="${javadoc.dir}"/>
+    <javadoc destdir="${javadoc.dir}"
+             classpathref="compile.classpath"
+             additionalparam="-notimestamp">
+      <fileset dir="${src.java.dir}"/>
+      <fileset dir="${src.gen.java.dir}"/>
+    </javadoc>
+  </target>
+
+  <target name="init-maven">
+    <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
+             uri="artifact:org.apache.maven.artifact.ant"
+             classpath="${test.lib.dir}/org.apache.maven-maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
+  </target>
+
+  <target name="publish" depends="jar, init-maven"
+          description="publish to the in-git-repo maven repository">
+    <artifact:deploy file="${jar.file}">
+      <artifact:remoteRepository url="file://${basedir}/repo"/>
+      <artifact:pom file="${build.dir}/${jar.name}-${version}.pom"/>
+    </artifact:deploy>
+  </target>
+
+  <target name="install-local" depends="jar, init-maven"
+          description="install in your local user maven repository">
+    <artifact:install file="${jar.file}">
+      <artifact:pom file="${build.dir}/${jar.name}-${version}.pom"/>
+    </artifact:install>
+  </target>
+
+  <target name="examples" depends="jar" description="Compile the examples">
+    <ant dir="examples" inheritAll="false">
+      <property name="lib.dir" value="${test.lib.dir}"/>
+      <property name="jar.file" value="${jar.file}"/>
+      <property name="version" value="${version}"/>
+    </ant>
+  </target>
+
 </project>

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ivysettings>
+  <properties file="${basedir}/libraries.properties"/>
+  <settings defaultResolver="elephant-bird-repos"/>
+  <resolvers>
+    <chain name="elephant-bird-repos" returnFirst="true">
+      <filesystem name="internal"
+                  m2compatible="true"
+                  transactional="false"
+                  local="true"
+                  checkmodified="true">
+        <ivy pattern="${basedir}/lib/[artifact]-[revision](-[classifier]).[ext]"/>
+        <artifact pattern="${basedir}/lib/[artifact]-[revision](-[classifier]).[ext]"/>
+      </filesystem>
+      <ibiblio name="maven.org"
+               m2compatible="true"
+               root="http://repo1.maven.org/maven2"/>
+      <ibiblio name="conjars.org"
+               m2compatible="true"
+               root="http://conjars.org/repo"/>
+    </chain>
+  </resolvers>
+  <caches useOrigin="true"/>
+</ivysettings>

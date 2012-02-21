@@ -18,8 +18,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import com.twitter.elephantbird.examples.proto.Examples.Age;
-import com.twitter.elephantbird.mapreduce.input.LzoProtobufB64LineInputFormat;
-import com.twitter.elephantbird.mapreduce.input.LzoProtobufBlockInputFormat;
+import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoProtobufB64LineOutputFormat;
 import com.twitter.elephantbird.mapreduce.output.LzoProtobufBlockOutputFormat;
@@ -94,11 +93,8 @@ public class ProtobufMRExample {
     job.setMapperClass(LzoMapper.class);
     job.setNumReduceTasks(0);
 
-    if (conf.get("proto.test.format", "B64Line").equals("Block")) {
-      job.setInputFormatClass(LzoProtobufBlockInputFormat.getInputFormatClass(Age.class, job.getConfiguration()));
-    } else {
-      job.setInputFormatClass(LzoProtobufB64LineInputFormat.getInputFormatClass(Age.class, job.getConfiguration()));
-    }
+    // input format is same for both B64Line or block:
+    MultiInputFormat.setInputFormatClass(Age.class, job);
     job.setOutputFormatClass(TextOutputFormat.class);
 
     FileInputFormat.setInputPaths(job, new Path(args[0]));
