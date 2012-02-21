@@ -3,10 +3,7 @@ package com.twitter.elephantbird.mapreduce.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.ExtensionRegistry;
-import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
@@ -69,8 +66,6 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     this.typeRef = typeRef;
     protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
     if(protoExtensionRegistry != null) {
-//      this.extensionRegistry = ProtobufConverter.getRealExtensionRegistry(
-//          protoBuilder.getDescriptorForType(), protoExtensionRegistry);
       this.extensionRegistry = protoExtensionRegistry.getExtensionRegistry();
     }
   }
@@ -96,45 +91,6 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
           typeRef.getRawClass().getName(), ume);
     }
     return null;
-  }
-
-  private static ExtensionRegistry getRealExtensionRegistry(Descriptor descriptor,
-      ProtobufExtensionRegistry protoExtensionRegistry) {
-    ExtensionRegistry extReg = ExtensionRegistry.newInstance();
-    ProtobufConverter.populateRealExtensionRegistry(extReg, descriptor, protoExtensionRegistry);
-    return extReg;
-  }
-
-  private static void populateRealExtensionRegistry(
-      ExtensionRegistry realExtensionRegistry,
-      FieldDescriptor fieldDescriptor,
-      ProtobufExtensionRegistry protoExtensionRegistry) {
-    assert(fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE);
-
-    for(GeneratedExtension<?, ?> e: protoExtensionRegistry.getExtensions(fieldDescriptor)) {
-      realExtensionRegistry.add(e);
-    }
-
-    for(FieldDescriptor e: fieldDescriptor.getMessageType().getFields()) {
-      if(e.getType() == FieldDescriptor.Type.MESSAGE) {
-        populateRealExtensionRegistry(realExtensionRegistry, e, protoExtensionRegistry);
-      }
-    }
-  }
-
-  private static void populateRealExtensionRegistry(
-      ExtensionRegistry realExtensionRegistry,
-      Descriptor descriptor,
-      ProtobufExtensionRegistry protoExtensionRegistry) {
-    for(GeneratedExtension<?, ?> e: protoExtensionRegistry.getExtensions(descriptor)) {
-      realExtensionRegistry.add(e);
-    }
-
-    for(FieldDescriptor e: descriptor.getFields()) {
-      if(e.getType() == FieldDescriptor.Type.MESSAGE) {
-        populateRealExtensionRegistry(realExtensionRegistry, e, protoExtensionRegistry);
-      }
-    }
   }
 
   @Override
