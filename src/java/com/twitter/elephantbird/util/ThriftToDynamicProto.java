@@ -69,14 +69,7 @@ public class ThriftToDynamicProto<T extends TBase<?,?>> {
     for (Pair<String, Type> extraField : extraFields) {
       addField(desBuilder, extraField.getFirst(), ++extraFieldIdx, extraField.getSecond());
     }
-    DescriptorProtos.DescriptorProto dsc = desBuilder.build();
-
-    DescriptorProtos.FileDescriptorProto fileDescP = DescriptorProtos.FileDescriptorProto.newBuilder()
-        .addMessageType(dsc).build();
-
-    Descriptors.FileDescriptor[] fileDescs = new Descriptors.FileDescriptor[0];
-    Descriptors.FileDescriptor dynamicDescriptor = Descriptors.FileDescriptor.buildFrom(fileDescP, fileDescs);
-    msgDescriptor = dynamicDescriptor.findMessageTypeByName("dynaMessage");
+    msgDescriptor = Protobufs.makeMessageDescriptor(desBuilder.build());
     protoBuilder = DynamicMessage.newBuilder(msgDescriptor);
   }
 

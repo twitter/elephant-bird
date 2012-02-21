@@ -89,7 +89,7 @@ public class ProtobufToPig {
    * or {@link #singleFieldToTuple(FieldDescriptor, Object)} depending
    * on whether the field is a Message or a simple field.
    */
-  protected Object fieldToPig(FieldDescriptor fieldDescriptor, Object fieldValue) {
+  public Object fieldToPig(FieldDescriptor fieldDescriptor, Object fieldValue) {
     if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
       return messageToTuple(fieldDescriptor, fieldValue);
     } else {
