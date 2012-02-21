@@ -28,10 +28,13 @@ public class ProtobufTuple extends AbstractLazyTuple {
     msg_ = msg;
     extensionRegistry_ = extensionRegistry;
 
-    fieldDescriptors_ = new ArrayList<FieldDescriptor>(msg.getDescriptorForType().getFields());
-    if(extensionRegistry_ != null) {
-      fieldDescriptors_.addAll(extensionRegistry_.getExtensionDescriptorFields(
-          msg.getDescriptorForType()));
+    fieldDescriptors_ = new ArrayList<FieldDescriptor>();
+    if(msg_ != null) {
+      fieldDescriptors_.addAll(msg.getDescriptorForType().getFields());
+      if(extensionRegistry_ != null) {
+        fieldDescriptors_.addAll(extensionRegistry_.getExtensionDescriptorFields(
+            msg.getDescriptorForType()));
+      }
     }
     protoSize_ = fieldDescriptors_.size();
     protoConv_ = new ProtobufToPig();
@@ -48,6 +51,6 @@ public class ProtobufTuple extends AbstractLazyTuple {
   @Override
   public long getMemorySize() {
     // The protobuf estimate is obviously inaccurate.
-    return msg_.getSerializedSize() + realTuple.getMemorySize();
+    return realTuple.getMemorySize() + (msg_!=null ? msg_.getSerializedSize() : 0);
   }
 }
