@@ -16,7 +16,7 @@ import com.twitter.elephantbird.util.TypeRef;
 /**
  * Pig loader for Protobufs stored in RCFiles.
  */
-public class RCFileProtobufPigLoader extends LzoProtobufB64LinePigLoader<Message> {
+public class RCFileProtobufPigLoader extends ProtobufPigLoader<Message> {
 
   private RCFileProtobufInputFormat.ProtobufReader protoReader;
 

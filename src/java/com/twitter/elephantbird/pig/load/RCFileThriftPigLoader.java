@@ -14,7 +14,7 @@ import com.twitter.elephantbird.mapreduce.input.RCFileThriftInputFormat;
 import com.twitter.elephantbird.pig.util.RCFileUtil;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class RCFileThriftPigLoader extends LzoThriftB64LinePigLoader<TBase<?,?>> {
+public class RCFileThriftPigLoader extends ThriftPigLoader<TBase<?,?>> {
 
   private RCFileThriftInputFormat.ThriftReader thriftReader;
 
@@ -27,7 +27,7 @@ public class RCFileThriftPigLoader extends LzoThriftB64LinePigLoader<TBase<?,?>>
 
   @Override @SuppressWarnings("unchecked")
   public InputFormat getInputFormat() throws IOException {
-    return new RCFileThriftInputFormat(typeRef_);
+    return new RCFileThriftInputFormat(typeRef);
   }
 
   @SuppressWarnings("unchecked")
