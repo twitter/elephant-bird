@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 
-import org.apache.hadoop.io.serializer.Deserializer;
-
 import com.google.protobuf.Message;
+
+import org.apache.hadoop.io.serializer.Deserializer;
 
 /**
  * Deserializes delimited protobufs from input stream

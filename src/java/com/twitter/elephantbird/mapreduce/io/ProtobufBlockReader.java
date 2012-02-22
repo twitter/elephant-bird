@@ -3,13 +3,14 @@ package com.twitter.elephantbird.mapreduce.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.google.protobuf.Message;
+import com.twitter.elephantbird.util.TypeRef;
+
 import org.apache.hadoop.io.BytesWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.Message;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
-import com.twitter.elephantbird.util.TypeRef;
 
 /* A class to read blocks of protobuf data of type M.  To use, just instantiate
  * with an InputStream and a TypeRef, call readProtobuf until it returns false, and

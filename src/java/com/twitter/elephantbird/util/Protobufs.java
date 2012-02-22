@@ -8,11 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
@@ -25,6 +20,12 @@ import com.google.protobuf.ExtensionRegistryLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.commons.lang.StringUtils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.proto.util.ProtogenHelper;
 

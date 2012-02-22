@@ -3,8 +3,9 @@ package com.twitter.elephantbird.pig.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 
 @SuppressWarnings("serial")

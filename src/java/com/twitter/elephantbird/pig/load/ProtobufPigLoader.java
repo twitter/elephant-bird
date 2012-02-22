@@ -76,8 +76,8 @@ public class ProtobufPigLoader<M extends Message> extends LzoBaseLoadFunc {
   @Override
   public Tuple getNext() throws IOException {
     if (tupleTemplate == null) {
-      tupleTemplate = new ProjectedProtobufTupleFactory<M>(typeRef,
-          requiredFieldList, extensionRegistry);
+      tupleTemplate = new ProjectedProtobufTupleFactory<M>(
+          typeRef, requiredFieldList, extensionRegistry);
     }
 
     M value = getNextBinaryValue(typeRef);

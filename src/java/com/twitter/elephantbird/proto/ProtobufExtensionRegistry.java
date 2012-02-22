@@ -16,6 +16,7 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.GeneratedMessage.GeneratedExtension;
 import com.google.protobuf.Message;
+
 import com.twitter.elephantbird.util.Protobufs;
 
 public class ProtobufExtensionRegistry {

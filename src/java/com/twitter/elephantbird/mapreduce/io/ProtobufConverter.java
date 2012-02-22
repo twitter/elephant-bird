@@ -15,8 +15,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * {@link BinaryConverter} for Protobufs
  */
 public class ProtobufConverter<M extends Message> implements BinaryConverter<M> {
-  private static final Logger LOG = LoggerFactory.getLogger(
-      ProtobufConverter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProtobufConverter.class);
 
   private Message.Builder protoBuilder;
   private TypeRef<M> typeRef;
@@ -37,13 +36,11 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   /**
    * Returns a ProtobufConverter for a given Protobuf class.
    */
-  public static <M extends Message> ProtobufConverter<M> newInstance(
-      Class<M> protoClass) {
+  public static <M extends Message> ProtobufConverter<M> newInstance(Class<M> protoClass) {
     return ProtobufConverter.newInstance(new TypeRef<M>(protoClass){});
   }
 
-  public static <M extends Message> ProtobufConverter<M> newInstance(
-      TypeRef<M> typeRef) {
+  public static <M extends Message> ProtobufConverter<M> newInstance(TypeRef<M> typeRef) {
     return new ProtobufConverter<M>(typeRef);
   }
 
@@ -84,11 +81,9 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
       }
       return (M) protoBuilder.clone().mergeFrom(messageBuffer).build();
     } catch (InvalidProtocolBufferException e) {
-      logWarning("Invalid Protobuf exception while building " +
-          typeRef.getRawClass().getName(), e);
+      logWarning("Invalid Protobuf exception while building " + typeRef.getRawClass().getName(), e);
     } catch(UninitializedMessageException ume) {
-      logWarning("Uninitialized Message Exception while building " +
-          typeRef.getRawClass().getName(), ume);
+      logWarning("Uninitialized Message Exception while building " + typeRef.getRawClass().getName(), ume);
     }
     return null;
   }

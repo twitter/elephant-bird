@@ -9,9 +9,9 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
-import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;

@@ -9,8 +9,8 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 
 import com.google.common.collect.Lists;
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;

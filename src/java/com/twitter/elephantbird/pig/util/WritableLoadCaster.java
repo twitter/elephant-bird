@@ -3,14 +3,14 @@ package com.twitter.elephantbird.pig.util;
 import java.io.IOException;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
+
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Writable;
 import org.apache.pig.LoadCaster;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
-
-import com.google.common.base.Preconditions;
 
 /**
  * Base LoadCaster implementation which simplifies conversion specification from Writable type to

@@ -3,9 +3,9 @@ package com.twitter.elephantbird.cascading2.io.protobuf;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.apache.hadoop.io.serializer.Serializer;
-
 import com.google.protobuf.Message;
+
+import org.apache.hadoop.io.serializer.Serializer;
 
 /**
  * Serializes protobufs with delimiters

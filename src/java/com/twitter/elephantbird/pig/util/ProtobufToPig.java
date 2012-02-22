@@ -1,11 +1,18 @@
 package com.twitter.elephantbird.pig.util;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
+import com.twitter.data.proto.Misc.CountedMap;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
@@ -19,15 +26,6 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.EnumValueDescriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Message;
-import com.twitter.data.proto.Misc.CountedMap;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 
@@ -74,12 +72,15 @@ public class ProtobufToPig {
     }
 
     Descriptor msgDescriptor = msg.getDescriptorForType();
-    Set<FieldDescriptor> fdSet = new LinkedHashSet<FieldDescriptor>();
-    fdSet.addAll(msgDescriptor.getFields());
+    List<FieldDescriptor> fdSet = msgDescriptor.getFields();
     if(extensionRegistry != null) {
-      fdSet.addAll(extensionRegistry.getExtensionDescriptorFields(msgDescriptor));
+      List<FieldDescriptor> extFdSet = extensionRegistry.getExtensionDescriptorFields(msgDescriptor);
+      List<FieldDescriptor> newFdSet = new ArrayList<FieldDescriptor>(fdSet.size() + extFdSet.size());
+      newFdSet.addAll(fdSet);
+      newFdSet.addAll(extFdSet);
+      fdSet = newFdSet;
     }
-//    fdSet.addAll(msg.getAllFields().keySet());
+
     Tuple tuple = tupleFactory_.newTuple(fdSet.size());
     int curField = 0;
     try {
@@ -122,8 +123,8 @@ public class ProtobufToPig {
    * @param fieldValue the object representing the value of this field, possibly null.
    * @return the object representing fieldValue in Pig -- either a bag or a tuple.
    */
-  protected Object messageToTuple(FieldDescriptor fieldDescriptor,
-      Object fieldValue, ProtobufExtensionRegistry extensionRegistry) {
+  protected Object messageToTuple(FieldDescriptor fieldDescriptor, Object fieldValue,
+      ProtobufExtensionRegistry extensionRegistry) {
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToTuple called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {
@@ -163,8 +164,7 @@ public class ProtobufToPig {
    * @throws ExecException if Pig decides to.  Shouldn't happen because we won't walk off the end of a tuple's field set.
    */
   @SuppressWarnings("unchecked")
-  protected Object singleFieldToTuple(FieldDescriptor fieldDescriptor,
-      Object fieldValue,
+  protected Object singleFieldToTuple(FieldDescriptor fieldDescriptor, Object fieldValue,
       @SuppressWarnings("unused") ProtobufExtensionRegistry extensionRegistry) {
     assert fieldDescriptor.getType() != FieldDescriptor.Type.MESSAGE : "messageToFieldSchema called with field of type " + fieldDescriptor.getType();
 
@@ -308,7 +308,6 @@ public class ProtobufToPig {
     return singleFieldToFieldSchema(fieldDescriptor, null);
   }
 
-
   public FieldSchema singleFieldToFieldSchema(FieldDescriptor fieldDescriptor,
       @SuppressWarnings("unused") ProtobufExtensionRegistry extensionRegistry) throws FrontendException {
     assert fieldDescriptor.getType() != FieldDescriptor.Type.MESSAGE : "singleFieldToFieldSchema called with field of type " + fieldDescriptor.getType();
@@ -399,8 +398,7 @@ public class ProtobufToPig {
     return toPigScript(msgDescriptor, null, loaderClassName, params);
   }
 
-  public String toPigScript(Descriptor msgDescriptor,
-      ProtobufExtensionRegistry extensionRegistry,
+  public String toPigScript(Descriptor msgDescriptor, ProtobufExtensionRegistry extensionRegistry,
       String loaderClassName, String... params) {
     StringBuffer sb = new StringBuffer();
     final int initialTabOffset = 3;

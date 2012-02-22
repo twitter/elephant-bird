@@ -4,6 +4,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
+import com.google.protobuf.Message;
+import com.google.protobuf.Message.Builder;
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
+import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
+
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.backend.executionengine.ExecException;
@@ -15,20 +28,8 @@ import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.DescriptorProtos.DescriptorProto;
-import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
-import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
-import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.DescriptorValidationException;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.FileDescriptor;
-import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
-import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 
 /**
  * Converts a Pig Tuple into a Protobuf message. Tuple values should be ordered to match the natural
@@ -100,8 +101,7 @@ public class PigToProtobuf {
           if (fieldDescriptor.isRepeated()) {
             // Repeated fields are set with Lists containing objects of the fields' Java type.
             builder.setField(fieldDescriptor,
-                dataBagToRepeatedField(builder, fieldDescriptor,
-                    (DataBag) tupleField, extensionRegistry));
+                dataBagToRepeatedField(builder, fieldDescriptor, (DataBag) tupleField, extensionRegistry));
           } else {
             if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
               Builder nestedMessageBuilder = null;
@@ -113,8 +113,7 @@ public class PigToProtobuf {
               }
 
               builder.setField(fieldDescriptor,
-                  tupleToMessage(nestedMessageBuilder, (Tuple) tupleField,
-                      extensionRegistry));
+                  tupleToMessage(nestedMessageBuilder, (Tuple) tupleField, extensionRegistry));
             } else {
               builder.setField(fieldDescriptor,
                   tupleFieldToSingleField(fieldDescriptor, tupleField, extensionRegistry));
@@ -212,8 +211,7 @@ public class PigToProtobuf {
    * @return a protobuf-friendly List of fieldDescriptor-type objects
    */
   private static List<Object> dataBagToRepeatedField(Builder containingMessageBuilder,
-      FieldDescriptor fieldDescriptor, DataBag bag,
-      ProtobufExtensionRegistry extensionRegistry) {
+      FieldDescriptor fieldDescriptor, DataBag bag, ProtobufExtensionRegistry extensionRegistry) {
     ArrayList<Object> bagContents = new ArrayList<Object>((int)bag.size());
     Iterator<Tuple> bagIter = bag.iterator();
 

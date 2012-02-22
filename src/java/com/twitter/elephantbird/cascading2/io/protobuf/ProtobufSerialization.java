@@ -2,13 +2,13 @@ package com.twitter.elephantbird.cascading2.io.protobuf;
 
 import java.util.Comparator;
 
+import com.google.protobuf.Message;
+
 import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.Serializer;
 
 import cascading.tuple.Comparison;
-
-import com.google.protobuf.Message;
 
 /**
  * Serialization format class

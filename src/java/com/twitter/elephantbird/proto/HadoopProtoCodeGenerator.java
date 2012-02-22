@@ -10,9 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.sourceforge.yamlbeans.YamlException;
-import net.sourceforge.yamlbeans.YamlReader;
-
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -27,6 +24,9 @@ import com.twitter.elephantbird.proto.codegen.ProtoCodeGenerator;
 import com.twitter.elephantbird.proto.codegen.ProtobufExtensionRegistryGenerator;
 import com.twitter.elephantbird.proto.util.ProtogenHelper;
 import com.twitter.elephantbird.util.Strings;
+
+import net.sourceforge.yamlbeans.YamlException;
+import net.sourceforge.yamlbeans.YamlReader;
 
 public class HadoopProtoCodeGenerator {
 

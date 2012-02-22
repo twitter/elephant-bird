@@ -2,6 +2,9 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
+import com.google.common.base.Preconditions;
+import com.google.protobuf.Message;
+
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
@@ -9,8 +12,6 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
@@ -82,8 +83,7 @@ public class ProtobufWritableConverter<M extends Message> extends
 
   @Override
   protected ProtobufWritable<M> toWritable(Tuple value) throws IOException {
-    writable.set(PigToProtobuf.tupleToMessage(typeRef.getRawClass(), value,
-        extensionRegistry));
+    writable.set(PigToProtobuf.tupleToMessage(typeRef.getRawClass(), value, extensionRegistry));
     return writable;
   }
 }
