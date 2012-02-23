@@ -19,6 +19,10 @@ import com.google.protobuf.Message;
 
 import com.twitter.elephantbird.util.Protobufs;
 
+/**
+ * A wrapper class around protobuf built-in ExtensionRegistry.
+ *
+ */
 public class ProtobufExtensionRegistry {
   private Map<String, LinkedHashSet<GeneratedExtension<?, ?>>> extensionsByExtendeeTypeName_ =
     new HashMap<String, LinkedHashSet<GeneratedExtension<?, ?>>>();
@@ -34,6 +38,10 @@ public class ProtobufExtensionRegistry {
   public ProtobufExtensionRegistry() {
   }
 
+  /**
+   * Register a protobuf message extension.
+   * @param extension
+   */
   public void addExtension(GeneratedExtension<?, ?> extension) {
     String extendeeTypeName = extension.getDescriptor().getContainingType().getFullName();
 
@@ -56,6 +64,11 @@ public class ProtobufExtensionRegistry {
     }
   }
 
+  /**
+   * Find extensions by protobuf message type name.
+   * @param protoTypeName
+   * @return a set of found extensions, an empty set if not found.
+   */
   public Set<GeneratedExtension<?, ?>> getExtensions(String protoTypeName) {
     Set<GeneratedExtension<?, ?>> ret = extensionsByExtendeeTypeName_.get(protoTypeName);
     if(ret != null) {
@@ -64,16 +77,32 @@ public class ProtobufExtensionRegistry {
     return Collections.emptySet();
   }
 
+  /**
+   * Find extensions by protobuf message descriptor.
+   * @param descriptor
+   * @return a set of found extensions, an empty set if not found.   *
+   */
   public Set<GeneratedExtension<?, ?>> getExtensions(Descriptor descriptor) {
     return getExtensions(descriptor.getFullName());
   }
 
+  /**
+   * Find extensions by protobuf field descriptor.
+   * The field's declared type must be a protobuf message.
+   * @param fieldDescriptor
+   * @return a set of found extensions, an empty set if not found.
+   */
   public Set<GeneratedExtension<?, ?>> getExtensions(FieldDescriptor fieldDescriptor) {
     Preconditions.checkArgument(fieldDescriptor.getType()==FieldDescriptor.Type.MESSAGE,
         fieldDescriptor + " must be message descriptor");
     return getExtensions(fieldDescriptor.getMessageType().getFullName());
   }
 
+  /**
+   * Find all registered extension field descriptors by protobuf message type name.
+   * @param protoFullName the protobuf message type name.
+   * @return a list of found field descriptors, an empty list if not found.
+   */
   public List<FieldDescriptor> getExtensionDescriptorFields(String protoFullName) {
     return new ArrayList<FieldDescriptor>(Collections2.transform(getExtensions(protoFullName),
         new Function<GeneratedExtension<?, ?>, FieldDescriptor>() {
@@ -94,10 +123,18 @@ public class ProtobufExtensionRegistry {
     return getExtensionDescriptorFields(fieldDescriptor.getMessageType().getFullName());
   }
 
+  /**
+   * Get protobuf message generated Java class
+   * @param extensionFd
+   * @return protobuf messsge Java class, null if not found
+   */
   public Class<? extends Message> getExtensionClass(Descriptor extensionFd) {
     return extClassesByExtensionTypeName_.get(extensionFd.getFullName());
   }
 
+  /**
+   * @return an unmodified protobuf built-in ExtensionRegistry instance.
+   */
   public ExtensionRegistry getExtensionRegistry() {
     return extensionRegistry_.getUnmodifiable();
   }

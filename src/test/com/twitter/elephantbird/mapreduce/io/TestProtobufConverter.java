@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.elephantbird.pig.piggybank.Fixtures;
+import com.twitter.elephantbird.pig.util.ProtobufToPig;
 
 public class TestProtobufConverter {
 

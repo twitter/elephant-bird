@@ -29,6 +29,7 @@ public abstract class ProtoCodeGenerator {
    * option java_package = "com.something.mypackage";
    * in their .proto file, the value will be "com.something.mypackage" instead.
    * @param proto the descriptor for the proto itself.
+   * @param codeGenOptions codegen options
    */
   public void configure(String protoFilename, String packageName,
       DescriptorProto proto, ProtoCodeGenOptions codeGenOptions) {
