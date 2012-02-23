@@ -156,27 +156,6 @@ public class TestInvoker {
       return bag;
     }
 
-    @Test
-    public void testSpeed() throws IOException, SecurityException, ClassNotFoundException, NoSuchMethodException {
-        EvalFunc<Double> log = new Log();
-        Tuple tup = tf_.newTuple(1);
-        long start = System.currentTimeMillis();
-        for (int i=0; i < 1000000; i++) {
-            tup.set(0, (double) i);
-            log.exec(tup);
-        }
-        long staticSpeed = (System.currentTimeMillis()-start);
-        start = System.currentTimeMillis();
-        log = new InvokeForDouble("java.lang.Math.log", "Double", "static");
-        for (int i=0; i < 1000000; i++) {
-            tup.set(0, (double) i);
-            log.exec(tup);
-        }
-        long dynamicSpeed = System.currentTimeMillis()-start;
-        System.err.println("Dynamic to static ratio: "+((float) dynamicSpeed)/staticSpeed);
-        assertTrue( ((float) dynamicSpeed)/staticSpeed < 5);
-    }
-    
     private class Log extends EvalFunc<Double> {
 
         @Override
