@@ -4,16 +4,15 @@ import com.google.common.collect.Maps;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.pig.LoadFunc;
 import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.PigContext;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -21,15 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
  * Decodes each line as JSON passes the resulting map of values
  * to Pig as a single-element tuple.
  */
-public class JsonLoader extends LoadFunc {
+public class JsonLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(JsonLoader.class);
   private static final TupleFactory tupleFactory = TupleFactory.getInstance();
 
@@ -54,30 +51,6 @@ public class JsonLoader extends LoadFunc {
 
   public JsonLoader(String inputFormatClassName) {
     this.inputFormatClassName = inputFormatClassName;
-    try {
-      this.inputFormat = (FileInputFormat) Class.forName(inputFormatClassName).newInstance();
-    } catch (InstantiationException e) {
-      throw new RuntimeException("Failed creating input format " + inputFormatClassName, e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException("Failed creating input format " + inputFormatClassName, e);
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Failed creating input format " + inputFormatClassName, e);
-    }
-  }
-
-  @Override
-  public void setLocation(String location, Job job) throws IOException {
-    try {
-      Method m = inputFormat.getClass().getMethod("setInputPaths",
-          new Class[]{Job.class, String.class});
-      m.invoke(null, job, location);
-    } catch (NoSuchMethodException e) {
-      throw new RuntimeException("Failed setting input paths on " + inputFormatClassName, e);
-    } catch (InvocationTargetException e) {
-      throw new RuntimeException("Failed setting input paths on " + inputFormatClassName, e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException("Failed setting input paths on " + inputFormatClassName, e);
-    }
   }
 
   /**
@@ -114,8 +87,20 @@ public class JsonLoader extends LoadFunc {
   }
 
   @Override
-  public InputFormat getInputFormat() {
-    return inputFormat;
+  public InputFormat getInputFormat() throws IOException {
+    if (inputFormat != null) {
+      return inputFormat;
+    } else {
+      try {
+        inputFormat =
+            (FileInputFormat) PigContext.resolveClassName(inputFormatClassName).newInstance();
+        return inputFormat;
+      } catch (InstantiationException e) {
+        throw new IOException("Failed creating input format " + inputFormatClassName, e);
+      } catch (IllegalAccessException e) {
+        throw new IOException("Failed creating input format " + inputFormatClassName, e);
+      }
+    }
   }
 
   protected Tuple parseStringToTuple(String line) {

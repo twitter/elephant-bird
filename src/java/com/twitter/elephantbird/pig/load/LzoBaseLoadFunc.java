@@ -23,20 +23,16 @@ import org.apache.pig.impl.util.UDFContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * This class handles LZO-decoding and slicing input LZO files.  It expects the
- * filenames to end in .lzo, otherwise it assumes they are not compressed and skips them.
- * TODO: Improve the logic to accept a mixture of lzo and non-lzo files.
+ * Provides common functionality & helpers required by all elephantbird loaders.
+ * TODO: Rename "BaseLoadFunc" as this class has nothing to do with LZO.
  */
 public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, LoadPushDown {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseLoadFunc.class);
-
-  protected final String LZO_EXTENSION = new LzopCodec().getDefaultExtension();
 
   @SuppressWarnings("unchecked")
   protected RecordReader reader_;
