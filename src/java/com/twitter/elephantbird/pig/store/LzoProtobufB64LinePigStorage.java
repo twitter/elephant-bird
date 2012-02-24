@@ -12,6 +12,7 @@ import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoProtobufB64LineOutputFormat;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -28,19 +29,23 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
 
   private TypeRef<M> typeRef_;
   private ProtobufWritable<M> writable;
+  private ProtobufExtensionRegistry extensionRegistry_;
 
   // TODO: should remove the default constructor, after updating codegen.
   // Same for other Protobuf loaders.
   public LzoProtobufB64LinePigStorage() {}
 
   public LzoProtobufB64LinePigStorage(String protoClassName) {
-    TypeRef<M> typeRef = Protobufs.getTypeRef(protoClassName);
-    setTypeRef(typeRef);
+    this(protoClassName, null);
   }
 
-  protected void setTypeRef(TypeRef<M> typeRef) {
-    typeRef_ = typeRef;
-    writable = ProtobufWritable.newInstance(typeRef.getRawClass());
+  public LzoProtobufB64LinePigStorage(String protoClassName,
+      String extensionRegistryClassName) {
+    typeRef_ = Protobufs.getTypeRef(protoClassName);
+    if(extensionRegistryClassName != null) {
+      extensionRegistry_ = Protobufs.getExtensionRegistry(extensionRegistryClassName);
+    }
+    writable = ProtobufWritable.newInstance(typeRef_, extensionRegistry_);
   }
 
   @Override
@@ -51,7 +56,7 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
     }
     Builder builder = Protobufs.getMessageBuilder(typeRef_.getRawClass());
     try {
-      writable.set((M) PigToProtobuf.tupleToMessage(builder, f));
+      writable.set((M) PigToProtobuf.tupleToMessage(builder, f, extensionRegistry_));
       writer.write(null, writable);
     } catch (InterruptedException e) {
       throw new IOException(e);
@@ -64,6 +69,6 @@ public class LzoProtobufB64LinePigStorage<M extends Message> extends LzoBaseStor
       LOG.error("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an OutputFormat can be created. Do not use the no-argument constructor.");
     }
-    return new LzoProtobufB64LineOutputFormat<M>(typeRef_);
+    return new LzoProtobufB64LineOutputFormat<M>(typeRef_, extensionRegistry_);
   }
 }

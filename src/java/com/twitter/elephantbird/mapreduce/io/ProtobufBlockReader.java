@@ -10,6 +10,8 @@ import org.apache.hadoop.io.BytesWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
+
 /* A class to read blocks of protobuf data of type M.  To use, just instantiate
  * with an InputStream and a TypeRef, call readProtobuf until it returns false, and
  * then close the protobuf.  For example,
@@ -32,7 +34,12 @@ public class ProtobufBlockReader<M extends Message> extends BinaryBlockReader<M>
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufBlockReader.class);
 
   public ProtobufBlockReader(InputStream in, TypeRef<M> typeRef) {
-    super(in, ProtobufConverter.newInstance(typeRef));
+    this(in, typeRef, null);
+  }
+
+  public ProtobufBlockReader(InputStream in, TypeRef<M> typeRef,
+      ProtobufExtensionRegistry extensionRegistry) {
+    super(in, ProtobufConverter.newInstance(typeRef, extensionRegistry));
     LOG.info("ProtobufReader, my typeClass is " + typeRef.getRawClass());
   }
 

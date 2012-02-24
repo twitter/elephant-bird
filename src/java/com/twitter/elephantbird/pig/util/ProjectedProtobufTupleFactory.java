@@ -11,6 +11,7 @@ import org.apache.pig.data.TupleFactory;
 import com.google.common.collect.Lists;
 import com.google.protobuf.Message;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -24,12 +25,20 @@ public class ProjectedProtobufTupleFactory<M extends Message> {
 
   private final List<FieldDescriptor> requiredFields;
   private final ProtobufToPig protoConv;
+  private final ProtobufExtensionRegistry extensionRegistry;
 
 
   public ProjectedProtobufTupleFactory(TypeRef<M> typeRef, RequiredFieldList requiredFieldList) {
+    this(typeRef, requiredFieldList, null);
+  }
+
+  public ProjectedProtobufTupleFactory(TypeRef<M> typeRef, RequiredFieldList requiredFieldList,
+      ProtobufExtensionRegistry extensionRegistry) {
+    this.extensionRegistry = extensionRegistry;
 
     List<FieldDescriptor> protoFields =
-      Protobufs.getMessageDescriptor(typeRef.getRawClass()).getFields();
+      Protobufs.getMessageAllFields(Protobufs.getMessageDescriptor(typeRef.getRawClass()),
+          this.extensionRegistry);
     protoConv = new ProtobufToPig();
 
     if (requiredFieldList != null) {
@@ -52,7 +61,7 @@ public class ProjectedProtobufTupleFactory<M extends Message> {
     for(int i=0; i < size; i++) {
       FieldDescriptor fdesc = requiredFields.get(i);
       Object value = msg.getField(fdesc);
-      tuple.set(i, protoConv.fieldToPig(fdesc, value));
+      tuple.set(i, protoConv.fieldToPig(fdesc, value, extensionRegistry));
     }
     return tuple;
   }

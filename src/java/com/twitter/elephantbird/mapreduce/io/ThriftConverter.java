@@ -80,4 +80,12 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
       return false;
     }
   }
+
+  @Override
+  public int hashCode() {
+	int hashCode = 7;
+	hashCode = 31 * hashCode + typeRef.getType().hashCode();
+
+	return hashCode;
+  }
 }

@@ -20,6 +20,7 @@ import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProjectedProtobufTupleFactory;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
+import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class TestProtoToPig {
@@ -28,27 +29,39 @@ public class TestProtoToPig {
 
   @Test
   public void testProtoToPig() throws IOException {
-    AddressBook abProto = Fixtures.buildAddressBookProto();
+    AddressBook abProto = Fixtures.buildAddressBookProto(false);
 
     Tuple abProtoTuple = tf_.newTuple(new DataByteArray(abProto.toByteArray()));
 
     ProtobufBytesToTuple abProtoToPig =
-        new ProtobufBytesToTuple(AddressBook.class.getCanonicalName());
+    new ProtobufBytesToTuple(AddressBook.class.getCanonicalName());
     Tuple abTuple = abProtoToPig.exec(abProtoTuple);
     assertEquals("{(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)}),(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)})}",
         abTuple.toDelimitedString(","));
+
+    AddressBook abProtoWithExt = Fixtures.buildAddressBookProto(true);
+    Tuple abProtoTupleWithExt = tf_.newTuple(new DataByteArray(abProtoWithExt.toByteArray()));
+    ProtobufBytesToTuple abProtoToPigWithExt =
+    new ProtobufBytesToTuple(AddressBook.class.getCanonicalName(),
+        Fixtures.buildExtensionRegistry());
+    Tuple abTupleWithExt = abProtoToPigWithExt.exec(abProtoTupleWithExt);
+    assertEquals("{(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)},(Rd. Foo),bar),(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)},(Rd. Foo),bar)},private",
+        abTupleWithExt.toDelimitedString(","));
+
   }
 
   @Test
   public void testLazyProtoToPig() throws ExecException {
-    Person personProto = Fixtures.buildPersonProto();
+    Person personProto = Fixtures.buildPersonProto(false);
     Tuple protoTuple = new ProtobufTuple(personProto);
-    Tuple normalTuple = Fixtures.buildPersonTuple();
-    List<FieldDescriptor> fieldDescs = personProto.getDescriptorForType().getFields();
+    Tuple normalTuple = Fixtures.buildPersonTuple(false);
+    List<FieldDescriptor> fieldDescs = Protobufs.getMessageAllFields(
+        personProto.getDescriptorForType(), null);
 
     TypeRef<Person> typeRef = PigUtil.getProtobufTypeRef(Person.class.getName());
     Tuple projectedTuple =
-      new ProjectedProtobufTupleFactory<Person>(typeRef, evenFields(fieldDescs)).newTuple(personProto);
+      new ProjectedProtobufTupleFactory<Person>(typeRef, evenFields(fieldDescs)
+          ).newTuple(personProto);
 
     int idx = 0;
     for (FieldDescriptor fd : fieldDescs) {

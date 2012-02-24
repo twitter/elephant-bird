@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -16,8 +17,13 @@ public class LzoProtobufBlockRecordReader<M extends Message> extends LzoBinaryBl
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufBlockRecordReader.class);
 
   public LzoProtobufBlockRecordReader(TypeRef<M> typeRef) {
+    this(typeRef, null);
+  }
+
+  public LzoProtobufBlockRecordReader(TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
     // input stream for the reader will be set by LzoBinaryBlockRecordReader
-    super(typeRef, new ProtobufBlockReader<M>(null, typeRef), new ProtobufWritable<M>(typeRef));
+    super(typeRef, new ProtobufBlockReader<M>(null, typeRef, extensionRegistry),
+        new ProtobufWritable<M>(typeRef, extensionRegistry));
     LOG.info("LzoProtobufBlockRecordReader, type args are " + typeRef.getRawClass());
   }
 }

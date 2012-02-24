@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 
 /**
  * Converts a Pig Tuple into a Protobuf message. Tuple values should be ordered to match the natural
@@ -54,10 +55,15 @@ public class PigToProtobuf {
 
   public PigToProtobuf() {}
 
-  @SuppressWarnings("unchecked")
   public static <M extends Message> M tupleToMessage(Class<M> protoClass, Tuple tuple) {
+    return tupleToMessage(protoClass, tuple, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <M extends Message> M tupleToMessage(Class<M> protoClass,
+      Tuple tuple, ProtobufExtensionRegistry extensionRegistry) {
     Builder builder = Protobufs.getMessageBuilder(protoClass);
-    return (M) tupleToMessage(builder, tuple);
+    return (M) tupleToMessage(builder, tuple, extensionRegistry);
   }
 
   /**
@@ -66,9 +72,14 @@ public class PigToProtobuf {
    * @param tuple the tuple
    * @return a message representing the given tuple
    */
-
   public static Message tupleToMessage(Builder builder, Tuple tuple) {
-    List<FieldDescriptor> fieldDescriptors = builder.getDescriptorForType().getFields();
+    return PigToProtobuf.tupleToMessage(builder, tuple, null);
+  }
+
+  public static Message tupleToMessage(Builder builder, Tuple tuple,
+      ProtobufExtensionRegistry extensionRegistry) {
+    List<FieldDescriptor> fieldDescriptors =
+      Protobufs.getMessageAllFields(builder.getDescriptorForType(), extensionRegistry);
 
     if (tuple == null) {
       return  builder.build();
@@ -90,15 +101,22 @@ public class PigToProtobuf {
           if (fieldDescriptor.isRepeated()) {
             // Repeated fields are set with Lists containing objects of the fields' Java type.
             builder.setField(fieldDescriptor,
-                dataBagToRepeatedField(builder, fieldDescriptor, (DataBag) tupleField));
+                dataBagToRepeatedField(builder, fieldDescriptor, (DataBag) tupleField, extensionRegistry));
           } else {
             if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-              Builder nestedMessageBuilder = builder.newBuilderForField(fieldDescriptor);
+              Builder nestedMessageBuilder = null;
+              if(!fieldDescriptor.isExtension()) {
+                nestedMessageBuilder = builder.newBuilderForField(fieldDescriptor);
+              } else {
+                nestedMessageBuilder = Protobufs.getMessageBuilder(
+                    extensionRegistry.getExtensionClass(fieldDescriptor.getMessageType()));
+              }
+
               builder.setField(fieldDescriptor,
-                  tupleToMessage(nestedMessageBuilder, (Tuple) tupleField));
+                  tupleToMessage(nestedMessageBuilder, (Tuple) tupleField, extensionRegistry));
             } else {
               builder.setField(fieldDescriptor,
-                  tupleFieldToSingleField(fieldDescriptor, tupleField));
+                  tupleFieldToSingleField(fieldDescriptor, tupleField, extensionRegistry));
             }
           }
         } catch (Exception e) {
@@ -192,18 +210,27 @@ public class PigToProtobuf {
    * @param bag the DataBag being serialized
    * @return a protobuf-friendly List of fieldDescriptor-type objects
    */
-  private static List<Object> dataBagToRepeatedField(Builder containingMessageBuilder, FieldDescriptor fieldDescriptor, DataBag bag) {
+  private static List<Object> dataBagToRepeatedField(Builder containingMessageBuilder,
+      FieldDescriptor fieldDescriptor, DataBag bag, ProtobufExtensionRegistry extensionRegistry) {
     ArrayList<Object> bagContents = new ArrayList<Object>((int)bag.size());
     Iterator<Tuple> bagIter = bag.iterator();
 
     while (bagIter.hasNext()) {
       Tuple tuple = bagIter.next();
       if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
-        Builder nestedMessageBuilder = containingMessageBuilder.newBuilderForField(fieldDescriptor);
-        bagContents.add(tupleToMessage((Builder)nestedMessageBuilder, tuple));
+
+        Builder nestedMessageBuilder = null;
+        if(!fieldDescriptor.isExtension()) {
+          nestedMessageBuilder = containingMessageBuilder.newBuilderForField(fieldDescriptor);
+        } else {
+          nestedMessageBuilder = Protobufs.getMessageBuilder(
+              extensionRegistry.getExtensionClass(fieldDescriptor.getMessageType()));
+        }
+
+        bagContents.add(tupleToMessage(nestedMessageBuilder, tuple, extensionRegistry));
       } else {
         try {
-          bagContents.add(tupleFieldToSingleField(fieldDescriptor, tuple.get(0)));
+          bagContents.add(tupleFieldToSingleField(fieldDescriptor, tuple.get(0), extensionRegistry));
         } catch (ExecException e) {
           LOG.warn("Could not add a value for repeated field with descriptor " + fieldDescriptor);
         }
@@ -220,7 +247,9 @@ public class PigToProtobuf {
    * @param tupleField the tupleField being converted to a protobuf field
    * @return the protobuf type for the given tupleField. This will be the tupleField itself unless it's an enum, in which case this will return the enum type for the field.
    */
-  private static Object tupleFieldToSingleField(FieldDescriptor fieldDescriptor, Object tupleField) {
+  private static Object tupleFieldToSingleField(FieldDescriptor fieldDescriptor,
+      Object tupleField,
+      @SuppressWarnings("unused") ProtobufExtensionRegistry extensionRegistry) {
     // type convertion should match with ProtobufToPig.getPigScriptDataType
     switch (fieldDescriptor.getType()) {
     case ENUM:

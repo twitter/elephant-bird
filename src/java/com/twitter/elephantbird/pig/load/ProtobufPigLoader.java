@@ -18,6 +18,7 @@ import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProjectedProtobufTupleFactory;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -30,6 +31,7 @@ public class ProtobufPigLoader<M extends Message> extends LzoBaseLoadFunc {
   static final Logger LOG = LoggerFactory.getLogger(ProtobufPigLoader.class);
 
   protected TypeRef<M> typeRef = null;
+  private ProtobufExtensionRegistry extensionRegistry;
   private final ProtobufToPig protoToPig = new ProtobufToPig();
   private ProjectedProtobufTupleFactory<M> tupleTemplate = null;
 
@@ -38,8 +40,26 @@ public class ProtobufPigLoader<M extends Message> extends LzoBaseLoadFunc {
   * @param protoClassName full classpath to the generated Protocol Buffer to be loaded.
   */
   public ProtobufPigLoader(String protoClassName) {
-    typeRef = PigUtil.getProtobufTypeRef(protoClassName);
+    this(protoClassName, null);
   }
+
+  public ProtobufPigLoader(String protoClassName, String extensionRegistryClassName) {
+    typeRef = PigUtil.getProtobufTypeRef(protoClassName);
+    if(extensionRegistryClassName != null) {
+      extensionRegistry = Protobufs.getExtensionRegistry(extensionRegistryClassName);
+    }
+
+  }
+
+  public ProtobufPigLoader(TypeRef<M> typeRef) {
+    this(typeRef, null);
+  }
+
+  public ProtobufPigLoader(TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
+    this.typeRef = typeRef;
+    this.extensionRegistry = extensionRegistry;
+  }
+
 
   @Override
   public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
@@ -56,7 +76,8 @@ public class ProtobufPigLoader<M extends Message> extends LzoBaseLoadFunc {
   @Override
   public Tuple getNext() throws IOException {
     if (tupleTemplate == null) {
-      tupleTemplate = new ProjectedProtobufTupleFactory<M>(typeRef, requiredFieldList);
+      tupleTemplate = new ProjectedProtobufTupleFactory<M>(
+          typeRef, requiredFieldList, extensionRegistry);
     }
 
     M value = getNextBinaryValue(typeRef);
@@ -66,7 +87,8 @@ public class ProtobufPigLoader<M extends Message> extends LzoBaseLoadFunc {
 
   @Override
   public ResourceSchema getSchema(String filename, Job job) throws IOException {
-    return new ResourceSchema(protoToPig.toSchema(Protobufs.getMessageDescriptor(typeRef.getRawClass())));
+    return new ResourceSchema(protoToPig.toSchema(
+        Protobufs.getMessageDescriptor(typeRef.getRawClass()), extensionRegistry));
   }
 
   @Override
@@ -75,6 +97,6 @@ public class ProtobufPigLoader<M extends Message> extends LzoBaseLoadFunc {
       LOG.error("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
       throw new IllegalArgumentException("Protobuf class must be specified before an InputFormat can be created. Do not use the no-argument constructor.");
     }
-    return new MultiInputFormat<M>(typeRef);
+    return new MultiInputFormat<M>(typeRef, extensionRegistry);
   }
 }

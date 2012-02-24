@@ -20,17 +20,31 @@ public class ProtobufWritableGenerator extends ProtoCodeGenerator {
 
     sb.append("import %s.%s.%s;", packageName_, protoFilename_, descriptorProto_.getName()).endl();
     sb.append("import %s;", ProtobufWritable.class.getName()).endl();
-    sb.append("import %s;", TypeRef.class.getName()).endl().endl();
+    sb.append("import %s;", TypeRef.class.getName()).endl();
+    if(codeGenOptions_.isSupportExtension()) {
+      sb.append("import %s;", ProtobufExtensionRegistryGenerator.getGenClassName(
+          packageName_, protoFilename_, true)).endl();
+    }
+    sb.endl();
+
+    String extensionRegistry = "null";
+    if(codeGenOptions_.isSupportExtension()) {
+      String extRegClassName = ProtobufExtensionRegistryGenerator.getGenClassName(
+          packageName_, protoFilename_, false);
+      extensionRegistry = extRegClassName + ".getInstance()";
+    }
 
     sb.append("public class Protobuf%sWritable extends ProtobufWritable<%s> {",
         descriptorProto_.getName(), descriptorProto_.getName(), descriptorProto_.getName()).endl();
     sb.append("  public Protobuf%sWritable() {", descriptorProto_.getName()).endl();
-    sb.append("    super(new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
+    sb.append("    super(new TypeRef<%s>(){}, %s);",
+        descriptorProto_.getName(), extensionRegistry).endl();
     sb.append("  }").endl();
 
     sb.append("  public Protobuf%sWritable(%s m) {",
         descriptorProto_.getName(), descriptorProto_.getName()).endl();
-    sb.append("    super(m, new TypeRef<%s>(){});", descriptorProto_.getName()).endl();
+    sb.append("    super(m, new TypeRef<%s>(){}, %s);",
+        descriptorProto_.getName(), extensionRegistry).endl();
     sb.append("  }").endl();
 
     sb.append("}").endl();

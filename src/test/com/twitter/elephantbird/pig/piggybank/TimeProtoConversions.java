@@ -12,13 +12,13 @@ public class TimeProtoConversions {
 
   /**
    * @param args
-   * @throws ExecException 
+   * @throws ExecException
    */
   public static void main(String[] args) throws ExecException {
     int iterations = 100000;
     ProtobufToPig protoConv = new ProtobufToPig();
     for (int i = 0; i < iterations; i++) {
-      Person proto = Fixtures.buildPersonProto();
+      Person proto = Fixtures.buildPersonProto(false);
       Tuple t = protoConv.toTuple(proto);
       t.get(0);
       t = new ProtobufTuple(proto);
@@ -27,7 +27,7 @@ public class TimeProtoConversions {
     StopWatch timer = new StopWatch();
     timer.start();
     for (int i = 0; i < iterations; i++) {
-      Person proto = Fixtures.buildPersonProto();
+      Person proto = Fixtures.buildPersonProto(false);
       Tuple t = protoConv.toTuple(proto);
       t.get(0);
     }
@@ -36,13 +36,13 @@ public class TimeProtoConversions {
     timer.reset();
     timer.start();
     for (int i = 0; i < iterations; i++) {
-      Person proto = Fixtures.buildPersonProto();
+      Person proto = Fixtures.buildPersonProto(false);
       Tuple t = new ProtobufTuple(proto);
       t.get(0);
     }
     timer.split();
     System.err.println(timer.getSplitTime());
-    
+
   }
 
 }

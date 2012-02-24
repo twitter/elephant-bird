@@ -30,6 +30,10 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   public WritableLoadCaster() {
   }
 
+  public void setWritable(W writable) {
+    this.writable = writable;
+  }
+
   /**
    * Deserializes raw bytes into a Writable instance, returning that instance. This implementation
    * relies on derived classes to initialize {@link #writable} before this method is called.
@@ -77,7 +81,8 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   public Map<String, Object> bytesToMap(byte[] bytes) throws IOException {
     return toMap(writable = readFields(bytes, writable));
   }
-  
+
+  @Override
   public Map<String, Object> bytesToMap(byte[] bytes, ResourceFieldSchema schema) throws IOException {
     return toMap(writable = readFields(bytes, writable), schema);
   }
@@ -115,7 +120,7 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   protected Map<String, Object> toMap(W writable) throws IOException {
     throw new UnsupportedOperationException();
   }
-  
+
   protected Map<String, Object> toMap(W writable, ResourceFieldSchema schema) throws IOException {
     throw new UnsupportedOperationException();
   }

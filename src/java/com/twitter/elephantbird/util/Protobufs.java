@@ -2,6 +2,9 @@ package com.twitter.elephantbird.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -11,14 +14,20 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.ExtensionRegistryLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UninitializedMessageException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.commons.lang.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
+import com.twitter.elephantbird.proto.util.ProtogenHelper;
 
 public class Protobufs {
   private static final Logger LOG = LoggerFactory.getLogger(Protobufs.class);
@@ -34,6 +43,9 @@ public class Protobufs {
   public static final String IGNORE_KEY = "IGNORE";
 
   private static final String CLASS_CONF_PREFIX = "elephantbird.protobuf.class.for.";
+
+  private static final String EXTENSION_REGISTRY_CLASS_CONF_PREFIX =
+    "elephantbird.extension.registry.class.for.";
 
   /**
    * Returns Protobuf class. The class name could be either normal name or
@@ -70,22 +82,32 @@ public class Protobufs {
 
   public static Class<? extends Message> getInnerProtobufClass(String canonicalClassName) {
     // is an inner class and is not visible from the outside.  We have to instantiate
-    String parentClass = canonicalClassName.substring(0, canonicalClassName.lastIndexOf("."));
-    String subclass = canonicalClassName.substring(canonicalClassName.lastIndexOf(".") + 1);
-    return getInnerClass(parentClass, subclass);
+    Class<?> ret = Protobufs.getInnerClass(canonicalClassName);
+    if(ret != null) {
+      return ret.asSubclass(Message.class);
+    }
+    return null;
   }
 
-  public static Class<? extends Message> getInnerClass(String canonicalParentName, String subclassName) {
+  public static Class<?> getInnerClass(String canonicalClassName) {
     try {
-      Class<?> outerClass = Class.forName(canonicalParentName);
-      for (Class<?> innerClass: outerClass.getDeclaredClasses()) {
-        if (innerClass.getSimpleName().equals(subclassName)) {
-          return innerClass.asSubclass(Message.class);
+      return Class.forName(canonicalClassName);
+    } catch (ClassNotFoundException e) {
+      int lastIndex = canonicalClassName.lastIndexOf(".");
+      if(lastIndex == -1) {
+        return null;
+      }
+      // is an inner class and is not visible from the outside.  We have to instantiate
+      String outerClassName = canonicalClassName.substring(0, lastIndex);
+      String subclassName = canonicalClassName.substring(lastIndex + 1);
+      Class<?> outerClass = Protobufs.getInnerClass(outerClassName);
+      if(outerClass != null) {
+        for (Class<?> innerClass: outerClass.getDeclaredClasses()) {
+          if (innerClass.getSimpleName().equals(subclassName)) {
+            return innerClass;
+          }
         }
       }
-    } catch (ClassNotFoundException e) {
-      LOG.error("Could not find class with parent " + canonicalParentName + " and inner class " + subclassName, e);
-      throw new IllegalArgumentException(e);
     }
     return null;
   }
@@ -125,6 +147,7 @@ public class Protobufs {
 
   public static List<String> getMessageFieldNames(Class<? extends Message> protoClass) {
     return Lists.transform(getMessageDescriptor(protoClass).getFields(), new Function<FieldDescriptor, String>() {
+      @Override
       public String apply(FieldDescriptor f) {
         return f.getName();
       }
@@ -145,7 +168,8 @@ public class Protobufs {
 
    public static Function<FieldDescriptor, String> getFieldTransformerFor(final Map<String, String> fieldNameTranslations) {
      return new Function<FieldDescriptor, String>() {
-       public String apply(FieldDescriptor f) {
+       @Override
+      public String apply(FieldDescriptor f) {
          String name = f.getName();
          if (fieldNameTranslations != null && fieldNameTranslations.containsKey(name)) {
            name = fieldNameTranslations.get(name);
@@ -177,9 +201,48 @@ public class Protobufs {
     return null;
   }
 
-  public static DynamicMessage parseDynamicFrom(Class<? extends Message> protoClass, byte[] messageBytes) {
+  @SuppressWarnings("unchecked")
+  public static <M extends Message> M parseFrom(Class<M> protoClass,
+      ProtobufExtensionRegistry extensionRegistry, byte[] messageBytes) {
+    ExtensionRegistryLite extReg = null;
+    if(extensionRegistry != null) {
+      extReg = extensionRegistry.getExtensionRegistry();
+    }
     try {
-      return DynamicMessage.parseFrom(getMessageDescriptor(protoClass), messageBytes);
+      if(extReg != null) {
+        Method parseFrom = protoClass.getMethod("parseFrom",
+            new Class[] { byte[].class, ExtensionRegistryLite.class });
+        return (M)parseFrom.invoke(null, new Object[] { messageBytes, extReg });
+      }
+      Method parseFrom = protoClass.getMethod("parseFrom", new Class[] { byte[].class });
+      return (M)parseFrom.invoke(null, new Object[] { messageBytes});
+    } catch (NoSuchMethodException e) {
+      LOG.error("Could not find method parseFrom in class " + protoClass, e);
+      throw new IllegalArgumentException(e);
+    } catch (IllegalAccessException e) {
+      LOG.error("Could not access method parseFrom in class " + protoClass, e);
+      throw new IllegalArgumentException(e);
+    } catch (InvocationTargetException e) {
+      LOG.error("Error invoking method parseFrom in class " + protoClass, e);
+    }
+
+    return null;
+  }
+
+
+  public static DynamicMessage parseDynamicFrom(Class<? extends Message> protoClass, byte[] messageBytes) {
+    return Protobufs.parseDynamicFrom(protoClass, null, messageBytes);
+  }
+
+  public static DynamicMessage parseDynamicFrom(Class<? extends Message> protoClass,
+      ProtobufExtensionRegistry extensionRegistry, byte[] messageBytes) {
+    Descriptor descriptor = getMessageDescriptor(protoClass);
+    try {
+      if(extensionRegistry != null) {
+        return DynamicMessage.parseFrom(descriptor, messageBytes,
+            extensionRegistry.getExtensionRegistry());
+      }
+      return DynamicMessage.parseFrom(descriptor, messageBytes);
     } catch (InvalidProtocolBufferException e) {
       LOG.error("Protocol buffer parsing error in parseDynamicFrom", e);
     } catch(UninitializedMessageException ume) {
@@ -254,4 +317,82 @@ public class Protobufs {
            CLASS_CONF_PREFIX + genericClass.getName(),
            protoClass);
   }
+
+  @SuppressWarnings("unchecked")
+  public static <M extends Message> Class<? extends ProtobufExtensionRegistry> getExtensionRegistryClassConf(
+      Configuration jobConf, Class<?> genericClass) {
+    String className = jobConf.get(
+        EXTENSION_REGISTRY_CLASS_CONF_PREFIX + genericClass.getName());
+    if(className == null) {
+      return null;
+    }
+    try {
+      return (Class<? extends ProtobufExtensionRegistry>) Class.forName(className);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <M extends Message> void setExtensionRegistryClassConf(Configuration jobConf,
+      Class<?> genericClass, Class<? extends ProtobufExtensionRegistry> extRegClass) {
+    HadoopUtils.setInputFormatClass(jobConf,
+        EXTENSION_REGISTRY_CLASS_CONF_PREFIX + genericClass.getName(),
+        extRegClass);
+  }
+
+  public static <T> T safeNewInstance(Class<T> claz) {
+    try {
+      return claz.newInstance();
+    } catch (IllegalAccessException e) {
+      throw new IllegalArgumentException(e);
+    } catch (InstantiationException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  public static ProtobufExtensionRegistry getExtensionRegistry(
+      String extensionRegistryClassName) {
+    @SuppressWarnings("unchecked")
+    Class<? extends ProtobufExtensionRegistry> extRegClass =
+      (Class<? extends ProtobufExtensionRegistry>)
+      Protobufs.getInnerClass(extensionRegistryClassName);
+    return Protobufs.safeNewInstance(extRegClass);
+  }
+
+  public static List<FieldDescriptor> getMessageAllFields(Descriptor descriptor,
+      ProtobufExtensionRegistry extensionRegistry) {
+    Collection<FieldDescriptor> extensionFds = Collections.emptyList();
+    if(extensionRegistry != null) {
+      extensionFds = extensionRegistry.getExtensionDescriptorFields(descriptor);
+    }
+
+    List<FieldDescriptor> ret = new ArrayList<FieldDescriptor>(descriptor.getFields().size() +
+        extensionFds.size());
+    ret.addAll(descriptor.getFields());
+    ret.addAll(extensionFds);
+
+    return ret;
+  }
+
+  public static String getProtoClassName(Descriptor descriptor) {
+    FileDescriptor fileDescriptor = descriptor.getFile();
+    String packageName = fileDescriptor.getPackage();
+
+    String className = StringUtils.removeStart(descriptor.getFullName(),
+        fileDescriptor.getPackage() + ".").replace('.', '$');
+
+    String javaPackageName = packageName;
+    if(fileDescriptor.getOptions().hasJavaPackage()) {
+      javaPackageName = fileDescriptor.getOptions().getJavaPackage();
+    }
+
+    String outerClassName = null;
+    if(fileDescriptor.getOptions().hasJavaOuterClassname()) {
+      outerClassName = fileDescriptor.getOptions().getJavaOuterClassname();
+    } else {
+      outerClassName = ProtogenHelper.getProtoNameFromFilename(fileDescriptor.getName());
+    }
+    return String.format("%s.%s$%s", javaPackageName, outerClassName, className);
+  }
+
 }

@@ -18,6 +18,7 @@ import org.apache.thrift.TBase;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -40,13 +41,23 @@ public class MultiInputFormat<M>
   // TODO need handle multiple input formats in a job better.
   //      might be better to store classname in the input split rather than in config.
   private static String CLASS_CONF_KEY = "elephantbird.class.for.MultiInputFormat";
+  private static final String EXTENSION_REGISTRY_CLASS_CONF_KEY =
+    "elephantbird.extension.registry.class.for.MultiInputFormat";
+
 
   private TypeRef<M> typeRef;
+  private ProtobufExtensionRegistry extensionRegistry;
 
   public MultiInputFormat() {}
 
   public MultiInputFormat(TypeRef<M> typeRef) {
     this.typeRef = typeRef;
+  }
+
+  public MultiInputFormat(TypeRef<M> typeRef,
+      ProtobufExtensionRegistry extensionRegistry) {
+    this(typeRef);
+    this.extensionRegistry = extensionRegistry;
   }
 
   private static enum Format {
@@ -64,6 +75,13 @@ public class MultiInputFormat<M>
     setClassConf(clazz, job.getConfiguration());
   }
 
+  public static void setInputFormatClass(Class<?> clazz,
+      Class<? extends ProtobufExtensionRegistry> extRegClass, Job job) {
+    MultiInputFormat.setInputFormatClass(clazz, job);
+    MultiInputFormat.setExtensionRegistryClassConf(extRegClass,
+        job.getConfiguration());
+  }
+
   /**
    * Stores supplied class name in configuration. This configuration is
    * read on the remote tasks to initialize the input format correctly.
@@ -71,6 +89,12 @@ public class MultiInputFormat<M>
   protected static void setClassConf(Class<?> clazz, Configuration conf) {
     HadoopUtils.setInputFormatClass(conf, CLASS_CONF_KEY, clazz);
   }
+
+  protected static void setExtensionRegistryClassConf(
+      Class<? extends ProtobufExtensionRegistry> clazz, Configuration conf) {
+    HadoopUtils.setInputFormatClass(conf, EXTENSION_REGISTRY_CLASS_CONF_KEY, clazz);
+  }
+
 
   @SuppressWarnings("unchecked") // return type is runtime dependent
   @Override
@@ -81,6 +105,11 @@ public class MultiInputFormat<M>
     if (typeRef == null) {
       setTypeRef(conf);
     }
+
+    if(extensionRegistry == null) {
+      extensionRegistry = MultiInputFormat.getExtensionRegistry(conf);
+    }
+
     Class<?> recordClass = typeRef.getRawClass();
 
     Format fileFormat = determineFileFormat(split, conf);
@@ -89,9 +118,9 @@ public class MultiInputFormat<M>
     if (Message.class.isAssignableFrom(recordClass)) {
       switch (fileFormat) {
       case LZO_BLOCK:
-        return new LzoProtobufBlockRecordReader(typeRef);
+        return new LzoProtobufBlockRecordReader(typeRef, extensionRegistry);
       case LZO_B64LINE:
-        return new LzoProtobufB64LineRecordReader(typeRef);
+        return new LzoProtobufB64LineRecordReader(typeRef, extensionRegistry);
       }
     }
 
@@ -131,6 +160,20 @@ public class MultiInputFormat<M>
     }
 
     typeRef = new TypeRef<M>(clazz){};
+  }
+
+  private static ProtobufExtensionRegistry getExtensionRegistry(Configuration conf) {
+    String className = conf.get(EXTENSION_REGISTRY_CLASS_CONF_KEY);
+
+    if(className == null) {
+      return null;
+    }
+
+    try {
+      return ((ProtobufExtensionRegistry) conf.getClassByName(className).newInstance());
+    } catch (Exception e) {
+      throw new RuntimeException("failed to instantiate class '" + className + "'", e);
+    }
   }
 
   /**

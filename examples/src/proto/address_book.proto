@@ -1,5 +1,9 @@
 package com.twitter.elephantbird.examples.proto;
 
+// The sample protocol buffer file that Google uses in their examples at
+// http://code.google.com/p/protobuf.
+// Used in this project for tests and examples.
+
 option java_outer_classname = "AddressBookProtos";
 
 message Person {
@@ -19,8 +23,31 @@ message Person {
   }
 
   repeated PhoneNumber phone = 4;
+
+  extensions 1000 to max;
 }
 
 message AddressBook {
   repeated Person person = 1;
+
+  extensions 1000 to max;
 }
+
+message PersonExt {
+  extend Person {
+    optional PersonExt ext_info = 1000;
+  }
+
+  optional string address = 1;
+}
+
+message JustPersonExtExtEnclosingType {
+  extend Person {
+    optional string ext_ext_info = 1001;
+  }
+}
+
+extend AddressBook {
+  optional string name = 1001;
+}
+

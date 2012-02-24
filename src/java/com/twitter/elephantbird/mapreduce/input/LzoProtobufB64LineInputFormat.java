@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapreduce.input;
 import org.apache.hadoop.conf.Configuration;
 
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -21,10 +22,16 @@ import com.twitter.elephantbird.util.TypeRef;
 public class LzoProtobufB64LineInputFormat<M extends Message> extends MultiInputFormat<M> {
 
   public LzoProtobufB64LineInputFormat() {
+    this(null, null);
   }
 
   public LzoProtobufB64LineInputFormat(TypeRef<M> typeRef) {
-    super(typeRef);
+    this(typeRef, null);
+  }
+
+  public LzoProtobufB64LineInputFormat(TypeRef<M> typeRef,
+      ProtobufExtensionRegistry extensionRegistry) {
+    super(typeRef, extensionRegistry);
   }
 
   /**
@@ -37,11 +44,27 @@ public class LzoProtobufB64LineInputFormat<M extends Message> extends MultiInput
   @SuppressWarnings("rawtypes")
   public static <M extends Message> Class<LzoProtobufB64LineInputFormat>
      getInputFormatClass(Class<M> protoClass, Configuration jobConf) {
+    return LzoProtobufB64LineInputFormat.getInputFormatClass(protoClass, null, jobConf);
+  }
+
+  @SuppressWarnings("rawtypes")
+  public static <M extends Message> Class<LzoProtobufB64LineInputFormat>
+    getInputFormatClass(Class<M> protoClass,
+        Class<? extends ProtobufExtensionRegistry> extRegClass,
+        Configuration jobConf) {
     setClassConf(protoClass, jobConf);
+    if(extRegClass != null) {
+      setExtensionRegistryClassConf(extRegClass, jobConf);
+    }
     return LzoProtobufB64LineInputFormat.class;
   }
 
   public static<M extends Message> LzoProtobufB64LineInputFormat<M> newInstance(TypeRef<M> typeRef) {
     return new LzoProtobufB64LineInputFormat<M>(typeRef);
+  }
+
+  public static <M extends Message> LzoProtobufB64LineInputFormat<M> newInstance(
+      TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {
+    return new LzoProtobufB64LineInputFormat<M>(typeRef, extensionRegistry);
   }
 }

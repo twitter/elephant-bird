@@ -19,9 +19,15 @@ public class TestPigToProto {
 
   @Test
   public void testPigToProto() throws ExecException, TException {
-    Tuple abTuple = Fixtures.buildAddressBookTuple();
+    Tuple abTuple = Fixtures.buildAddressBookTuple(false);
     Message proto = PigToProtobuf.tupleToMessage(AddressBook.newBuilder(), abTuple);
-    assertEquals(Fixtures.buildAddressBookProto(), proto);
+    assertEquals(Fixtures.buildAddressBookProto(false), proto);
+
+    Tuple abTupleWithExt = Fixtures.buildAddressBookTuple(true);
+    Message protoWithExt = PigToProtobuf.tupleToMessage(AddressBook.newBuilder(), abTupleWithExt,
+        Fixtures.buildExtensionRegistry());
+    assertEquals(Fixtures.buildAddressBookProto(true), protoWithExt);
+
 
     // test with OneOfEach.
     thrift.test.OneOfEach thrift_ooe = org.apache.thrift.Fixtures.oneOfEach;
@@ -29,7 +35,7 @@ public class TestPigToProto {
     //tuple from Thrift ooe :
     Tuple tuple_ooe = ThriftToPig.newInstance(thrift.test.OneOfEach.class).getPigTuple(thrift_ooe);
 
-    assertEquals(proto_ooe, PigToProtobuf.tupleToMessage(OneOfEach.class, tuple_ooe));
+    assertEquals(proto_ooe, PigToProtobuf.tupleToMessage(OneOfEach.class, tuple_ooe, null));
 
   }
 }
