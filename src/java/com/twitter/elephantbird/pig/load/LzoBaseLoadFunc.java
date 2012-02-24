@@ -23,23 +23,19 @@ import org.apache.pig.impl.util.UDFContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * This class handles LZO-decoding and slicing input LZO files.  It expects the
- * filenames to end in .lzo, otherwise it assumes they are not compressed and skips them.
- * TODO: Improve the logic to accept a mixture of lzo and non-lzo files.
+ * Provides common functionality & helpers required by all elephantbird loaders.
+ * TODO: Rename "BaseLoadFunc" as this class has nothing to do with LZO.
  */
 public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, LoadPushDown {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseLoadFunc.class);
 
-  protected final String LZO_EXTENSION = new LzopCodec().getDefaultExtension();
-
   @SuppressWarnings("unchecked")
-  protected RecordReader reader_;
+  protected RecordReader reader;
 
   // Making accessing Hadoop counters from Pig slightly more convenient.
   private final PigCounterHelper counterHelper_ = new PigCounterHelper();
@@ -108,9 +104,9 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
   protected <M> M getNextBinaryValue(TypeRef<M> typeRef) throws IOException {
     //typeRef is just to help compiler resolve the type at compile time.
     try {
-      if (reader_ != null && reader_.nextKeyValue()) {
+      if (reader != null && reader.nextKeyValue()) {
         @SuppressWarnings("unchecked")
-        BinaryWritable<M> writable = (BinaryWritable<M>)reader_.getCurrentValue();
+        BinaryWritable<M> writable = (BinaryWritable<M>)reader.getCurrentValue();
         return writable.get();
       }
     } catch (InterruptedException e) {
@@ -158,7 +154,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
 
   @Override
   public void prepareToRead(@SuppressWarnings("unchecked") RecordReader reader, PigSplit split) {
-      this.reader_ = reader;
+      this.reader = reader;
   }
 
   @Override

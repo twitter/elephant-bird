@@ -52,22 +52,24 @@ public class LzoW3CLogLoader extends LzoBaseLoadFunc implements LoadMetadata {
    */
   @Override
   public Tuple getNext() throws IOException {
-    LzoW3CLogRecordReader reader = (LzoW3CLogRecordReader) reader_;
-    if (reader == null) {
+    LzoW3CLogRecordReader w3CLogRecordReader = (LzoW3CLogRecordReader) reader;
+    if (w3CLogRecordReader == null) {
       return null;
     }
     MapWritable value_;
     try {
-      if ( reader.nextKeyValue() && (value_ = reader.getCurrentValue()) != null) {
-          Map<String, String> values = Maps.newHashMap();
+      if (w3CLogRecordReader.nextKeyValue()
+          && (value_ = w3CLogRecordReader.getCurrentValue()) != null) {
+        Map<String, String> values = Maps.newHashMap();
 
-          for (Writable key: value_.keySet()) {
-            Writable value = value_.get(key);
-            values.put(key.toString(), value != null ? value.toString() : null);
-          }
-          incrCounter(LzoW3CLogLoaderCounters.LinesW3CDecoded, 1L);
-          incrCounter(LzoW3CLogLoaderCounters.UnparseableLines, reader.getBadRecordsSkipped());
-          return tupleFactory_.newTuple(values);
+        for (Writable key : value_.keySet()) {
+          Writable value = value_.get(key);
+          values.put(key.toString(), value != null ? value.toString() : null);
+        }
+        incrCounter(LzoW3CLogLoaderCounters.LinesW3CDecoded, 1L);
+        incrCounter(LzoW3CLogLoaderCounters.UnparseableLines,
+            w3CLogRecordReader.getBadRecordsSkipped());
+        return tupleFactory_.newTuple(values);
       }
     } catch (InterruptedException e) {
       int errCode = 6018;
