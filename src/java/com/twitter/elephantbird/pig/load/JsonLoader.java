@@ -3,7 +3,6 @@ package com.twitter.elephantbird.pig.load;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.pig.PigException;
@@ -38,7 +37,6 @@ public class JsonLoader extends LzoBaseLoadFunc {
   }
 
   private String inputFormatClassName;
-  private FileInputFormat inputFormat;
 
   public JsonLoader() {
     this(TextInputFormat.class.getName());
@@ -78,18 +76,12 @@ public class JsonLoader extends LzoBaseLoadFunc {
 
   @Override
   public InputFormat getInputFormat() throws IOException {
-    if (inputFormat != null) {
-      return inputFormat;
-    } else {
-      try {
-        inputFormat =
-            (FileInputFormat) PigContext.resolveClassName(inputFormatClassName).newInstance();
-        return inputFormat;
-      } catch (InstantiationException e) {
-        throw new IOException("Failed creating input format " + inputFormatClassName, e);
-      } catch (IllegalAccessException e) {
-        throw new IOException("Failed creating input format " + inputFormatClassName, e);
-      }
+    try {
+      return (FileInputFormat) PigContext.resolveClassName(inputFormatClassName).newInstance();
+    } catch (InstantiationException e) {
+      throw new IOException("Failed creating input format " + inputFormatClassName, e);
+    } catch (IllegalAccessException e) {
+      throw new IOException("Failed creating input format " + inputFormatClassName, e);
     }
   }
 
