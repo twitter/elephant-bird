@@ -35,7 +35,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseLoadFunc.class);
 
   @SuppressWarnings("unchecked")
-  protected RecordReader reader_;
+  protected RecordReader reader;
 
   // Making accessing Hadoop counters from Pig slightly more convenient.
   private final PigCounterHelper counterHelper_ = new PigCounterHelper();
@@ -104,9 +104,9 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
   protected <M> M getNextBinaryValue(TypeRef<M> typeRef) throws IOException {
     //typeRef is just to help compiler resolve the type at compile time.
     try {
-      if (reader_ != null && reader_.nextKeyValue()) {
+      if (reader != null && reader.nextKeyValue()) {
         @SuppressWarnings("unchecked")
-        BinaryWritable<M> writable = (BinaryWritable<M>)reader_.getCurrentValue();
+        BinaryWritable<M> writable = (BinaryWritable<M>)reader.getCurrentValue();
         return writable.get();
       }
     } catch (InterruptedException e) {
@@ -154,7 +154,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
 
   @Override
   public void prepareToRead(@SuppressWarnings("unchecked") RecordReader reader, PigSplit split) {
-      this.reader_ = reader;
+      this.reader = reader;
   }
 
   @Override

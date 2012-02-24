@@ -1,7 +1,6 @@
 package com.twitter.elephantbird.pig.load;
 
 import com.google.common.collect.Maps;
-import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -9,7 +8,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.PigContext;
@@ -32,8 +30,6 @@ public class JsonLoader extends LzoBaseLoadFunc {
 
   private final JSONParser jsonParser = new JSONParser();
 
-  private final PigCounterHelper counterHelper = new PigCounterHelper();
-
   private enum JsonLoaderCounters {
     LinesRead,
     LinesJsonDecoded,
@@ -41,7 +37,6 @@ public class JsonLoader extends LzoBaseLoadFunc {
     LinesParseErrorBadNumber
   }
 
-  private RecordReader reader;
   private String inputFormatClassName;
   private FileInputFormat inputFormat;
 
@@ -64,10 +59,10 @@ public class JsonLoader extends LzoBaseLoadFunc {
     try {
       while (reader.nextKeyValue()) {
         Text value = (Text) reader.getCurrentValue();
-        counterHelper.incrCounter(JsonLoaderCounters.LinesRead, 1L);
+        incrCounter(JsonLoaderCounters.LinesRead, 1L);
         Tuple t = parseStringToTuple(value.toString());
         if (t != null) {
-          counterHelper.incrCounter(JsonLoaderCounters.LinesJsonDecoded, 1L);
+          incrCounter(JsonLoaderCounters.LinesJsonDecoded, 1L);
           return t;
         }
       }
@@ -79,11 +74,6 @@ public class JsonLoader extends LzoBaseLoadFunc {
       throw new ExecException(errMsg, errCode,
           PigException.REMOTE_ENVIRONMENT, e);
     }
-  }
-
-  @Override
-  public void prepareToRead(RecordReader reader, PigSplit split) {
-    this.reader = reader;
   }
 
   @Override
@@ -117,21 +107,21 @@ public class JsonLoader extends LzoBaseLoadFunc {
         // the input parameter is the string "null".  A single line with
         // "null" is not valid JSON though.
         LOG.warn("Could not json-decode string: " + line);
-        counterHelper.incrCounter(JsonLoaderCounters.LinesParseError, 1L);
+        incrCounter(JsonLoaderCounters.LinesParseError, 1L);
         return null;
       }
       return tupleFactory.newTuple(values);
     } catch (ParseException e) {
       LOG.warn("Could not json-decode string: " + line, e);
-      counterHelper.incrCounter(JsonLoaderCounters.LinesParseError, 1L);
+      incrCounter(JsonLoaderCounters.LinesParseError, 1L);
       return null;
     } catch (NumberFormatException e) {
       LOG.warn("Very big number exceeds the scale of long: " + line, e);
-      counterHelper.incrCounter(JsonLoaderCounters.LinesParseErrorBadNumber, 1L);
+      incrCounter(JsonLoaderCounters.LinesParseErrorBadNumber, 1L);
       return null;
     } catch (ClassCastException e) {
       LOG.warn("Could not convert to Json Object: " + line, e);
-      counterHelper.incrCounter(JsonLoaderCounters.LinesParseError, 1L);
+      incrCounter(JsonLoaderCounters.LinesParseError, 1L);
       return null;
     }
   }
