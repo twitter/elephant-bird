@@ -8,7 +8,6 @@ import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 import org.junit.Test;
 
-import com.twitter.elephantbird.pig.mahout.VectorWritableConverter;
 import com.twitter.elephantbird.pig.util.AbstractTestWritableConverter;
 
 /**
@@ -42,14 +41,14 @@ public class TestSequentialAccessSparseVectorWritableConverter extends
     validate(new String[] { "({(0,1.0),(1,2.0),(2,3.0)})" }, pigServer.openIterator("A"));
   }
 
-  @Test(expected = Exception.class)
-  public void testLoadInvalidSchema01() throws IOException {
+  @Test
+  public void testLoadConversionSchema() throws IOException {
     registerReadQuery("-- -dense -cardinality 3", null);
-    validate(pigServer.openIterator("A"));
+    validate(new String[] { "(1.0,2.0,3.0)" }, pigServer.openIterator("A"));
   }
 
   @Test(expected = Exception.class)
-  public void testLoadInvalidSchema02() throws IOException {
+  public void testLoadInvalidSchema() throws IOException {
     registerReadQuery("-- -sparse -cardinality 2", null);
     validate(pigServer.openIterator("A"));
   }

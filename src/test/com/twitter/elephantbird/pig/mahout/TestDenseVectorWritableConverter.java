@@ -83,9 +83,9 @@ public class TestDenseVectorWritableConverter extends
     validate(pigServer.openIterator("A"));
   }
 
-  @Test(expected = Exception.class)
-  public void testLoadInvalidSchema() throws IOException {
+  @Test
+  public void testLoadConversionSchema() throws IOException {
     registerReadQuery("-- -sparse", null);
-    validate(pigServer.openIterator("A"));
+    validate(new String[] { "(3,{(0,1.0),(1,2.0),(2,3.0)})" }, pigServer.openIterator("A"));
   }
 }

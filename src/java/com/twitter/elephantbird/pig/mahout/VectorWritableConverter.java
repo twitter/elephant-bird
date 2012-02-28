@@ -14,8 +14,8 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.SequentialAccessSparseVector;
 import org.apache.mahout.math.Vector;
-import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.Vector.Element;
+import org.apache.mahout.math.VectorWritable;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.BagFactory;
@@ -225,24 +225,21 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
     if (sparse) {
       FieldSchema entriesFieldSchema;
       if (PigUtil.Pig9orNewer) {
-        Schema tupleSchema = new Schema();
-        tupleSchema.add(new FieldSchema("index",DataType.INTEGER));
-        tupleSchema.add(new FieldSchema("value", valueType));
-
-        Schema bagSchema = new Schema();
-        bagSchema.add(new FieldSchema("t", tupleSchema, DataType.TUPLE));
-
-        entriesFieldSchema =new FieldSchema("entries", bagSchema, DataType.BAG);
+        Schema tupleSchema = new Schema(Lists.newArrayList(new FieldSchema("index",
+            DataType.INTEGER), new FieldSchema("value", valueType)));
+        Schema bagSchema = new Schema(Lists.newArrayList(new FieldSchema("t", tupleSchema,
+            DataType.TUPLE)));
+        entriesFieldSchema = new FieldSchema("entries", bagSchema, DataType.BAG);
       } else {
         entriesFieldSchema =
-              new FieldSchema("entries", new Schema(ImmutableList.of(new FieldSchema("index",
-                  DataType.INTEGER), new FieldSchema("value", valueType))), DataType.BAG);
+            new FieldSchema("entries", new Schema(Lists.newArrayList(new FieldSchema("index",
+                DataType.INTEGER), new FieldSchema("value", valueType))), DataType.BAG);
       }
       if (cardinality != null) {
         return new ResourceFieldSchema(new FieldSchema(null, new Schema(
-            ImmutableList.of(entriesFieldSchema))));
+            Lists.newArrayList(entriesFieldSchema))));
       }
-      return new ResourceFieldSchema(new FieldSchema(null, new Schema(ImmutableList.of(
+      return new ResourceFieldSchema(new FieldSchema(null, new Schema(Lists.newArrayList(
           new FieldSchema("cardinality", DataType.INTEGER), entriesFieldSchema))));
     }
     if (dense && cardinality != null) {
@@ -273,42 +270,44 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
     // create Tuple
     Tuple out = null;
     if (v.isDense()) {
-
       // dense vector found
-      Preconditions.checkState(!sparse, "Expecting sparse vector but found dense vector");
-      List<Number> values = Lists.newArrayListWithCapacity(v.size());
-      if (floatPrecision) {
-        for (Element e : v) {
-          values.add((float) e.get());
-        }
+      if (sparse) {
+        // client requested sparse tuple rep
+        out = toSparseVectorTuple(v);
       } else {
-        for (Element e : v) {
-          values.add(e.get());
-        }
+        out = toDenseVectorTuple(v);
       }
-      out = tupleFactory.newTupleNoCopy(values);
-
     } else {
-
-      // sparse vector encountered
-      Preconditions.checkState(!dense, "Expecting dense vector but found sparse vector");
-      List<Tuple> entries = Lists.newArrayListWithCapacity(v.getNumNondefaultElements());
-      Iterator<Element> itr = v.iterateNonZero();
-      while (itr.hasNext()) {
-        Element e = itr.next();
-        int index = e.index();
-        Preconditions.checkState(this.cardinality == null || index < this.cardinality,
-            "Vector entry index %s is outside valid range [0, %s)", index, cardinality);
-        double value = e.get();
-        entries.add(tupleFactory.newTupleNoCopy(ImmutableList.of(index, value)));
+      // sparse vector found
+      if (dense) {
+        // client requested dense tuple rep
+        out = toDenseVectorTuple(v);
+      } else {
+        out = toSparseVectorTuple(v);
       }
-      out =
-          cardinality != null ? tupleFactory.newTupleNoCopy(ImmutableList.of(bagFactory
-              .newDefaultBag(entries))) : tupleFactory.newTupleNoCopy(ImmutableList.of(size,
-              bagFactory.newDefaultBag(entries)));
-
     }
     return out;
+  }
+
+  protected Tuple toDenseVectorTuple(Vector v) {
+    List<Number> values = Lists.newArrayListWithCapacity(v.size());
+    for (Element e : v) {
+      values.add(floatPrecision ? (float) e.get() : e.get());
+    }
+    return tupleFactory.newTupleNoCopy(values);
+  }
+
+  protected Tuple toSparseVectorTuple(Vector v) {
+    DataBag bag = bagFactory.newDefaultBag();
+    Iterator<Element> itr = v.iterateNonZero();
+    while (itr.hasNext()) {
+      Element e = itr.next();
+      bag.add(tupleFactory.newTupleNoCopy(Lists.<Number> newArrayList(e.index(),
+          floatPrecision ? (float) e.get() : e.get())));
+    }
+    return cardinality != null ? tupleFactory.newTupleNoCopy(ImmutableList.of(bag)) : tupleFactory
+        .newTupleNoCopy(ImmutableList.of(v.size(),
+            bag));
   }
 
   @Override
