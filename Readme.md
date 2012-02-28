@@ -57,6 +57,7 @@ And include elephant-bird as a dependency in `ivy.xml`:
 4. Hive 0.7 (with HIVE-1616)
 5. Thrift 0.5
 6. Mahout 0.6
+7. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
 
 ## Protocol Buffer and Thrift compiler dependencies
 
