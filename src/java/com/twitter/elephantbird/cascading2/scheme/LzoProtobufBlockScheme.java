@@ -15,6 +15,7 @@ import cascading.scheme.Scheme;
 import cascading.scheme.SinkCall;
 import cascading.scheme.SourceCall;
 import cascading.tap.Tap;
+import cascading.tuple.Tuple;
 
 /**
  * Scheme for Protobuf block encoded files.
@@ -53,9 +54,15 @@ public class LzoProtobufBlockScheme extends
     //We have the next value, decode it:
     ProtobufWritable writable = (ProtobufWritable) context[1];
     //getTuple returns a tuple with the length of the Fields size
-    sourceCall.getIncomingEntry().getTuple().set(0, writable.get());
+    sourceCall.getIncomingEntry().setTuple(new Tuple(writable.get()));
     //Only successful exit point is here:
     return true;
+  }
+
+  @Override
+  public void sourceCleanup(HadoopFlowProcess flowProcess,
+    SourceCall<Object[], RecordReader> sourceCall) {
+    sourceCall.setContext(null);
   }
 
   @Override
