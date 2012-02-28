@@ -45,7 +45,7 @@
   <property name="test.lib.dir" location="${build.dir}/lib/test"/>
 
   <property name="jar.name" value="elephant-bird"/>
-  <property name="version" value="2.1.8"/>
+  <property name="version" value="2.1.9"/>
   <property name="jar.file" location="${build.dir}/${jar.name}-${version}.jar"/>
 
   <property name="maven.repo" value="http://repo1.maven.org/maven2"/>
