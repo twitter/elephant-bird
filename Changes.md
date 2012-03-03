@@ -1,5 +1,9 @@
 # Elephant Bird #
 
+### Version 2.1.10 ###
+
+ISSUE 156. Fix a classname bug introduced in the recent refactor. (Travis Crawford)
+
 ### Version 2.1.9 ###
 
 ISSUE 153. Update cascading2 version and classes with changes already in science. (Travis Crawford)
