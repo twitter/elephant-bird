@@ -1,6 +1,6 @@
 # Elephant Bird #
 
-Version: 2.1.8
+Version: 2.1.10
 
 ## About
 
