@@ -15,6 +15,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
@@ -34,6 +35,7 @@ import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.backend.hadoop.executionengine.util.MapRedUtil;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
@@ -286,6 +288,21 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
      */
     return null;
   }
+  
+  protected void ensureUDFContext(Configuration conf) {
+    if (UDFContext.getUDFContext().isUDFConfEmpty()
+        && conf.get("pig.udf.context") != null) {
+      try {
+        MapRedUtil.setupUDFContext(conf);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  
+  protected void ensureUDFContext() {
+    ensureUDFContext(UDFContext.getUDFContext().getJobConf());
+  }
 
   @Override
   public void setUDFContextSignature(String signature) {
@@ -293,6 +310,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   }
 
   protected Properties getContextProperties() {
+    ensureUDFContext();
     return UDFContext.getUDFContext().getUDFProperties(getClass(), new String[] { signature });
   }
 
