@@ -288,8 +288,9 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
      */
     return null;
   }
-  
+
   protected void ensureUDFContext(Configuration conf) {
+    Preconditions.checkNotNull(conf, "Configuration is null");
     if (UDFContext.getUDFContext().isUDFConfEmpty()
         && conf.get("pig.udf.context") != null) {
       try {
@@ -299,10 +300,6 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       }
     }
   }
-  
-  protected void ensureUDFContext() {
-    ensureUDFContext(UDFContext.getUDFContext().getJobConf());
-  }
 
   @Override
   public void setUDFContextSignature(String signature) {
@@ -310,7 +307,6 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   }
 
   protected Properties getContextProperties() {
-    ensureUDFContext();
     return UDFContext.getUDFContext().getUDFProperties(getClass(), new String[] { signature });
   }
 
