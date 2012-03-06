@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.SequenceFile;
@@ -42,7 +43,18 @@ public class RawSequenceFileRecordReader extends RecordReader<DataInputBuffer, D
     Configuration conf = context.getConfiguration();
     FileSplit fileSplit = (FileSplit) inputSplit;
     Path path = fileSplit.getPath();
-    reader = new SequenceFile.Reader(FileSystem.get(conf), path, conf);
+    // inhibit class loading during SequenceFile.Reader initialization
+    reader = new SequenceFile.Reader(FileSystem.get(conf), path, conf) {
+      @Override
+      public synchronized Class<?> getKeyClass() {
+        return BytesWritable.class;
+      }
+
+      @Override
+      public synchronized Class<?> getValueClass() {
+        return BytesWritable.class;
+      }
+    };
     vbytes = this.reader.createValueBytes();
     start = fileSplit.getStart();
     if (start > reader.getPosition()) {
