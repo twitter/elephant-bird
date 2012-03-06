@@ -217,6 +217,14 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     }
   }
 
+  private void ensureUDFContext(Configuration conf) throws IOException {
+    if (UDFContext.getUDFContext().isUDFConfEmpty()
+      && conf.get("pig.udf.context") != null) {
+      MapRedUtil.setupUDFContext(conf);
+    }
+  }
+
+
   /**
    * Tests validity of Writable class, ensures consistent error message for both key and value
    * tests.
