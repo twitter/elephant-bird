@@ -103,7 +103,7 @@ public class ThriftUtils {
     }
   }
 
-  public static Class<?> getFiedlType(Class<?> containingClass, String fieldName) {
+  public static Class<?> getFieldType(Class<?> containingClass, String fieldName) {
     try {
       // checking the return type of get method works for union as well.
       String getMethodName = "get"
