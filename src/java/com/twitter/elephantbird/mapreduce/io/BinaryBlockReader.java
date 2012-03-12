@@ -27,7 +27,7 @@ public abstract class BinaryBlockReader<M> {
   private SerializedBlock curBlock_;
   private int numLeftToReadThisBlock_ = 0;
   private boolean readNewBlocks_ = true;
-  private boolean skipEmptyBlobs = true; // skip any records of length zero
+  private boolean skipEmptyRecords = true; // skip any records of length zero
 
   protected BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
     this(in, protoConverter, true);
@@ -38,8 +38,8 @@ public abstract class BinaryBlockReader<M> {
                               boolean skipEmptyRecords) {
     in_ = in;
     protoConverter_ = protoConverter;
-    skipEmptyBlobs = skipEmptyRecords;
     searcher_ = new StreamSearcher(Protobufs.KNOWN_GOOD_POSITION_MARKER);
+    this.skipEmptyRecords = skipEmptyRecords;
   }
 
   public void close() throws IOException {
@@ -88,7 +88,7 @@ public abstract class BinaryBlockReader<M> {
       int blobIndex = curBlock_.getProtoBlobsCount() - numLeftToReadThisBlock_;
       numLeftToReadThisBlock_--;
       byte[] blob = curBlock_.getProtoBlobs(blobIndex).toByteArray();
-      if (blob.length == 0 && skipEmptyBlobs) {
+      if (blob.length == 0 && skipEmptyRecords) {
         continue;
       }
       return blob;
