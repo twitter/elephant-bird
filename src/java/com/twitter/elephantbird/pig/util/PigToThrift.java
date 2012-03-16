@@ -90,6 +90,8 @@ public class PigToThrift<T extends TBase<?, ?>> {
               field.getName(), value, type, i), e);
         }
       }
+      // if tDesc is a union, at least one field needs to be non-null.
+      // user is responsible for ensuring that.
     }
     return tObj;
   }
