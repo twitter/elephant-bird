@@ -8,7 +8,6 @@ import java.util.Iterator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
-import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.junit.Assert;
@@ -16,7 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.hadoop.compression.lzo.GPLNativeCodeLoader;
+import com.hadoop.compression.lzo.LzoCodec;
 import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.elephantbird.mapreduce.io.ThriftBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
@@ -25,6 +24,7 @@ import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.thrift.test.TestName;
 import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
+import com.twitter.elephantbird.util.UnitTestUtil;
 
 /**
  * Test {@link MultiFormatLoader} using a Thrift struct.
@@ -44,19 +44,15 @@ public class TestThriftMultiFormatLoader {
   @Before
   public void setUp() throws Exception {
 
-    if (!GPLNativeCodeLoader.isNativeCodeLoaded()) {
+    Configuration conf = new Configuration();
+
+    if (!LzoCodec.isNativeLzoLoaded(conf)){
       // TODO: Consider using @RunWith / @SuiteClasses
       return;
     }
 
-    pigServer = new PigServer(ExecType.LOCAL);
-    // set lzo codec:
-    pigServer.getPigContext().getProperties().setProperty(
-        "io.compression.codecs", "com.hadoop.compression.lzo.LzopCodec");
-    pigServer.getPigContext().getProperties().setProperty(
-        "io.compression.codec.lzo.class", "com.hadoop.compression.lzo.LzoCodec");
+    pigServer = UnitTestUtil.makePigServer();
 
-    Configuration conf = new Configuration();
     inputDir.mkdirs();
 
     // write to block file
