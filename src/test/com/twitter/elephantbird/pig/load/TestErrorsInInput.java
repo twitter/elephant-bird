@@ -115,6 +115,10 @@ public class TestErrorsInInput {
   public void TestErrorTolerance() throws Exception {
     // test configurable error tolerance in EB record reader.
 
+    if (pigServer == null) {
+      return;
+    }
+
     // initialize
     String testDir = System.getProperty("test.build.data") + "/TestErrorTolerance";
 
