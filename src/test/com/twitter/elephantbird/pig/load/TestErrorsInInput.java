@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Random;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
@@ -14,12 +16,13 @@ import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.hadoop.compression.lzo.GPLNativeCodeLoader;
+import com.hadoop.compression.lzo.LzoCodec;
 import com.hadoop.compression.lzo.LzopCodec;
+import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.io.RawBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
@@ -28,48 +31,54 @@ import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
 import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.util.UnitTestUtil;
 
 /**
- * Test to ensure that empty records in B64Line and Block formats are
- * correctly skipped. Uses thrift records loaded using MultiFormatLoader.
+ * 1. Test to ensure that empty records in B64Line and Block formats are
+ * correctly skipped.
+ * 2. Test error tolerance in input.
  */
-public class TestEmptyRecords {
+public class TestErrorsInInput {
   // create a directory with two lzo files, one in Base64Line format
   // and the other in Serialized blocks, and load them using
   // MultiFormatLoader
 
-  private PigServer pigServer;
-  private final String testDir =
-    System.getProperty("test.build.data") + "/TestEmptyRecords";
-  private final File inputDir = new File(testDir, "in");
+  private static PigServer pigServer;
+  private static Configuration conf;
   private final TestPerson[] records = new TestPerson[]{  makePerson(0),
                                                           makePerson(1),
                                                           makePerson(2) };
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void setUp() throws Exception {
 
-    if (!GPLNativeCodeLoader.isNativeCodeLoaded()) {
-      // TODO: Consider using @RunWith / @SuiteClasses
+    conf = new Configuration();
+
+    if (!LzoCodec.isNativeLzoLoaded(conf)) {
       return;
     }
 
-    pigServer = new PigServer(ExecType.LOCAL);
-    // set lzo codec:
-    pigServer.getPigContext().getProperties().setProperty(
-        "io.compression.codecs", "com.hadoop.compression.lzo.LzopCodec");
-    pigServer.getPigContext().getProperties().setProperty(
-        "io.compression.codec.lzo.class", "com.hadoop.compression.lzo.LzoCodec");
+    pigServer = UnitTestUtil.makePigServer();
+  }
 
-    Configuration conf = new Configuration();
-    inputDir.mkdirs();
+  @Test
+  public void TestMultiFormatLoaderWithEmptyRecords() throws Exception {
+    if (pigServer == null) {
+      //setUp didn't run because of missing lzo native libraries
+      return;
+    }
+
+    // initalize
+    String testDir = System.getProperty("test.build.data") + "/TestEmptyRecords";
+
+    final File inDir = new File(testDir, "in");
+    inDir.mkdirs();
 
     // block writer
-    RawBlockWriter blk_writer = new RawBlockWriter(createLzoOut("1-block.lzo", conf));
+    RawBlockWriter blk_writer = new RawBlockWriter(createLzoOut(new File(inDir, "1-block.lzo"), conf));
     //b64 writer
-    OutputStream b64_writer = createLzoOut("2-b64.lzo", conf);
+    OutputStream b64_writer = createLzoOut(new File(inDir, "2-b64.lzo"), conf);
 
     Base64 base64 = Codecs.createStandardBase64();
-    ThriftConverter<TestPerson> tConverter = ThriftConverter.newInstance(TestPerson.class);
 
     for (TestPerson rec : records) {
       //write a regular record and an empty record
@@ -82,18 +91,11 @@ public class TestEmptyRecords {
     }
     blk_writer.close();
     b64_writer.close();
-  }
-
-  @Test
-  public void testMultiFormatLoaderWithEmptyRecords() throws Exception {
-    if (pigServer == null) {
-      //setUp didn't run because of missing lzo native libraries
-      return;
-    }
+    // end of initialization.
 
     pigServer.registerQuery(String.format(
         "A = load '%s' using %s('%s');\n",
-        inputDir.toURI().toString(),
+        inDir.toURI().toString(),
         MultiFormatLoader.class.getName(),
         TestPerson.class.getName()));
 
@@ -106,11 +108,74 @@ public class TestEmptyRecords {
       }
     }
 
-    FileUtil.fullyDelete(inputDir);
+    FileUtil.fullyDelete(new File(testDir));
   }
 
-  private DataOutputStream createLzoOut(String name, Configuration conf) throws IOException {
-    File file = new File(inputDir, name);
+  @Test
+  public void TestErrorTolerance() throws Exception {
+    // test configurable error tolerance in EB record reader.
+
+    // initialize
+    String testDir = System.getProperty("test.build.data") + "/TestErrorTolerance";
+
+    final File inDir = new File(testDir, "in");
+    inDir.mkdirs();
+
+    // create input with 100 records with 10% of records with errors.
+
+    RawBlockWriter blk_writer = new RawBlockWriter(createLzoOut(new File(inDir, "1-block.lzo"), conf));
+
+    TestPerson person = records[records.length - 1];
+    String expectedStr = personToString(person);
+    byte[] properRec = tConverter.toBytes(person);
+    byte[] truncatedRec = Arrays.copyOfRange(properRec, 0, properRec.length*3/4);
+
+    final int totalRecords = 100;
+    final int pctErrors = 10;
+    final int totalErrors = totalRecords * pctErrors / 100;
+    final int goodRecords = totalRecords - totalErrors;
+
+    int corruptIdx = new Random().nextInt(10);
+    for(int i=0; i<totalRecords; i++) {
+      blk_writer.write((i%10 == corruptIdx) ? truncatedRec : properRec);
+    }
+    blk_writer.close();
+
+    String[] expectedRows = new String[goodRecords];
+    for (int i=0; i<goodRecords; i++){
+      expectedRows[i] = expectedStr;
+    }
+
+    // A = load 'in' using ThritPigLoader('TestPerson');
+    String loadStmt = String.format("A = load '%s' using %s('%s');\n",
+                                    inDir.toURI().toString(),
+                                    ThriftPigLoader.class.getName(),
+                                    TestPerson.class.getName());
+
+    // a simple load should fail.
+    pigServer.registerQuery(loadStmt);
+    try {
+      verifyRows(expectedRows, pigServer.openIterator("A"));
+      Assert.assertFalse("A Pig IOException was expected", true);
+    } catch (IOException e){
+      // expected.
+    }
+
+    // loader should succeed with error rate set to 50%
+    pigServer.getPigContext().getProperties().setProperty(
+        LzoRecordReader.BAD_RECORD_THRESHOLD_CONF_KEY, "0.5");
+    pigServer.registerQuery(loadStmt);
+    verifyRows(expectedRows, pigServer.openIterator("A"));
+
+    // set low threshold and test min_error count works.
+    pigServer.getPigContext().getProperties().setProperty(
+        LzoRecordReader.BAD_RECORD_THRESHOLD_CONF_KEY, "0.0001");
+    pigServer.getPigContext().getProperties().setProperty(
+        LzoRecordReader.BAD_RECORD_MIN_COUNT_CONF_KEY, ""+(totalErrors+1));
+    verifyRows(expectedRows, pigServer.openIterator("A"));
+  }
+
+  private DataOutputStream createLzoOut(File file, Configuration conf) throws IOException {
     LzopCodec codec = new LzopCodec();
     codec.setConf(conf);
 
@@ -122,6 +187,7 @@ public class TestEmptyRecords {
 
   // thrift class related :
   private ThriftToPig<TestPerson> thriftToPig = ThriftToPig.newInstance(TestPerson.class);
+  private ThriftConverter<TestPerson> tConverter = ThriftConverter.newInstance(TestPerson.class);
 
   // return a Person thrift object
   private TestPerson makePerson(int index) {
@@ -132,5 +198,12 @@ public class TestEmptyRecords {
   }
   private String personToString(TestPerson person) {
     return thriftToPig.getPigTuple(person).toString();
+  }
+
+  private void verifyRows(String[] expected,  Iterator<Tuple> actual) {
+    for(String row : expected) {
+      Assert.assertEquals(row, actual.next().toString());
+    }
+    Assert.assertFalse("no more rows are expected", actual.hasNext());
   }
 }

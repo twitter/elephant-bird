@@ -1,6 +1,5 @@
 package com.twitter.elephantbird.pig.load;
 
-import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.json.simple.parser.JSONParser;
@@ -8,6 +7,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.twitter.elephantbird.util.UnitTestUtil;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -49,7 +50,7 @@ public class TestJsonLoader {
     writer.write("{\"score\": 30}\n");
     writer.close();
 
-    PigServer pigServer = new PigServer(ExecType.LOCAL);
+    PigServer pigServer = UnitTestUtil.makePigServer();
     logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
         + "' using com.twitter.elephantbird.pig.load.JsonLoader() as (json: map[]);");
     logAndRegisterQuery(pigServer, "a = foreach data generate (int) json#'score' as score;");
