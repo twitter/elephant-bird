@@ -1,5 +1,15 @@
 # Elephant Bird #
 
+### Version 2.1.11 ###
+
+ISSUE 164. Mininum error threshold in LzoRecordReader (Raghu Angadi)
+
+ISSUE 163. Support Thrift union (Raghu Angadi)
+
+ISSUE 155. Remove non-null precondition in SequenceFileLoader (Andy Schlaikjer)
+
+ISSUE 159. Inhibit class loading in RawSequenceFileRecordReader (Andy Schlaikjer)
+
 ### Version 2.1.10 ###
 
 ISSUE 156. Fix a classname bug introduced in the recent refactor. (Travis Crawford)
