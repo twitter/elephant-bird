@@ -1,5 +1,7 @@
 # Elephant Bird #
 
+### Version 2.1.12 ###
+
 ### Version 2.1.11 ###
 
 ISSUE 164. Mininum error threshold in LzoRecordReader (Raghu Angadi)
