@@ -9,6 +9,7 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.TEnum;
 import org.apache.thrift.TException;
 import org.apache.thrift.TFieldIdEnum;
+import org.apache.thrift.TUnion;
 import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.meta_data.FieldMetaData;
 import org.apache.thrift.meta_data.FieldValueMetaData;
@@ -42,6 +43,7 @@ public class TStructDescriptor {
 
   private List<Field> fields;
   private Class<? extends TBase<?, ?>> tClass;
+  private boolean isUnion;
 
   public Class<? extends TBase<?, ?>> getThriftClass() {
     return tClass;
@@ -75,9 +77,14 @@ public class TStructDescriptor {
      * here, the assumption is the field is not null most of the
      * time. otherwise, rather than catching the exception, we
      * could cache 'BufferForFieldName()' method and invoke it.
+     *
+     * this also helps with unions.
      */
     Field field = fields.get(fieldIdx);
     try {
+      if (isUnion && field.getFieldIdEnum() != ((TUnion<?, ?>)tObject).getSetField()) {
+        return null;
+      }
       return tObject.getFieldValue(field.getFieldIdEnum());
     } catch (NullPointerException e) {
       return null;
@@ -107,6 +114,8 @@ public class TStructDescriptor {
   private void build(Class<? extends TBase<?, ?>> tClass) {
     Map<? extends TFieldIdEnum, FieldMetaData> fieldMap = FieldMetaData.getStructMetaDataMap(tClass);
     Field[] arr = new Field[fieldMap.size()];
+
+    isUnion = TUnion.class.isAssignableFrom(tClass);
 
     int idx = 0;
     for (Entry<? extends TFieldIdEnum, FieldMetaData> e : fieldMap.entrySet()) {
@@ -216,7 +225,7 @@ public class TStructDescriptor {
         // until then a partial work around that works only if
         // the field is not inside a container.
         isBuffer_ =
-          ByteBuffer.class == ThriftUtils.getFiedlType(enclosingClass, fieldName);
+          ByteBuffer.class == ThriftUtils.getFieldType(enclosingClass, fieldName);
       } else {
         isBuffer_= false;
       }

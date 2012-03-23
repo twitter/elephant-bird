@@ -293,17 +293,16 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   }
 
   protected Properties getContextProperties() {
-    Preconditions.checkNotNull(signature, "Signature is null");
     return UDFContext.getUDFContext().getUDFProperties(getClass(), new String[] { signature });
+  }
+
+  protected String getContextProperty(String name, String defaultValue) {
+    return getContextProperties().getProperty(signature + name, defaultValue);
   }
 
   protected void setContextProperty(String name, String value) {
     Preconditions.checkNotNull(name, "Context property name is null");
     getContextProperties().setProperty(signature + name, value);
-  }
-
-  protected String getContextProperty(String name, String defaultValue) {
-    return getContextProperties().getProperty(signature + name, defaultValue);
   }
 
   @Override

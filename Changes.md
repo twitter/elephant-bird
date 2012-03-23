@@ -1,5 +1,41 @@
 # Elephant Bird #
 
+### Version 2.1.12 ###
+
+### Version 2.1.11 ###
+
+ISSUE 164. Mininum error threshold in LzoRecordReader (Raghu Angadi)
+
+ISSUE 163. Support Thrift union (Raghu Angadi)
+
+ISSUE 155. Remove non-null precondition in SequenceFileLoader (Andy Schlaikjer)
+
+ISSUE 159. Inhibit class loading in RawSequenceFileRecordReader (Andy Schlaikjer)
+
+### Version 2.1.10 ###
+
+ISSUE 156. Fix a classname bug introduced in the recent refactor. (Travis Crawford)
+
+### Version 2.1.9 ###
+
+ISSUE 153. Update cascading2 version and classes with changes already in science. (Travis Crawford)
+
+ISSUE 152. Removes requirement that input Vector data match user specified -dense, -sparse options (Andy Schlaikjer)
+
+ISSUE 148. TestInvoker#testSpeed() may fail on slow machines (Michael Noll)
+
+ISSUE 147. Refactor JSON loaders so an InputFormat can be used & update test. (Travis Crawford)
+
+ISSUE 142. Don't force thrift in classpath unless necessary. (Raghu Angadi)
+
+ISSUE 141. Cleans up top level Readme.md, adds more info on SequenceFile IO (Andy Schlaikjer)
+
+ISSUE 140. SeqFileLoader and SeqFileStorage should resolve using PigContext (Dmitriy Ryaboy)
+
+ISSUE 139. Adds Mahout VectorWritableConverter util from Twadoop (Andy Schlaikjer)
+
+ISSUE 138. Please bump to lastest cascading2 build (slightly incompatible with wip-176). (Oscar Boykin)
+
 ### Version 2.1.8 ###
 
 ISSUE 137. Fixes the namespace in cascading2 protobufs (Oscar Boykin)

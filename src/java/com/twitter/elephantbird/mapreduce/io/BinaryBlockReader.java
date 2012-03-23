@@ -12,26 +12,34 @@ import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
- * A class to read blocks of binary objects like protobufs. 
+/**
+ * A class to read blocks of binary objects like protobufs.
  */
 public abstract class BinaryBlockReader<M> {
   private static final Logger LOG = LoggerFactory.getLogger(BinaryBlockReader.class);
 
-  // though any type of objects can be stored, each block itself is 
+  // though any type of objects can be stored, each block itself is
   // stored as a protocolbuf (SerializedBlock).
-  
+
   private InputStream in_;
   private final StreamSearcher searcher_;
   private final BinaryConverter<M> protoConverter_;
   private SerializedBlock curBlock_;
   private int numLeftToReadThisBlock_ = 0;
   private boolean readNewBlocks_ = true;
+  private boolean skipEmptyRecords = true; // skip any records of length zero
 
   protected BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
+    this(in, protoConverter, true);
+  }
+
+  protected BinaryBlockReader(InputStream in,
+                              BinaryConverter<M> protoConverter,
+                              boolean skipEmptyRecords) {
     in_ = in;
     protoConverter_ = protoConverter;
     searcher_ = new StreamSearcher(Protobufs.KNOWN_GOOD_POSITION_MARKER);
+    this.skipEmptyRecords = skipEmptyRecords;
   }
 
   public void close() throws IOException {
@@ -67,20 +75,26 @@ public abstract class BinaryBlockReader<M> {
     }
     return false;
   }
-  
+
   /**
    * Return byte blob for the next proto object. null indicates end of stream;
    */
   public byte[] readNextProtoBytes() throws IOException {
-    if (!setupNewBlockIfNeeded()) {
-      return null;
-    }
+    while (true) {
+      if (!setupNewBlockIfNeeded()) {
+        return null;
+      }
 
-    int blobIndex = curBlock_.getProtoBlobsCount() - numLeftToReadThisBlock_;
-    numLeftToReadThisBlock_--;
-    return curBlock_.getProtoBlobs(blobIndex).toByteArray();
+      int blobIndex = curBlock_.getProtoBlobsCount() - numLeftToReadThisBlock_;
+      numLeftToReadThisBlock_--;
+      byte[] blob = curBlock_.getProtoBlobs(blobIndex).toByteArray();
+      if (blob.length == 0 && skipEmptyRecords) {
+        continue;
+      }
+      return blob;
+    }
   }
-  
+
   /**
    * returns true if bytes for next object are written to writable, false
    * other wise.

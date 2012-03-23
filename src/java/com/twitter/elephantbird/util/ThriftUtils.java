@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.lang.reflect.Method;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TBase;
@@ -114,13 +115,17 @@ public class ThriftUtils {
     }
   }
 
-  public static Class<?> getFiedlType(Class<?> containingClass, String fieldName) {
+  public static Class<?> getFieldType(Class<?> containingClass, String fieldName) {
     try {
-      java.lang.reflect.Field field = containingClass.getDeclaredField(fieldName);
-      return field.getType();
-    } catch (NoSuchFieldException e) {
-      throw new RuntimeException("while trying to find " + fieldName + " in "
-                                 + containingClass, e);
+      // checking the return type of get method works for union as well.
+      String getMethodName = "get"
+                             + fieldName.substring(0, 1).toUpperCase()
+                             + fieldName.substring(1);
+      Method method = containingClass.getDeclaredMethod(getMethodName);
+      return method.getReturnType();
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException("while trying to find type for " + fieldName +
+                                 " in " + containingClass, e);
     }
   }
 

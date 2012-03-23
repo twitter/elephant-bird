@@ -46,7 +46,7 @@ public abstract class LzoBaseRegexLoader extends LzoBaseLoadFunc {
    */
   @Override
   public Tuple getNext() throws IOException {
-	  if (reader_ == null) {
+	  if (reader == null) {
 		  return null;
 	  }
 
@@ -58,9 +58,9 @@ public abstract class LzoBaseRegexLoader extends LzoBaseLoadFunc {
 	  // Read lines until a match is found, making sure there's no reading past the
 	  // end of the assigned byte range.
 	  try {
-		  while (reader_.nextKeyValue()) {
+		  while (reader.nextKeyValue()) {
 
-			  lineObj = reader_.getCurrentValue();
+			  lineObj = reader.getCurrentValue();
 
 			  if (lineObj == null) {
 				  break;

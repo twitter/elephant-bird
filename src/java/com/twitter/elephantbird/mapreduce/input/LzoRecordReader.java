@@ -32,6 +32,8 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoRecordReader.class);
 
   public static final String BAD_RECORD_THRESHOLD_CONF_KEY = "elephantbird.mapred.input.bad.record.threshold";
+  /* Error out only after threshold rate is reached and we have see this many errors */
+  public static final String BAD_RECORD_MIN_COUNT_CONF_KEY = "elephantbird.mapred.input.bad.record.min";
   protected long start_;
   protected long pos_;
   protected long end_;
@@ -111,10 +113,12 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     long numErrors;
 
     double errorThreshold; // max fraction of errors allowed
+    long minErrors; // throw error only after this many errors
 
     InputErrorTracker(Configuration conf) {
       //default threshold : 0.01%
       errorThreshold = conf.getFloat(BAD_RECORD_THRESHOLD_CONF_KEY, 0.0001f);
+      minErrors = conf.getLong(BAD_RECORD_MIN_COUNT_CONF_KEY, 2);
       numRecords = 0;
       numErrors = 0;
     }
@@ -145,7 +149,7 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
 
       // will always excuse the first error. We can decide if single
       // error crosses threshold inside close() if we want to.
-      if (numErrors > 1 && errRate > errorThreshold) {
+      if (numErrors >= minErrors  && errRate > errorThreshold) {
         LOG.error(numErrors + " out of " + numRecords
             + " crosses configured threshold (" + errorThreshold + ")");
         throw new RuntimeException("error rate while reading input records crossed threshold", cause);
