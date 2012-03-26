@@ -43,10 +43,6 @@ abstract public class DeprecatedLzoBlockRecordReader<M>
   protected BinaryBlockReader<M> reader_;
   protected TypeRef<M> typeRef_;
 
-  public DeprecatedLzoBlockRecordReader() {
-    throw new RuntimeException("cannot call default constructor");
-  }
-
   /**
    * We're doing stuff in the constructor that probably should be handled with an init method - however the
    * hadoop < 0.19 API isn't ideal.

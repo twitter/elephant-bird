@@ -1,21 +1,13 @@
 package com.twitter.elephantbird.cascading2.scheme;
 
-import java.io.IOException;
-
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.RecordReader;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedLzoProtobufBlockInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.Scheme;
-import cascading.scheme.SinkCall;
-import cascading.scheme.SourceCall;
 import cascading.tap.Tap;
-import cascading.tuple.Tuple;
 
 /**
  * Scheme for Protobuf block encoded files.
