@@ -1,6 +1,5 @@
 package com.twitter.elephantbird.mapred.input;
 
-import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.TypeRef;

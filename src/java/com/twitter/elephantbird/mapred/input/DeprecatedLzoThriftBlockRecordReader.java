@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapred.input;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.mapreduce.io.ThriftBlockReader;
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.util.TypeRef;
 
 import org.apache.hadoop.conf.Configuration;
@@ -21,8 +22,8 @@ import java.io.InputStream;
 public class DeprecatedLzoThriftBlockRecordReader<M extends TBase<?,?>>
     extends DeprecatedLzoBlockRecordReader<M> {
 
-  public DeprecatedLzoThriftBlockRecordReader(TypeRef<M> typeRef, BinaryWritable<M> writable, Configuration conf, FileSplit split) throws IOException {
-    super(typeRef, writable, conf, split);
+  public DeprecatedLzoThriftBlockRecordReader(TypeRef<M> typeRef, Configuration conf, FileSplit split) throws IOException {
+    super(typeRef, ThriftWritable.newInstance(typeRef.getRawClass()), conf, split);
   }
 
   protected BinaryBlockReader<M> createInputReader(InputStream input, Configuration conf) throws IOException {
