@@ -23,7 +23,7 @@ import cascading.tuple.Tuple;
  * @author Avi Bryant, Ning Liang
  */
 public class LzoProtobufBlockScheme extends
-  Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Object[]> {
+  LzoBlockScheme<ProtobufWritable<?>> {
 
   private static final long serialVersionUID = -5011096855302946105L;
   private Class protoClass;
@@ -33,53 +33,8 @@ public class LzoProtobufBlockScheme extends
   }
 
   @Override
-  public void sink(HadoopFlowProcess flowProcess, SinkCall<Object[], OutputCollector> sinkCall)
-    throws IOException {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public void sinkConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public boolean source(HadoopFlowProcess flowProcess,
-    SourceCall<Object[], RecordReader> sourceCall) throws IOException {
-    //Read the next item into length 2 object array (key, value):
-    Object[] context = sourceCall.getContext();
-    if (!sourceCall.getInput().next(context[0], context[1])) {
-      return false;
-    }
-    //We have the next value, decode it:
-    ProtobufWritable writable = (ProtobufWritable) context[1];
-    //getTuple returns a tuple with the length of the Fields size
-    sourceCall.getIncomingEntry().setTuple(new Tuple(writable.get()));
-    //Only successful exit point is here:
-    return true;
-  }
-
-  @Override
-  public void sourceCleanup(HadoopFlowProcess flowProcess,
-    SourceCall<Object[], RecordReader> sourceCall) {
-    sourceCall.setContext(null);
-  }
-
-  @Override
   public void sourceConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
     conf.setInputFormat(
       DeprecatedLzoProtobufBlockInputFormat.getInputFormatClass(protoClass, conf));
-  }
-
-  /**
-  * This sets up the state between succesive calls to source
-  */
-  @Override
-  public void sourcePrepare(HadoopFlowProcess flowProcess,
-    SourceCall<Object[], RecordReader> sourceCall) {
-    //Hadoop sets a key value pair:
-    sourceCall.setContext(new Object[2]);
-    sourceCall.getContext()[0] = sourceCall.getInput().createKey();
-    sourceCall.getContext()[1] = sourceCall.getInput().createValue();
   }
 }
