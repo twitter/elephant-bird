@@ -3,6 +3,7 @@ package com.twitter.elephantbird.cascading2.scheme;
 import org.apache.hadoop.mapred.JobConf;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedLzoThriftMultiInputFormat;
+import com.twitter.elephantbird.mapred.output.DeprecatedLzoThriftBlockOutputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 
 import cascading.flow.hadoop.HadoopFlowProcess;
@@ -22,6 +23,13 @@ public class LzoThriftBlockScheme extends
 
   public LzoThriftBlockScheme(Class thriftClass) {
     this.thriftClass = thriftClass;
+  }
+
+  @Override
+  public void sinkConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
+    conf.setOutputFormat(
+      DeprecatedLzoThriftBlockOutputFormat.getOutputFormatClass(thriftClass, conf)
+    );
   }
 
   @Override

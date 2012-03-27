@@ -3,6 +3,7 @@ package com.twitter.elephantbird.cascading2.scheme;
 import org.apache.hadoop.mapred.JobConf;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedLzoProtobufBlockInputFormat;
+import com.twitter.elephantbird.mapred.output.DeprecatedLzoProtobufBlockOutputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 
 import cascading.flow.hadoop.HadoopFlowProcess;
@@ -22,6 +23,13 @@ public class LzoProtobufBlockScheme extends
 
   public LzoProtobufBlockScheme(Class protoClass) {
     this.protoClass = protoClass;
+  }
+
+  @Override
+  public void sinkConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
+    conf.setOutputFormat(
+      DeprecatedLzoProtobufBlockOutputFormat.getOutputFormatClass(protoClass, conf)
+    );
   }
 
   @Override

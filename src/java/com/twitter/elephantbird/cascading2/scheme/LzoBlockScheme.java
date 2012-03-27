@@ -18,6 +18,7 @@ import cascading.scheme.SinkCall;
 import cascading.scheme.SourceCall;
 import cascading.tap.Tap;
 import cascading.tuple.Tuple;
+import cascading.tuple.TupleEntry;
 
 /**
  * Scheme for lzo block encoded files.
@@ -33,7 +34,10 @@ abstract public class LzoBlockScheme<T extends BinaryWritable<?>> extends
   @Override
   public void sink(HadoopFlowProcess flowProcess, SinkCall<Object[], OutputCollector> sinkCall)
     throws IOException {
-    throw new NotImplementedException();
+    OutputCollector collector = sinkCall.getOutput();
+    TupleEntry entry = sinkCall.getOutgoingEntry();
+    T message = (T) entry.getTuple().getObject(0);
+    collector.collect(null, message);
   }
 
   @Override
