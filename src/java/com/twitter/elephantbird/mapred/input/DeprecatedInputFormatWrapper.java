@@ -53,8 +53,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
    * This configuration is read on the remote tasks to instantiate actual
    * InputFormat correctly.
    */
-  public static void setInputFormat(Class<? extends InputFormat<?, ?>> realInputFormatClass,
-                                    JobConf jobConf) {
+  public static void setInputFormat(Class<?> realInputFormatClass, JobConf jobConf) {
     jobConf.setInputFormat(DeprecatedInputFormatWrapper.class);
     HadoopUtils.setInputFormatClass(jobConf, CLASS_CONF_KEY, realInputFormatClass);
   }
