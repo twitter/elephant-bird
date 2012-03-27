@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.mapred.input;
 
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
 import com.twitter.elephantbird.util.Protobufs;
@@ -30,15 +31,15 @@ import java.io.IOException;
  */
 
 @SuppressWarnings("deprecation")
-public class DeprecatedLzoProtobufBlockInputFormat<M extends Message, W extends ProtobufWritable<M>> extends DeprecatedLzoInputFormat<M, W> {
+public class DeprecatedLzoProtobufBlockInputFormat<M extends Message> extends DeprecatedLzoInputFormat<M, BinaryWritable<M>> {
   private TypeRef typeRef_;
-  private W protobufWritable_;
+  private BinaryWritable<M> protobufWritable_;
 
   public void setTypeRef(TypeRef typeRef) {
     typeRef_ = typeRef;
   }
 
-  protected void setProtobufWritable(W protobufWritable) {
+  protected void setProtobufWritable(ProtobufWritable<M> protobufWritable) {
     protobufWritable_ = protobufWritable;
   }
 
@@ -55,12 +56,12 @@ public class DeprecatedLzoProtobufBlockInputFormat<M extends Message, W extends 
   }
 
   @Override
-  public RecordReader<M, W> getRecordReader(InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
+  public RecordReader<M, BinaryWritable<M>> getRecordReader(InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
     if (typeRef_ == null) {
       typeRef_ = Protobufs.getTypeRef(jobConf, DeprecatedLzoProtobufBlockInputFormat.class);
     }
     if(protobufWritable_ == null) {
-      protobufWritable_ = (W) new ProtobufWritable<M>(typeRef_);
+      protobufWritable_ = new ProtobufWritable<M>(typeRef_);
     }
     return new DeprecatedLzoProtobufBlockRecordReader(typeRef_, protobufWritable_, jobConf, (FileSplit) inputSplit);
   }

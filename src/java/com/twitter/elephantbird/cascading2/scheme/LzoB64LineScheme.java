@@ -16,6 +16,7 @@ import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.SinkCall;
 import cascading.scheme.SourceCall;
 import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 
 /**
@@ -59,31 +60,26 @@ public abstract class LzoB64LineScheme extends LzoTextLine {
   @Override
   public boolean source(HadoopFlowProcess flowProcess,
     SourceCall<Object[], RecordReader> sourceCall) throws IOException {
-    //Read the next item into length 2 object array:
+
     Object[] context = sourceCall.getContext();
-    if (!sourceCall.getInput().next(context[0], context[1])) {
-      return false;
-    }
-    boolean success = false;
-    //We have the next value, decode it:
-    Text encoded = (Text) context[1];
-    try {
-      byte[] bytes = getBase64().decode(encoded.toString().getBytes(ENCODING));
-      Object message = decodeMessage(bytes);
-      if (message == null) {
-        LOG.info("Couldn't decode " + encoded + " " + Arrays.toString(bytes));
-      } else {
-        //Decoded, and time to hand it over
-        sourceCall.getIncomingEntry().getTuple().set(0, message);
-        //Only successful exit point is here:
-        success = true;
+
+    while(sourceCall.getInput().next(context[0], context[1])) {
+      Text encoded = (Text) context[1];
+      try {
+        byte[] bytes = getBase64().decode(encoded.toString().getBytes(ENCODING));
+        Object out = decodeMessage(bytes);
+        if(out != null) {
+          sourceCall.getIncomingEntry().setTuple(new Tuple(out));
+          return true;
+        }
+        LOG.info("Could not decode " + encoded);
+      } catch (java.io.UnsupportedEncodingException e) {
+        LOG.info(e.toString());
+      } catch (ArrayIndexOutOfBoundsException e) {
+        LOG.info("Could not decode " + encoded);
       }
-    } catch (java.io.UnsupportedEncodingException e) {
-      LOG.info(e.toString());
-    } catch (ArrayIndexOutOfBoundsException e) {
-      LOG.info("Could not decode " + encoded);
     }
-    return success;
+    return false;
   }
 
   /**

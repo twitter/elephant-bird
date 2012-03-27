@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.mapred.input;
 
+import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
@@ -17,7 +18,7 @@ import java.io.IOException;
  * @author Yifan Shi
  */
 @SuppressWarnings("deprecation")
-public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
+public class DeprecatedLzoThriftMultiInputFormat<M extends TBase<?, ?>>
     extends DeprecatedLzoInputFormat<LongWritable, ThriftWritable<M>> {
 
   /**
@@ -26,10 +27,10 @@ public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
    * appropriate object for this generic class based on thriftClass
    */
   //@SuppressWarnings("unchecked")
-  public static <M extends TBase<?, ?>> Class<DeprecatedLzoThriftB64LineInputFormat>
+  public static <M extends TBase<?, ?>> Class<DeprecatedLzoThriftMultiInputFormat>
      getInputFormatClass(Class<M> thriftClass, Configuration jobConf) {
     return getInputFormatClass(
-        DeprecatedLzoThriftB64LineInputFormat.class, thriftClass, jobConf);
+        DeprecatedLzoThriftMultiInputFormat.class, thriftClass, jobConf);
   }
 
   /**
@@ -49,13 +50,25 @@ public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
    * @throws IOException
    */
   @Override
-  public RecordReader<LongWritable, ThriftWritable<M>> getRecordReader(
+  public RecordReader getRecordReader(
       InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
 
     TypeRef<M> typeRef = ThriftUtils.getTypeRef(jobConf, this.getClass());
 
     reporter.setStatus(inputSplit.toString());
-    return new DeprecatedLzoThriftB64LineRecordReader<M>(
-        jobConf, (FileSplit)inputSplit, typeRef);
+
+    MultiInputFormat.Format format =
+      MultiInputFormat.determineFileFormat(((FileSplit)inputSplit).getPath(), jobConf);
+
+    switch (format) {
+    case LZO_B64LINE:
+      return new DeprecatedLzoThriftB64LineRecordReader<M>(
+          jobConf, (FileSplit)inputSplit, typeRef);
+    case LZO_BLOCK:
+      return new DeprecatedLzoThriftBlockRecordReader<M>(typeRef, jobConf,
+          (FileSplit)inputSplit);
+    }
+    // not expected.
+    throw new IOException("could not determine file format");
   }
 }
