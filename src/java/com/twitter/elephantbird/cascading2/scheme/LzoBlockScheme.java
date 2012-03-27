@@ -7,6 +7,9 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 
 import cascading.flow.hadoop.HadoopFlowProcess;
@@ -24,6 +27,7 @@ import cascading.tuple.Tuple;
 abstract public class LzoBlockScheme<T extends BinaryWritable<?>> extends
   Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Object[]> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LzoBlockScheme.class);
   private static final long serialVersionUID = -5011096855302946106L;
 
   @Override
@@ -48,10 +52,15 @@ abstract public class LzoBlockScheme<T extends BinaryWritable<?>> extends
 
     //We have the next value, decode it:
     T writable = (T) context[1];
-    //getTuple returns a tuple with the length of the Fields size
-    sourceCall.getIncomingEntry().setTuple(new Tuple(writable.get()));
-    //Only successful exit point is here:
-    return true;
+    Object out = writable.get();
+    if(out != null) {
+      //getTuple returns a tuple with the length of the Fields size
+      sourceCall.getIncomingEntry().setTuple(new Tuple(out));
+      //Only successful exit point is here:
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @Override

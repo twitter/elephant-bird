@@ -18,7 +18,7 @@ import java.io.IOException;
  * @author Yifan Shi
  */
 @SuppressWarnings("deprecation")
-public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
+public class DeprecatedLzoThriftMultiInputFormat<M extends TBase<?, ?>>
     extends DeprecatedLzoInputFormat<LongWritable, ThriftWritable<M>> {
 
   /**
@@ -27,10 +27,10 @@ public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
    * appropriate object for this generic class based on thriftClass
    */
   //@SuppressWarnings("unchecked")
-  public static <M extends TBase<?, ?>> Class<DeprecatedLzoThriftB64LineInputFormat>
+  public static <M extends TBase<?, ?>> Class<DeprecatedLzoThriftMultiInputFormat>
      getInputFormatClass(Class<M> thriftClass, Configuration jobConf) {
     return getInputFormatClass(
-        DeprecatedLzoThriftB64LineInputFormat.class, thriftClass, jobConf);
+        DeprecatedLzoThriftMultiInputFormat.class, thriftClass, jobConf);
   }
 
   /**
