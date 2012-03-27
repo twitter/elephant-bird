@@ -61,33 +61,25 @@ public abstract class LzoB64LineScheme extends LzoTextLine {
   public boolean source(HadoopFlowProcess flowProcess,
     SourceCall<Object[], RecordReader> sourceCall) throws IOException {
 
-    Object out = null;
-    boolean hasNext;
     Object[] context = sourceCall.getContext();
 
-    do {
-      hasNext = sourceCall.getInput().next(context[0], context[1]);
-      //We have the next value, decode it:
+    while(sourceCall.getInput().next(context[0], context[1])) {
       Text encoded = (Text) context[1];
       try {
         byte[] bytes = getBase64().decode(encoded.toString().getBytes(ENCODING));
-        out = decodeMessage(bytes);
-        if (out == null) {
-          LOG.info("Couldn't decode " + encoded + " " + Arrays.toString(bytes));
+        Object out = decodeMessage(bytes);
+        if(out != null) {
+          sourceCall.getIncomingEntry().setTuple(new Tuple(out));
+          return true;
         }
+        LOG.info("Could not decode " + encoded);
       } catch (java.io.UnsupportedEncodingException e) {
         LOG.info(e.toString());
       } catch (ArrayIndexOutOfBoundsException e) {
         LOG.info("Could not decode " + encoded);
       }
-    } while(hasNext && out == null);
-
-    if(!hasNext) {
-      return false;
-    } else {
-      sourceCall.getIncomingEntry().setTuple(new Tuple(out));
-      return true;
     }
+    return false;
   }
 
   /**

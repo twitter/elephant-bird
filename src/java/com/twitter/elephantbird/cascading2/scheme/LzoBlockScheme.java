@@ -45,24 +45,20 @@ abstract public class LzoBlockScheme<T extends BinaryWritable<?>> extends
   public boolean source(HadoopFlowProcess flowProcess,
     SourceCall<Object[], RecordReader> sourceCall) throws IOException {
 
-    Object out = null;
-    boolean hasNext;
     Object[] context = sourceCall.getContext();
-
-    do {
-      hasNext = sourceCall.getInput().next(context[0], context[1]);
-      if(hasNext) {
-        T writable = (T) context[1];
-        out = writable.get();
+    while(sourceCall.getInput().next(context[0], context[1])) {
+      try {
+        Object out = ((T) context[1]).get();
+        if(out != null) {
+          sourceCall.getIncomingEntry().setTuple(new Tuple(out));
+          return true;
+        }
+        LOG.warn("failed to decode record");
+      } catch (Throwable e) {
+        LOG.warn("while decoding error caught exception: " + e);
       }
-    } while(hasNext && out == null);
-
-    if(!hasNext) {
-      return false;
-    } else {
-      sourceCall.getIncomingEntry().setTuple(new Tuple(out));
-      return true;
     }
+    return false;
   }
 
   @Override
