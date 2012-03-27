@@ -44,22 +44,24 @@ abstract public class LzoBlockScheme<T extends BinaryWritable<?>> extends
   @Override
   public boolean source(HadoopFlowProcess flowProcess,
     SourceCall<Object[], RecordReader> sourceCall) throws IOException {
-    //Read the next item into length 2 object array (key, value):
-    Object[] context = sourceCall.getContext();
-    if (!sourceCall.getInput().next(context[0], context[1])) {
-      return false;
-    }
 
-    //We have the next value, decode it:
-    T writable = (T) context[1];
-    Object out = writable.get();
-    if(out != null) {
-      //getTuple returns a tuple with the length of the Fields size
-      sourceCall.getIncomingEntry().setTuple(new Tuple(out));
-      //Only successful exit point is here:
-      return true;
-    } else {
+    Object out = null;
+    boolean hasNext;
+    Object[] context = sourceCall.getContext();
+
+    do {
+      hasNext = sourceCall.getInput().next(context[0], context[1]);
+      if(hasNext) {
+        T writable = (T) context[1];
+        out = writable.get();
+      }
+    } while(hasNext && out == null);
+
+    if(!hasNext) {
       return false;
+    } else {
+      sourceCall.getIncomingEntry().setTuple(new Tuple(out));
+      return true;
     }
   }
 

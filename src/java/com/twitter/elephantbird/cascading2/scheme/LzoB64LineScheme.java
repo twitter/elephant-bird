@@ -16,6 +16,7 @@ import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.SinkCall;
 import cascading.scheme.SourceCall;
 import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 
 /**
@@ -59,31 +60,34 @@ public abstract class LzoB64LineScheme extends LzoTextLine {
   @Override
   public boolean source(HadoopFlowProcess flowProcess,
     SourceCall<Object[], RecordReader> sourceCall) throws IOException {
-    //Read the next item into length 2 object array:
+
+    Object out = null;
+    boolean hasNext;
     Object[] context = sourceCall.getContext();
-    if (!sourceCall.getInput().next(context[0], context[1])) {
-      return false;
-    }
-    boolean success = false;
-    //We have the next value, decode it:
-    Text encoded = (Text) context[1];
-    try {
-      byte[] bytes = getBase64().decode(encoded.toString().getBytes(ENCODING));
-      Object message = decodeMessage(bytes);
-      if (message == null) {
-        LOG.info("Couldn't decode " + encoded + " " + Arrays.toString(bytes));
-      } else {
-        //Decoded, and time to hand it over
-        sourceCall.getIncomingEntry().getTuple().set(0, message);
-        //Only successful exit point is here:
-        success = true;
+
+    do {
+      hasNext = sourceCall.getInput().next(context[0], context[1]);
+      //We have the next value, decode it:
+      Text encoded = (Text) context[1];
+      try {
+        byte[] bytes = getBase64().decode(encoded.toString().getBytes(ENCODING));
+        out = decodeMessage(bytes);
+        if (out == null) {
+          LOG.info("Couldn't decode " + encoded + " " + Arrays.toString(bytes));
+        }
+      } catch (java.io.UnsupportedEncodingException e) {
+        LOG.info(e.toString());
+      } catch (ArrayIndexOutOfBoundsException e) {
+        LOG.info("Could not decode " + encoded);
       }
-    } catch (java.io.UnsupportedEncodingException e) {
-      LOG.info(e.toString());
-    } catch (ArrayIndexOutOfBoundsException e) {
-      LOG.info("Could not decode " + encoded);
+    } while(hasNext && out == null);
+
+    if(!hasNext) {
+      return false;
+    } else {
+      sourceCall.getIncomingEntry().setTuple(new Tuple(out));
+      return true;
     }
-    return success;
   }
 
   /**
