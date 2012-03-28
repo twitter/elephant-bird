@@ -13,8 +13,10 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import com.twitter.elephantbird.util.HadoopUtils;
@@ -81,7 +83,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
   public RecordReader<K, V> getRecordReader(InputSplit split, JobConf job,
                   Reporter reporter) throws IOException {
     initInputFormat(job);
-    return new RecordReaderWrapper<K, V>(realInputFormat, split, job);
+    return new RecordReaderWrapper<K, V>(realInputFormat, split, job, reporter);
   }
 
   @Override
@@ -124,15 +126,31 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     public RecordReaderWrapper(InputFormat<K, V> newInputFormat,
                                InputSplit oldSplit,
-                               JobConf oldJobConf) throws IOException {
+                               JobConf oldJobConf,
+                               Reporter reporter) throws IOException {
 
       splitLen = oldSplit.getLength();
 
       org.apache.hadoop.mapreduce.InputSplit split =
         ((InputSplitWrapper)oldSplit).realSplit;
 
+      // create a TaskInputOutputContext
+      @SuppressWarnings("unchecked")
       TaskAttemptContext taskContext =
-        new TaskAttemptContext(oldJobConf, TaskAttemptID.forName(oldJobConf.get("mapred.task.id")));
+        new TaskInputOutputContext(
+            oldJobConf, TaskAttemptID.forName(oldJobConf.get("mapred.task.id")),
+            null, null, (StatusReporter) reporter) {
+
+              public Object getCurrentKey() throws IOException, InterruptedException {
+                throw new RuntimeException("not implemented");
+              }
+              public Object getCurrentValue() throws IOException, InterruptedException {
+                throw new RuntimeException("not implemented");
+              }
+              public boolean nextKeyValue() throws IOException, InterruptedException {
+                throw new RuntimeException("not implemented");
+              }
+      };
 
       try {
         realReader = newInputFormat.createRecordReader(split, taskContext);
