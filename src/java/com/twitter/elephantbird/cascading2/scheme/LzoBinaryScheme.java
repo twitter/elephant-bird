@@ -54,16 +54,12 @@ abstract public class LzoBinaryScheme<M, T extends BinaryWritable<M>> extends
 
     Object[] context = sourceCall.getContext();
     while(sourceCall.getInput().next(context[0], context[1])) {
-      try {
-        Object out = ((T) context[1]).get();
-        if(out != null) {
-          sourceCall.getIncomingEntry().setTuple(new Tuple(out));
-          return true;
-        }
-        LOG.warn("failed to decode record");
-      } catch (Throwable e) {
-        LOG.warn("while decoding error caught exception: " + e);
+      Object out = ((T) context[1]).get();
+      if(out != null) {
+        sourceCall.getIncomingEntry().setTuple(new Tuple(out));
+        return true;
       }
+      LOG.warn("failed to decode record");
     }
     return false;
   }
