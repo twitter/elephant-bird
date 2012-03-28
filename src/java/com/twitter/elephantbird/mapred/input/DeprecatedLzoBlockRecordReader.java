@@ -1,8 +1,7 @@
 package com.twitter.elephantbird.mapred.input;
 
-import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
-import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
+import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.TypeRef;
 
 import org.apache.hadoop.conf.Configuration;
@@ -26,9 +25,9 @@ import java.io.InputStream;
  */
 
 @SuppressWarnings("deprecation")
-public class DeprecatedLzoProtobufBlockRecordReader<M extends Message, W extends ProtobufWritable<M>>
-    implements RecordReader<LongWritable, W> {
-  private static final Logger LOG = LoggerFactory.getLogger(DeprecatedLzoProtobufBlockRecordReader.class);
+abstract public class DeprecatedLzoBlockRecordReader<M>
+    implements RecordReader<LongWritable, BinaryWritable<M>> {
+  private static final Logger LOG = LoggerFactory.getLogger(DeprecatedLzoBlockRecordReader.class);
   private final FSDataInputStream fileIn_;
 
   // Will create a uncompressed input stream from a compressed block.
@@ -37,19 +36,19 @@ public class DeprecatedLzoProtobufBlockRecordReader<M extends Message, W extends
   private final long end_;
   private long start_;
   private long pos_;
-  private W value_;
+  private BinaryWritable<M> value_;
 
   // Will be assigned by the concrete subclass.
-  protected ProtobufBlockReader<M> reader_;
+  protected BinaryBlockReader<M> reader_;
   protected TypeRef<M> typeRef_;
 
   /**
    * We're doing stuff in the constructor that probably should be handled with an init method - however the
    * hadoop < 0.19 API isn't ideal.
    */
-  public DeprecatedLzoProtobufBlockRecordReader(TypeRef<M> typeRef, W protobufWritable, Configuration conf, FileSplit split) throws IOException {
+  public DeprecatedLzoBlockRecordReader(TypeRef<M> typeRef, BinaryWritable<M> writable, Configuration conf, FileSplit split) throws IOException {
     typeRef_ = typeRef;
-    value_ = protobufWritable;
+    value_ = writable;
     start_ = split.getStart();
     end_ = start_ + split.getLength();
     final Path file = split.getPath();
@@ -64,7 +63,7 @@ public class DeprecatedLzoProtobufBlockRecordReader<M extends Message, W extends
     // Open the file and seek to the next split.
     fileIn_ = fs.open(split.getPath());
 
-    createInputReader(codec.createInputStream(fileIn_), conf);
+    reader_ = createInputReader(codec.createInputStream(fileIn_), conf);
 
     if (start_ != 0) {
       LOG.debug("Seeking to split start at pos " + start_);
@@ -78,11 +77,11 @@ public class DeprecatedLzoProtobufBlockRecordReader<M extends Message, W extends
   }
 
   @Override
-  public boolean next(LongWritable key, W value) throws IOException {
+  public boolean next(LongWritable key, BinaryWritable<M> value) throws IOException {
     if (pos_ > end_) {
       reader_.markNoMoreNewBlocks();
     }
-    while (reader_.readProtobuf(value)) {
+    while (reader_.readNext(value)) {
       key.set(pos_);
       pos_ = fileIn_.getPos();
       return true;
@@ -96,7 +95,7 @@ public class DeprecatedLzoProtobufBlockRecordReader<M extends Message, W extends
   }
 
   @Override
-  public W createValue() {
+  public BinaryWritable<M> createValue() {
     return value_;
   }
 
@@ -121,10 +120,8 @@ public class DeprecatedLzoProtobufBlockRecordReader<M extends Message, W extends
   protected void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
     // Nothing to do here because the reader_ does the sync each time it's called on
     // to read a protobuf.
-    LOG.debug("DeprecatedLzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
+    LOG.debug("DeprecatedLzoBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
   }
 
-  protected void createInputReader(InputStream input, Configuration conf) throws IOException {
-    reader_ = new ProtobufBlockReader<M>(input, typeRef_);
-  }
+  abstract protected BinaryBlockReader<M> createInputReader(InputStream input, Configuration conf) throws IOException;
 }

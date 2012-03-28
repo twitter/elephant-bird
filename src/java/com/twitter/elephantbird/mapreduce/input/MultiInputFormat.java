@@ -49,7 +49,7 @@ public class MultiInputFormat<M>
     this.typeRef = typeRef;
   }
 
-  private static enum Format {
+  public static enum Format {
     LZO_BLOCK,
     LZO_B64LINE;
   };
@@ -68,7 +68,7 @@ public class MultiInputFormat<M>
    * Stores supplied class name in configuration. This configuration is
    * read on the remote tasks to initialize the input format correctly.
    */
-  protected static void setClassConf(Class<?> clazz, Configuration conf) {
+  public static void setClassConf(Class<?> clazz, Configuration conf) {
     HadoopUtils.setInputFormatClass(conf, CLASS_CONF_KEY, clazz);
   }
 
@@ -83,7 +83,7 @@ public class MultiInputFormat<M>
     }
     Class<?> recordClass = typeRef.getRawClass();
 
-    Format fileFormat = determineFileFormat(split, conf);
+    Format fileFormat = determineFileFormat(((FileSplit)split).getPath(), conf);
 
     // Protobuf
     if (Message.class.isAssignableFrom(recordClass)) {
@@ -138,12 +138,9 @@ public class MultiInputFormat<M>
    * The block format starts with {@link Protobufs#KNOWN_GOOD_POSITION_MARKER}.
    * Otherwise the input is assumed to be Base64 encoded lines.
    */
-  private static Format determineFileFormat(InputSplit split,
-                                            Configuration conf)
-                                            throws IOException {
-    FileSplit fileSplit = (FileSplit)split;
-
-    Path file = fileSplit.getPath();
+  public static Format determineFileFormat(Path file,
+                                    Configuration conf)
+                                    throws IOException {
 
     /* we could have a an optional configuration that maps a regex on a
      * file name to a format. E.g. ".*-block.lzo" to LZO_BLOCK file.
