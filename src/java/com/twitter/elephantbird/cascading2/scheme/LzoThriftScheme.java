@@ -20,7 +20,7 @@ import org.apache.thrift.TBase;
 import java.io.IOException;
 
 /**
- * Scheme for Thrift block encoded files.
+ * Scheme for Thrift lzo compressed files.
  *
  * @author Argyris Zymnis
  */

@@ -20,7 +20,7 @@ import cascading.tap.Tap;
 import java.io.IOException;
 
 /**
- * Scheme for Protobuf block and B64 encoded files.
+ * Scheme for Protobuf lzo compressed files.
  *
  * @author Avi Bryant, Ning Liang
  */
