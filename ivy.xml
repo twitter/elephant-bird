@@ -25,6 +25,8 @@
     <dependency org="org.antlr" name="antlr" rev="${antlr.version}" conf="test"/>
     <dependency org="org.apache.hadoop" name="hadoop-core"
                 rev="${hadoop-core.version}" transitive="false"/>
+    <dependency org="org.apache.hadoop" name="hadoop-test"
+                rev="${hadoop-core.version}" conf="test"/>
     <dependency org="org.apache.hive" name="hive-serde"
                 rev="${hive-serde.version}" transitive="false"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks"
