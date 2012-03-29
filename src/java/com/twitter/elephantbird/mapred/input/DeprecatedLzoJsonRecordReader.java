@@ -17,7 +17,8 @@ import com.twitter.elephantbird.mapreduce.input.LzoJsonRecordReader;
  * Skips lines that are invalid json.
  *
  * WARNING: Does not handle multi-line json input well, if at all.
- * TODO: Fix that, and keep Hadoop counters for invalid vs. valid lines.
+ *
+ * TODO : should be removed. made obsolete by DeprecatedInputFormatWrapper
  */
 @SuppressWarnings("deprecation")
 public class DeprecatedLzoJsonRecordReader implements RecordReader<LongWritable, MapWritable> {

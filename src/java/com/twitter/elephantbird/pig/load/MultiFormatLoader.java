@@ -31,14 +31,9 @@ public class MultiFormatLoader<M> extends FilterLoadFunc {
     Class<?> clazz = PigUtil.getClass(className);
     typeRef = new TypeRef<M>(clazz){};
 
-    /* Initialize loader
-     * It does not matter that we are using 'B64Line' though the input
-     * can be in a different format. These loaders depend only on the
-     * class name and differ only what getInputFormat() returns. since
-     * we override getInputFormat(), the difference does not matter.
-     *
-     * The loader is required to handle rest of the functionality of
-     * LoadFunc, LoadMetadata etc.
+    /* Initialize the loader. It is required to handle
+     * functionality of LoadFunc, LoadMetadata etc,
+     * even though it does not affect the inputformat.
      */
     LoadFunc ldr;
     if (Message.class.isAssignableFrom(clazz)) {

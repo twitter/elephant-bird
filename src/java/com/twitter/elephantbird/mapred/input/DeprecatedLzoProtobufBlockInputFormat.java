@@ -27,6 +27,8 @@ import java.io.IOException;
  * does a check that the given input format is a descendant of
  * org.apache.hadoop.mapred.InputFormat, which any InputFormat-derived class
  * from the new API fails.
+ *
+ * TODO : should extend DeprecatedInputFormatWrapper (or removed)
  */
 
 @SuppressWarnings("deprecation")
