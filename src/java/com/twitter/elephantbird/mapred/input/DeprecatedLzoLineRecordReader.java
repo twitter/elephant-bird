@@ -17,6 +17,8 @@ import org.apache.hadoop.util.LineReader;
 /**
  * A line-based record reader for LZO files that outputs <position, line>
  * writable pairs in the style of TextInputFormat.
+ *
+ * TODO : should be removed. made obsolete by DeprecatedInputFormatWrapper
  */
 
 @SuppressWarnings("deprecation")

@@ -15,6 +15,8 @@ import java.io.IOException;
  * which is deprecated but still required in places.
  *
  * @author Yifan Shi
+ *
+ * TODO: should extend DeprecatedInputFormatWrapper (or removed)
  */
 @SuppressWarnings("deprecation")
 public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
