@@ -208,7 +208,7 @@ public class TStructDescriptor {
         // until then a partial work around that works only if
         // the field is not inside a container.
         isBuffer_ =
-          ByteBuffer.class == ThriftUtils.getFieldType(enclosingClass, fieldName);
+          ThriftUtils.getFieldType(enclosingClass, fieldName) != String.class;
       } else {
         isBuffer_= false;
       }

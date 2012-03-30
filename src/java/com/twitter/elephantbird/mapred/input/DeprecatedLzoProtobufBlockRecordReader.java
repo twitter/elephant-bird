@@ -23,6 +23,8 @@ import java.io.InputStream;
 /**
  * A reader for LZO-encoded protobuf blocks, generally written by
  * a ProtobufBlockWriter or similar.  Returns <position, protobuf> pairs.
+ *
+ * TODO : should be removed. made obsolete by DeprecatedInputFormatWrapper
  */
 
 @SuppressWarnings("deprecation")
