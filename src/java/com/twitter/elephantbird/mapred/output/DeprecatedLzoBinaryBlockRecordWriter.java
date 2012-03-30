@@ -16,19 +16,19 @@ import org.apache.hadoop.mapred.Reporter;
 public class DeprecatedLzoBinaryBlockRecordWriter<M, W extends BinaryWritable<M>>
     implements RecordWriter<NullWritable, W> {
 
-  private BinaryBlockWriter<M> writer_;
+  private BinaryBlockWriter<M> writer;
 
   public DeprecatedLzoBinaryBlockRecordWriter(BinaryBlockWriter<M> writer) {
-    writer_ = writer;
+    this.writer = writer;
   }
 
   public void write(NullWritable nullWritable, W writable)
       throws IOException {
-    writer_.write(writable.get());
+    writer.write(writable.get());
   }
 
   public void close(Reporter reporter) throws IOException {
-    writer_.finish();
-    writer_.close();
+    writer.finish();
+    writer.close();
   }
 }
