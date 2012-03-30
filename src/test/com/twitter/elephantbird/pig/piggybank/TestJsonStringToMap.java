@@ -1,19 +1,29 @@
 package com.twitter.elephantbird.pig.piggybank;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.junit.Test;
 
-public class TestJsonStringToMap extends TestCase {
+public class TestJsonStringToMap {
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
   JsonStringToMap udf_ = new JsonStringToMap();
+
+  @Test
+  public void testSchema() {
+    Schema schema = udf_.outputSchema(null);
+    assertNotNull(schema);
+    assertEquals("{map: map[chararray]}", schema.toString());
+  }
 
   @Test
   public final void testStandard() throws IOException, ExecException {

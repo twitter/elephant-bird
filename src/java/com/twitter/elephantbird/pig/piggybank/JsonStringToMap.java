@@ -8,6 +8,9 @@ import org.apache.log4j.Logger;
 import org.apache.pig.EvalFunc;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.util.Utils;
+import org.apache.pig.parser.ParserException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -16,14 +19,22 @@ import com.google.common.collect.Maps;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 
 /**
- * <p>Transforms a Json string into a Pig map.<br>
- * Only goes 1 level deep -- all value representations are their toString() representations.</p>
+ * Transforms a Json string into a Pig map whose value type is chararray. Only goes one level deep;
+ * All input map values are converted to strings via {@link Object#toString()}.
  */
-@SuppressWarnings("rawtypes")
-public class JsonStringToMap extends EvalFunc<Map> {
+public class JsonStringToMap extends EvalFunc<Map<String, String>> {
   private static final Logger LOG = LogManager.getLogger(JsonStringToMap.class);
   private final JSONParser jsonParser = new JSONParser();
   private final PigCounterHelper counterHelper = new PigCounterHelper();
+
+  @Override
+  public Schema outputSchema(Schema input) {
+    try {
+      return Utils.getSchemaFromString("map: [chararray]");
+    } catch (ParserException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @Override
   public Map<String, String> exec(Tuple input) throws IOException {
