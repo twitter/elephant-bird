@@ -30,7 +30,7 @@ public class JsonStringToMap extends EvalFunc<Map<String, String>> {
   @Override
   public Schema outputSchema(Schema input) {
     try {
-      return Utils.getSchemaFromString("m: [chararray]");
+      return Utils.getSchemaFromString("json: [chararray]");
     } catch (ParserException e) {
       throw new RuntimeException(e);
     }
