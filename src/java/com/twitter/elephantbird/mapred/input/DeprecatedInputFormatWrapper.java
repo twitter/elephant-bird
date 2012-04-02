@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
+import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
@@ -132,7 +133,13 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       splitLen = oldSplit.getLength();
 
       org.apache.hadoop.mapreduce.InputSplit split =
-        ((InputSplitWrapper)oldSplit).realSplit;
+          (oldSplit instanceof FileSplit) ?
+              new org.apache.hadoop.mapreduce.lib.input.FileSplit(
+                  ((FileSplit) oldSplit).getPath(),
+                  ((FileSplit) oldSplit).getStart(),
+                  oldSplit.getLength(),
+                  oldSplit.getLocations()) :
+              ((InputSplitWrapper)oldSplit).realSplit;
 
       // create a TaskInputOutputContext
       @SuppressWarnings("unchecked")
