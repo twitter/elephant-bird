@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.pig.load;
 
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.json.simple.parser.JSONParser;
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Test the JsonLoader, make sure it reads the data properly.
@@ -66,6 +68,80 @@ public class TestJsonLoader {
     }
 
     Assert.assertEquals(1, count); // expect just one tuple
+  }
+  
+  @Test
+  public void testNestedLoad() throws IOException {
+    
+    File tempFile = File.createTempFile("json", null);
+    tempFile.deleteOnExit();
+
+    FileWriter writer = new FileWriter(tempFile);
+    // json structure as in Twitter Streaming
+    writer.write("{\"entities\":{\"hashtags\":[{\"indices\":[0,0],\"text\":\"test1\"},{\"indices\":[0,0],\"text\":\"test2\"}],\"user_mentions\":[],\"urls\":[]}}");
+    writer.close();
+
+    // extract hashtags from it
+    PigServer pigServer = UnitTestUtil.makePigServer();
+    logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
+        + "' using com.twitter.elephantbird.pig.load.JsonLoader() as (json: map[]);");
+    logAndRegisterQuery(pigServer, "a = foreach data generate json#'entities'#'hashtags' as h;");
+    logAndRegisterQuery(pigServer, "b = foreach a generate flatten(h) as h;");
+    logAndRegisterQuery(pigServer, "c = foreach b generate h#'text' as h;");
+    Iterator<Tuple> tuples = pigServer.openIterator("c");
+
+    int count = 0;
+    String[] hashtags = {"test1","test2"};
+    while(tuples.hasNext()) {
+      Tuple t = tuples.next();
+      Assert.assertEquals(hashtags[count], t.get(0).toString());
+      count++;
+    }
+    
+    Assert.assertEquals(2, count); // expect two tuples
+  }
+  
+  @Test
+  public void testBackwardsCompatibility() throws IOException {
+    
+    File tempFile = File.createTempFile("json", null);
+    tempFile.deleteOnExit();
+
+    FileWriter writer = new FileWriter(tempFile);
+    String json = "{\"a\":{\"b\":{\"c\":0}, \"d\":{\"e\":0}}}";
+    writer.write(json);
+    writer.close();
+
+    // extract hashtags from it
+    PigServer pigServer = UnitTestUtil.makePigServer();
+    // disable nested load
+    pigServer.getPigContext().getProperties().setProperty("jsonLoader.nestedLoad.disabled", "true");
+    logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
+        + "' using com.twitter.elephantbird.pig.load.JsonLoader() as (json: map[]);");
+    logAndRegisterQuery(pigServer, "a = foreach data generate json#'a' as h;");
+    Iterator<Tuple> tuples = pigServer.openIterator("a");
+
+    int count = 0;
+    while(tuples.hasNext()) {
+      Tuple t = tuples.next();
+      Assert.assertEquals(String.class, t.get(0).getClass());
+      count++;
+    }
+    
+    Assert.assertEquals(1, count); // expect one tuple
+  }
+  
+  @Test
+  public void tesFieldsSpec() throws IOException {
+    
+    String json = "{\"a\":{\"b\":{\"c\":0}, \"d\":{\"e\":0}}}";
+    JsonLoader jsonLoader = new JsonLoader(TextInputFormat.class.getName(),"a,b,c");
+    Tuple result = jsonLoader.parseStringToTuple(json);
+    Map<String, Object> m = (Map<String, Object>)result.get(0);
+    Assert.assertTrue(m.containsKey("a"));
+    m = (Map<String, Object>)m.get("a");
+    Assert.assertTrue(m.containsKey("b"));
+    Assert.assertTrue(!m.containsKey("d"));
   }
 
   private void logAndRegisterQuery(PigServer pigServer, String query) throws IOException {
