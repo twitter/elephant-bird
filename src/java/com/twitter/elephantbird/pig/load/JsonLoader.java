@@ -42,6 +42,7 @@ public class JsonLoader extends LzoBaseLoadFunc {
   }
 
   private String inputFormatClassName;
+  private boolean isNestedLoadEnabled = false;
 
   public JsonLoader() {
     this(TextInputFormat.class.getName());
@@ -59,6 +60,7 @@ public class JsonLoader extends LzoBaseLoadFunc {
     if (reader == null) {
       return null;
     }
+    isNestedLoadEnabled = "true".equals(jobConf.get("jsonLoader.nestedLoad.enabled"));
     try {
       while (reader.nextKeyValue()) {
         Text value = (Text) reader.getCurrentValue();
@@ -120,9 +122,9 @@ public class JsonLoader extends LzoBaseLoadFunc {
 
   private Object wrap(Object value) {
     
-    if (value instanceof JSONObject) {
+    if (isNestedLoadEnabled && value instanceof JSONObject) {
       return walkJson((JSONObject) value);
-    }  else if (value instanceof JSONArray) {
+    }  else if (isNestedLoadEnabled && value instanceof JSONArray) {
       
       JSONArray a = (JSONArray) value;
       DataBag mapValue = bagFactory.newDefaultBag();
