@@ -21,7 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Decodes each line as JSON passes the resulting map of values
@@ -42,14 +44,22 @@ public class JsonLoader extends LzoBaseLoadFunc {
   }
 
   private String inputFormatClassName;
-  private boolean isNestedLoadEnabled = false;
+  private boolean isNestedLoadDisabled = false;
+  private Set<String> fields = null;
 
   public JsonLoader() {
-    this(TextInputFormat.class.getName());
+    // defaults to no fields specification
+    this(TextInputFormat.class.getName(), null);
   }
 
-  public JsonLoader(String inputFormatClassName) {
+  public JsonLoader(String inputFormatClassName, String fieldsSpec) {
     this.inputFormatClassName = inputFormatClassName;
+    if (fieldsSpec != null && fieldsSpec.length() > 0) {
+      fields = new HashSet<String>();
+      for(String s: fieldsSpec.split(",")) {
+        fields.add(s);
+      }
+    }
   }
 
   /**
@@ -60,7 +70,9 @@ public class JsonLoader extends LzoBaseLoadFunc {
     if (reader == null) {
       return null;
     }
-    isNestedLoadEnabled = "true".equals(jobConf.get("jsonLoader.nestedLoad.enabled"));
+    // nested load can be disabled through a pig property
+    if ("true".equals(jobConf.get("jsonLoader.nestedLoad.disabled")))
+      isNestedLoadDisabled = true;
     try {
       while (reader.nextKeyValue()) {
         Text value = (Text) reader.getCurrentValue();
@@ -122,9 +134,9 @@ public class JsonLoader extends LzoBaseLoadFunc {
 
   private Object wrap(Object value) {
     
-    if (isNestedLoadEnabled && value instanceof JSONObject) {
+    if (!isNestedLoadDisabled && value instanceof JSONObject) {
       return walkJson((JSONObject) value);
-    }  else if (isNestedLoadEnabled && value instanceof JSONArray) {
+    }  else if (!isNestedLoadDisabled && value instanceof JSONArray) {
       
       JSONArray a = (JSONArray) value;
       DataBag mapValue = bagFactory.newDefaultBag();
@@ -142,7 +154,8 @@ public class JsonLoader extends LzoBaseLoadFunc {
   private Map<String,Object> walkJson(JSONObject jsonObj) {
     Map<String,Object> v = Maps.newHashMap();
     for (Object key: jsonObj.keySet()) {
-      v.put(key.toString(), wrap(jsonObj.get(key)));
+      if (fields == null || fields.contains(key.toString()))
+        v.put(key.toString(), wrap(jsonObj.get(key)));
     }
     return v;
   }
