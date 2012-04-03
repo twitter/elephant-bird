@@ -36,9 +36,8 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
 
   @Override
   public void sinkConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
-    conf.setOutputFormat(
-      DeprecatedLzoThriftBlockOutputFormat.getOutputFormatClass(thriftClass, conf)
-    );
+    DeprecatedLzoThriftBlockOutputFormat.setClassConf(thriftClass, conf);
+    conf.setOutputFormat(DeprecatedLzoThriftBlockOutputFormat.class);
   }
 
   protected ThriftWritable<M> prepareBinaryWritable() {

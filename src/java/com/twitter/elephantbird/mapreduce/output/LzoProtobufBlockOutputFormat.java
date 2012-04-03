@@ -16,8 +16,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * Class for all blocked protocol buffer based output formats.  See
  * the ProtobufBlockWriter class for the on-disk format. <br><br>
  *
- * Do not use LzoProtobufBlockOutputFormat.class directly for setting
- * OutputFormat class for a job. Use getOutputFormatClass() or getInstance() instead.
+ * Do not forget to set Protobuf class using setClassConf().
  */
 
 public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFormat<M, ProtobufWritable<M>> {
@@ -35,16 +34,14 @@ public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFo
   }
 
   /**
-   * Returns {@link LzoProtobufB64LineOutputFormat} class.
    * Sets an internal configuration in jobConf so that remote Tasks
    * instantiate appropriate object for this generic class based on protoClass
    */
-  @SuppressWarnings("unchecked")
-  public static <M extends Message> Class<LzoProtobufBlockOutputFormat>
-  getOutputFormatClass(Class<M> protoClass, Configuration jobConf) {
-
-    Protobufs.setClassConf(jobConf, LzoProtobufBlockOutputFormat.class, protoClass);
-    return LzoProtobufBlockOutputFormat.class;
+  public static <M extends Message>
+  void setClassConf(Class<M> protoClass, Configuration jobConf) {
+    Protobufs.setClassConf(jobConf,
+                           LzoProtobufBlockOutputFormat.class,
+                           protoClass);
   }
 
   public static<M extends Message> LzoProtobufBlockOutputFormat<M> newInstance(TypeRef<M> typeRef) {

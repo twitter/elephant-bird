@@ -69,7 +69,7 @@ public class MultiInputFormat<M>
    * read on the remote tasks to initialize the input format correctly.
    */
   public static void setClassConf(Class<?> clazz, Configuration conf) {
-    HadoopUtils.setInputFormatClass(conf, CLASS_CONF_KEY, clazz);
+    HadoopUtils.setClassConf(conf, CLASS_CONF_KEY, clazz);
   }
 
   @SuppressWarnings("unchecked") // return type is runtime dependent

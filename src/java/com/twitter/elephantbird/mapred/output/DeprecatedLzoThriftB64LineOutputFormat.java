@@ -21,12 +21,13 @@ import java.io.IOException;
  */
 public class DeprecatedLzoThriftB64LineOutputFormat<M extends TBase<?, ?>>
     extends DeprecatedLzoOutputFormat<NullWritable, ThriftWritable<M>> {
-  @SuppressWarnings("unchecked")
-  public static <M extends TBase<?, ?>> Class<DeprecatedLzoThriftB64LineOutputFormat>
-     getOutputFormatClass(Class<M> thriftClass, Configuration jobConf) {
 
-    ThriftUtils.setClassConf(jobConf, DeprecatedLzoThriftB64LineOutputFormat.class, thriftClass);
-    return DeprecatedLzoThriftB64LineOutputFormat.class;
+  /**
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the output format correctly.
+   */
+  public static void setClassConf(Class<? extends TBase<?, ?>> thriftClass, Configuration conf) {
+    ThriftUtils.setClassConf(conf, DeprecatedLzoThriftB64LineOutputFormat.class, thriftClass);
   }
 
   @Override

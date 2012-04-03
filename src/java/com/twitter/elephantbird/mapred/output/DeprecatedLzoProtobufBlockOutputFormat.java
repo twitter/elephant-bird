@@ -1,7 +1,6 @@
 package com.twitter.elephantbird.mapred.output;
 
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockWriter;
-import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
 import com.twitter.elephantbird.util.Protobufs;
@@ -22,12 +21,13 @@ import java.io.IOException;
  */
 public class DeprecatedLzoProtobufBlockOutputFormat<M extends Message>
     extends DeprecatedLzoOutputFormat<NullWritable, ProtobufWritable<M>> {
-  @SuppressWarnings("unchecked")
-  public static <M extends Message> Class<DeprecatedLzoProtobufBlockOutputFormat>
-     getOutputFormatClass(Class<M> protoClass, Configuration jobConf) {
 
-    Protobufs.setClassConf(jobConf, DeprecatedLzoProtobufBlockOutputFormat.class, protoClass);
-    return DeprecatedLzoProtobufBlockOutputFormat.class;
+  /**
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the output format correctly.
+   */
+  public static void setClassConf(Class<? extends Message> protoClass, Configuration conf) {
+    Protobufs.setClassConf(conf, DeprecatedLzoProtobufBlockOutputFormat.class, protoClass);
   }
 
   @Override
