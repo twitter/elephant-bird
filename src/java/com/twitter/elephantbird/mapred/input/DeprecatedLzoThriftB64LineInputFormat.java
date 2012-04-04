@@ -23,28 +23,12 @@ public class DeprecatedLzoThriftB64LineInputFormat<M extends TBase<?, ?>>
     extends DeprecatedLzoInputFormat<LongWritable, ThriftWritable<M>> {
 
   /**
-   * Returns DeprecatedLzoThriftB64LineInputFormat class for setting up a job.
-   * Sets an internal configuration in jobConf so that Task instantiates
-   * appropriate object for this generic class based on thriftClass
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the input format correctly.
    */
-  //@SuppressWarnings("unchecked")
-  public static <M extends TBase<?, ?>> Class<DeprecatedLzoThriftB64LineInputFormat>
-     getInputFormatClass(Class<M> thriftClass, Configuration jobConf) {
-    return getInputFormatClass(
-        DeprecatedLzoThriftB64LineInputFormat.class, thriftClass, jobConf);
+  public static void setClassConf(Class<? extends TBase<?, ?>> thriftClass, Configuration conf) {
+    ThriftUtils.setClassConf(conf, DeprecatedLzoThriftB64LineInputFormat.class, thriftClass);
   }
-
-  /**
-   * Sets an internal configuration in jobConf so that Task instantiates
-   * appropriate object for this generic class based on thriftClass.
-   * Returns formatClass.
-   */
-  public static <T extends InputFormat, M extends TBase<?, ?>> Class<T> getInputFormatClass(
-      Class<T> formatClass, Class<M> thriftClass, Configuration jobConf) {
-    ThriftUtils.setClassConf(jobConf, formatClass, thriftClass);
-    return formatClass;
-  }
-
 
   /**
    * Return a DeprecatedLzoThriftB64LineRecordReader to handle the work.

@@ -62,9 +62,11 @@ public class ThriftMRExample {
 
     job.setInputFormatClass(TextInputFormat.class);
     if (conf.get("thrift.test.format", "B64Line").equals("Block")) {
-      job.setOutputFormatClass(LzoThriftBlockOutputFormat.getOutputFormatClass(Age.class, job.getConfiguration()));
+      LzoThriftBlockOutputFormat.setClassConf(Age.class, job.getConfiguration());
+      job.setOutputFormatClass(LzoThriftBlockOutputFormat.class);
     } else { // assume B64Line
-      job.setOutputFormatClass(LzoThriftB64LineOutputFormat.getOutputFormatClass(Age.class, job.getConfiguration()));
+      LzoThriftB64LineOutputFormat.setClassConf(Age.class, job.getConfiguration());
+      job.setOutputFormatClass(LzoThriftB64LineOutputFormat.class);
     }
 
     FileInputFormat.setInputPaths(job, new Path(args[0]));
