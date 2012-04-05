@@ -33,7 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileRecordReader;
-import com.twitter.elephantbird.pig.load.SequenceFileLoader;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 
 /**
@@ -64,16 +63,38 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
     this.valueSchema = valueSchema;
   }
 
-  protected void registerReadQuery(String writableConverterClassArgs, String valueSchema)
+  protected void registerReadQuery(String filename, String writableConverterArguments,
+      String valueSchema)
       throws IOException {
     pigServer.registerQuery(String.format("A = LOAD 'file:%s' USING %s('-c %s', '-c %s %s')%s;",
-        tempFilename, SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
-        writableConverterClass.getName(), writableConverterClassArgs, valueSchema == null
-            || valueSchema.isEmpty() ? "" : String.format(" AS (key: int, val: %s)", valueSchema)));
+        filename, SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
+        writableConverterClass.getName(), writableConverterArguments, valueSchema == null
+            || valueSchema.isEmpty() ? "" : String.format(" AS (key: int, value: %s)", valueSchema)));
+  }
+
+  protected void registerReadQuery(String writableConverterArguments,
+      String valueSchema) throws IOException {
+    registerReadQuery(tempFilename, writableConverterArguments, valueSchema);
+  }
+
+  protected void registerReadQuery(String filename) throws IOException {
+    registerReadQuery(filename, writableConverterArguments, valueSchema);
   }
 
   protected void registerReadQuery() throws IOException {
-    registerReadQuery(writableConverterArguments, valueSchema);
+    registerReadQuery(tempFilename, writableConverterArguments, valueSchema);
+  }
+
+  protected void registerWriteQuery(String filename, String writableConverterArguments)
+      throws IOException {
+    pigServer.registerQuery(String.format(
+        "STORE A INTO 'file:%s' USING %s('-c %s', '-c %s -t %s -- %s');", filename,
+        SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
+        writableConverterClass.getName(), writableClass.getName(), writableConverterArguments));
+  }
+
+  protected void registerWriteQuery(String filename) throws IOException {
+    registerWriteQuery(filename, writableConverterArguments);
   }
 
   @Before
@@ -135,27 +156,15 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
 
   @Test
   public void read() throws IOException {
-    pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s -- %s') AS (key: int, val: %s);",
-        tempFilename, SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
-        writableConverterClass.getName(), writableConverterArguments, valueSchema));
+    registerReadQuery();
     validate(pigServer.openIterator("A"));
   }
 
   @Test
   public void readWriteRead() throws IOException {
-    pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s' USING %s('-c %s', '-c %s -- %s') AS (key: int, val: %s);",
-        tempFilename, SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
-        writableConverterClass.getName(), writableConverterArguments, valueSchema));
-    pigServer.registerQuery(String.format(
-        "STORE A INTO 'file:%s-2' USING %s('-c %s', '-c %s -t %s -- %s');", tempFilename,
-        SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
-        writableConverterClass.getName(), writableClass.getName(), writableConverterArguments));
-    pigServer.registerQuery(String.format(
-        "A = LOAD 'file:%s-2' USING %s('-c %s', '-c %s -- %s') AS (key: int, val: %s);",
-        tempFilename, SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
-        writableConverterClass.getName(), writableConverterArguments, valueSchema));
+    registerReadQuery();
+    registerWriteQuery(tempFilename + "-2");
+    registerReadQuery(tempFilename + "-2");
     validate(pigServer.openIterator("A"));
   }
 

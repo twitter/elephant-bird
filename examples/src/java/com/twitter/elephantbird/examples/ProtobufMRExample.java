@@ -66,9 +66,11 @@ public class ProtobufMRExample {
 
     job.setInputFormatClass(TextInputFormat.class);
     if (conf.get("proto.test.format", "B64Line").equals("Block")) {
-      job.setOutputFormatClass(LzoProtobufBlockOutputFormat.getOutputFormatClass(Age.class, job.getConfiguration()));
+      LzoProtobufBlockOutputFormat.setClassConf(Age.class, job.getConfiguration());
+      job.setOutputFormatClass(LzoProtobufBlockOutputFormat.class);
     } else { // assume B64Line
-      job.setOutputFormatClass(LzoProtobufB64LineOutputFormat.getOutputFormatClass(Age.class, job.getConfiguration()));
+      LzoProtobufB64LineOutputFormat.setClassConf(Age.class, job.getConfiguration());
+      job.setOutputFormatClass(LzoProtobufB64LineOutputFormat.class);
     }
 
     FileInputFormat.setInputPaths(job, new Path(args[0]));

@@ -8,7 +8,6 @@ import org.apache.mahout.math.VectorWritable;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.twitter.elephantbird.pig.mahout.VectorWritableConverter;
 import com.twitter.elephantbird.pig.util.AbstractTestWritableConverter;
 
 /**
@@ -29,7 +28,7 @@ public class TestDenseVectorWritableConverter extends
 
   protected void testLoadSchema(String writableConverterClassArgs, String expectedSchema)
       throws IOException {
-    registerReadQuery(writableConverterClassArgs, null);
+    registerReadQuery(tempFilename, writableConverterClassArgs, null);
     Assert.assertEquals(String.format("{key: int,value: %s}", expectedSchema),
         String.valueOf(pigServer.dumpSchema("A")));
   }
@@ -87,5 +86,13 @@ public class TestDenseVectorWritableConverter extends
   public void testLoadConversionSchema() throws IOException {
     registerReadQuery("-- -sparse", null);
     validate(new String[] { "(3,{(0,1.0),(1,2.0),(2,3.0)})" }, pigServer.openIterator("A"));
+  }
+
+  @Test
+  public void testSparseToDense() throws IOException {
+    registerReadQuery("-- -sparse", null);
+    registerWriteQuery(tempFilename + "-2", "-- -dense");
+    registerReadQuery(tempFilename + "-2");
+    validate(pigServer.openIterator("A"));
   }
 }

@@ -16,8 +16,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * This is the class for all base64 encoded, line-oriented protocol buffer based output formats.
  * Data is written as one base64 encoded serialized protocol buffer per line.<br><br>
  *
- * Do not use LzoProtobufB64LineOutputFormat.class directly for setting
- * OutputFormat class for a job. Use getOutputFormatClass() or getInstance() instead.
+ * Do not forget to set Protobuf class using setClassConf().
  */
 
 public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutputFormat<M, ProtobufWritable<M>> {
@@ -34,16 +33,14 @@ public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutput
   }
 
   /**
-   * Returns {@link LzoProtobufBlockOutputFormat} class.
    * Sets an internal configuration in jobConf so that remote Tasks
    * instantiate appropriate object for this generic class based on protoClass
    */
-  @SuppressWarnings("unchecked")
-  public static <M extends Message> Class<LzoProtobufB64LineOutputFormat>
-  getOutputFormatClass(Class<M> protoClass, Configuration jobConf) {
-
-    Protobufs.setClassConf(jobConf, LzoProtobufB64LineOutputFormat.class, protoClass);
-    return LzoProtobufB64LineOutputFormat.class;
+  public static <M extends Message>
+  void setClassConf(Class<M> protoClass, Configuration jobConf) {
+    Protobufs.setClassConf(jobConf,
+                           LzoProtobufB64LineOutputFormat.class,
+                           protoClass);
   }
 
   @Override

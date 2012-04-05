@@ -60,7 +60,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
    */
   public static void setInputFormat(Class<?> realInputFormatClass, JobConf jobConf) {
     jobConf.setInputFormat(DeprecatedInputFormatWrapper.class);
-    HadoopUtils.setInputFormatClass(jobConf, CLASS_CONF_KEY, realInputFormatClass);
+    HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
   }
 
   @SuppressWarnings("unchecked")

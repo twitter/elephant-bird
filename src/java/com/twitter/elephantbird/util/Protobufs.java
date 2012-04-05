@@ -250,7 +250,7 @@ public class Protobufs {
 
   public static void setClassConf(Configuration jobConf, Class<?> genericClass,
       Class<? extends Message> protoClass) {
-    HadoopUtils.setInputFormatClass(jobConf,
+    HadoopUtils.setClassConf(jobConf,
            CLASS_CONF_PREFIX + genericClass.getName(),
            protoClass);
   }

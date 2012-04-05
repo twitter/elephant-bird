@@ -41,9 +41,8 @@ public class LzoProtobufScheme<M extends Message> extends
 
   @Override
   public void sinkConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
-    conf.setOutputFormat(
-      DeprecatedLzoProtobufBlockOutputFormat.getOutputFormatClass(protoClass, conf)
-    );
+    DeprecatedLzoProtobufBlockOutputFormat.setClassConf(protoClass, conf);
+    conf.setOutputFormat(DeprecatedLzoProtobufBlockOutputFormat.class);
   }
 
   @Override
