@@ -1,0 +1,62 @@
+package com.twitter.elephantbird.mapred.input;
+
+import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+import com.twitter.elephantbird.util.TypeRef;
+import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.hadoop.hive.ql.plan.PartitionDesc;
+import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapred.FileSplit;
+import org.apache.hadoop.mapred.InputSplit;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapred.Reporter;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+
+@SuppressWarnings("deprecation")
+public class HiveMultiInputFormat extends DeprecatedInputFormatWrapper<LongWritable, ThriftWritable> {
+
+  public HiveMultiInputFormat() {
+    super(new MultiInputFormat());
+  }
+
+  private void initialize(FileSplit split, JobConf job) {
+    if (realInputFormat == null) {
+      return;
+    }
+
+    Map<String, PartitionDesc> partitionDescMap =
+        Utilities.getMapRedWork(job).getPathToPartitionInfo();
+
+    if (!partitionDescMap.containsKey(split.getPath().getParent().toUri().toString())) {
+      throw new RuntimeException("Failed locating partition description for "
+          + split.getPath().toUri().toString());
+    }
+
+    Properties properties = partitionDescMap.get(split.getPath().getParent().toUri().toString())
+        .getTableDesc().getProperties();
+
+    String thriftClassName = properties.getProperty(Constants.SERIALIZATION_CLASS, null);
+    if (thriftClassName == null) {
+      throw new RuntimeException(
+          "Required property " + Constants.SERIALIZATION_CLASS + " is null.");
+    }
+
+    try {
+      Class thriftClass = job.getClassByName(thriftClassName);
+      realInputFormat = new MultiInputFormat(new TypeRef(thriftClass) {});
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException("Failed getting class for " + thriftClassName);
+    }
+  }
+
+  public RecordReader<LongWritable, ThriftWritable> getRecordReader(InputSplit split, JobConf job,
+      Reporter reporter) throws IOException {
+    initialize((FileSplit) split, job);
+    return super.getRecordReader(split, job, reporter);
+  }
+}

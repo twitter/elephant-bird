@@ -27,6 +27,8 @@
                 rev="${hadoop-core.version}" transitive="false"/>
     <dependency org="org.apache.hive" name="hive-serde"
                 rev="${hive-serde.version}" transitive="false"/>
+    <dependency org="org.apache.hive" name="hive-exec"
+                rev="${hive-serde.version}" transitive="false"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks"
                 rev="${maven-ant-tasks.version}" conf="test"/>
     <dependency org="org.apache.pig" name="pig" rev="${pig.version}" transitive="false"/>

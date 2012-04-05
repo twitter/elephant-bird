@@ -1,8 +1,6 @@
 package com.twitter.elephantbird.hive.serde;
 
-import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
-import com.twitter.elephantbird.util.Codecs;
-import org.apache.commons.codec.binary.Base64;
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.SerDe;
@@ -14,9 +12,11 @@ import org.apache.hadoop.io.Writable;
 
 import java.util.Properties;
 
+/**
+ * SerDe for working with {@link ThriftWritable} records.
+ * This pairs well with {@link com.twitter.elephantbird.mapred.input.HiveMultiInputFormat}.
+ */
 public class ThriftSerDe implements SerDe {
-  private static final Base64 base64 = Codecs.createStandardBase64();
-  private ThriftConverter converter;
   private ObjectInspector inspector;
 
   @Override
@@ -33,8 +33,6 @@ public class ThriftSerDe implements SerDe {
       throw new SerDeException("Failed getting class for " + thriftClassName);
     }
 
-    converter = ThriftConverter.newInstance(thriftClass);
-
     inspector = ObjectInspectorFactory.getReflectionObjectInspector(
         thriftClass, ObjectInspectorFactory.ObjectInspectorOptions.THRIFT);
   }
@@ -50,18 +48,16 @@ public class ThriftSerDe implements SerDe {
   }
 
   /**
-   * @param writable a base64 encoded serialized thrift object
+   * @param writable the {@link ThriftWritable} to deserialize
    * @return the actual thrift object
    * @throws SerDeException
    */
   @Override
   public Object deserialize(Writable writable) throws SerDeException {
-    try {
-      byte[] bytes = writable.toString().getBytes("UTF-8");
-      return converter.fromBytes(base64.decode(bytes));
-    } catch (Exception e) {
-      throw new SerDeException(e);
+    if (!(writable instanceof ThriftWritable)) {
+      throw new SerDeException("Not an instance of ThriftWritable: " + writable);
     }
+    return ((ThriftWritable) writable).get();
   }
 
   @Override
