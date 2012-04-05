@@ -20,6 +20,8 @@ import com.twitter.elephantbird.mapreduce.input.LzoJsonInputFormat;
  * does a check that the given input format is a descendant of
  * org.apache.hadoop.mapred.InputFormat, which any InputFormat-derived class
  * from the new API fails.
+ *
+ * TODO : should extend DeprecatedInputFormatWrapper
  */
 @SuppressWarnings("deprecation")
 public class DeprecatedLzoJsonInputFormat extends DeprecatedLzoInputFormat<LongWritable, MapWritable>{

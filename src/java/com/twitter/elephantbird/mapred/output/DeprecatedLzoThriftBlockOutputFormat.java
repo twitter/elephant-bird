@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.mapred.output;
 
-import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
+import com.twitter.elephantbird.mapreduce.io.ThriftBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
@@ -15,11 +15,10 @@ import org.apache.thrift.TBase;
 import java.io.IOException;
 
 /**
- * Base64 encode each thrift serialization string then lzo-compress and output as a line.
+ * Output format for lzo compressed thrift.
  *
- * @author Yifan Shi
  */
-public class DeprecatedLzoThriftB64LineOutputFormat<M extends TBase<?, ?>>
+public class DeprecatedLzoThriftBlockOutputFormat<M extends TBase<?, ?>>
     extends DeprecatedLzoOutputFormat<NullWritable, ThriftWritable<M>> {
 
   /**
@@ -27,7 +26,7 @@ public class DeprecatedLzoThriftB64LineOutputFormat<M extends TBase<?, ?>>
    * read on the remote tasks to initialize the output format correctly.
    */
   public static void setClassConf(Class<? extends TBase<?, ?>> thriftClass, Configuration conf) {
-    ThriftUtils.setClassConf(conf, DeprecatedLzoThriftB64LineOutputFormat.class, thriftClass);
+    ThriftUtils.setClassConf(conf, DeprecatedLzoThriftBlockOutputFormat.class, thriftClass);
   }
 
   @Override
@@ -35,8 +34,9 @@ public class DeprecatedLzoThriftB64LineOutputFormat<M extends TBase<?, ?>>
       FileSystem fileSystem, JobConf jobConf, String name, Progressable progressable)
       throws IOException {
 
-    TypeRef<M> typeRef = ThriftUtils.getTypeRef(jobConf, DeprecatedLzoThriftB64LineOutputFormat.class);
-    return new DeprecatedLzoThriftB64LineRecordWriter<M>(
-        new ThriftConverter<M>(typeRef), getOutputStream(jobConf));
+    TypeRef<M> typeRef = ThriftUtils.getTypeRef(jobConf, DeprecatedLzoThriftBlockOutputFormat.class);
+    return new DeprecatedLzoThriftBlockRecordWriter<M>(
+      new ThriftBlockWriter<M>(getOutputStream(jobConf), typeRef.getRawClass())
+    );
   }
 }

@@ -27,6 +27,8 @@ import java.util.List;
  * com.twitter.elephantbird.mapred.input.DeprecatedLzoTextInputFormat, not
  * com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat.  The classes attempt to be alike in
  * every other respect.
+ *
+ * TODO: should be removed. made obsolete by DeprecatedInputFormatWrapper
  */
 
 @SuppressWarnings("deprecation")

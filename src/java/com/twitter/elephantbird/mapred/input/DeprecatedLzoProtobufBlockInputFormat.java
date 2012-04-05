@@ -4,6 +4,8 @@ import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.TypeRef;
 import com.twitter.elephantbird.util.Protobufs;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -27,6 +29,8 @@ import java.io.IOException;
  * does a check that the given input format is a descendant of
  * org.apache.hadoop.mapred.InputFormat, which any InputFormat-derived class
  * from the new API fails.
+ *
+ * TODO : should extend DeprecatedInputFormatWrapper (or removed)
  */
 
 @SuppressWarnings("deprecation")
@@ -43,15 +47,11 @@ public class DeprecatedLzoProtobufBlockInputFormat<M extends Message, W extends 
   }
 
   /**
-   * Returns {@link DeprecatedLzoProtobufBlockInputFormat} class.
-   * Sets an internal configuration in jobConf so that remote Tasks
-   * instantiate appropriate object based on protoClass.
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the input format correctly.
    */
-  @SuppressWarnings("unchecked")
-  public static <M extends Message> Class<DeprecatedLzoProtobufBlockInputFormat>
-     getInputFormatClass(Class<M> protoClass, JobConf jobConf) {
-    Protobufs.setClassConf(jobConf, DeprecatedLzoProtobufBlockInputFormat.class, protoClass);
-    return DeprecatedLzoProtobufBlockInputFormat.class;
+  public static void setClassConf(Class<? extends Message> protoClass, Configuration conf) {
+    Protobufs.setClassConf(conf, DeprecatedLzoProtobufBlockInputFormat.class, protoClass);
   }
 
   @Override

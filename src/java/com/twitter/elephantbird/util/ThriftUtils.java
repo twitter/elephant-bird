@@ -25,7 +25,7 @@ public class ThriftUtils {
   public static void setClassConf(Configuration jobConf, Class<?> genericClass,
                                   Class<? extends TBase<?, ?>> thriftClass) {
     String configKey = CLASS_CONF_PREFIX + genericClass.getName();
-    HadoopUtils.setInputFormatClass(jobConf, configKey, thriftClass);
+    HadoopUtils.setClassConf(jobConf, configKey, thriftClass);
   }
 
   /**

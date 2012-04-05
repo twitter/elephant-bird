@@ -21,6 +21,8 @@ import java.io.IOException;
  * prescribed thrift object, will skip empty line and undecodable line.
  *
  * @author Yifan SHi
+ *
+ * TODO : should be removed. made obsolete by DeprecatedInputFormatWrapper
  */
 @SuppressWarnings("deprecation")
 public class DeprecatedLzoThriftB64LineRecordReader<M extends TBase<?, ?>>

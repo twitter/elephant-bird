@@ -16,11 +16,11 @@ public class HadoopUtils {
 
   /**
    * MapReduce counters are available only with {@link TaskInputOutputContext},
-   * but most interfaces use super classes, though the actual obejct is a 
+   * but most interfaces use super classes, though the actual obejct is a
    * subclass (e.g. Mapper.Context). <br> <br>
-   * 
+   *
    * This utility method checks the type and returns the appropriate counter.
-   * In the rare (may be unexpected) case where ctx is not a 
+   * In the rare (may be unexpected) case where ctx is not a
    * TaskInputOutputContext, a dummy counter is returned after printing
    * a warning.
    */
@@ -35,13 +35,23 @@ public class HadoopUtils {
   }
 
   /**
+   * @Deprecated use {@link #setClassConf(Configuration, String, Class)}
+   */
+  @Deprecated
+  public static void setInputFormatClass(Configuration  conf,
+                                         String         configKey,
+                                         Class<?>       clazz) {
+    setClassConf(conf, configKey, clazz);
+  }
+
+  /**
    * A helper to set configuration to class name.
    * Throws a RuntimeExcpetion if the
    * configuration is already set to a different class name.
    */
-  public static void setInputFormatClass(Configuration  conf,
-                                         String         configKey,
-                                         Class<?>       clazz) {
+  public static void setClassConf(Configuration  conf,
+                                  String         configKey,
+                                  Class<?>       clazz) {
     String existingClass = conf.get(configKey);
     String className = clazz.getName();
 

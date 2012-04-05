@@ -49,7 +49,20 @@ public class TestSequentialAccessSparseVectorWritableConverter extends
 
   @Test(expected = Exception.class)
   public void testLoadInvalidSchema() throws IOException {
-    registerReadQuery("-- -sparse -cardinality 2", null);
+    registerReadQuery(tempFilename, "-- -sparse -cardinality 2", null);
+    validate(pigServer.openIterator("A"));
+  }
+
+  @Test
+  public void testDenseToSparse() throws IOException {
+    registerReadQuery("-- -dense -cardinality 3", null);
+    registerWriteQuery(tempFilename + "-2", "-- -sparse");
+    registerReadQuery(tempFilename + "-2");
+    pigServer.registerQuery("A = FOREACH A GENERATE key, FLATTEN(value);");
+    pigServer.registerQuery(String.format("A = FOREACH A {\n" +
+        "entries_sorted = ORDER entries BY index ASC;\n" +
+        "GENERATE key, TOTUPLE(cardinality, entries_sorted) AS value;\n" +
+        "}"));
     validate(pigServer.openIterator("A"));
   }
 }
