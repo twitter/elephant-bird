@@ -1,7 +1,7 @@
 package com.twitter.elephantbird.mapred.input;
 
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
-import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.TypeRef;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.plan.PartitionDesc;
@@ -17,18 +17,20 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * Hive-specific wrapper around {@link MultiInputFormat}. This is necessary to set the
+ * {@link TypeRef} because Hive does not support InputFormat constructor arguments.
+ * This pairs well with {@link com.twitter.elephantbird.hive.serde.ThriftSerDe}.
+ */
 @SuppressWarnings("deprecation")
-public class HiveMultiInputFormat extends DeprecatedInputFormatWrapper<LongWritable, ThriftWritable> {
+public class HiveMultiInputFormat
+    extends DeprecatedInputFormatWrapper<LongWritable, BinaryWritable> {
 
   public HiveMultiInputFormat() {
     super(new MultiInputFormat());
   }
 
   private void initialize(FileSplit split, JobConf job) {
-    if (realInputFormat == null) {
-      return;
-    }
-
     Map<String, PartitionDesc> partitionDescMap =
         Utilities.getMapRedWork(job).getPathToPartitionInfo();
 
@@ -54,7 +56,7 @@ public class HiveMultiInputFormat extends DeprecatedInputFormatWrapper<LongWrita
     }
   }
 
-  public RecordReader<LongWritable, ThriftWritable> getRecordReader(InputSplit split, JobConf job,
+  public RecordReader<LongWritable, BinaryWritable> getRecordReader(InputSplit split, JobConf job,
       Reporter reporter) throws IOException {
     initialize((FileSplit) split, job);
     return super.getRecordReader(split, job, reporter);
