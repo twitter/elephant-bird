@@ -10,7 +10,6 @@ import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
@@ -50,14 +49,11 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
   }
 
   /**
-   * In addition to setting InputFormat class to {@link RCFileProtobufInputFormat},
-   * sets an internal configuration in jobConf so that remote tasks
-   * instantiate appropriate object for the protobuf class.
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the input format correctly.
    */
-  public static <M extends Message> void
-      setInputFormatClass(Class<M> protoClass, Job job) {
-    Protobufs.setClassConf(job.getConfiguration(), RCFileProtobufInputFormat.class, protoClass);
-    job.setInputFormatClass(RCFileProtobufInputFormat.class);
+  public static void setClassConf(Class<? extends Message> protoClass, Configuration conf) {
+    Protobufs.setClassConf(conf, RCFileProtobufInputFormat.class, protoClass);
   }
 
   public class ProtobufReader extends HiveRCRecordReader {

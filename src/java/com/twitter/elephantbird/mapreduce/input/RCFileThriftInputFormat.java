@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
@@ -49,14 +49,11 @@ public class RCFileThriftInputFormat extends HiveRCInputFormat {
   }
 
   /**
-   * In addition to setting InputFormat class to {@link RCFileThriftInputFormat},
-   * sets an internal configuration in jobConf so that remote tasks
-   * instantiate appropriate object for the correct Thrift class.
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the input format correctly.
    */
-  public static <T extends TBase<?, ?>> void
-      setInputFormatClass(Class<T> thriftClass, Job job) {
-    ThriftUtils.setClassConf(job.getConfiguration(), RCFileThriftInputFormat.class, thriftClass);
-    job.setInputFormatClass(RCFileThriftInputFormat.class);
+  public static void setClassConf(Class<? extends TBase<?, ?> > thriftClass, Configuration conf) {
+    ThriftUtils.setClassConf(conf, RCFileThriftInputFormat.class, thriftClass);
   }
 
 

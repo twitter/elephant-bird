@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
@@ -17,6 +18,7 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
+import com.twitter.elephantbird.mapreduce.input.RCFileProtobufInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -117,14 +119,11 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
   }
 
   /**
-   * In addition to setting OutputFormat class to {@link RCFileProtobufOutputFormat},
-   * sets an internal configuration in jobConf so that remote tasks
-   * instantiate appropriate object for the protobuf class.
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the output format correctly.
    */
-  public static <M extends Message> void setOutputFormatClass(Class<M> protoClass, Job job) {
-
-    Protobufs.setClassConf(job.getConfiguration(), RCFileProtobufOutputFormat.class, protoClass);
-    job.setOutputFormatClass(RCFileProtobufOutputFormat.class);
+  public static void setClassConf(Class<? extends Message> protoClass, Configuration conf) {
+    Protobufs.setClassConf(conf, RCFileProtobufOutputFormat.class, protoClass);
   }
 
   @Override

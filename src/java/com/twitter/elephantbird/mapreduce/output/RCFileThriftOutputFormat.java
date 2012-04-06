@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
@@ -17,6 +18,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TIOStreamTransport;
 
 import com.twitter.data.proto.Misc.ColumnarMetadata;
+import com.twitter.elephantbird.mapreduce.input.RCFileThriftInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
@@ -120,14 +122,11 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
   }
 
   /**
-   * In addition to setting OutputFormat class to {@link RCFileThriftOutputFormat},
-   * sets an internal configuration in jobConf so that remote tasks
-   * instantiate appropriate object for the correct Thrift class.
+   * Stores supplied class name in configuration. This configuration is
+   * read on the remote tasks to initialize the output format correctly.
    */
-  public static <T extends TBase<?, ?>> void setOutputFormatClass(Class<T> thriftClass, Job job) {
-
-    ThriftUtils.setClassConf(job.getConfiguration(), RCFileThriftOutputFormat.class, thriftClass);
-    job.setOutputFormatClass(RCFileThriftOutputFormat.class);
+  public static void setClassConf(Class<? extends TBase<?, ?> > thriftClass, Configuration conf) {
+    ThriftUtils.setClassConf(conf, RCFileThriftOutputFormat.class, thriftClass);
   }
 
   @Override
