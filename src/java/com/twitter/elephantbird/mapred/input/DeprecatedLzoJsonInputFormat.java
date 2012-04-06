@@ -6,7 +6,7 @@ import org.apache.hadoop.io.MapWritable;
 import com.twitter.elephantbird.mapreduce.input.LzoJsonInputFormat;
 
 /**
- * This mapred version of {@link LzoJsonInputFormat}.
+ * mapred version of {@link LzoJsonInputFormat}.
  */
 public class DeprecatedLzoJsonInputFormat extends DeprecatedInputFormatWrapper<LongWritable, MapWritable>{
   public DeprecatedLzoJsonInputFormat() {
