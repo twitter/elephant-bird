@@ -83,6 +83,8 @@ public class TestJsonLoader {
 
     // extract hashtags from it
     PigServer pigServer = UnitTestUtil.makePigServer();
+    // enable nested load
+    pigServer.getPigContext().getProperties().setProperty(JsonLoader.NESTED_ENABLED_KEY, "true");
     logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
         + "' using com.twitter.elephantbird.pig.load.JsonLoader() as (json: map[]);");
     logAndRegisterQuery(pigServer, "a = foreach data generate json#'entities'#'hashtags' as h;");
@@ -114,8 +116,6 @@ public class TestJsonLoader {
 
     // extract hashtags from it
     PigServer pigServer = UnitTestUtil.makePigServer();
-    // disable nested load
-    pigServer.getPigContext().getProperties().setProperty("jsonLoader.nestedLoad.disabled", "true");
     logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
         + "' using com.twitter.elephantbird.pig.load.JsonLoader() as (json: map[]);");
     logAndRegisterQuery(pigServer, "a = foreach data generate json#'a' as h;");
@@ -136,6 +136,7 @@ public class TestJsonLoader {
     
     String json = "{\"a\":{\"b\":{\"c\":0}, \"d\":{\"e\":0}}}";
     JsonLoader jsonLoader = new JsonLoader(TextInputFormat.class.getName(),"a,b,c");
+    jsonLoader.setNestedLoadEnabled(true);
     Tuple result = jsonLoader.parseStringToTuple(json);
     Map<String, Object> m = (Map<String, Object>)result.get(0);
     Assert.assertTrue(m.containsKey("a"));

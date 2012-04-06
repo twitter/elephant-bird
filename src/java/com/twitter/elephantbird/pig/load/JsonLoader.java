@@ -33,6 +33,8 @@ public class JsonLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(JsonLoader.class);
   private static final TupleFactory tupleFactory = TupleFactory.getInstance();
   private static final BagFactory bagFactory = DefaultBagFactory.getInstance();
+  
+  public static final String NESTED_ENABLED_KEY = "elephantbird.jsonloader.nested_enabled";
 
   private final JSONParser jsonParser = new JSONParser();
 
@@ -44,7 +46,7 @@ public class JsonLoader extends LzoBaseLoadFunc {
   }
 
   private String inputFormatClassName;
-  private boolean isNestedLoadDisabled = false;
+  private boolean isNestedLoadEnabled = false;
   private Set<String> fields = null;
 
   public JsonLoader() {
@@ -71,8 +73,8 @@ public class JsonLoader extends LzoBaseLoadFunc {
       return null;
     }
     // nested load can be disabled through a pig property
-    if ("true".equals(jobConf.get("jsonLoader.nestedLoad.disabled")))
-      isNestedLoadDisabled = true;
+    if ("true".equals(jobConf.get(NESTED_ENABLED_KEY)))
+      isNestedLoadEnabled = true;
     try {
       while (reader.nextKeyValue()) {
         Text value = (Text) reader.getCurrentValue();
@@ -102,6 +104,15 @@ public class JsonLoader extends LzoBaseLoadFunc {
     } catch (IllegalAccessException e) {
       throw new IOException("Failed creating input format " + inputFormatClassName, e);
     }
+  }
+
+  /**
+   * Enables/disables loading of nested JSON structures.
+   * When enabled, JSON objects are loaded as nested Maps 
+   * and JSON arrays are loaded as Bags.
+   */
+  public void setNestedLoadEnabled(boolean isNestedLoadEnabled) {
+    this.isNestedLoadEnabled = isNestedLoadEnabled;
   }
 
   protected Tuple parseStringToTuple(String line) {
@@ -134,9 +145,9 @@ public class JsonLoader extends LzoBaseLoadFunc {
 
   private Object wrap(Object value) {
     
-    if (!isNestedLoadDisabled && value instanceof JSONObject) {
+    if (isNestedLoadEnabled && value instanceof JSONObject) {
       return walkJson((JSONObject) value);
-    }  else if (!isNestedLoadDisabled && value instanceof JSONArray) {
+    }  else if (isNestedLoadEnabled && value instanceof JSONArray) {
       
       JSONArray a = (JSONArray) value;
       DataBag mapValue = bagFactory.newDefaultBag();
