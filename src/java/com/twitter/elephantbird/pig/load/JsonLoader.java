@@ -1,6 +1,12 @@
 package com.twitter.elephantbird.pig.load;
 
 import com.google.common.collect.Maps;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -28,13 +34,26 @@ import java.util.Set;
 /**
  * Decodes each line as JSON passes the resulting map of values
  * to Pig as a single-element tuple.
+ * 
+ * <p>This Loader supports loading of nested JSON structures, but this feature
+ * is disabled by default. There are two ways to enable it:<ul>
+ * <li>setting the -nestedLoadEnabled option in the 
+ * {@link JsonLoader#JsonLoader(String, String)} constructor
+ * <li>setting the <code>elephantbird.jsonloader.nestedLoadEnabled</code>
+ * property to true. This can be done with the following pig command:
+ * <pre>grunt> set elephantbird.jsonloader.nestedLoadEnabled 'true'</pre>
+ * </ul>
  */
 public class JsonLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(JsonLoader.class);
   private static final TupleFactory tupleFactory = TupleFactory.getInstance();
   private static final BagFactory bagFactory = DefaultBagFactory.getInstance();
   
-  public static final String NESTED_ENABLED_KEY = "elephantbird.jsonloader.nested_enabled";
+  public static final String NESTED_ENABLED_KEY = "elephantbird.jsonloader.nestedLoadEnabled";
+  
+  private final static Options validOptions_ = new Options();
+  private final static CommandLineParser parser_ = new GnuParser();
+  private final CommandLine configuredOptions_;
 
   private final JSONParser jsonParser = new JSONParser();
 
@@ -48,14 +67,52 @@ public class JsonLoader extends LzoBaseLoadFunc {
   private String inputFormatClassName;
   private boolean isNestedLoadEnabled = false;
   private Set<String> fields = null;
+  
+  private static void populateValidOptions() {
+    validOptions_.addOption("nestedLoadEnabled", false, "Enables loading of " +
+        "nested JSON structures");
+    validOptions_.addOption("fieldsSpec", true, "Fields specification");
+  }
 
   public JsonLoader() {
     // defaults to no fields specification
-    this(TextInputFormat.class.getName(), null);
+    this(TextInputFormat.class.getName(), "");
   }
 
-  public JsonLoader(String inputFormatClassName, String fieldsSpec) {
+  /**
+   * Constructor. Construct a JsonLoader LoadFunc to load. 
+   * @param inputFormatClassName the inputFormat class name
+   * 
+   * @param optString Loader options. Available options:<ul>
+   * <li>-nestedLoadEnabled==(true|false) Enables loading of nested JSON
+   * structures. When enabled, JSON objects are loaded as nested Maps 
+   * and JSON arrays are loaded as Bags.
+   * <li>-fieldsSpec=fields
+   *        Fields specification, a string delimited by commas representing
+   *        a list of JSON fields.
+   *        If specified, only fields specified by this list will be loaded,
+   *        otherwise, all fields are loaded. To retrieve the value of a
+   *        nested field in the JSON structure, specify all fields to arrive
+   *        to that object. E.g., to retrieve the value of the object "baz"
+   *        in the structure <code>{"foo":{"bar":{"baz":"x"}}</code>, specify
+   *        all <code>"foo,bar,baz"</code> in the fields specification.
+   * </ul>
+   */
+  public JsonLoader(String inputFormatClassName, String optString) {
     this.inputFormatClassName = inputFormatClassName;
+    populateValidOptions();
+    String[] optsArr = optString.split(" ");
+    
+    try {
+      configuredOptions_ = parser_.parse(validOptions_, optsArr);
+    } catch (org.apache.commons.cli.ParseException e) {
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.printHelp( "[-nestedLoadEnabled] [-fieldsSpec]", validOptions_ );
+        throw new RuntimeException(e);
+    }
+    isNestedLoadEnabled = configuredOptions_.hasOption("nestedLoadEnabled");
+    
+    String fieldsSpec = configuredOptions_.getOptionValue("fieldsSpec");
     if (fieldsSpec != null && fieldsSpec.length() > 0) {
       fields = new HashSet<String>();
       for(String s: fieldsSpec.split(",")) {
@@ -104,15 +161,6 @@ public class JsonLoader extends LzoBaseLoadFunc {
     } catch (IllegalAccessException e) {
       throw new IOException("Failed creating input format " + inputFormatClassName, e);
     }
-  }
-
-  /**
-   * Enables/disables loading of nested JSON structures.
-   * When enabled, JSON objects are loaded as nested Maps 
-   * and JSON arrays are loaded as Bags.
-   */
-  public void setNestedLoadEnabled(boolean isNestedLoadEnabled) {
-    this.isNestedLoadEnabled = isNestedLoadEnabled;
   }
 
   protected Tuple parseStringToTuple(String line) {

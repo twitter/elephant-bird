@@ -135,8 +135,7 @@ public class TestJsonLoader {
   public void tesFieldsSpec() throws IOException {
     
     String json = "{\"a\":{\"b\":{\"c\":0}, \"d\":{\"e\":0}}}";
-    JsonLoader jsonLoader = new JsonLoader(TextInputFormat.class.getName(),"a,b,c");
-    jsonLoader.setNestedLoadEnabled(true);
+    JsonLoader jsonLoader = new JsonLoader(TextInputFormat.class.getName(),"-fieldsSpec=a,b,c -nestedLoadEnabled");
     Tuple result = jsonLoader.parseStringToTuple(json);
     Map<String, Object> m = (Map<String, Object>)result.get(0);
     Assert.assertTrue(m.containsKey("a"));
