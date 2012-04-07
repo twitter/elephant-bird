@@ -82,13 +82,13 @@ public class TestJsonLoader {
         "{" +
         "  \"entities\": {" +
         "    \"hashtags\": [" +
-    		"      {\"indices\": [0,0], \"text\": \"test1\"}," +
-    		"      {\"indices\": [0,0], \"text\": \"test2\"}" +
-    		"    ]," +
-    		"    \"user_mentions\": []," +
-    		"    \"urls\": []" +
-    		"  }" +
-    		"}");
+        "      {\"indices\": [0,0], \"text\": \"test1\"}," +
+        "      {\"indices\": [0,0], \"text\": \"test2\"}" +
+        "    ]," +
+        "    \"user_mentions\": []," +
+        "    \"urls\": []" +
+        "  }" +
+        "}");
     writer.close();
 
     // extract hashtags from it
@@ -120,7 +120,17 @@ public class TestJsonLoader {
     tempFile.deleteOnExit();
 
     FileWriter writer = new FileWriter(tempFile);
-    String json = "{\"a\":{\"b\":{\"c\":0}, \"d\":{\"e\":0}}}";
+    String json = 
+        "{" +
+        "  \"a\": {" +
+        "    \"b\": {" +
+        "      \"c\":0" +
+        "    }," +
+        "    \"d\": {" +
+        "      \"e\":0" +
+        "    }" +
+        "  }" +
+        "}";
     writer.write(json);
     writer.close();
 
@@ -142,15 +152,26 @@ public class TestJsonLoader {
   }
   
   @Test
-  public void tesFieldsSpec() throws IOException {
+  public void testFieldsSpec() throws IOException {
     
-    String json = "{\"a\":{\"b\":{\"c\":0}, \"d\":{\"e\":0}}}";
+    String json = 
+        "{" +
+        "  \"a\": {" +
+        "    \"b\": {" +
+        "      \"c\":0" +
+        "    }," +
+        "    \"d\": {" +
+        "      \"e\":0" +
+        "    }" +
+        "  }" +
+        "}";
     JsonLoader jsonLoader = new JsonLoader(TextInputFormat.class.getName(),"-fieldsSpec=a,b,c -nestedLoadEnabled");
     Tuple result = jsonLoader.parseStringToTuple(json);
     Map<String, Object> m = (Map<String, Object>)result.get(0);
     Assert.assertTrue(m.containsKey("a"));
     m = (Map<String, Object>)m.get("a");
     Assert.assertTrue(m.containsKey("b"));
+    Assert.assertTrue(((Map<String, Object>)m.get("b")).containsKey("c"));
     Assert.assertTrue(!m.containsKey("d"));
   }
 

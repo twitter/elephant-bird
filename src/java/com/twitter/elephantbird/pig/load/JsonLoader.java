@@ -129,7 +129,7 @@ public class JsonLoader extends LzoBaseLoadFunc {
     if (reader == null) {
       return null;
     }
-    // nested load can be disabled through a pig property
+    // nested load can be enabled through a pig property
     if ("true".equals(jobConf.get(NESTED_ENABLED_KEY)))
       isNestedLoadEnabled = true;
     try {
