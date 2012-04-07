@@ -78,7 +78,17 @@ public class TestJsonLoader {
 
     FileWriter writer = new FileWriter(tempFile);
     // json structure as in Twitter Streaming
-    writer.write("{\"entities\":{\"hashtags\":[{\"indices\":[0,0],\"text\":\"test1\"},{\"indices\":[0,0],\"text\":\"test2\"}],\"user_mentions\":[],\"urls\":[]}}");
+    writer.write(
+        "{" +
+        "  \"entities\": {" +
+        "    \"hashtags\": [" +
+    		"      {\"indices\": [0,0], \"text\": \"test1\"}," +
+    		"      {\"indices\": [0,0], \"text\": \"test2\"}" +
+    		"    ]," +
+    		"    \"user_mentions\": []," +
+    		"    \"urls\": []" +
+    		"  }" +
+    		"}");
     writer.close();
 
     // extract hashtags from it
