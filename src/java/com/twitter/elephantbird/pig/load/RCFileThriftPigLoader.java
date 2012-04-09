@@ -14,6 +14,9 @@ import com.twitter.elephantbird.mapreduce.input.RCFileThriftInputFormat;
 import com.twitter.elephantbird.pig.util.RCFileUtil;
 import com.twitter.elephantbird.util.TypeRef;
 
+/**
+ * Pig loader for Thrift object stored in RCFiles.
+ */
 public class RCFileThriftPigLoader extends ThriftPigLoader<TBase<?,?>> {
 
   private RCFileThriftInputFormat.ThriftReader thriftReader;

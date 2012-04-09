@@ -9,7 +9,6 @@ import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.thrift.TBase;
@@ -18,7 +17,6 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TIOStreamTransport;
 
 import com.twitter.data.proto.Misc.ColumnarMetadata;
-import com.twitter.elephantbird.mapreduce.input.RCFileThriftInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
@@ -30,9 +28,16 @@ import com.twitter.elephantbird.util.TypeRef;
  *
  * Each of the top level fields is stored in a separate column.
  * Thrift field ids are stored in RCFile metadata.
- * TODO: handle "unknown fields"
  */
 public class RCFileThriftOutputFormat extends RCFileOutputFormat {
+
+  /*
+   * TODO: handle unknown fields.
+   * Thrift objects do not carry "unknown fields" (as described in javadoc
+   * for {@link RCFileProtobufOutputFormat}) and as a result the last column
+   * is empty. In order to handle such fields, the output format should
+   * accept raw serialized bytes and deserialize it it self.
+   */
 
   // typeRef is only required for setting metadata for the RCFile
   private TypeRef<? extends TBase<?, ?>> typeRef;

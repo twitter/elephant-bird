@@ -14,8 +14,8 @@ import com.twitter.elephantbird.util.TypeRef;
 
 /**
  * StoreFunc for storing Thrift objects in RCFiles. <p>
- * Each of the top level fields is stored in a separate column.
- * The thrift field ids stored in metadata in RCFiles.
+ *
+ * @see RCFileThriftOutputFormat
  */
 public class RCFileThriftPigStorage extends BaseStoreFunc {
   // add stats?

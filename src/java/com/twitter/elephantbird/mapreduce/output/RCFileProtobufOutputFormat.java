@@ -9,7 +9,6 @@ import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -18,7 +17,6 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
-import com.twitter.elephantbird.mapreduce.input.RCFileProtobufInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -27,8 +25,13 @@ import com.twitter.elephantbird.util.TypeRef;
  * OutputFormat for storing protobufs in RCFile.<p>
  *
  * Each of the top level fields is stored in a separate column.
- * An extra column at the end is added for "unknown fields" in the protobuf.
- * The protobuf field numbers are stored in RCFile metadata.
+ * The protobuf field numbers are stored in RCFile metadata.<p>
+ *
+ * A protobuf message can contain <a href="https://developers.google.com/protocol-buffers/docs/proto#updating">
+ * "unknown fields"</a>. These fields are preserved and stored
+ * in the last column. e.g. if protobuf A with 4 fields (a, b, c, d) is
+ * serialized and when it is deserialized A has only 3 fields (a, c, d),
+ * then 'b' is carried over as an unknown field.
  */
 public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
 
