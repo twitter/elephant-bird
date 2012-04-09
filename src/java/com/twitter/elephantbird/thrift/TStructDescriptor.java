@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import org.apache.thrift.TBase;
 import org.apache.thrift.TEnum;
+import org.apache.thrift.TException;
 import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.TUnion;
 import org.apache.thrift.meta_data.EnumMetaData;
@@ -19,6 +20,7 @@ import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TType;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.twitter.elephantbird.util.ThriftUtils;
 
@@ -47,6 +49,13 @@ public class TStructDescriptor {
     return tClass;
   }
 
+  public TBase<?, ?> newThriftObject() throws TException {
+    try {
+      return tClass.newInstance();
+    } catch (Exception e) { //not excpected
+      throw new TException(e);
+    }
+  }
   /**
    * The list of fields returned is immutable.
    */
@@ -124,11 +133,11 @@ public class TStructDescriptor {
    * Currently used for converting Tuple to a Thrift object.
    */
   static private Map<String, TEnum> extractEnumMap(Class<? extends TEnum> enumClass) {
-    Map<String, TEnum> map = Maps.newHashMapWithExpectedSize(enumClass.getEnumConstants().length);
+    ImmutableMap.Builder<String, TEnum> builder = ImmutableMap.builder();
     for(TEnum e : enumClass.getEnumConstants()) {
-      map.put(e.toString(), e);
+      builder.put(e.toString(), e);
     }
-    return map;
+    return builder.build();
   }
 
   /**
@@ -147,6 +156,7 @@ public class TStructDescriptor {
     private final Field mapKeyField;      // maps
     private final Field mapValueField;    // maps
     private final Map<String, TEnum> enumMap; // enums
+    private final Map<Integer, TEnum> enumIdMap; // enums
     private final TStructDescriptor tStructDescriptor; // Structs
     private final boolean isBuffer_;  // strings
 
@@ -190,8 +200,15 @@ public class TStructDescriptor {
 
       if (!simpleField && field instanceof EnumMetaData) {
         enumMap = extractEnumMap(((EnumMetaData)field).enumClass);
+
+        ImmutableMap.Builder<Integer, TEnum> builder = ImmutableMap.builder();
+        for(TEnum e : enumMap.values()) {
+          builder.put(e.getValue(), e);
+        }
+        enumIdMap = builder.build();
       } else {
         enumMap = null;
+        enumIdMap = null;
       }
 
       if (field.isStruct()) {
@@ -280,6 +297,10 @@ public class TStructDescriptor {
 
     public TEnum getEnumValueOf(String name) {
       return enumMap.get(name);
+    }
+
+    public TEnum getEnumValueOf(int id) {
+      return enumIdMap.get(id);
     }
 
     public String getName() {
