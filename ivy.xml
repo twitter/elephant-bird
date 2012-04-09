@@ -25,13 +25,15 @@
     <dependency org="org.antlr" name="antlr" rev="${antlr.version}" conf="test"/>
     <dependency org="org.apache.hadoop" name="hadoop-core"
                 rev="${hadoop-core.version}" transitive="false"/>
-    <dependency org="org.apache.hive" name="hive-serde"
-                rev="${hive-serde.version}" transitive="false"/>
+    <dependency org="org.mortbay.jetty" name="jsp-api-2.1" rev="6.1.14" transitive="false"/>
     <dependency org="org.apache.hive" name="hive-exec"
-                rev="${hive-serde.version}" transitive="false"/>
+                rev="${hive.version}" transitive="false"/>
+    <dependency org="org.apache.hive" name="hive-serde"
+                rev="${hive.version}" transitive="false"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks"
                 rev="${maven-ant-tasks.version}" conf="test"/>
     <dependency org="org.apache.pig" name="pig" rev="${pig.version}" transitive="false"/>
+    <dependency org="org.apache.pig" name="piggybank" rev="${pig.version}" transitive="false"/>
     <dependency org="org.apache.thrift" name="libthrift" rev="${libthrift.version}"/>
     <dependency org="org.apache.thrift" name="thrift-test"
                 rev="${thrift-test.version}" conf="test"/>
