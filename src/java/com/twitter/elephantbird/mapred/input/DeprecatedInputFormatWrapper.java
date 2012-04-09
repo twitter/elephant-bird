@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
+import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
@@ -101,7 +102,17 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       InputSplit[] resultSplits = new InputSplit[splits.size()];
       int i = 0;
       for (org.apache.hadoop.mapreduce.InputSplit split : splits) {
-        resultSplits[i++] = new InputSplitWrapper(split);
+        if (split.getClass() == org.apache.hadoop.mapreduce.lib.input.FileSplit.class) {
+          org.apache.hadoop.mapreduce.lib.input.FileSplit mapreduceFileSplit =
+              ((org.apache.hadoop.mapreduce.lib.input.FileSplit)split);
+          resultSplits[i++] = new FileSplit(
+              mapreduceFileSplit.getPath(),
+              mapreduceFileSplit.getStart(),
+              mapreduceFileSplit.getLength(),
+              mapreduceFileSplit.getLocations());
+        } else {
+          resultSplits[i++] = new InputSplitWrapper(split);
+        }
       }
 
       return resultSplits;
@@ -131,8 +142,16 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
       splitLen = oldSplit.getLength();
 
-      org.apache.hadoop.mapreduce.InputSplit split =
-        ((InputSplitWrapper)oldSplit).realSplit;
+      org.apache.hadoop.mapreduce.InputSplit split;
+      if (oldSplit.getClass() == FileSplit.class) {
+        split = new org.apache.hadoop.mapreduce.lib.input.FileSplit(
+            ((FileSplit)oldSplit).getPath(),
+            ((FileSplit)oldSplit).getStart(),
+            ((FileSplit)oldSplit).getLength(),
+            oldSplit.getLocations());
+      } else {
+        split = ((InputSplitWrapper)oldSplit).realSplit;
+      }
 
       // create a TaskInputOutputContext
       @SuppressWarnings("unchecked")
