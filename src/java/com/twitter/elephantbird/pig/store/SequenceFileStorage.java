@@ -181,15 +181,10 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     Preconditions.checkNotNull(schema, "Schema is null");
     ResourceFieldSchema[] fields = schema.getFields();
     Preconditions.checkNotNull(fields, "Schema fields are undefined");
-    checkFieldSchema(fields, 0, keyConverter);
-    checkFieldSchema(fields, 1, valueConverter);
-  }
-
-  private <T extends Writable> void checkFieldSchema(ResourceFieldSchema[] fields, int index,
-      WritableConverter<T> writableConverter) throws IOException {
-    Preconditions.checkArgument(fields.length > index,
-        "Expecting schema length > %s but found length %s", index, fields.length);
-    writableConverter.checkStoreSchema(fields[index]);
+    Preconditions.checkArgument(2 == fields.length,
+        "Expecting 2 schema fields but found %s", fields.length);
+    keyConverter.checkStoreSchema(fields[0]);
+    valueConverter.checkStoreSchema(fields[1]);
   }
 
   @Override
