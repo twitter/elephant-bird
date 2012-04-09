@@ -20,7 +20,7 @@ import com.twitter.elephantbird.mapreduce.output.LzoTextOutputFormat;
  * A storage class to store the ouput of each tuple in a delimited file
  * like PigStorage, but LZO compressed.
  */
-public class LzoJsonStorage extends LzoBaseStoreFunc {
+public class LzoJsonStorage extends BaseStoreFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoJsonStorage.class);
 
   // If null, keep all keys.
