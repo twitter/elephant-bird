@@ -231,6 +231,7 @@
            failureProperty="tests.failed">
       <sysproperty key="test.build.data" value="${test.build.data}"/>
       <sysproperty key="test.log.dir" value="${test.log.dir}"/>
+      <sysproperty key="hadoop.log.dir" value="${test.log.dir}"/>
       <sysproperty key="test.source.dir" value="${test.src.dir}"/>
       <sysproperty key="java.library.path" value="${test.library.path}"/>
       <classpath>
