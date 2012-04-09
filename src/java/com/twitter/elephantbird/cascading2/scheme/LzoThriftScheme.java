@@ -1,23 +1,19 @@
 package com.twitter.elephantbird.cascading2.scheme;
 
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.Job;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
-import com.twitter.elephantbird.mapred.output.DeprecatedLzoThriftBlockOutputFormat;
+import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+import com.twitter.elephantbird.mapreduce.output.LzoThriftBlockOutputFormat;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 import cascading.flow.hadoop.HadoopFlowProcess;
-import cascading.scheme.Scheme;
 import cascading.tap.Tap;
 
 import org.apache.thrift.TBase;
-
-import java.io.IOException;
 
 /**
  * Scheme for Thrift lzo compressed files.
@@ -36,8 +32,8 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
 
   @Override
   public void sinkConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
-    DeprecatedLzoThriftBlockOutputFormat.setClassConf(thriftClass, conf);
-    conf.setOutputFormat(DeprecatedLzoThriftBlockOutputFormat.class);
+    LzoThriftBlockOutputFormat.setClassConf(thriftClass, conf);
+    DeprecatedOutputFormatWrapper.setOutputFormat(LzoThriftBlockOutputFormat.class, conf);
   }
 
   protected ThriftWritable<M> prepareBinaryWritable() {
