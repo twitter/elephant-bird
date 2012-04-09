@@ -20,10 +20,11 @@ import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.util.ReflectionUtils;
 
+import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
 import com.twitter.elephantbird.util.HadoopUtils;
 
 /**
- * The wrapper enables a {@link InputFormat} written for new
+ * The wrapper enables an {@link InputFormat} written for new
  * <code>mapreduce</code> interface to be used unmodified in contexts where
  * a {@link org.apache.hadoop.mapred.InputFormat} with old <code>mapred</code>
  * interface is required. </p>
@@ -37,11 +38,14 @@ import com.twitter.elephantbird.util.HadoopUtils;
  * <p>
  *
  * Usage: <pre>
- *    // set up JobConf
+ *    // set InputFormat class using a mapreduce InputFormat
  *    DeprecatedInputFormatWrapper.setInputFormat(org.apache.hadoop.mapreduce.lib.input.TextInputFormat.class, jobConf);
  *    jobConf.setOutputFormat(org.apache.hadoop.mapred.TextOutputFormat.class);
  *    // ...
  * </pre>
+ *
+ * @see DeprecatedOutputFormatWrapper
+ *
  * @author Raghu Angadi
  *
  */
