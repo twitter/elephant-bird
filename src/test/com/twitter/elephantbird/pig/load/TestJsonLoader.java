@@ -150,30 +150,6 @@ public class TestJsonLoader {
     
     Assert.assertEquals(1, count); // expect one tuple
   }
-  
-  @Test
-  public void testFieldsSpec() throws IOException {
-    
-    String json = 
-        "{" +
-        "  \"a\": {" +
-        "    \"b\": {" +
-        "      \"c\":0" +
-        "    }," +
-        "    \"d\": {" +
-        "      \"e\":0" +
-        "    }" +
-        "  }" +
-        "}";
-    JsonLoader jsonLoader = new JsonLoader(TextInputFormat.class.getName(),"-fieldsSpec=a,b,c -nestedLoadEnabled");
-    Tuple result = jsonLoader.parseStringToTuple(json);
-    Map<String, Object> m = (Map<String, Object>)result.get(0);
-    Assert.assertTrue(m.containsKey("a"));
-    m = (Map<String, Object>)m.get("a");
-    Assert.assertTrue(m.containsKey("b"));
-    Assert.assertTrue(((Map<String, Object>)m.get("b")).containsKey("c"));
-    Assert.assertTrue(!m.containsKey("d"));
-  }
 
   private void logAndRegisterQuery(PigServer pigServer, String query) throws IOException {
     LOG.info("Registering query: " + query);

@@ -27,9 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Decodes each line as JSON passes the resulting map of values
@@ -66,16 +64,14 @@ public class JsonLoader extends LzoBaseLoadFunc {
 
   private String inputFormatClassName;
   private boolean isNestedLoadEnabled = false;
-  private Set<String> fields = null;
   
   private static void populateValidOptions() {
     validOptions_.addOption("nestedLoadEnabled", false, "Enables loading of " +
         "nested JSON structures");
-    validOptions_.addOption("fieldsSpec", true, "Fields specification");
   }
 
   public JsonLoader() {
-    // defaults to no fields specification
+    // defaults to no options
     this(TextInputFormat.class.getName(), "");
   }
 
@@ -87,15 +83,6 @@ public class JsonLoader extends LzoBaseLoadFunc {
    * <li>-nestedLoadEnabled==(true|false) Enables loading of nested JSON
    * structures. When enabled, JSON objects are loaded as nested Maps 
    * and JSON arrays are loaded as Bags.
-   * <li>-fieldsSpec=fields
-   *        Fields specification, a string delimited by commas representing
-   *        a list of JSON fields.
-   *        If specified, only fields specified by this list will be loaded,
-   *        otherwise, all fields are loaded. To retrieve the value of a
-   *        nested field in the JSON structure, specify all fields to arrive
-   *        to that object. E.g., to retrieve the value of the object "baz"
-   *        in the structure <code>{"foo":{"bar":{"baz":"x"}}</code>, specify
-   *        all <code>"foo,bar,baz"</code> in the fields specification.
    * </ul>
    */
   public JsonLoader(String inputFormatClassName, String optString) {
@@ -107,18 +94,10 @@ public class JsonLoader extends LzoBaseLoadFunc {
       configuredOptions_ = parser_.parse(validOptions_, optsArr);
     } catch (org.apache.commons.cli.ParseException e) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp( "[-nestedLoadEnabled] [-fieldsSpec]", validOptions_ );
+        formatter.printHelp( "[-nestedLoadEnabled]", validOptions_ );
         throw new RuntimeException(e);
     }
     isNestedLoadEnabled = configuredOptions_.hasOption("nestedLoadEnabled");
-    
-    String fieldsSpec = configuredOptions_.getOptionValue("fieldsSpec");
-    if (fieldsSpec != null && fieldsSpec.length() > 0) {
-      fields = new HashSet<String>();
-      for(String s: fieldsSpec.split(",")) {
-        fields.add(s);
-      }
-    }
   }
 
   /**
@@ -213,8 +192,7 @@ public class JsonLoader extends LzoBaseLoadFunc {
   private Map<String,Object> walkJson(JSONObject jsonObj) {
     Map<String,Object> v = Maps.newHashMap();
     for (Object key: jsonObj.keySet()) {
-      if (fields == null || fields.contains(key.toString()))
-        v.put(key.toString(), wrap(jsonObj.get(key)));
+      v.put(key.toString(), wrap(jsonObj.get(key)));
     }
     return v;
   }
