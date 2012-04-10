@@ -2,15 +2,17 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
-import com.google.common.base.Preconditions;
-
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.apache.thrift.TBase;
 
+import com.google.common.base.Preconditions;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 import com.twitter.elephantbird.util.TypeRef;
@@ -52,6 +54,7 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
     AbstractWritableConverter<ThriftWritable<M>> {
   protected final TypeRef<M> typeRef;
   protected final ThriftToPig<M> thriftToPig;
+  protected final Schema expectedSchema;
   protected final PigToThrift<M> pigToThrift;
 
   public ThriftWritableConverter(String thriftClassName) {
@@ -59,6 +62,7 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
     Preconditions.checkNotNull(thriftClassName);
     typeRef = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig = ThriftToPig.newInstance(typeRef);
+    expectedSchema = thriftToPig.toSchema();
     pigToThrift = PigToThrift.newInstance(typeRef);
     writable.setConverter(typeRef.getRawClass());
   }
@@ -74,8 +78,20 @@ public class ThriftWritableConverter<M extends TBase<?, ?>> extends
 
   @Override
   public ResourceFieldSchema getLoadSchema() throws IOException {
-    return new ResourceFieldSchema(new FieldSchema(null,
-        ThriftToPig.toSchema(typeRef.getRawClass())));
+    return new ResourceFieldSchema(new FieldSchema(null, expectedSchema));
+  }
+
+  @Override
+  public void checkStoreSchema(ResourceFieldSchema schema) throws IOException {
+    Preconditions.checkNotNull(schema, "Schema is null");
+    Preconditions.checkArgument(DataType.TUPLE == schema.getType(),
+        "Expected schema type '%s' but found type '%s'", DataType.findTypeName(DataType.TUPLE),
+        DataType.findTypeName(schema.getType()));
+    ResourceSchema childSchema = schema.getSchema();
+    Preconditions.checkNotNull(childSchema, "Child schema is null");
+    Schema actualSchema = Schema.getPigSchema(childSchema);
+    Preconditions.checkArgument(Schema.equals(expectedSchema, actualSchema, false, true),
+        "Expected store schema '%s' but found schema '%s'", expectedSchema, actualSchema);
   }
 
   @Override
