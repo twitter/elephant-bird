@@ -1,5 +1,37 @@
 # Elephant Bird #
 
+### Version 2.2.0 ###
+
+ISSUE 176. Load nested JSON structures (André Panisson)
+
+ISSUE 181. preserve unknown fields for Thrift + RCFile (Raghu Angadi)
+
+ISSUE 180. Improves SequenceFileStorage schema validation (Andy Schlaikjer)
+
+ISSUE 144. RCFile storage for Protobuf and Thrift (Raghu Angadi)
+
+ISSUE 166. Hello, I've been asked to do a fatjar with all the compile deps of your project (Alexis Torres Paderewski)
+
+ISSUE 179. Deprecated outputformat wrapper (Raghu Angadi)
+
+ISSUE 178. remove DepcreateInputFormat and deprecated RecordReaders (Raghu Angadi)
+
+ISSUE 177. Add Hive thrift support (Travis Crawford)
+
+ISSUE 175. setClassConf() interface (Raghu Angadi)
+
+ISSUE 174. Refactors VectorWritableConverter to support transformation of vector data on store (Andy Schlaikjer)
+
+ISSUE 172. Adds outputSchema impl to JsonStringToMap UDF (Andy Schlaikjer)
+
+ISSUE 173. Remove version number from readme file. The readme always describes the ... (Travis Crawford)
+
+ISSUE 170. Cleanup cascading chemes: use deprecated input format wrapper (Argyris Zymnis)
+
+ISSUE 168. Thrift : fix for isBuffer check (Raghu Angadi)
+
+ISSUE 167. Deprecated inputformat wrapper (Raghu Angadi)
+
 ### Version 2.1.12 ###
 
 ### Version 2.1.11 ###
