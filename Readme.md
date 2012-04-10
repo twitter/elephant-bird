@@ -66,26 +66,33 @@ machine (java library dependencies are pulled from maven repositories during the
 
 ## Contents
 
-### Hadoop Input Formats
+### Hadoop Input and Output Formats
+
+Elephant-Bird provides input and output formats for working with working with a variety of plaintext formats stored in LZO compressed files.
+
 * JSON data
-* Line-based data (TextInputFormat but for LZO; also available in deprecated 0.18 format)
+* Line-based data (TextInputFormat but for LZO)
 * [W3C logs](http://www.w3.org/TR/WD-logfile.html)
-* Serialized Protocol Buffers and Thrift messages in one of three flavors:
- * Block-based (also available in deprecated 0.18 format)
- * Block-based, into generic bytes
- * Line-based, base64 encoded
+
+Additionally, protocol buffers and thrift messages can be stored in a variety of file formats.
+
+* Block-based, into generic bytes
+* Line-based, base64 encoded
+* SequenceFile
+* RCFile
+
+### Hadoop API wrappers
+
+Hadoop provides two API implementations: the the old-style `org.apache.hadoop.mapred` and new-style `org.apache.hadoop.mapreduce` packages. Elephant-Bird provides wrapper classes that allow unmodified usage of `mapreduce` input and output formats in contexts where the `mapred` interface is required.
+
+For more information, see [DeprecatedInputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/src/java/com/twitter/elephantbird/mapred/input/DeprecatedInputFormatWrapper.java) and [DeprecatedOutputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/src/java/com/twitter/elephantbird/mapred/output/DeprecatedOutputFormatWrapper.java)
+
 
 ### Hadoop Writables
-* Protocol Buffer and Thrift writables
-
-### Hadoop OutputFormats
-* Serialized Protocol Buffers and Thrift messages in one of two flavors
- * Block-based
- * Line-based, base64 encoded
-* LZO-only (patches to make this more general would be great)
+* Elephant-Bird provides protocol buffer and thrift writables for directly working with these formats in map-reduce jobs.
 
 ### Pig LoadFuncs
-* JSON data
+* JSON data (including nested structures)
 * Regex-based loaders
 * LzoPigStorage (just what it sounds like)
 * [W3C logs](http://www.w3.org/TR/WD-logfile.html)
@@ -105,6 +112,10 @@ machine (java library dependencies are pulled from maven repositories during the
 * LZO compression via LzoPigStorage
 * Serialized Protobufs and Thrift
 * SequenceFile Storage (with converters, as above)
+
+### Hive Support
+
+Elephant-Bird has experimental Hive support. For more information, see [How to use Elephant Bird with Hive](https://github.com/kevinweil/elephant-bird/wiki/How-to-use-Elephant-Bird-with-Hive).
 
 ### Utilities
 * Counters in Pig
