@@ -91,27 +91,14 @@ For more information, see [DeprecatedInputFormatWrapper.java](https://github.com
 ### Hadoop Writables
 * Elephant-Bird provides protocol buffer and thrift writables for directly working with these formats in map-reduce jobs.
 
-### Pig LoadFuncs
-* JSON data (including nested structures)
-* Regex-based loaders
-* LzoPigStorage (just what it sounds like)
-* [W3C logs](http://www.w3.org/TR/WD-logfile.html)
-* Serialized Protocol Buffers
- * Block-based (dynamic or via codegen, see below)
- * Line-based, base64 encoded (dynamic or via codegen, see below)
- * In SequenceFiles, using ProtobufWritableConverter
-* Serialized Thrift
- * Block-based (dynamic)
- * Line-based, base64 encoded (dynamic)
- * In SequenceFiles, using ThriftWritableConverter
-* SequenceFile loader
- * Includes converter interface for turning Tuples into Writables and vice versa
- * Provides implementations to convert generic Writables, Thrift, Protobufs, and other specialized classes, such as [Apache Mahout](http://mahout.apache.org/)'s [VectorWritable](http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/math/VectorWritable.java).
+### Pig Support
 
-### Pig StoreFuncs
-* LZO compression via LzoPigStorage
-* Serialized Protobufs and Thrift
-* SequenceFile Storage (with converters, as above)
+Loaders and storers are available for the input and output formats listed above. Additionally, pig-specific features include:
+
+* JSON loader (including nested structures)
+* Regex-based loader
+* Includes converter interface for turning Tuples into Writables and vice versa
+* Provides implementations to convert generic Writables, Thrift, Protobufs, and other specialized classes, such as [Apache Mahout](http://mahout.apache.org/)'s [VectorWritable](http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/math/VectorWritable.java).
 
 ### Hive Support
 
