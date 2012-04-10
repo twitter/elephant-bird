@@ -58,8 +58,11 @@ public class PigUtil {
 
   /**
    * Invokes the static {@code getDescriptor} method of the given {@link Message} class.
+   *
    * @param protoClass the {@link Message} class whose {@link Descriptor} should be retrieved.
    * @return the Descriptor instance for the given {@link Message} class.
+   * @throws RuntimeException on any exception encountered during introspection of protoClass or
+   * invocation of its static {@code getDescriptor} method.
    * @see Descriptors
    */
   public static Descriptor getProtobufDescriptor(Class<? extends Message> protoClass) {
@@ -71,8 +74,11 @@ public class PigUtil {
   }
 
   /**
-   * @param protoClassName name of the {@link Message} class whose {@link Descriptor} should be retrieved.
+   * @param protoClassName name of the {@link Message} class whose {@link Descriptor} should be
+   * retrieved.
    * @return the Descriptor instance for the given {@link Message} class.
+   * @throws RuntimeException on any exception encountered during class load or introspection of
+   * protoClassName or invocation of its static {@code getDescriptor} method.
    * @see #getProtobufDescriptor(Class)
    */
   public static Descriptor getProtobufDescriptor(String protoClassName) {
