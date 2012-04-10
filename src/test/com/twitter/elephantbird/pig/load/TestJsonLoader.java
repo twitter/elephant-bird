@@ -1,6 +1,5 @@
 package com.twitter.elephantbird.pig.load;
 
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.json.simple.parser.JSONParser;
@@ -15,7 +14,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Test the JsonLoader, make sure it reads the data properly.
@@ -94,7 +92,7 @@ public class TestJsonLoader {
     // extract hashtags from it
     PigServer pigServer = UnitTestUtil.makePigServer();
     // enable nested load
-    pigServer.getPigContext().getProperties().setProperty(JsonLoader.NESTED_ENABLED_KEY, "true");
+    pigServer.getPigContext().getProperties().setProperty(JsonLoader.NESTED_LOAD_KEY, "true");
     logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
         + "' using com.twitter.elephantbird.pig.load.JsonLoader() as (json: map[]);");
     logAndRegisterQuery(pigServer, "a = foreach data generate json#'entities'#'hashtags' as h;");
