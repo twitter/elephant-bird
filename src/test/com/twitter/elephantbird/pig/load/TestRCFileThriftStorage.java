@@ -135,9 +135,9 @@ public class TestRCFileThriftStorage {
       thriftWriter.write(null, new BytesWritable(thriftConverter.toBytes(person)));
     }
     thriftWriter.close(null);
-    // the RCFile has 3 columns : 2 fields in TestPerson and one for unknown
-    // fields. In time unknowns-column contains 2 fields from TestPersonExtended
-    // that were not understood by TestPerson.
+    // this RCFile has 3 columns : 2 fields in TestPerson and one for unknown
+    // fields. The unknowns-columns contains 2 fields from TestPersonExtended
+    // that are not understood by TestPerson.
 
     // load using RCFileThriftPigLoader
     pigServer.registerQuery(String.format(
