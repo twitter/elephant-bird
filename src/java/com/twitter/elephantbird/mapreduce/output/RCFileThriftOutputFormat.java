@@ -2,11 +2,13 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -14,8 +16,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TField;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TIOStreamTransport;
+import org.apache.thrift.transport.TMemoryInputTransport;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
@@ -27,17 +35,16 @@ import com.twitter.elephantbird.util.TypeRef;
  * OutputFormat for storing Thrift objects in RCFile.<p>
  *
  * Each of the top level fields is stored in a separate column.
- * Thrift field ids are stored in RCFile metadata.
+ * Thrift field ids are stored in RCFile metadata.<p>
+ *
+ * The user can write either a {@link ThriftWritable} with the Thrift object
+ * or a {@link BytesWritable} with serialized Thrift bytes. The latter
+ * ensures that all the fields are preserved even if the current Thrift
+ * definition does not match the definition represented in the serialized bytes.
+ * Any fields not recognized by current Thrift class are stored in the last
+ * column.
  */
 public class RCFileThriftOutputFormat extends RCFileOutputFormat {
-
-  /*
-   * TODO: handle unknown fields.
-   * Thrift objects do not carry "unknown fields" (as described in javadoc
-   * for {@link RCFileProtobufOutputFormat}) and as a result the last column
-   * is empty. In order to handle such fields, the output format should
-   * accept raw serialized bytes and deserialize it it self.
-   */
 
   // typeRef is only required for setting metadata for the RCFile
   private TypeRef<? extends TBase<?, ?>> typeRef;
@@ -47,9 +54,6 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
 
   private BytesRefArrayWritable rowWritable = new BytesRefArrayWritable();
   private BytesRefWritable[] colValRefs;
-  private ByteStream.Output byteStream = new ByteStream.Output();
-  private TBinaryProtocol tProto = new TBinaryProtocol(
-                                      new TIOStreamTransport(byteStream));
 
   /** internal, for MR use only. */
   public RCFileThriftOutputFormat() {
@@ -86,13 +90,39 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
 
   private class ProtobufWriter extends RCFileOutputFormat.Writer {
 
+    private ByteStream.Output byteStream = new ByteStream.Output();
+    private TBinaryProtocol tProto = new TBinaryProtocol(
+                                        new TIOStreamTransport(byteStream));
+
+    // used when deserializing thrift bytes
+    private Map<Short, Integer> idMap;
+    private TMemoryInputTransport mTransport;
+    private TBinaryProtocol skipProto;
+
     ProtobufWriter(TaskAttemptContext job) throws IOException {
       super(RCFileThriftOutputFormat.this, job, makeColumnarMetadata());
     }
 
     @Override @SuppressWarnings("unchecked")
     public void write(NullWritable key, Writable value) throws IOException, InterruptedException {
-      TBase tObj = ((ThriftWritable<TBase>)value).get();
+      try {
+        if (value instanceof BytesWritable) {
+          // TODO: handled errors
+          fromBytes((BytesWritable)value);
+        } else {
+          fromObject((TBase<?, ?>)((ThriftWritable)value).get());
+        }
+      } catch (TException e) {
+        // might need to tolerate a few errors.
+        throw new IOException(e);
+      }
+
+      super.write(null, rowWritable);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void fromObject(TBase tObj)
+                    throws IOException, InterruptedException, TException {
 
       byteStream.reset(); // reinitialize the byteStream if buffer is too large?
       int startPos = 0;
@@ -104,25 +134,83 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
 
           Field fd = tFields.get(i);
           if (tObj.isSet(fd.getFieldIdEnum())) {
-            try {
-              ThriftUtils.writeFieldNoTag(tProto, fd, tDesc.getFieldValue(i, tObj));
-            } catch (TException e) {
-              throw new IOException(e);
-            }
+            ThriftUtils.writeFieldNoTag(tProto, fd, tDesc.getFieldValue(i, tObj));
           }
 
-        } else { // last column : write unknown fields
-          // TODO: we need to deserialize thrift buffer ourselves to handle
-          // unknown fields.
-        }
+        } // else { }  : no 'unknown fields' in thrift object
 
         colValRefs[i].set(byteStream.getData(),
                           startPos,
                           byteStream.getCount() - startPos);
         startPos = byteStream.getCount();
       }
+    }
 
-      super.write(null, rowWritable);
+    /**
+     * extract serialized bytes for each field, including unknown fields and
+     * store those byes in columns.
+     */
+    private void fromBytes(BytesWritable bytesWritable)
+                       throws IOException, InterruptedException, TException {
+
+      if (mTransport == null) {
+        initIdMap();
+        mTransport = new TMemoryInputTransport();
+        skipProto = new TBinaryProtocol(mTransport);
+      }
+
+      byte[] bytes = bytesWritable.getBytes();
+      mTransport.reset(bytes, 0, bytesWritable.getLength());
+      byteStream.reset();
+
+      // set all the fields to null
+      for(BytesRefWritable ref : colValRefs) {
+        ref.set(bytes, 0, 0);
+      }
+
+      skipProto.readStructBegin();
+
+      while (true) {
+        int start = mTransport.getBufferPosition();
+
+        TField field = skipProto.readFieldBegin();
+        if (field.type == TType.STOP) {
+          break;
+        }
+
+        int fieldStart = mTransport.getBufferPosition();
+
+        // skip still creates and copies primitive objects (String, buffer, etc)
+        // skipProto could override readString() and readBuffer() to avoid that.
+        TProtocolUtil.skip(skipProto, field.type);
+
+        int end = mTransport.getBufferPosition();
+
+        Integer idx = idMap.get(field.id);
+
+        if (idx != null && field.type == tFields.get(idx).getType()) {
+          // known field
+          colValRefs[idx].set(bytes, fieldStart, end-fieldStart);
+        } else {
+          // unknown field, copy the bytes to last column (with field id)
+          byteStream.write(bytes, start, end-start);
+        }
+      }
+
+      if (byteStream.getCount() > 0) {
+        byteStream.write(TType.STOP);
+        colValRefs[colValRefs.length-1].set(byteStream.getData(),
+                                            0,
+                                            byteStream.getCount());
+      }
+    }
+
+    private void initIdMap() {
+      idMap = Maps.newHashMap();
+      for(int i=0; i<tFields.size(); i++) {
+        idMap.put(tFields.get(i).getFieldId(), i);
+      }
+      idMap = ImmutableMap.copyOf(idMap);
     }
   }
 

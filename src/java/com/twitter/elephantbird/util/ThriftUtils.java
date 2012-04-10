@@ -195,10 +195,13 @@ public class ThriftUtils {
 
     if (field.getType() == TType.MAP) {
 
+      Field valueField = field.getMapValueField();
       Map<?, ?> map = (Map<?, ?>)value;
+
+      proto.writeByte(innerField.getType());
+      proto.writeByte(valueField.getType());
       proto.writeI32(map.size());
 
-      Field valueField = field.getMapValueField();
       for(Entry<?, ?> entry : map.entrySet()) {
         writeSingleFieldNoTag(proto, innerField, entry.getKey());
         writeSingleFieldNoTag(proto, valueField, entry.getValue());
@@ -207,6 +210,8 @@ public class ThriftUtils {
     } else { // SET or LIST
 
       Collection<?> coll = (Collection<?>)value;
+
+      proto.writeByte(innerField.getType());
       proto.writeI32(coll.size());
 
       for(Object v : coll) {
@@ -278,9 +283,12 @@ public class ThriftUtils {
 
     // collection or a map:
 
-    int nEntries = proto.readI32();
 
     if (field.getType() == TType.MAP) {
+
+      proto.readByte();
+      proto.readByte();
+      int nEntries = proto.readI32();
 
       Map<Object, Object> map = Maps.newHashMap();
       Field valueField = field.getMapValueField();
@@ -292,6 +300,9 @@ public class ThriftUtils {
       return map;
 
     } else { // SET or LIST
+
+      proto.readByte();
+      int nEntries = proto.readI32();
 
       for(int i=0; i<nEntries; i++) {
         coll.add(readFieldNoTag(proto, innerField));

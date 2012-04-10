@@ -90,11 +90,11 @@ public class TestRCFileProtobufStorage {
   @Test
   public void testRCFileStorage() throws Exception {
     /* create a directory with two rcfiles :
-     *  - one created with normal Person objects using Pig storage.
+     *  - one created with normal Person objects using RCFileProtobufPigStorage.
      *  - other with PersonWithoutEmail (for testing unknown fields)
      *    using the same objects as the first one.
      *
-     * Then load both files using Pig loader.
+     * Then load both files using RCFileProtobufPigLoader
      */
 
     // write to rcFile using RCFileProtobufStorage
