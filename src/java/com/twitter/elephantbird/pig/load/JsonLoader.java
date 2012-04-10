@@ -36,7 +36,7 @@ import java.util.Map;
  * <p>This Loader supports loading of nested JSON structures, but this feature
  * is disabled by default. There are two ways to enable it:<ul>
  * <li>setting the -nestedLoad option in the 
- * {@link JsonLoader#JsonLoader(String, String)} constructor
+ * {@link JsonLoader#JsonLoader(String)} constructor
  * <li>setting the <code>elephantbird.jsonloader.nestedLoad</code>
  * property to true. This can be done with the following pig command:
  * <pre>grunt> set elephantbird.jsonloader.nestedLoad 'true'</pre>
@@ -68,11 +68,13 @@ public class JsonLoader extends LzoBaseLoadFunc {
   private static void populateValidOptions() {
     validOptions_.addOption("nestedLoad", false, "Enables loading of " +
         "nested JSON structures");
+    validOptions_.addOption("inputFormat", true, "The input format class name" +
+        " used by this loader instance");
   }
 
   public JsonLoader() {
     // defaults to no options
-    this(TextInputFormat.class.getName(), "");
+    this("");
   }
 
   /**
@@ -83,10 +85,11 @@ public class JsonLoader extends LzoBaseLoadFunc {
    * <li>-nestedLoad==(true|false) Enables loading of nested JSON
    * structures. When enabled, JSON objects are loaded as nested Maps 
    * and JSON arrays are loaded as Bags.
+   * <li>-inputFormat=className The input format class name used
+   * by this loader instance.
    * </ul>
    */
-  public JsonLoader(String inputFormatClassName, String optString) {
-    this.inputFormatClassName = inputFormatClassName;
+  public JsonLoader(String optString) {
     populateValidOptions();
     String[] optsArr = optString.split(" ");
     
@@ -94,10 +97,20 @@ public class JsonLoader extends LzoBaseLoadFunc {
       configuredOptions_ = parser_.parse(validOptions_, optsArr);
     } catch (org.apache.commons.cli.ParseException e) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp( "[-nestedLoad]", validOptions_ );
+        formatter.printHelp( "[-nestedLoad] [-inputFormat]", validOptions_ );
         throw new RuntimeException(e);
     }
     isNestedLoadEnabled = configuredOptions_.hasOption("nestedLoad");
+    
+    if (configuredOptions_.getOptionValue("inputFormat") != null) {
+      this.inputFormatClassName = configuredOptions_.getOptionValue("inputFormat");
+    } else {
+      this.inputFormatClassName = TextInputFormat.class.getName();
+    }
+  }
+
+  public void setInputFormatClassName(String inputFormatClassName) {
+    this.inputFormatClassName = inputFormatClassName;
   }
 
   /**

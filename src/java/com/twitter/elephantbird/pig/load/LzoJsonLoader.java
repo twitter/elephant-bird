@@ -7,10 +7,12 @@ public class LzoJsonLoader extends JsonLoader {
   /**
    * Constructor. Construct a LzoJsonLoader LoadFunc to load.
    * @param optString Loader options. For available options,
-   * see {@link JsonLoader#JsonLoader(String, String)}
+   * see {@link JsonLoader#JsonLoader(String)}.
+   * Notice that the -inputFormat option is overridden.
    */
   public LzoJsonLoader(String optString) {
-    super(LzoTextInputFormat.class.getName(), optString);
+    super(optString);
+    this.setInputFormatClassName(LzoTextInputFormat.class.getName());
   }
   
   public LzoJsonLoader() {
