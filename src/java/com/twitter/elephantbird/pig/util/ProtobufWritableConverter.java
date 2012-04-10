@@ -2,14 +2,17 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
-import com.google.common.base.Preconditions;
-import com.google.protobuf.Message;
-
+import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataByteArray;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 
+import com.google.common.base.Preconditions;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -25,6 +28,8 @@ public class ProtobufWritableConverter<M extends Message> extends
     AbstractWritableConverter<ProtobufWritable<M>> {
   protected final TypeRef<M> typeRef;
   protected final ProtobufToPig protobufToPig;
+  protected final Descriptor descriptor;
+  protected final Schema expectedSchema;
 
   public ProtobufWritableConverter(String protobufClassName) {
     super(new ProtobufWritable<M>());
@@ -32,6 +37,8 @@ public class ProtobufWritableConverter<M extends Message> extends
     typeRef = PigUtil.getProtobufTypeRef(protobufClassName);
     protobufToPig = new ProtobufToPig();
     writable.setConverter(typeRef.getRawClass());
+    descriptor = PigUtil.getProtobufDescriptor(typeRef.getRawClass());
+    expectedSchema = protobufToPig.toSchema(descriptor);
   }
 
   @Override
@@ -47,6 +54,19 @@ public class ProtobufWritableConverter<M extends Message> extends
   public ResourceFieldSchema getLoadSchema() throws IOException {
     return new ResourceFieldSchema(new FieldSchema(null, protobufToPig.toSchema(Protobufs
         .getMessageDescriptor(typeRef.getRawClass()))));
+  }
+
+  @Override
+  public void checkStoreSchema(ResourceFieldSchema schema) throws IOException {
+    Preconditions.checkNotNull(schema, "Schema is null");
+    Preconditions.checkArgument(DataType.TUPLE == schema.getType(),
+        "Expected schema type '%s' but found type '%s'", DataType.findTypeName(DataType.TUPLE),
+        DataType.findTypeName(schema.getType()));
+    ResourceSchema childSchema = schema.getSchema();
+    Preconditions.checkNotNull(childSchema, "Child schema is null");
+    Schema actualSchema = Schema.getPigSchema(childSchema);
+    Preconditions.checkArgument(Schema.equals(expectedSchema, actualSchema, false, true),
+        "Expected store schema '%s' but found schema '%s'", expectedSchema, actualSchema);
   }
 
   @Override

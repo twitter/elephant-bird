@@ -2,8 +2,6 @@ package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
 
-import com.google.common.base.Preconditions;
-
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -27,14 +25,14 @@ import org.apache.pig.StoreFunc;
 import org.apache.pig.StoreFuncInterface;
 import org.apache.pig.backend.hadoop.executionengine.util.MapRedUtil;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.PigContext;
+import org.apache.pig.impl.util.UDFContext;
 
+import com.google.common.base.Preconditions;
 import com.twitter.elephantbird.pig.load.SequenceFileLoader;
 import com.twitter.elephantbird.pig.util.GenericWritableConverter;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import com.twitter.elephantbird.pig.util.WritableConverter;
-
-import org.apache.pig.impl.PigContext;
-import org.apache.pig.impl.util.UDFContext;
 
 /**
  * Pig StoreFunc supporting conversion between Pig tuples and arbitrary key-value pairs stored
@@ -154,7 +152,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
   /**
    * @param writableClassName
    * @return {@code null} if writableClassName is {@code null}, otherwise the Class instance named
-   *         by writableClassName.
+   * by writableClassName.
    * @throws IOException
    */
   @SuppressWarnings("unchecked")
@@ -181,15 +179,10 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     Preconditions.checkNotNull(schema, "Schema is null");
     ResourceFieldSchema[] fields = schema.getFields();
     Preconditions.checkNotNull(fields, "Schema fields are undefined");
-    checkFieldSchema(fields, 0, keyConverter);
-    checkFieldSchema(fields, 1, valueConverter);
-  }
-
-  private <T extends Writable> void checkFieldSchema(ResourceFieldSchema[] fields, int index,
-      WritableConverter<T> writableConverter) throws IOException {
-    Preconditions.checkArgument(fields.length > index,
-        "Expecting schema length > %s but found length %s", index, fields.length);
-    writableConverter.checkStoreSchema(fields[index]);
+    Preconditions.checkArgument(2 == fields.length,
+        "Expecting 2 schema fields but found %s", fields.length);
+    keyConverter.checkStoreSchema(fields[0]);
+    valueConverter.checkStoreSchema(fields[1]);
   }
 
   @Override
@@ -219,11 +212,10 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   private void ensureUDFContext(Configuration conf) throws IOException {
     if (UDFContext.getUDFContext().isUDFConfEmpty()
-      && conf.get("pig.udf.context") != null) {
+        && conf.get("pig.udf.context") != null) {
       MapRedUtil.setupUDFContext(conf);
     }
   }
-
 
   /**
    * Tests validity of Writable class, ensures consistent error message for both key and value
