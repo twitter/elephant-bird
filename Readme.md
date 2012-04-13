@@ -13,7 +13,7 @@ Apache licensed.
 ## Quickstart
 
 1. git clone
-2. ant
+2. ant (or ant fatjar for generating a jar that doesn't have deps)
 3. check out javadoc, etc.
 4. Play with the examples: ant examples
 
