@@ -41,6 +41,7 @@
     <dependency org="org.apache.mahout" name="mahout-collections" rev="${mahout-collections.version}" transitive="false"/>
     <dependency org="org.apache.mahout" name="mahout-core" rev="${mahout.version}" transitive="false"/>
     <dependency org="org.apache.mahout" name="mahout-math" rev="${mahout.version}" transitive="false"/>
+    <dependency org="org.apache.hcatalog" name="hcatalog" rev="0.5.0-dev" transitive="false"/>
     <exclude org="javax.jms"/>
     <exclude org="com.sun.jdmk"/>
     <exclude org="com.sun.jmx"/>
