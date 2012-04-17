@@ -41,6 +41,7 @@ import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.thrift.test.TestName;
 import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
+import com.twitter.elephantbird.thrift.test.TestUnion;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class TestThriftToPig {
@@ -83,7 +84,10 @@ public class TestThriftToPig {
       Tuple pt = new ProjectedThriftTupleFactory<M>(typeRef, reqFieldList).newTuple(obj);
       int pidx=0;
       for(int idx : idxList) {
-        assertEquals(t.get(idx).toString(), pt.get(pidx++).toString());
+        if (t.get(idx) != pt.get(pidx)) { // if both are not nulls
+          assertEquals(t.get(idx).toString(), pt.get(pidx).toString());
+        }
+        pidx++;
       }
     } catch (ExecException e) { // not expected
       throw new TException(e);
@@ -193,6 +197,16 @@ public class TestThriftToPig {
     assertTrue( // the order of elements in map could vary because of HashMap
         tupleString.equals("(bob,jenkins)-{MOBILE=650-555-5555, WORK=415-555-5555, HOME=408-555-5555}") ||
         tupleString.equals("(bob,jenkins)-{MOBILE=650-555-5555, HOME=408-555-5555, WORK=415-555-5555}"));
+
+    // Test Uniton:
+    TestUnion unionInt = new TestUnion();
+    unionInt.setI32Type(10);
+    assertEquals(",10,,", toTuple(type, unionInt).toDelimitedString(","));
+
+    TestUnion unionStr = new TestUnion();
+    unionStr.setI32Type(-1); // is overridden below.
+    unionStr.setStringType("abcd");
+    assertEquals("abcd,,,", toTuple(type, unionStr).toDelimitedString(","));
   }
 
   //test a list of a struct
@@ -235,6 +249,11 @@ public class TestThriftToPig {
   @Test
   public void setInSetTest() throws FrontendException {
     nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInSet","name:chararray,names:bag{t:tuple(names_bag:bag{t:tuple(names_tuple:chararray)})}");
+  }
+
+  @Test
+  public void testUnionSchema() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUnion", "stringType:chararray,i32:int,bufferType:bytearray,structType:tuple(first_name:chararray,last_name:chararray)");
   }
 
   /*

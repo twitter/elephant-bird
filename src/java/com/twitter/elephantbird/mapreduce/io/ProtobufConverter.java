@@ -61,7 +61,7 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
 
   public ProtobufConverter(TypeRef<M> typeRef, ProtobufExtensionRegistry protoExtensionRegistry) {
     this.typeRef = typeRef;
-    protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+//    protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
     if(protoExtensionRegistry != null) {
       this.extensionRegistry = protoExtensionRegistry.getExtensionRegistry();
     }

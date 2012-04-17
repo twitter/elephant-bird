@@ -7,7 +7,9 @@ import java.util.Map.Entry;
 
 import org.apache.thrift.TBase;
 import org.apache.thrift.TEnum;
+import org.apache.thrift.TException;
 import org.apache.thrift.TFieldIdEnum;
+import org.apache.thrift.TUnion;
 import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.meta_data.FieldMetaData;
 import org.apache.thrift.meta_data.FieldValueMetaData;
@@ -18,6 +20,7 @@ import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TType;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.twitter.elephantbird.util.ThriftUtils;
 
@@ -40,11 +43,19 @@ public class TStructDescriptor {
 
   private List<Field> fields;
   private Class<? extends TBase<?, ?>> tClass;
+  private boolean isUnion;
 
   public Class<? extends TBase<?, ?>> getThriftClass() {
     return tClass;
   }
 
+  public TBase<?, ?> newThriftObject() throws TException {
+    try {
+      return tClass.newInstance();
+    } catch (Exception e) { //not excpected
+      throw new TException(e);
+    }
+  }
   /**
    * The list of fields returned is immutable.
    */
@@ -66,9 +77,14 @@ public class TStructDescriptor {
      * here, the assumption is the field is not null most of the
      * time. otherwise, rather than catching the exception, we
      * could cache 'BufferForFieldName()' method and invoke it.
+     *
+     * this also helps with unions.
      */
     Field field = fields.get(fieldIdx);
     try {
+      if (isUnion && field.getFieldIdEnum() != ((TUnion<?, ?>)tObject).getSetField()) {
+        return null;
+      }
       return tObject.getFieldValue(field.getFieldIdEnum());
     } catch (NullPointerException e) {
       return null;
@@ -99,6 +115,8 @@ public class TStructDescriptor {
     Map<? extends TFieldIdEnum, FieldMetaData> fieldMap = FieldMetaData.getStructMetaDataMap(tClass);
     Field[] arr = new Field[fieldMap.size()];
 
+    isUnion = TUnion.class.isAssignableFrom(tClass);
+
     int idx = 0;
     for (Entry<? extends TFieldIdEnum, FieldMetaData> e : fieldMap.entrySet()) {
       arr[idx++] = new Field(e.getKey(),
@@ -115,11 +133,11 @@ public class TStructDescriptor {
    * Currently used for converting Tuple to a Thrift object.
    */
   static private Map<String, TEnum> extractEnumMap(Class<? extends TEnum> enumClass) {
-    Map<String, TEnum> map = Maps.newHashMapWithExpectedSize(enumClass.getEnumConstants().length);
+    ImmutableMap.Builder<String, TEnum> builder = ImmutableMap.builder();
     for(TEnum e : enumClass.getEnumConstants()) {
-      map.put(e.toString(), e);
+      builder.put(e.toString(), e);
     }
-    return map;
+    return builder.build();
   }
 
   /**
@@ -138,6 +156,7 @@ public class TStructDescriptor {
     private final Field mapKeyField;      // maps
     private final Field mapValueField;    // maps
     private final Map<String, TEnum> enumMap; // enums
+    private final Map<Integer, TEnum> enumIdMap; // enums
     private final TStructDescriptor tStructDescriptor; // Structs
     private final boolean isBuffer_;  // strings
 
@@ -181,8 +200,15 @@ public class TStructDescriptor {
 
       if (!simpleField && field instanceof EnumMetaData) {
         enumMap = extractEnumMap(((EnumMetaData)field).enumClass);
+
+        ImmutableMap.Builder<Integer, TEnum> builder = ImmutableMap.builder();
+        for(TEnum e : enumMap.values()) {
+          builder.put(e.getValue(), e);
+        }
+        enumIdMap = builder.build();
       } else {
         enumMap = null;
+        enumIdMap = null;
       }
 
       if (field.isStruct()) {
@@ -199,7 +225,7 @@ public class TStructDescriptor {
         // until then a partial work around that works only if
         // the field is not inside a container.
         isBuffer_ =
-          ByteBuffer.class == ThriftUtils.getFiedlType(enclosingClass, fieldName);
+          ThriftUtils.getFieldType(enclosingClass, fieldName) != String.class;
       } else {
         isBuffer_= false;
       }
@@ -271,6 +297,10 @@ public class TStructDescriptor {
 
     public TEnum getEnumValueOf(String name) {
       return enumMap.get(name);
+    }
+
+    public TEnum getEnumValueOf(int id) {
+      return enumIdMap.get(id);
     }
 
     public String getName() {

@@ -19,7 +19,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * fields are not currently accessible to a StoreFunc. It will be in 0.7,
  * so something more flexible will be possible)
  */
-public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends LzoBaseStoreFunc {
+public class LzoThriftB64LinePigStorage<T extends TBase<?, ?>> extends BaseStoreFunc {
 
   private TypeRef<T> typeRef;
   private ThriftWritable<T> writable;

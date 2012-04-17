@@ -2,35 +2,22 @@ package com.twitter.elephantbird.cascading2.scheme;
 
 import com.google.protobuf.Message;
 
-import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
-import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
- * Scheme for Protobuf/Base64 encoded log files.
- *
- * @author Avi Bryant, Ning Liang
+ * Scheme for Protobuf B64 line encoded files.
+ * @deprecated please use {@link LzoProtobufScheme}
+ * @author Argyris Zymnis
  */
-public class LzoProtobufB64LineScheme extends LzoB64LineScheme {
-
-  private transient BinaryConverter<Message> converter;
-  private Class protoClass;
-
+@Deprecated
+public class LzoProtobufB64LineScheme<M extends Message> extends
+  LzoProtobufScheme<M> {
+  private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufB64LineScheme.class);
   public LzoProtobufB64LineScheme(Class protoClass) {
-    this.protoClass = protoClass;
-  }
-
-  protected BinaryConverter<Message> getConverter() {
-    if (converter == null) {
-      converter = ProtobufConverter.newInstance(protoClass);
-    }
-    return converter;
-  }
-
-  protected Object decodeMessage(byte[] bytes) {
-    return getConverter().fromBytes(bytes);
-  }
-
-  protected byte[] encodeMessage(Object message) {
-    return getConverter().toBytes((Message) message);
+    super(protoClass);
+    LOG.warn("LzoProtobufB64LineScheme is deprecated, please use LzoProtobufScheme");
   }
 }

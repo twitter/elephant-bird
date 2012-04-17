@@ -11,14 +11,11 @@ import com.twitter.elephantbird.util.TypeRef;
  * Data is expected to be one base64 encoded serialized protocol buffer per line.
  * <br><br>
  *
- * Do not use LzoProtobufB64LineInputFormat.class directly for setting
- * InputFormat class for a job. Use getInputFormatClass() or newInstance(typeRef) instead.
- *
- * <p>
  * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
  * for more information on error handling.
+ *
+ * @Deprecated use {@link MultiInputFormat}
  */
-
 public class LzoProtobufB64LineInputFormat<M extends Message> extends MultiInputFormat<M> {
 
   public LzoProtobufB64LineInputFormat() {

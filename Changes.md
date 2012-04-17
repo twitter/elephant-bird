@@ -1,5 +1,73 @@
 # Elephant Bird #
 
+### Version 2.2.0 ###
+
+ISSUE 176. Load nested JSON structures (André Panisson)
+
+ISSUE 181. preserve unknown fields for Thrift + RCFile (Raghu Angadi)
+
+ISSUE 180. Improves SequenceFileStorage schema validation (Andy Schlaikjer)
+
+ISSUE 144. RCFile storage for Protobuf and Thrift (Raghu Angadi)
+
+ISSUE 166. Hello, I've been asked to do a fatjar with all the compile deps of your project (Alexis Torres Paderewski)
+
+ISSUE 179. Deprecated outputformat wrapper (Raghu Angadi)
+
+ISSUE 178. remove DepcreateInputFormat and deprecated RecordReaders (Raghu Angadi)
+
+ISSUE 177. Add Hive thrift support (Travis Crawford)
+
+ISSUE 175. setClassConf() interface (Raghu Angadi)
+
+ISSUE 174. Refactors VectorWritableConverter to support transformation of vector data on store (Andy Schlaikjer)
+
+ISSUE 172. Adds outputSchema impl to JsonStringToMap UDF (Andy Schlaikjer)
+
+ISSUE 173. Remove version number from readme file. The readme always describes the ... (Travis Crawford)
+
+ISSUE 170. Cleanup cascading chemes: use deprecated input format wrapper (Argyris Zymnis)
+
+ISSUE 168. Thrift : fix for isBuffer check (Raghu Angadi)
+
+ISSUE 167. Deprecated inputformat wrapper (Raghu Angadi)
+
+### Version 2.1.12 ###
+
+### Version 2.1.11 ###
+
+ISSUE 164. Mininum error threshold in LzoRecordReader (Raghu Angadi)
+
+ISSUE 163. Support Thrift union (Raghu Angadi)
+
+ISSUE 155. Remove non-null precondition in SequenceFileLoader (Andy Schlaikjer)
+
+ISSUE 159. Inhibit class loading in RawSequenceFileRecordReader (Andy Schlaikjer)
+
+### Version 2.1.10 ###
+
+ISSUE 156. Fix a classname bug introduced in the recent refactor. (Travis Crawford)
+
+### Version 2.1.9 ###
+
+ISSUE 153. Update cascading2 version and classes with changes already in science. (Travis Crawford)
+
+ISSUE 152. Removes requirement that input Vector data match user specified -dense, -sparse options (Andy Schlaikjer)
+
+ISSUE 148. TestInvoker#testSpeed() may fail on slow machines (Michael Noll)
+
+ISSUE 147. Refactor JSON loaders so an InputFormat can be used & update test. (Travis Crawford)
+
+ISSUE 142. Don't force thrift in classpath unless necessary. (Raghu Angadi)
+
+ISSUE 141. Cleans up top level Readme.md, adds more info on SequenceFile IO (Andy Schlaikjer)
+
+ISSUE 140. SeqFileLoader and SeqFileStorage should resolve using PigContext (Dmitriy Ryaboy)
+
+ISSUE 139. Adds Mahout VectorWritableConverter util from Twadoop (Andy Schlaikjer)
+
+ISSUE 138. Please bump to lastest cascading2 build (slightly incompatible with wip-176). (Oscar Boykin)
+
 ### Version 2.1.8 ###
 
 ISSUE 137. Fixes the namespace in cascading2 protobufs (Oscar Boykin)

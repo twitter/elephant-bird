@@ -11,14 +11,11 @@ import com.twitter.elephantbird.util.TypeRef;
  * the ProtobufBlockWriter to write your data, this input format can read it.
  * <br> <br>
  *
- * Do not use LzoProtobufBlockInputFormat.class directly for setting
- * InputFormat class for a job. Use getInputFormatClass() instead.<p>
- *
- * <p>
  * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
  * for more information on error handling.
+ *
+ * @Deprecated use {@link MultiInputFormat}
  */
-
 public class LzoProtobufBlockInputFormat<M extends Message> extends MultiInputFormat<M> {
 
   public LzoProtobufBlockInputFormat() {

@@ -14,8 +14,8 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.SequentialAccessSparseVector;
 import org.apache.mahout.math.Vector;
-import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.Vector.Element;
+import org.apache.mahout.math.VectorWritable;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.BagFactory;
@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.twitter.elephantbird.pig.load.SequenceFileLoader;
 import com.twitter.elephantbird.pig.util.AbstractWritableConverter;
+import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import com.twitter.elephantbird.pig.util.PigUtil;
 
 /**
@@ -125,6 +126,19 @@ import com.twitter.elephantbird.pig.util.PigUtil;
  * @author Andy Schlaikjer
  */
 public class VectorWritableConverter extends AbstractWritableConverter<VectorWritable> {
+  /**
+   * Hadoop job counters used by {@link VectorWritableConverter}.
+   *
+   * @author Andy Schlaikjer
+   */
+  public static enum Counter {
+    /**
+     * The number of input sparse vector entry indices found to be out-of-bounds during Tuple to
+     * Vector conversion.
+     */
+    INDEX_OUT_OF_BOUNDS;
+  }
+
   private static final String CARDINALITY_PARAM = "cardinality";
   private static final String DENSE_PARAM = "dense";
   private static final String SPARSE_PARAM = "sparse";
@@ -132,6 +146,7 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
   private static final String FLOAT_PRECISION_PARAM = "floatPrecision";
   private final TupleFactory tupleFactory = TupleFactory.getInstance();
   private final BagFactory bagFactory = BagFactory.getInstance();
+  private final PigCounterHelper counterHelper = new PigCounterHelper();
   private final boolean dense;
   private final boolean sparse;
   private final Integer cardinality;
@@ -225,24 +240,21 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
     if (sparse) {
       FieldSchema entriesFieldSchema;
       if (PigUtil.Pig9orNewer) {
-        Schema tupleSchema = new Schema();
-        tupleSchema.add(new FieldSchema("index",DataType.INTEGER));
-        tupleSchema.add(new FieldSchema("value", valueType));
-
-        Schema bagSchema = new Schema();
-        bagSchema.add(new FieldSchema("t", tupleSchema, DataType.TUPLE));
-
-        entriesFieldSchema =new FieldSchema("entries", bagSchema, DataType.BAG);
+        Schema tupleSchema = new Schema(Lists.newArrayList(new FieldSchema("index",
+            DataType.INTEGER), new FieldSchema("value", valueType)));
+        Schema bagSchema = new Schema(Lists.newArrayList(new FieldSchema("t", tupleSchema,
+            DataType.TUPLE)));
+        entriesFieldSchema = new FieldSchema("entries", bagSchema, DataType.BAG);
       } else {
         entriesFieldSchema =
-              new FieldSchema("entries", new Schema(ImmutableList.of(new FieldSchema("index",
-                  DataType.INTEGER), new FieldSchema("value", valueType))), DataType.BAG);
+            new FieldSchema("entries", new Schema(Lists.newArrayList(new FieldSchema("index",
+                DataType.INTEGER), new FieldSchema("value", valueType))), DataType.BAG);
       }
       if (cardinality != null) {
         return new ResourceFieldSchema(new FieldSchema(null, new Schema(
-            ImmutableList.of(entriesFieldSchema))));
+            Lists.newArrayList(entriesFieldSchema))));
       }
-      return new ResourceFieldSchema(new FieldSchema(null, new Schema(ImmutableList.of(
+      return new ResourceFieldSchema(new FieldSchema(null, new Schema(Lists.newArrayList(
           new FieldSchema("cardinality", DataType.INTEGER), entriesFieldSchema))));
     }
     if (dense && cardinality != null) {
@@ -273,42 +285,44 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
     // create Tuple
     Tuple out = null;
     if (v.isDense()) {
-
       // dense vector found
-      Preconditions.checkState(!sparse, "Expecting sparse vector but found dense vector");
-      List<Number> values = Lists.newArrayListWithCapacity(v.size());
-      if (floatPrecision) {
-        for (Element e : v) {
-          values.add((float) e.get());
-        }
+      if (sparse) {
+        // client requested sparse tuple rep
+        out = toSparseVectorTuple(v);
       } else {
-        for (Element e : v) {
-          values.add(e.get());
-        }
+        out = toDenseVectorTuple(v);
       }
-      out = tupleFactory.newTupleNoCopy(values);
-
     } else {
-
-      // sparse vector encountered
-      Preconditions.checkState(!dense, "Expecting dense vector but found sparse vector");
-      List<Tuple> entries = Lists.newArrayListWithCapacity(v.getNumNondefaultElements());
-      Iterator<Element> itr = v.iterateNonZero();
-      while (itr.hasNext()) {
-        Element e = itr.next();
-        int index = e.index();
-        Preconditions.checkState(this.cardinality == null || index < this.cardinality,
-            "Vector entry index %s is outside valid range [0, %s)", index, cardinality);
-        double value = e.get();
-        entries.add(tupleFactory.newTupleNoCopy(ImmutableList.of(index, value)));
+      // sparse vector found
+      if (dense) {
+        // client requested dense tuple rep
+        out = toDenseVectorTuple(v);
+      } else {
+        out = toSparseVectorTuple(v);
       }
-      out =
-          cardinality != null ? tupleFactory.newTupleNoCopy(ImmutableList.of(bagFactory
-              .newDefaultBag(entries))) : tupleFactory.newTupleNoCopy(ImmutableList.of(size,
-              bagFactory.newDefaultBag(entries)));
-
     }
     return out;
+  }
+
+  protected Tuple toDenseVectorTuple(Vector v) {
+    List<Number> values = Lists.newArrayListWithCapacity(v.size());
+    for (Element e : v) {
+      values.add(floatPrecision ? (float) e.get() : e.get());
+    }
+    return tupleFactory.newTupleNoCopy(values);
+  }
+
+  protected Tuple toSparseVectorTuple(Vector v) {
+    DataBag bag = bagFactory.newDefaultBag();
+    Iterator<Element> itr = v.iterateNonZero();
+    while (itr.hasNext()) {
+      Element e = itr.next();
+      bag.add(tupleFactory.newTupleNoCopy(Lists.<Number> newArrayList(e.index(),
+          floatPrecision ? (float) e.get() : e.get())));
+    }
+    return cardinality != null ? tupleFactory.newTupleNoCopy(ImmutableList.of(bag)) : tupleFactory
+        .newTupleNoCopy(ImmutableList.of(v.size(),
+            bag));
   }
 
   @Override
@@ -370,51 +384,17 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
   protected VectorWritable toWritable(Tuple value) throws IOException {
     Preconditions.checkNotNull(value, "Tuple is null");
     Vector v = null;
-    if (isSparseVector(value)) {
-
-      // found sparse vector tuple
-      Preconditions.checkState(!dense, "Expecting dense vector but found sparse vector");
-      int size = 0;
-      DataBag entries = null;
-      if (value.size() == 2) {
-        size = (Integer) value.get(0);
-        if (cardinality != null) {
-          Preconditions.checkState(cardinality == size,
-              "Expecting cardinality %s but found cardinality %s", cardinality, size);
-        }
-        entries = (DataBag) value.get(1);
-      } else {
-        Preconditions.checkNotNull(cardinality, "Cardinality is undefined");
-        size = cardinality;
-        entries = (DataBag) value.get(0);
-      }
-      v = new RandomAccessSparseVector(size);
-      for (Tuple entry : entries) {
-        validateSparseVectorEntry(entry);
-        v.setQuick((Integer) entry.get(0), ((Number) entry.get(1)).doubleValue());
-      }
-      if (sequential) {
-        v = new SequentialAccessSparseVector(v);
-      }
-
+    if (isSparseVectorData(value)) {
+      v = convertSparseVectorDataToVector(value);
     } else {
-
-      // found dense vector tuple
-      Preconditions.checkState(!sparse, "Expecting sparse vector but found dense vector");
-      validateDenseVector(value);
-      double[] values = new double[value.size()];
-      for (int i = 0; i < values.length; ++i) {
-        values[i] = ((Number) value.get(i)).doubleValue();
-      }
-      v = new DenseVector(values, true);
-
+      validateDenseVectorData(value);
+      v = convertDenseVectorDataToVector(value);
     }
-
     writable.set(v);
     return writable;
   }
 
-  private static boolean isSparseVector(Tuple value) throws IOException {
+  private static boolean isSparseVectorData(Tuple value) throws IOException {
     assertNotNull(value, "Tuple is null");
     if ((1 == value.size() && DataType.BAG == value.getType(0))
         || (2 == value.size() && DataType.INTEGER == value.getType(0) && DataType.BAG == value
@@ -423,18 +403,101 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
     return false;
   }
 
-  private static void validateSparseVectorEntry(Tuple value) throws IOException {
+  private Vector convertSparseVectorDataToVector(Tuple value) throws IOException {
+    Vector v;
+
+    // determine output vector size and fetch bag containing entries from input
+    int size = 0;
+    DataBag entries = null;
+    if (value.size() == 2) {
+      // cardinality defined by input
+      size = (Integer) value.get(0);
+      if (cardinality != null) {
+        // cardinality defined by VectorWritableConverter instance
+        size = cardinality;
+      }
+      entries = (DataBag) value.get(1);
+    } else {
+      Preconditions.checkNotNull(cardinality, "Cardinality is undefined");
+      size = cardinality;
+      entries = (DataBag) value.get(0);
+    }
+
+    // create vector, allowing conversion of sparse input vector data to dense output vector
+    if (dense) {
+      // TODO(Andy Schlaikjer): Test for OOM before it happens
+      v = new DenseVector(size);
+    } else {
+      // more efficient to build sparse vector with this impl
+      v = new RandomAccessSparseVector(size);
+    }
+
+    // populate vector
+    for (Tuple entry : entries) {
+      validateSparseVectorEntryData(entry);
+      int i = (Integer) entry.get(0);
+      // check index bounds
+      if (i < 0 || i >= size) {
+        counterHelper.incrCounter(Counter.INDEX_OUT_OF_BOUNDS, 1);
+        continue;
+      }
+      double n = ((Number) entry.get(1)).doubleValue();
+      v.setQuick(i, n);
+    }
+
+    // convert to (sparse) sequential vector if requested
+    if (sequential) {
+      v = new SequentialAccessSparseVector(v);
+    }
+
+    return v;
+  }
+
+  private static void validateSparseVectorEntryData(Tuple value) throws IOException {
     assertNotNull(value, "Tuple is null");
     assertTupleLength(2, value.size(), "tuple");
     assertFieldTypeEquals(DataType.INTEGER, value.getType(0), "tuple[0]");
     assertFieldTypeIsNumeric(value.getType(1), "tuple[1]");
   }
 
-  private static void validateDenseVector(Tuple value) throws IOException {
+  private static void validateDenseVectorData(Tuple value) throws IOException {
     assertNotNull(value, "Tuple is null");
     for (int i = 0; i < value.size(); ++i) {
       assertFieldTypeIsNumeric(value.getType(i), "tuple[" + i + "]");
     }
+  }
+
+  private Vector convertDenseVectorDataToVector(Tuple value) throws IOException {
+    Vector v;
+
+    // determine output vector size
+    int size = value.size();
+    int minSize = size;
+    if (cardinality != null && cardinality != size) {
+      // cardinality specified on construction overrides instance cardinality
+      size = cardinality;
+      if (minSize > size) {
+        minSize = size;
+      }
+    }
+
+    // allow conversion of dense vector data to sparse vector
+    if (sparse) {
+      // this ctor used to pre-alloc space for entries
+      v = new RandomAccessSparseVector(size, size);
+      for (int i = 0; i < minSize; ++i) {
+        v.setQuick(i, ((Number) value.get(i)).doubleValue());
+      }
+    } else {
+      double[] values = new double[size];
+      for (int i = 0; i < minSize; ++i) {
+        values[i] = ((Number) value.get(i)).doubleValue();
+      }
+      // this ctor uses values directly, no copying performed
+      v = new DenseVector(values, true);
+    }
+
+    return v;
   }
 
   private static void assertNotNull(Object value, String msg, Object... values) throws IOException {

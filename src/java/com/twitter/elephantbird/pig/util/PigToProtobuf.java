@@ -80,7 +80,24 @@ public class PigToProtobuf {
       ProtobufExtensionRegistry extensionRegistry) {
     List<FieldDescriptor> fieldDescriptors =
       Protobufs.getMessageAllFields(builder.getDescriptorForType(), extensionRegistry);
+    return tupleToMessage(builder, fieldDescriptors, tuple, extensionRegistry);
+  }
 
+  public static Message tupleToMessage(Builder builder, List<FieldDescriptor> fieldDescriptors, Tuple tuple) {
+    return tupleToMessage(builder, fieldDescriptors, tuple, null);
+  }
+
+  /**
+   * @param builder
+   * @param fieldDescriptors should be same as builder.getDescriptorForType.getFields()
+   *        plus some necessary extension fields get from extensionRegistry.
+   *        Avoids overhead of getFields() which creates an array each time.
+   * @param tuple
+   * @param extensionRegistry
+   * @return
+   */
+  public static Message tupleToMessage(Builder builder, List<FieldDescriptor> fieldDescriptors,
+      Tuple tuple, ProtobufExtensionRegistry extensionRegistry) {
     if (tuple == null) {
       return  builder.build();
     }
@@ -191,13 +208,7 @@ public class PigToProtobuf {
 
     desBuilder.setName("PigToProtobufDynamicBuilder");
 
-    DescriptorProto descriptorProto = desBuilder.build();
-    FileDescriptorProto fileDescriptorProto = FileDescriptorProto.newBuilder().addMessageType(descriptorProto).build();
-
-    FileDescriptor[] fileDescs = new FileDescriptor[0];
-    FileDescriptor dynamicDescriptor = FileDescriptor.buildFrom(fileDescriptorProto, fileDescs);
-
-    return dynamicDescriptor.findMessageTypeByName("PigToProtobufDynamicBuilder");
+    return Protobufs.makeMessageDescriptor(desBuilder.build());
   }
 
   /**

@@ -25,7 +25,7 @@ import com.twitter.elephantbird.util.TypeRef;
  *
  * @param <M> Protocol Buffer Message class being serialized
  */
-public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreFunc {
+public class LzoProtobufBlockPigStorage<M extends Message> extends BaseStoreFunc {
   private static final Logger LOG = LoggerFactory.getLogger(LzoProtobufBlockPigStorage.class);
 
   private TypeRef<M> typeRef_;

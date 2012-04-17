@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.apache.pig.impl.PigContext;
 import org.apache.thrift.TBase;
 
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.ThriftUtils;
@@ -52,6 +54,35 @@ public class PigUtil {
       // try normal loader first (handles inner class).
       return Protobufs.getProtobufClass(protoClassName);
     }
+  }
+
+  /**
+   * Invokes the static {@code getDescriptor} method of the given {@link Message} class.
+   *
+   * @param protoClass the {@link Message} class whose {@link Descriptor} should be retrieved.
+   * @return the Descriptor instance for the given {@link Message} class.
+   * @throws RuntimeException on any exception encountered during introspection of protoClass or
+   * invocation of its static {@code getDescriptor} method.
+   * @see Descriptors
+   */
+  public static Descriptor getProtobufDescriptor(Class<? extends Message> protoClass) {
+    try {
+      return (Descriptor) protoClass.getMethod("getDescriptor").invoke(null);
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Failed to get Descriptor for Message type '%s'", protoClass.getName()), e);
+    }
+  }
+
+  /**
+   * @param protoClassName name of the {@link Message} class whose {@link Descriptor} should be
+   * retrieved.
+   * @return the Descriptor instance for the given {@link Message} class.
+   * @throws RuntimeException on any exception encountered during class load or introspection of
+   * protoClassName or invocation of its static {@code getDescriptor} method.
+   * @see #getProtobufDescriptor(Class)
+   */
+  public static Descriptor getProtobufDescriptor(String protoClassName) {
+    return getProtobufDescriptor(getProtobufClass(protoClassName));
   }
 
   public static<M extends Message> TypeRef<M> getProtobufTypeRef(String protoClassName) {

@@ -20,6 +20,14 @@ struct TestPerson {
   2: map<TestPhoneType, string>   phones, // for testing enum keys in maps.
 }
 
+/* TestPerson, plus couple more traits */
+struct TestPersonExtended {
+  1: TestName                     name,
+  2: map<TestPhoneType, string>   phones,
+  3: string                       email,
+  4: TestName                     friend
+}
+
 struct TestIngredient {
   1: string name,
   2: string color,
@@ -88,4 +96,11 @@ struct TestMapInSet {
 struct TestSetInMap {
   1: string name,
   2: map<string,set<string>> names,
+}
+
+union TestUnion {
+  1: string stringType,
+  2: i32    i32Type,
+  3: binary bufferType,
+  4: TestName structType
 }

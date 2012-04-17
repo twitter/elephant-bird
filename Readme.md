@@ -1,10 +1,10 @@
 # Elephant Bird #
 
-Version: 2.1.8
-
 ## About
 
 Elephant Bird is Twitter's open source library of [LZO](http://www.github.com/kevinweil/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day.
+
+Join the conversation about Elephant-Bird on the [developer mailing list](https://groups.google.com/forum/?fromgroups#!forum/elephantbird-dev).
 
 ## License
 
@@ -12,10 +12,9 @@ Apache licensed.
 
 ## Quickstart
 
-1. git clone
-2. ant
-3. check out javadoc, etc.
-4. Play with the examples: ant examples
+1. Get the code: `git clone git://github.com/kevinweil/elephant-bird.git`
+1. Build the jar: `ant` (or `ant -p` to view all targets)
+1. Explore what's available: `ant javadoc` and `ant examples`
 
 Note: For any of the LZO-based code, make sure that the native LZO libraries are on your `java.library.path`.  Generally this is done by setting `JAVA_LIBRARY_PATH` in `pig-env.sh` or `hadoop-env.sh`.  You can also add lines like
 
@@ -57,6 +56,7 @@ And include elephant-bird as a dependency in `ivy.xml`:
 4. Hive 0.7 (with HIVE-1616)
 5. Thrift 0.5
 6. Mahout 0.6
+7. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
 
 ## Protocol Buffer and Thrift compiler dependencies
 
@@ -67,45 +67,43 @@ machine (java library dependencies are pulled from maven repositories during the
 
 ## Contents
 
-### Hadoop Input Formats
+### Hadoop Input and Output Formats
+
+Elephant-Bird provides input and output formats for working with working with a variety of plaintext formats stored in LZO compressed files.
+
 * JSON data
-* Line-based data (TextInputFormat but for LZO; also available in deprecated 0.18 format)
+* Line-based data (TextInputFormat but for LZO)
 * [W3C logs](http://www.w3.org/TR/WD-logfile.html)
-* Serialized Protocol Buffers and Thrift messages in one of three flavors:
- * Block-based (also available in deprecated 0.18 format)
- * Block-based, into generic bytes
- * Line-based, base64 encoded
+
+Additionally, protocol buffers and thrift messages can be stored in a variety of file formats.
+
+* Block-based, into generic bytes
+* Line-based, base64 encoded
+* SequenceFile
+* RCFile
+
+### Hadoop API wrappers
+
+Hadoop provides two API implementations: the the old-style `org.apache.hadoop.mapred` and new-style `org.apache.hadoop.mapreduce` packages. Elephant-Bird provides wrapper classes that allow unmodified usage of `mapreduce` input and output formats in contexts where the `mapred` interface is required.
+
+For more information, see [DeprecatedInputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/src/java/com/twitter/elephantbird/mapred/input/DeprecatedInputFormatWrapper.java) and [DeprecatedOutputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/src/java/com/twitter/elephantbird/mapred/output/DeprecatedOutputFormatWrapper.java)
+
 
 ### Hadoop Writables
-* Protocol Buffer and Thrift writables
+* Elephant-Bird provides protocol buffer and thrift writables for directly working with these formats in map-reduce jobs.
 
-### Hadoop OutputFormats
-* Serialized Protocol Buffers and Thrift messages in one of two flavors
- * Block-based
- * Line-based, base64 encoded
-* LZO-only (patches to make this more general would be great)
+### Pig Support
 
-### Pig LoadFuncs
-* JSON data
-* Regex-based loaders
-* LzoPigStorage (just what it sounds like)
-* [W3C logs](http://www.w3.org/TR/WD-logfile.html)
-* Serialized Protocol Buffers
- * Block-based (dynamic or via codegen, see below)
- * Line-based, base64 encoded (dynamic or via codegen, see below)
- * In SequenceFiles, using ProtobufWritableConverter
-* Serialized Thrift
- * Block-based (dynamic)
- * Line-based, base64 encoded (dynamic)
- * In SequenceFiles, using ThriftWritableConverter
-* SequenceFile loader
- * Includes converter interface for turning Tuples into Writables and vice versa
- * Provides implementations to convert generic Writables, Thrift, Protobufs, and other specialized classes, such as [Apache Mahout](http://mahout.apache.org/)'s [VectorWritable](http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/math/VectorWritable.java).
+Loaders and storers are available for the input and output formats listed above. Additionally, pig-specific features include:
 
-### Pig StoreFuncs
-* LZO compression via LzoPigStorage
-* Serialized Protobufs and Thrift
-* SequenceFile Storage (with converters, as above)
+* JSON loader (including nested structures)
+* Regex-based loader
+* Includes converter interface for turning Tuples into Writables and vice versa
+* Provides implementations to convert generic Writables, Thrift, Protobufs, and other specialized classes, such as [Apache Mahout](http://mahout.apache.org/)'s [VectorWritable](http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/math/VectorWritable.java).
+
+### Hive Support
+
+Elephant-Bird has experimental Hive support. For more information, see [How to use Elephant Bird with Hive](https://github.com/kevinweil/elephant-bird/wiki/How-to-use-Elephant-Bird-with-Hive).
 
 ### Utilities
 * Counters in Pig

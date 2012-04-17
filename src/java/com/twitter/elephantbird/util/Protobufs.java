@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.util;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -11,18 +12,29 @@ import java.util.Map;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.Message.Builder;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.ExtensionRegistryLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.ProtocolMessageEnum;
 import com.google.protobuf.UninitializedMessageException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.io.Text;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +88,7 @@ public class Protobufs {
    * For a configured protoClass, should the message be dynamic or is it a pre-generated Message class? If protoClass is
    * null or set to DynamicMessage.class, then the configurer intends for a dynamically generated protobuf to be used.
    */
-  public static boolean useDynamicProtoMessage(Class protoClass) {
+  public static boolean useDynamicProtoMessage(Class<?> protoClass) {
     return protoClass == null || protoClass.getCanonicalName().equals(DynamicMessage.class.getCanonicalName());
   }
 
@@ -152,6 +164,24 @@ public class Protobufs {
         return f.getName();
       }
     });
+  }
+
+  /**
+   * Returns a Message {@link Descriptor} for a dynamically generated
+   * DescriptorProto.
+   *
+   * @param descProto
+   * @throws DescriptorValidationException
+   */
+  public static Descriptor makeMessageDescriptor(DescriptorProto descProto)
+                                      throws DescriptorValidationException {
+
+    DescriptorProtos.FileDescriptorProto fileDescP =
+      DescriptorProtos.FileDescriptorProto.newBuilder().addMessageType(descProto).build();
+
+    Descriptors.FileDescriptor[] fileDescs = new Descriptors.FileDescriptor[0];
+    Descriptors.FileDescriptor dynamicDescriptor = Descriptors.FileDescriptor.buildFrom(fileDescP, fileDescs);
+    return dynamicDescriptor.findMessageTypeByName(descProto.getName());
   }
 
    // Translates from protobuf field names to other field names, stripping out any that have value IGNORE.
@@ -313,7 +343,7 @@ public class Protobufs {
 
   public static void setClassConf(Configuration jobConf, Class<?> genericClass,
       Class<? extends Message> protoClass) {
-    HadoopUtils.setInputFormatClass(jobConf,
+    HadoopUtils.setClassConf(jobConf,
            CLASS_CONF_PREFIX + genericClass.getName(),
            protoClass);
   }
@@ -335,7 +365,7 @@ public class Protobufs {
 
   public static <M extends Message> void setExtensionRegistryClassConf(Configuration jobConf,
       Class<?> genericClass, Class<? extends ProtobufExtensionRegistry> extRegClass) {
-    HadoopUtils.setInputFormatClass(jobConf,
+    HadoopUtils.setClassConf(jobConf,
         EXTENSION_REGISTRY_CLASS_CONF_PREFIX + genericClass.getName(),
         extRegClass);
   }
@@ -395,4 +425,181 @@ public class Protobufs {
     return String.format("%s.%s$%s", javaPackageName, outerClassName, className);
   }
 
+  public static Text toText(Message message) {
+    return new Text(message.toByteArray());
+  }
+
+  public static <B extends Message.Builder> B mergeFromText(B builder, Text bytes)
+                                    throws InvalidProtocolBufferException {
+    @SuppressWarnings("unchecked")
+    B b = (B) builder.mergeFrom(bytes.getBytes());
+    return b;
+  }
+
+  /**
+   * Serializes a single field. All the native fields are serialized using
+   * "NoTag" methods in {@link CodedOutputStream}
+   * e.g. <code>writeInt32NoTag()</code>. The field index is not written.
+   *
+   * @param output
+   * @param fd
+   * @param fieldValue
+   * @throws IOException
+   */
+  public static void writeFieldNoTag(CodedOutputStream   output,
+                                     FieldDescriptor     fd,
+                                     Object              value)
+                                     throws IOException {
+    if (value == null) {
+      return;
+    }
+
+    if (fd.isRepeated()) {
+      @SuppressWarnings("unchecked")
+      List<Object> values = (List<Object>) value;
+      for(Object obj : values) {
+        writeSingleFieldNoTag(output, fd, obj);
+      }
+    } else {
+      writeSingleFieldNoTag(output, fd, value);
+    }
+  }
+
+  private static void writeSingleFieldNoTag(CodedOutputStream   output,
+                                            FieldDescriptor     fd,
+                                            Object              value)
+                                            throws IOException {
+    switch (fd.getType()) {
+    case DOUBLE:
+      output.writeDoubleNoTag((Double) value);    break;
+    case FLOAT:
+      output.writeFloatNoTag((Float) value);      break;
+    case INT64:
+    case UINT64:
+      output.writeInt64NoTag((Long) value);       break;
+    case INT32:
+      output.writeInt32NoTag((Integer) value);    break;
+    case FIXED64:
+      output.writeFixed64NoTag((Long) value);     break;
+    case FIXED32:
+      output.writeFixed32NoTag((Integer) value);  break;
+    case BOOL:
+      output.writeBoolNoTag((Boolean) value);     break;
+    case STRING:
+      output.writeStringNoTag((String) value);    break;
+    case GROUP:
+    case MESSAGE:
+      output.writeMessageNoTag((Message) value);  break;
+    case BYTES:
+      output.writeBytesNoTag((ByteString) value); break;
+    case UINT32:
+      output.writeUInt32NoTag((Integer) value);   break;
+    case ENUM:
+      output.writeEnumNoTag(((ProtocolMessageEnum) value).getNumber()); break;
+    case SFIXED32:
+      output.writeSFixed32NoTag((Integer) value); break;
+    case SFIXED64:
+      output.writeSFixed64NoTag((Long) value);    break;
+    case SINT32:
+      output.writeSInt32NoTag((Integer) value);   break;
+    case SINT64:
+      output.writeSInt64NoTag((Integer) value);   break;
+
+    default:
+      throw new IllegalArgumentException("Unknown type " + fd.getType()
+                                         + " for " + fd.getFullName());
+    }
+  }
+
+  /**
+   *  Wrapper around {@link #readFieldNoTag(CodedInputStream, FieldDescriptor, Builder)}. <br>
+   *  same as <br> <code>
+   *  builder.setField(fd, readFieldNoTag(input, fd, builder));  </code>
+   */
+  public static void setFieldValue(CodedInputStream input,
+                              FieldDescriptor  fd,
+                              Builder          builder)
+                              throws IOException {
+    builder.setField(fd, readFieldNoTag(input, fd, builder));
+  }
+
+  /**
+   * Deserializer for protobuf objects written with
+   * {@link #writeFieldNoTag(CodedOutputStream, FieldDescriptor, Object)}.
+   *
+   * @param input
+   * @param fd
+   * @param enclosingBuilder required to create a builder when the field
+   *                         is a message
+   * @throws IOException
+   */
+  public static Object readFieldNoTag(CodedInputStream input,
+                                      FieldDescriptor  fd,
+                                      Builder          enclosingBuilder)
+                                      throws IOException {
+    if (!fd.isRepeated()) {
+      return readSingleFieldNoTag(input, fd, enclosingBuilder);
+    }
+
+    // repeated field
+
+    List<Object> values = Lists.newArrayList();
+    while (!input.isAtEnd()) {
+      values.add(readSingleFieldNoTag(input, fd, enclosingBuilder));
+    }
+    return values;
+  }
+
+  private static Object readSingleFieldNoTag(CodedInputStream input,
+                                             FieldDescriptor  fd,
+                                             Builder          enclosingBuilder)
+                                             throws IOException {
+    switch (fd.getType()) {
+    case DOUBLE:
+      return input.readDouble();
+    case FLOAT:
+      return input.readFloat();
+    case INT64:
+    case UINT64:
+      return input.readInt64();
+    case INT32:
+      return input.readInt32();
+    case FIXED64:
+      return input.readFixed64();
+    case FIXED32:
+      return input.readFixed32();
+    case BOOL:
+      return input.readBool();
+    case STRING:
+      return input.readString();
+    case GROUP:
+    case MESSAGE:
+      Builder fieldBuilder = enclosingBuilder.newBuilderForField(fd);
+      input.readMessage(fieldBuilder, null);
+      return fieldBuilder.build();
+    case BYTES:
+      return input.readBytes();
+    case UINT32:
+      return input.readUInt32();
+    case ENUM:
+      EnumValueDescriptor eVal = fd.getEnumType().findValueByNumber(input.readEnum());
+      // ideally if a given enum does not exist, we should search
+      // unknown fields. but we don't have access to that here. return default
+      return eVal != null ? eVal : fd.getDefaultValue();
+    case SFIXED32:
+      return input.readSFixed32();
+    case SFIXED64:
+      return input.readSFixed64();
+    case SINT32:
+      return input.readSInt32();
+    case SINT64:
+      return input.readSInt64();
+
+    default:
+      throw new IllegalArgumentException("Unknown type " + fd.getType()
+          + " for " + fd.getFullName());
+    }
+  }
+
 }
+
