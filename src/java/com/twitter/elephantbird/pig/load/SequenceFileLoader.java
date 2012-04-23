@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.pig.load;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
@@ -437,9 +438,14 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
         tuple.set(0, getCurrentValueObject());
       }
       return tupleFactory.newTupleNoCopy(tuple);
+    } catch (EOFException e) {
+      // prefer to keep reading rather than causing the job to fail when it hits a file still 
+      // being written
     } catch (InterruptedException e) {
       throw new ExecException("Error while reading input", 6018, PigException.REMOTE_ENVIRONMENT, e);
     }
+    
+    return null;
   }
 
   private Object getCurrentKeyObject() throws IOException, InterruptedException {
