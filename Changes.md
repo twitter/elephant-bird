@@ -1,5 +1,11 @@
 # Elephant Bird #
 
+### Version 2.2.1 ###
+
+ISSUE 185. Add HCatalog support to HiveMultiInputFormat. (Travis Crawford)
+
+ISSUE 183. Add a link to the mailing list on the readme. (Travis Crawford)
+
 ### Version 2.2.0 ###
 
 ISSUE 176. Load nested JSON structures (André Panisson)
