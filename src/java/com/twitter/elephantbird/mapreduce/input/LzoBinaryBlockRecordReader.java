@@ -30,6 +30,7 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
   private final LongWritable key_;
   private final W value_;
   private final TypeRef<M> typeRef_;
+  boolean updatePosition = false;
 
   private final BinaryBlockReader<M> reader_;
 
@@ -79,6 +80,8 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
   protected void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
     // No need to skip to the sync point here; the block reader will do it for us.
     LOG.debug("LzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
+    updatePosition = !atFirstRecord;
+    LOG.debug("reset first record offset in skipToNextSyncPoint()");
   }
 
   /**
@@ -100,6 +103,7 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
       if (pos_ > end_) {
         reader_.markNoMoreNewBlocks();
       }
+
       value_.set(null);
       errorTracker.incRecords();
       Throwable decodeException = null;
@@ -114,6 +118,11 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
         decodeException = e;
       }
 
+      if (updatePosition) {
+        pos_ = getLzoFilePos();
+        updatePosition = false;
+      }
+
       key_.set(pos_);
       pos_ = getLzoFilePos();
       if (value_.get() != null) {
@@ -126,4 +135,3 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
     }
   }
 }
-
