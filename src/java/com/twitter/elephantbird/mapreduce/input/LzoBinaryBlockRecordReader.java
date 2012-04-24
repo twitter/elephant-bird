@@ -81,7 +81,6 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
     // No need to skip to the sync point here; the block reader will do it for us.
     LOG.debug("LzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
     updatePosition = !atFirstRecord;
-    LOG.debug("reset first record offset in skipToNextSyncPoint()");
   }
 
   /**
