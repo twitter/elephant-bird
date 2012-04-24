@@ -16,6 +16,8 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
@@ -47,6 +49,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileInputFormat;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
+import com.twitter.elephantbird.pig.util.PigCounterHelper;
 import com.twitter.elephantbird.pig.util.TextConverter;
 import com.twitter.elephantbird.pig.util.WritableConverter;
 
@@ -72,7 +75,9 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  */
 public class SequenceFileLoader<K extends Writable, V extends Writable> extends FileInputLoadFunc
     implements LoadPushDown, LoadMetadata {
+  private static final Log LOG = LogFactory.getLog(SequenceFileLoader.class);
   public static final String CONVERTER_PARAM = "converter";
+  public static final String SKIP_EOF_ERRORS_PARAM = "skipEOFErrors";
   private static final String READ_KEY_PARAM = "_readKey";
   private static final String READ_VALUE_PARAM = "_readValue";
   protected final CommandLine keyArguments;
@@ -88,7 +93,9 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   private RecordReader<DataInputBuffer, DataInputBuffer> reader;
   private boolean readKey = true;
   private boolean readValue = true;
-
+  private final PigCounterHelper counterHelper_ = new PigCounterHelper();
+  private enum SequenceFileLoaderCounters { EOFError };
+  
   /**
    * Parses key and value options from argument strings. Available options for both key and value
    * argument strings include:
@@ -168,7 +175,13 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
             .withDescription(
                 "Converter type to use for conversion of data." + "  Defaults to '"
                     + TextConverter.class.getName() + "'.").create("c");
-    return new Options().addOption(converterOption);
+    Option skipEOFOption = 
+        OptionBuilder
+            .withLongOpt(SKIP_EOF_ERRORS_PARAM)
+            .withDescription(
+                "Skip EOFExceptions if they occur while reading the data."
+            ).create();
+    return new Options().addOption(converterOption).addOption(skipEOFOption);
   }
 
   /**
@@ -439,8 +452,14 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       }
       return tupleFactory.newTupleNoCopy(tuple);
     } catch (EOFException e) {
-      // prefer to keep reading rather than causing the job to fail when it hits a file still 
-      // being written
+      if (valueArguments.hasOption(SKIP_EOF_ERRORS_PARAM)) {
+        // prefer to keep reading rather than causing the job to fail when it hits a file still 
+        // being written
+        LOG.warn("EOFException encountered while reading input", e);
+        counterHelper_.incrCounter(SequenceFileLoaderCounters.EOFError, 1L);
+      } else {
+          throw e;
+      }
     } catch (InterruptedException e) {
       throw new ExecException("Error while reading input", 6018, PigException.REMOTE_ENVIRONMENT, e);
     }
