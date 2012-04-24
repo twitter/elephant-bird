@@ -31,6 +31,13 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
   private final W value_;
   private final TypeRef<M> typeRef_;
   boolean updatePosition = false;
+  /* make LzoBinaryBlockRecordReader return lzoblock offset the same way as
+   * LzoBinaryBlockRecordReader for indexing purposes.
+   * For the the first record returned, pos_ should be 0
+   * if the recordreader is reading the first split,
+   * otherwise it should be end of the current lzo block.
+   * This makes pos_ consistent with LzoBinaryB64LineRecordReader.
+   */
 
   private final BinaryBlockReader<M> reader_;
 
