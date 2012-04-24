@@ -62,6 +62,10 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
      */
     NULL_TUPLE,
     /**
+     * Tuple supplied to {@link SequenceFileStorage#putNext(Tuple)} whose length is not 2.
+     */
+    TUPLE_SIZE,
+    /**
      * Null key was supplied to {@link SequenceFileStorage#putNext(Tuple)} and key type is not
      * {@link NullWritable}.
      */
@@ -261,9 +265,13 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
 
   @Override
   public void putNext(Tuple t) throws IOException {
-    // test for null input tuple
+    // validate input tuple
     if (t == null) {
       counterHelper.incrCounter(Error.NULL_TUPLE, 1);
+      return;
+    }
+    if (t.size() != 2) {
+      counterHelper.incrCounter(Error.TUPLE_SIZE, 1);
       return;
     }
 
