@@ -16,8 +16,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
@@ -47,6 +45,8 @@ import org.apache.pig.impl.util.UDFContext;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileInputFormat;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
@@ -75,7 +75,7 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  */
 public class SequenceFileLoader<K extends Writable, V extends Writable> extends FileInputLoadFunc
     implements LoadPushDown, LoadMetadata {
-  private static final Log LOG = LogFactory.getLog(SequenceFileLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SequenceFileLoader.class);
   public static final String CONVERTER_PARAM = "converter";
   public static final String SKIP_EOF_ERRORS_PARAM = "skipEOFErrors";
   private static final String READ_KEY_PARAM = "_readKey";
@@ -458,7 +458,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
         LOG.warn("EOFException encountered while reading input", e);
         counterHelper_.incrCounter(SequenceFileLoaderCounters.EOFError, 1L);
       } else {
-          throw e;
+        throw e;
       }
     } catch (InterruptedException e) {
       throw new ExecException("Error while reading input", 6018, PigException.REMOTE_ENVIRONMENT, e);
