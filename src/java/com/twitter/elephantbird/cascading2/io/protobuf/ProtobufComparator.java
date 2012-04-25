@@ -8,7 +8,7 @@ import java.util.Comparator;
 import com.google.protobuf.Message;
 
 import cascading.tuple.StreamComparator;
-import cascading.tuple.hadoop.BufferedInputStream;
+import cascading.tuple.hadoop.io.BufferedInputStream;
 
 /**
  * Comparator for protobufs
