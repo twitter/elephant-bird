@@ -272,6 +272,11 @@ public class TestThriftToPig {
   }
 
   @Test
+  public void structInMapTest() throws FrontendException {
+      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestStructInMap","name:chararray,names:map[(name: (first_name: chararray,last_name: chararray),phones: map[chararray])]");
+  }
+
+  @Test
   public void mapInListTest() throws FrontendException {
     nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestMapInList","name:chararray,names:bag{t:tuple(names_tuple:map[chararray])}");
   }
@@ -286,16 +291,8 @@ public class TestThriftToPig {
     Schema schema=ThriftToPig.toSchema(typeRef_.getRawClass());
     Schema oldSchema = Schema.getPigSchema(new ResourceSchema(schema));
     assertTrue(Schema.equals(schema, oldSchema, false, true));
-    //this is necessary because in pig8, Utils.getSchemaFromString throws a ParseException,
-    //but this doesn't exist in Pig9
-    try {
-      Schema expectedSchema=Utils.getSchemaFromString(expSchema);
-      assertTrue(Schema.equals(schema, expectedSchema, false, true));
-    } catch (Exception e) {
-      System.out.println("Error thrown!");
-      System.out.println(e.getMessage());
-      System.out.println(e.getStackTrace());
-      assertTrue(false);
-    }
+    Schema expectedSchema=Utils.getSchemaFromString(expSchema);
+    assertTrue("expected : " + expSchema + " got " +  schema.toString(),
+               Schema.equals(schema, expectedSchema, false, true));
   }
 }
