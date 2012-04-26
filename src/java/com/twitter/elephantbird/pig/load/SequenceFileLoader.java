@@ -82,6 +82,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   private static final String READ_VALUE_PARAM = "_readValue";
   protected final CommandLine keyArguments;
   protected final CommandLine valueArguments;
+  protected final CommandLine otherArguments;
   protected final WritableConverter<K> keyConverter;
   protected final WritableConverter<V> valueConverter;
   private final DataByteArray keyDataByteArray = new DataByteArray();
@@ -135,15 +136,17 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    *
    * @param keyArgs
    * @param valueArgs
+   * @param otherArgs
    * @throws ParseException
    * @throws IOException
    */
-  public SequenceFileLoader(String keyArgs, String valueArgs) throws ParseException, IOException {
+  public SequenceFileLoader(String keyArgs, String valueArgs, String otherArgs) throws ParseException, IOException {
     // parse key, value arguments
     Options options = getOptions();
     keyArguments = parseArguments(options, keyArgs);
     valueArguments = parseArguments(options, valueArgs);
-
+    otherArguments = parseArguments(options, otherArgs);
+    
     // construct key, value converters
     keyConverter = getWritableConverter(keyArguments);
     valueConverter = getWritableConverter(valueArguments);
@@ -162,6 +165,16 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     this("", "");
   }
 
+  /**
+   * Constructor without other args (backwards compatible).
+   *
+   * @throws ParseException
+   * @throws IOException
+   */
+  public SequenceFileLoader(String keyArgs, String valueArgs) throws ParseException, IOException {
+    this(keyArgs, valueArgs, "");
+  }
+  
   /**
    * @return Options instance containing valid key/value options.
    */
@@ -452,7 +465,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       }
       return tupleFactory.newTupleNoCopy(tuple);
     } catch (EOFException e) {
-      if (valueArguments.hasOption(SKIP_EOF_ERRORS_PARAM)) {
+      if (otherArguments.hasOption(SKIP_EOF_ERRORS_PARAM)) {
         // prefer to keep reading rather than causing the job to fail when it hits a file still 
         // being written
         LOG.warn("EOFException encountered while reading input", e);
