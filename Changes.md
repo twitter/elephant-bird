@@ -2,6 +2,16 @@
 
 ### Version 2.2.1 ###
 
+ISSUE 190. Added support for skipping EOFExceptions to SequenceFileLoader (Xavier Stevens)
+
+ISSUE 191. Upgrade cascading to wip-281. (Argyris Zymnis)
+
+ISSUE 189. make LzoBinaryBlockRecordReader return lzoblock offset (Yu Xu)
+
+ISSUE 188. Pig schema for Thrift maps. (Raghu Angadi)
+
+ISSUE 187. Adds check for input tuple length equal to 2, in case output schema validation is skipped (Andy Schlaikjer)
+
 ISSUE 185. Add HCatalog support to HiveMultiInputFormat. (Travis Crawford)
 
 ISSUE 183. Add a link to the mailing list on the readme. (Travis Crawford)
