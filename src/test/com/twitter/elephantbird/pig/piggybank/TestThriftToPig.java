@@ -256,10 +256,6 @@ public class TestThriftToPig {
     nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUnion", "stringType:chararray,i32:int,bufferType:bytearray,structType:tuple(first_name:chararray,last_name:chararray)");
   }
 
-  /*
-  TODO: maps in elephantbird do not take advantage of the typed maps, and in general break
-  TODO: on moderately complicated schemas. need to fix that.
-
   @Test
   public void basicMapTest() throws FrontendException {
     nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestMap","name:chararray,names:map[chararray]");
@@ -282,12 +278,11 @@ public class TestThriftToPig {
 
   @Test
   public void mapInSetTest() throws FrontendException {
-      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestSetInList","name:chararray,names:bag{t:tuple(names_tuple:map[chararray])}");
+      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestMapInSet","name:chararray,names:bag{t:tuple(names_tuple:map[chararray])}");
   }
-  */
 
   public void nestedInListTestHelper(String s, String expSchema) throws FrontendException {
-    TypeRef typeRef_ = PigUtil.getThriftTypeRef(s);
+    TypeRef<? extends TBase<?, ?>> typeRef_ = PigUtil.getThriftTypeRef(s);
     Schema schema=ThriftToPig.toSchema(typeRef_.getRawClass());
     Schema oldSchema = Schema.getPigSchema(new ResourceSchema(schema));
     assertTrue(Schema.equals(schema, oldSchema, false, true));
