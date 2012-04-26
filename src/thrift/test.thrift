@@ -98,6 +98,11 @@ struct TestSetInMap {
   2: map<string,set<string>> names,
 }
 
+struct TestStructInMap {
+  1: string name,
+  2: map<string,TestPerson> names,
+}
+
 union TestUnion {
   1: string stringType,
   2: i32    i32Type,

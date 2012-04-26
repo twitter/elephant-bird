@@ -242,12 +242,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
     try {
       for(Field field : tDesc.getFields()) {
-        String fieldName = field.getName();
-        if (field.isStruct()) {
-          schema.add(new FieldSchema(fieldName, toSchema(field.gettStructDescriptor()), DataType.TUPLE));
-        } else {
-          schema.add(singleFieldToFieldSchema(fieldName, field));
-        }
+        schema.add(singleFieldToFieldSchema(field.getName(), field));
       }
     } catch (FrontendException t) {
       throw new RuntimeException(t);
@@ -255,9 +250,15 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
     return schema;
   }
-  //TODO we should probably implement better naming, the current system is pretty nonsensical now
+
+  /**
+   * return {@link FieldSchema} for a given field.
+   */
   private static FieldSchema singleFieldToFieldSchema(String fieldName, Field field) throws FrontendException {
+    //TODO we should probably implement better naming, the current system is pretty nonsensical now
     switch (field.getType()) {
+      case TType.STRUCT:
+        return new FieldSchema(fieldName, toSchema(field.gettStructDescriptor()), DataType.TUPLE);
       case TType.LIST:
         return new FieldSchema(fieldName, singleFieldToTupleSchema(fieldName + "_tuple", field.getListElemField()), DataType.BAG);
       case TType.SET:
