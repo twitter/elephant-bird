@@ -12,6 +12,7 @@ import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.StatusReporter;
@@ -157,13 +158,37 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
         split = ((InputSplitWrapper)oldSplit).realSplit;
       }
 
+      // If this is run on the cluster, reporter will be populated
+      // locally this can be a deprecated NULL reporter.
+      StatusReporter statusReporter = null;
+      if(reporter == Reporter.NULL) {
+        statusReporter = new StatusReporter() {
+          public void setStatus(String s) {
+          }
+          public void progress() {
+          }
+          public Counter getCounter(Enum<?> name) {
+            return null;
+          }
+          public Counter getCounter(String group, String name) {
+            return null;
+          }
+        };
+      } else {
+        statusReporter = (StatusReporter) reporter;
+      }
+
+      TaskAttemptID tid = null;
+      if(oldJobConf.get("mapred.task.id") == null) {
+        tid = new TaskAttemptID("0", 0, true, 0, 0);
+      } else {
+        tid = TaskAttemptID.forName(oldJobConf.get("mapred.task.id"));
+      }
+
       // create a TaskInputOutputContext
       @SuppressWarnings("unchecked")
       TaskAttemptContext taskContext =
-        new TaskInputOutputContext(
-            oldJobConf, TaskAttemptID.forName(oldJobConf.get("mapred.task.id")),
-            null, null, (StatusReporter) reporter) {
-
+        new TaskInputOutputContext(oldJobConf, tid, null, null, statusReporter) {
               public Object getCurrentKey() throws IOException, InterruptedException {
                 throw new RuntimeException("not implemented");
               }
