@@ -1,5 +1,9 @@
 # Elephant Bird #
 
+### Version 2.2.2 ###
+
+ISSUE 193. Fix schema for Thrift struct in a map. (Raghu Angadi)
+
 ### Version 2.2.1 ###
 
 ISSUE 190. Added support for skipping EOFExceptions to SequenceFileLoader (Xavier Stevens)
