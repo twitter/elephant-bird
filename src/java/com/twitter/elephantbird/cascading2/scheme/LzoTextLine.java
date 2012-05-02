@@ -8,7 +8,6 @@ import com.twitter.elephantbird.mapred.input.DeprecatedLzoTextInputFormat;
 import com.twitter.elephantbird.mapred.output.DeprecatedLzoTextOutputFormat;
 
 import cascading.flow.FlowProcess;
-import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.hadoop.TextLine;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
@@ -45,12 +44,12 @@ public class LzoTextLine extends TextLine {
   }
 
   @Override
-  public void sourceConfInit(FlowProcess<JobConf> flowProcess, Tap<FlowProcess<JobConf>, JobConf, RecordReader, OutputCollector> tap, JobConf conf ) {
+  public void sourceConfInit(FlowProcess<JobConf> flowProcess, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf ) {
     conf.setInputFormat(DeprecatedLzoTextInputFormat.class);
   }
 
   @Override
-  public void sinkConfInit(FlowProcess<JobConf> flowProcess, Tap<FlowProcess<JobConf>, JobConf, RecordReader, OutputCollector> tap, JobConf conf ) {
+  public void sinkConfInit(FlowProcess<JobConf> flowProcess, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf ) {
     conf.setOutputFormat(DeprecatedLzoTextOutputFormat.class);
   }
 }

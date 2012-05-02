@@ -1,6 +1,8 @@
 package com.twitter.elephantbird.cascading2.scheme;
 
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.RecordReader;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
@@ -10,7 +12,7 @@ import com.twitter.elephantbird.mapreduce.output.LzoThriftBlockOutputFormat;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-import cascading.flow.hadoop.HadoopFlowProcess;
+import cascading.flow.FlowProcess;
 import cascading.tap.Tap;
 
 import org.apache.thrift.TBase;
@@ -31,7 +33,7 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   }
 
   @Override
-  public void sinkConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
+  public void sinkConfInit(FlowProcess<JobConf> hfp, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
     LzoThriftBlockOutputFormat.setClassConf(thriftClass, conf);
     DeprecatedOutputFormatWrapper.setOutputFormat(LzoThriftBlockOutputFormat.class, conf);
   }
@@ -42,7 +44,7 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   }
 
   @Override
-  public void sourceConfInit(HadoopFlowProcess hfp, Tap tap, JobConf conf) {
+  public void sourceConfInit(FlowProcess<JobConf> hfp, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
     MultiInputFormat.setClassConf(thriftClass, conf);
     DeprecatedInputFormatWrapper.setInputFormat(MultiInputFormat.class, conf);
   }
