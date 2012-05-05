@@ -419,7 +419,10 @@ public class ThriftToPig<M extends TBase<?, ?>> {
                                                + "as inner schema") ;
                   }
               } else if (fs.type == DataType.MAP) {
-                  sb.append(DataType.findTypeName(fs.type) + "[ ]") ;
+                sb.append(DataType.findTypeName(fs.type) + "[");
+                if (fs.schema!=null)
+                    stringifySchema(sb, fs.schema, fs.type, prefix);
+                sb.append("]");
               } else {
                   sb.append(DataType.findTypeName(fs.type)) ;
               }
