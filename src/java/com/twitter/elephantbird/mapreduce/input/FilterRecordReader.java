@@ -11,7 +11,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  */
 public class FilterRecordReader<K, V> extends RecordReader<K, V> {
 
-  private RecordReader<K, V> reader;
+  protected RecordReader<K, V> reader;
 
   public FilterRecordReader(RecordReader<K, V> reader) {
     this.reader = reader;

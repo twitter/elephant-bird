@@ -36,7 +36,7 @@ import com.twitter.elephantbird.util.HadoopUtils;
  *    // ...
  * </pre>
  *
- * This is mirror image implementation of {@link DeprecatedInputFormatWrapper}
+ * This is a mirror image of {@link DeprecatedInputFormatWrapper}
  *
  * @author Raghu Angadi
  *
