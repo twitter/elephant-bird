@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.apache.pig.data.Tuple;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.pig.util.PigToProtobuf;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockWriter;
 import com.twitter.elephantbird.util.Protobufs;
@@ -24,7 +23,7 @@ import java.io.OutputStream;
 public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreFunc {
 
   private TypeRef<M> typeRef_;
-  Builder builder_;
+  private Message msgObj; // for newBuilder().
   protected ProtobufBlockWriter<M> writer_ = null;
   private int numRecordsPerBlock_ = 10000;
 
@@ -44,13 +43,13 @@ public class LzoProtobufBlockPigStorage<M extends Message> extends LzoBaseStoreF
 
   protected void setTypeRef(TypeRef<M> typeRef) {
     typeRef_ = typeRef;
-    builder_ = Protobufs.getMessageBuilder(typeRef_.getRawClass());
+    msgObj = Protobufs.getMessageBuilder(typeRef_.getRawClass()).build();
   }
 
   @SuppressWarnings("unchecked")
   public void putNext(Tuple f) throws IOException {
     if (f == null) return;
-	  writer_.write((M)PigToProtobuf.tupleToMessage(builder_, f));
+	  writer_.write((M)PigToProtobuf.tupleToMessage(msgObj.newBuilderForType(), f));
   }
 
 	@Override
