@@ -8,33 +8,27 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.util.Pair;
 import org.apache.thrift.TBase;
-import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftBlockReader;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
-import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 
 public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoThriftBlockPigLoader.class);
 
   private final TypeRef<M> typeRef_;
   private final ThriftToPig<M> thriftToPig_;
   private ThriftBlockReader<M> reader_;
 
   private Pair<String, String> thriftStructsRead;
-  private Pair<String, String> thriftErrors;
 
   public LzoThriftBlockPigLoader(String thriftClassName) {
-    typeRef_ = ThriftUtils.getTypeRef(thriftClassName);
+    typeRef_ = PigUtil.getThriftTypeRef(thriftClassName);
     thriftToPig_ =  ThriftToPig.newInstance(typeRef_);
 
     String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
     thriftStructsRead = new Pair<String, String>(group, "Thrift Structs Read");
-    thriftErrors = new Pair<String, String>(group, "Errors");
 
     setLoaderSpec(getClass(), new String[]{thriftClassName});
   }
@@ -72,15 +66,8 @@ public class LzoThriftBlockPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadF
 
     M value;
     while ((value = reader_.readNext()) != null) {
-      try {
-        Tuple t = thriftToPig_.getPigTuple(value);
-        incrCounter(thriftStructsRead, 1L);
-        return t;
-      } catch (TException e) {
-        incrCounter(thriftErrors, 1L);
-        LOG.warn("ThriftToTuple error :", e); // may be corrupt data.
-        // try next
-      }
+      incrCounter(thriftStructsRead, 1L);
+      return thriftToPig_.getLazyTuple(value);
     }
     return null;
   }

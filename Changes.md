@@ -1,13 +1,16 @@
 # Elephant Bird #
 
+### Version 1.2.4 ###
+
 ### Version 1.2.3 ###
 
 ISSUE 35.  Fixes to B64Line Pig Loader.
+
 ISSUE 34.  Typos in "Thrift"
 
 ### Version 1.2.2 ###
 
-NO TICKET. Protobuf Pig storage : don't reuse builder object.
+NO TICKET. Protobuf Pig storage : do not reuse builder object.
 
 ### Version 1.2.1 ###
 
