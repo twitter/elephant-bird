@@ -13,6 +13,8 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
     super(null, null);
   }
 
+  public ProtobufWritable() {}
+
   public ProtobufWritable(TypeRef<M> typeRef) {
     this(null, typeRef);
   }
