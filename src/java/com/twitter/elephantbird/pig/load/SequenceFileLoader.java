@@ -87,7 +87,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
 
   private static final Logger LOG = LoggerFactory.getLogger(SequenceFileLoader.class);
   public static final String CONVERTER_PARAM = "converter";
-  public static final String SKIP_EOF_EXCEPTIONS_PARAM = "skipEOFErrors";
+  public static final String SKIP_EOF_ERRORS_PARAM = "skipEOFErrors";
   private static final String READ_KEY_PARAM = "_readKey";
   private static final String READ_VALUE_PARAM = "_readValue";
   protected final CommandLine keyArguments;
@@ -213,7 +213,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
     @SuppressWarnings("static-access")
     Option skipEOFOption =
         OptionBuilder
-            .withLongOpt(SKIP_EOF_EXCEPTIONS_PARAM)
+            .withLongOpt(SKIP_EOF_ERRORS_PARAM)
             .withDescription(
                 "Skip EOFExceptions if they occur while reading data." +
                     " Useful for reading sequence files while they are being created."
@@ -489,7 +489,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       }
       return tupleFactory.newTupleNoCopy(tuple);
     } catch (EOFException e) {
-      if (!otherArguments.hasOption(SKIP_EOF_EXCEPTIONS_PARAM)) {
+      if (!otherArguments.hasOption(SKIP_EOF_ERRORS_PARAM)) {
         throw e;
       }
 
