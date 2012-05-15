@@ -6,9 +6,11 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -16,8 +18,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.apache.pig.piggybank.storage.hiverc.HiveRCInputFormat;
-import org.apache.pig.piggybank.storage.hiverc.HiveRCRecordReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +34,7 @@ import com.twitter.elephantbird.pig.util.RCFileUtil;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class RCFileProtobufInputFormat extends HiveRCInputFormat {
+public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongWritable, BytesRefArrayWritable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RCFileProtobufInputFormat.class);
 
@@ -42,9 +42,11 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
 
   /** internal, for MR use only. */
   public RCFileProtobufInputFormat() {
+    super(new RCFileInputFormat<LongWritable, BytesRefArrayWritable>());
   }
 
   public RCFileProtobufInputFormat(TypeRef<Message> typeRef) {
+    this();
     this.typeRef = typeRef;
   }
 
@@ -56,7 +58,7 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
     Protobufs.setClassConf(conf, RCFileProtobufInputFormat.class, protoClass);
   }
 
-  public class ProtobufReader extends HiveRCRecordReader {
+  public class ProtobufReader extends FilterRecordReader<LongWritable, BytesRefArrayWritable> {
 
     private final TupleFactory tf = TupleFactory.getInstance();
     private final ProtobufToPig protoToPig = new ProtobufToPig();
@@ -67,6 +69,10 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
     private ArrayList<Integer>    columnsBeingRead = Lists.newArrayList();
 
     private Message               currentValue;
+
+    public ProtobufReader(RecordReader<LongWritable, BytesRefArrayWritable> reader) {
+      super(reader);
+    }
 
     /** is valid only after initialize() is called */
     public boolean isReadingUnknonwsColumn() {
@@ -135,11 +141,6 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
      * Builds protobuf message from the raw bytes returned by RCFile reader.
      */
     public Message getCurrentProtobufValue() throws IOException, InterruptedException {
-      /* getCurrentValue() returns a BytesRefArrayWritable since this class
-       * extends HiveRCRecordReader. Other option is to extend
-       * RecordReader directly and explicitly delegate each of the methods to
-       * HiveRCRecordReader
-       */
       if (currentValue != null) {
         return currentValue;
       }
@@ -214,6 +215,6 @@ public class RCFileProtobufInputFormat extends HiveRCInputFormat {
     if (typeRef == null) {
       typeRef = Protobufs.getTypeRef(taskAttempt.getConfiguration(), RCFileProtobufInputFormat.class);
     }
-    return new ProtobufReader();
+    return new ProtobufReader(super.createRecordReader(split, taskAttempt));
   }
 }

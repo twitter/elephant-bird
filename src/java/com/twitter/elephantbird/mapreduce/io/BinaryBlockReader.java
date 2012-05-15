@@ -48,15 +48,17 @@ public abstract class BinaryBlockReader<M> {
   }
 
   /**
-   * Sets input stream. Sometimes the actual input stream might be created 
+   * Sets input stream. Sometimes the actual input stream might be created
    * away from the constructor.
    */
   public void setInputStream(InputStream in) {
     in_ = in; // not closing existing in_, normally it is null
   }
-  
+
   /**
-   * Returns next deserialized object. null indicates end of stream.
+   * Returns next deserialized object. null indicates end of stream or a
+   * deserialization error. Use {@link #readNext(BinaryWritable)} to
+   * distinguish betwen end of stream or deserialization error.
    */
   public M readNext() throws IOException {
     byte[] blob = readNextProtoBytes();
@@ -105,9 +107,9 @@ public abstract class BinaryBlockReader<M> {
       writable.set(blob, 0, blob.length);
       return true;
     }
-    return false;  
+    return false;
   }
-  
+
   public void markNoMoreNewBlocks() {
     readNewBlocks_ = false;
   }
