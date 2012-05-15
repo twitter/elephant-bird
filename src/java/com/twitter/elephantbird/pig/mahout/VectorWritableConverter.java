@@ -67,59 +67,62 @@ import com.twitter.elephantbird.pig.util.PigUtil;
  * Example usage:
  *
  * <pre>
+ * %declare SEQFILE_LOADER 'com.twitter.elephantbird.pig.load.SequenceFileLoader';
+ * %declare SEQFILE_STORAGE 'com.twitter.elephantbird.pig.store.SequenceFileStorage';
  * %declare INT_CONVERTER 'com.twitter.elephantbird.pig.util.IntWritableConverter';
  * %declare VECTOR_CONVERTER 'com.twitter.elephantbird.pig.mahout.VectorWritableConverter';
  *
  * -- store DenseVector
  * pair = LOAD '$data' AS (key: int, val: (v1: double, v2: double));
- * STORE pair INTO '$output' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
- *   '-c $INT_CONVERTER',
- *   '-c $VECTOR_CONVERTER'
+ * STORE pair INTO '$output' USING $SEQFILE_STORAGE (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER'
  * );
  *
  * -- store DenseVector with floats
  * pair = LOAD '$data' AS (key: int, val: (v1: float, v2: float));
- * STORE pair INTO '$output' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
- *   '-c $INT_CONVERTER',
- *   '-c $VECTOR_CONVERTER -- -floatPrecision'
+ * STORE pair INTO '$output' USING $SEQFILE_STORAGE (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER -- -floatPrecision'
  * );
  *
  * -- store RandomAccessSparseVector data
  * pair = LOAD '$data' AS (key: int, val: (cardinality: int, entries: {entry: (index: int, value: double)}));
- * STORE pair INTO '$output' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
- *   '-c $INT_CONVERTER',
- *   '-c $VECTOR_CONVERTER'
+ * STORE pair INTO '$output' USING $SEQFILE_STORAGE (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER'
  * );
  *
  * -- store SequentialAccessSparseVector data with the -sequential flag
  * pair = LOAD '$data' AS (key: int, val: (cardinality: int, entries: {entry: (index: int, value: double)}));
- * STORE pair INTO '$output' USING com.twitter.elephantbird.pig.store.SequenceFileStorage (
- *   '-c $INT_CONVERTER',
- *   '-c $VECTOR_CONVERTER -- -sequential'
+ * STORE pair INTO '$output' USING $SEQFILE_STORAGE (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER -- -sequential'
  * );
  *
  * -- load DenseVector data, specifying schema manually
- * pair = LOAD '$data' USING com.twitter.elephantbird.pig.store.SequenceFileLoader (
- *   '-c $INT_CONVERTER',
- *   '-c $VECTOR_CONVERTER'
+ * pair = LOAD '$data' USING $SEQFILE_LOADER (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER'
  * ) AS (key: int, val: (f1: double, f2: double, f3: double));
  *
  * -- load DenseVector data with known cardinality; Schema defined by SequenceFileLoader
- * pair = LOAD '$data' USING com.twitter.elephantbird.pig.store.SequenceFileLoader (
- *   '-c $INT_CONVERTER',
- *   '-c $VECTOR_CONVERTER -- -dense -cardinality 2'
+ * pair = LOAD '$data' USING $SEQFILE_LOADER (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER -- -dense -cardinality 2'
  * );
  *
  * -- load *SparseVector data; Schema defined by SequenceFileLoader
- * pair = LOAD '$data' USING com.twitter.elephantbird.pig.store.SequenceFileLoader (
- *   '-c $INT_CONVERTER',
- *   '-c $VECTOR_CONVERTER -sparse'
+ * pair = LOAD '$data' USING $SEQFILE_LOADER (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER -- -sparse'
  * );
  *
  * -- load *SparseVector data with known cardinality; Schema defined by SequenceFileLoader
- * pair = LOAD '$data' USING com.twitter.elephantbird.pig.store.SequenceFileLoader (
- *   '-c $INT_CONVERTER',
- *   '-c $VECTOR_CONVERTER -- -sparse -cardinality 2'
+ * pair = LOAD '$data' USING $SEQFILE_LOADER (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER -- -sparse -cardinality 2'
+ * );
+ * </pre>
+ *
+ * Note that conversion of vector data is also supported in cases where it may be desirable to
+ * process data in sparse Pig vector format, but input Mahout vector data is actually dense:
+ *
+ * <pre>
+ * pair = LOAD '$dense_vectors' USING $SEQFILE_LOADER (
+ *   '-c $INT_CONVERTER', '-c $VECTOR_CONVERTER -- -sparse'
  * );
  * </pre>
  *
