@@ -6,17 +6,17 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
-import org.apache.pig.piggybank.storage.hiverc.HiveRCInputFormat;
-import org.apache.pig.piggybank.storage.hiverc.HiveRCRecordReader;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -34,7 +34,7 @@ import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class RCFileThriftInputFormat extends HiveRCInputFormat {
+public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWritable, BytesRefArrayWritable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RCFileThriftInputFormat.class);
 
@@ -42,9 +42,11 @@ public class RCFileThriftInputFormat extends HiveRCInputFormat {
 
   /** internal, for MR use only. */
   public RCFileThriftInputFormat() {
+    super(new RCFileInputFormat<LongWritable, BytesRefArrayWritable>());
   }
 
   public RCFileThriftInputFormat(TypeRef<? extends TBase<?, ?>> typeRef) {
+    this();
     this.typeRef = typeRef;
   }
 
@@ -64,10 +66,10 @@ public class RCFileThriftInputFormat extends HiveRCInputFormat {
     if (typeRef == null) {
       typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), RCFileThriftInputFormat.class);
     }
-    return new ThriftReader();
+    return new ThriftReader(super.createRecordReader(split, taskAttempt));
   }
 
-  public class ThriftReader extends HiveRCRecordReader {
+  public class ThriftReader extends FilterRecordReader<LongWritable, BytesRefArrayWritable> {
 
     private final TupleFactory tf = TupleFactory.getInstance();
 
@@ -80,6 +82,10 @@ public class RCFileThriftInputFormat extends HiveRCInputFormat {
     private TBinaryProtocol tProto = new TBinaryProtocol(memTransport);
 
     private TBase<?, ?>     currentValue;
+
+    public ThriftReader(RecordReader<LongWritable, BytesRefArrayWritable> reader) {
+      super(reader);
+    }
 
     /** is valid only after initialize() is called */
     public boolean isReadingUnknonwsColumn() {
@@ -145,11 +151,6 @@ public class RCFileThriftInputFormat extends HiveRCInputFormat {
      */
     @SuppressWarnings("unchecked")
     public TBase<?, ?> getCurrentThriftValue() throws IOException, InterruptedException, TException {
-      /* getCurrentValue() returns a BytesRefArrayWritable since this class
-       * extends HiveRCRecordReader. Other option is to extend
-       * RecordReader directly and explicitly delegate each of the methods to
-       * HiveRCRecordReader
-       */
       if (currentValue != null) {
         return currentValue;
       }
