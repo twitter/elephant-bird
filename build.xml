@@ -38,8 +38,8 @@
   -->
   <property name="test.library.path" value="none"/>
 
-  <property name="thrift.version.expected" value="Thrift version 0.5.0"/>
-  <property name="protobuf.version.expected" value="libprotoc 2.3.0"/>
+  <property name="thrift.version.expected.regex" value="Thrift version 0\.[567]\."/>
+  <property name="protobuf.version.expected.regex" value="libprotoc 2.3.0"/>
 
   <property name="compile.lib.dir" location="${build.dir}/lib/compile"/>
   <property name="test.lib.dir" location="${build.dir}/lib/test"/>
@@ -63,7 +63,7 @@
       <fail message="Expected @{compiler} @{versionExpected} but you have ${@{compiler}.version.actual}">
         <condition>
           <not>
-            <contains string="${@{compiler}.version.actual}" substring="@{versionExpected}"/>
+            <matches pattern="@{versionExpected}" string="${@{compiler}.version.actual}"/>
           </not>
         </condition>
       </fail>
@@ -129,7 +129,7 @@
   <target name="generate-protobuf" depends="init">
     <_check_compiler compiler="protoc"
                      versionArg="--version"
-                     versionExpected="${protobuf.version.expected}"/>
+                     versionExpected="${protobuf.version.expected.regex}"/>
     <apply executable="protoc" failonerror="true" skipemptyfilesets="true" verbose="true">
       <arg value="--proto_path=${src.proto.dir}"/>
       <arg value="--java_out=${src.gen.java.dir}"/>
@@ -187,7 +187,7 @@
   <target name="generate-thrift" depends="init">
     <_check_compiler compiler="thrift"
                      versionArg="-version"
-                     versionExpected="${thrift.version.expected}"/>
+                     versionExpected="${thrift.version.expected.regex}"/>
     <apply executable="thrift" failonerror="true" skipemptyfilesets="true" verbose="true">
       <arg value="--gen"/>
       <arg value="java"/>
