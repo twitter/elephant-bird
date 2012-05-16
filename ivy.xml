@@ -10,7 +10,7 @@
       <exclude org="log4j"/>
       <exclude org="org.apache.hadoop"/>
     </dependency>
-    <dependency org="com.google" name="protobuf-java" rev="${protobuf-java.version}"/>
+    <dependency org="com.google.protobuf" name="protobuf-java" rev="${protobuf-java.version}"/>
     <dependency org="com.google.guava" name="guava" rev="${guava.version}"/>
     <dependency org="com.googlecode.json-simple" name="json-simple" rev="${json-simple.version}"/>
     <dependency org="com.hadoop" name="hadoop-lzo" rev="${hadoop-lzo.version}"/>
