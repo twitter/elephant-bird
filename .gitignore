@@ -14,3 +14,9 @@
 .settings
 build
 eclipse-bin
+elephant-bird-cascading2/target
+elephant-bird-core/target
+elephant-bird-hive/target
+elephant-bird-pig/target
+elephant-bird-rcfile/target
+elephant-bird-core/test.txt
