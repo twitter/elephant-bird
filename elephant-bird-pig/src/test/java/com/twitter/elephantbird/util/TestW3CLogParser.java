@@ -18,7 +18,6 @@ import com.twitter.elephantbird.util.W3CLogParser;
 import static org.junit.Assert.assertEquals;
 
 public class TestW3CLogParser {
-  // TODO change this to use the maven resource stuff
   static final String FIELD_FILE = "W3CLogParser.field.txt";
   static final String VALID_FILE  = "W3CLogParser.valid.txt";
   static final String INVALID_FILE  = "W3CLogParser.invalid.txt";
