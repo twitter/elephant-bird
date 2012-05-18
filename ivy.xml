@@ -10,7 +10,7 @@
       <exclude org="log4j"/>
       <exclude org="org.apache.hadoop"/>
     </dependency>
-    <dependency org="com.google" name="protobuf-java" rev="${protobuf-java.version}"/>
+    <dependency org="com.google.protobuf" name="protobuf-java" rev="${protobuf-java.version}"/>
     <dependency org="com.google.guava" name="guava" rev="${guava.version}"/>
     <dependency org="com.googlecode.json-simple" name="json-simple" rev="${json-simple.version}"/>
     <dependency org="com.hadoop" name="hadoop-lzo" rev="${hadoop-lzo.version}"/>
@@ -34,8 +34,6 @@
                 rev="${maven-ant-tasks.version}" conf="test"/>
     <dependency org="org.apache.pig" name="pig" rev="${pig.version}" transitive="false"/>
     <dependency org="org.apache.thrift" name="libthrift" rev="${libthrift.version}"/>
-    <dependency org="org.apache.thrift" name="thrift-test"
-                rev="${thrift-test.version}" conf="test"/>
     <dependency org="yamlbeans" name="yamlbeans" rev="${yamlbeans.version}"/>
     <dependency org="org.apache.mahout" name="mahout-collections" rev="${mahout-collections.version}" transitive="false"/>
     <dependency org="org.apache.mahout" name="mahout-core" rev="${mahout.version}" transitive="false"/>
