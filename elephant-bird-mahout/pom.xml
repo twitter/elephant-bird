@@ -1,39 +1,44 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-         
     <parent>
         <groupId>com.twitter</groupId>
         <artifactId>elephant-bird</artifactId>
         <version>2.2.3-SNAPSHOT</version>
     </parent>
-         
+
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>elephant-bird-hive</artifactId>
+    <artifactId>elephant-bird-mahout</artifactId>
     <packaging>jar</packaging>
+
     <dependencies>
         <!-- library dependencies -->
         <dependency>
             <groupId>com.twitter</groupId>
-            <artifactId>elephant-bird-core</artifactId>
+            <artifactId>elephant-bird-pig</artifactId>
             <version>2.2.3-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-serde</artifactId>
-            <version>0.8.0</version>
+            <groupId>com.twitter</groupId>
+            <artifactId>elephant-bird-pig</artifactId>
+            <version>2.2.3-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>            
+        </dependency>        
+        <dependency>
+            <groupId>org.apache.mahout</groupId>
+            <artifactId>mahout-collections</artifactId>
+            <version>1.0</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-exec</artifactId>
-            <version>0.8.0</version>
+            <groupId>org.apache.mahout</groupId>
+            <artifactId>mahout-core</artifactId>
+            <version>0.6</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.hcatalog</groupId>
-            <artifactId>hcatalog</artifactId>
-            <version>0.5.0-dev</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/../lib/hcatalog-0.5.0-dev.jar</systemPath>
+            <groupId>org.apache.mahout</groupId>
+            <artifactId>mahout-math</artifactId>
+            <version>0.6</version>
         </dependency>
     </dependencies>
 </project>

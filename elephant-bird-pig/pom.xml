@@ -1,11 +1,34 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.twitter</groupId>
+        <artifactId>elephant-bird</artifactId>
+        <version>2.2.3-SNAPSHOT</version>
+    </parent>
+
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.twitter</groupId>
     <artifactId>elephant-bird-pig</artifactId>
     <packaging>jar</packaging>
-    <version>2.2.3-SNAPSHOT</version>
+
+    <!-- need this for the mahout tests -->
+    <build>
+        <plugins>
+         <plugin>
+           <groupId>org.apache.maven.plugins</groupId>
+           <artifactId>maven-jar-plugin</artifactId>
+           <version>2.2</version>
+           <executions>
+             <execution>
+               <goals>
+                 <goal>test-jar</goal>
+               </goals>
+             </execution>
+           </executions>
+         </plugin>
+        </plugins>
+      </build>
+
     <dependencies>
         <!-- library dependencies -->
         <dependency>
@@ -17,21 +40,6 @@
             <groupId>org.apache.pig</groupId>
             <artifactId>pig</artifactId>
             <version>0.9.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-collections</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-core</artifactId>
-            <version>0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-math</artifactId>
-            <version>0.6</version>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
