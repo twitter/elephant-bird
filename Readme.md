@@ -2,7 +2,7 @@
 
 ## About
 
-Elephant Bird is Twitter's open source library of [LZO](http://www.github.com/kevinweil/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day.
+Elephant Bird is Twitter's open source library of [LZO](https://github.com/twitter/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day.
 
 Join the conversation about Elephant-Bird on the [developer mailing list](https://groups.google.com/forum/?fromgroups#!forum/elephantbird-dev).
 
@@ -24,11 +24,8 @@ PIG_OPTS=-Djava.library.path=/path/to/my/libgplcompression/dir
 
 to `pig-env.sh`. See the instructions for [Hadoop-LZO](http://www.github.com/kevinweil/hadoop-lzo) for more details.
 
-There are a few simple examples that use the input formats.  Note how the Protocol Buffer-based
-formats work, and also note that the examples build file uses the custom codegen stuff.  See below for
-more about that.
-
-NOTE: This is an experimental branch for working with Pig 0.8. It may not work. Caveat emptor.
+There are a few simple examples that use the input formats. Note how the Protocol Buffer and Thrift
+classes are passed to input formats through configuration.
 
 ## Maven repository
 
@@ -54,15 +51,15 @@ And include elephant-bird as a dependency in `ivy.xml`:
 1. Protocol Buffers 2.3 (not compatible with 2.4+)
 2. Pig 0.8, 0.9 (not compatible with 0.7 and below)
 4. Hive 0.7 (with HIVE-1616)
-5. Thrift 0.5
+5. Thrift 0.5.0, 0.6.0, 0.7.0
 6. Mahout 0.6
 7. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
 
 ## Protocol Buffer and Thrift compiler dependencies
 
 Elephant Bird requires Protocol Buffer compiler version 2.3 at build time, as generated
-classes are used internally. Thrift compiler version 0.5.0 is required to generate
-classes used in tests. As these are native-code tools they must be installed on the build
+classes are used internally. Thrift compiler is required to generate classes used in tests.
+As these are native-code tools they must be installed on the build
 machine (java library dependencies are pulled from maven repositories during the build).
 
 ## Contents
@@ -120,31 +117,6 @@ and Writables for working with Thrift and Google Protocol Buffers.
 We haven't written up the docs yet, but look at `ProtobufMRExample.java`, `ThriftMRExample.java`, `people_phone_number_count.pig`, `people_phone_number_count_thrift.pig` under `examples` directory for reflection-based dynamic usage.
 We also provide utilities for generating Protobuf-specific Loaders, Input/Output Formats, etc, if for some reason you want to avoid
 the dynamic bits.
-
-### Protobuf Codegen?
-
-Note: this is not strictly required for working with Protocol Buffers in Hadoop. We can do most of this dynamically.
-Some people like having specific classes, though, so this functionality is available since protobuf 2.3 makes it so easy to do.
-
-In protobuf 2.3, Google introduced the notion of a [Protocol Buffer plugin](http://code.google.com/apis/protocolbuffers/docs/reference/cpp/google.protobuf.compiler.plugin.pb.html) that
-lets you hook in to their code generation elegantly, with all the parsed metadata available.  We use this in
-`com.twitter.elephantbird.proto.HadoopProtoCodeGenerator` to generate code for each Protocol Buffer.  The
-`HadoopProtoCodeGenerator` expects as a first argument a yml file consisting of keys and lists of classnames.  For each
-Protocol Buffer file read in (say from `my_file.proto`), it looks up the basename (`my_file`) in the yml file.
-If a corresponding list exists, it expects each element is a classname of a class deriving from `com.twitter.elephantbird.proto.ProtoCodeGenerator`.  These classes implement
-a method to set the filename, and a method to set the generated code contents of the file.  You can add your own by creating
-such a derived class and including it in the list of classnames for the Protocol Buffer file key.  That is, if you want
-to apply the code generators in `com.twitter.elephantbird.proto.codegen.ProtobufWritableGenerator` and
-`com.twitter.elephantbird.proto.codegen.LzoProtobufBytesToPigTupleGenerator` to every protobuf in the
-file `my_file.proto`, then your config file should have a section that looks like
-
-```
-my_file:
-  - com.twitter.elephantbird.proto.codegen.ProtobufWritableGenerator
-  - com.twitter.elephantbird.proto.codegen.LzoProtobufBytesToPigTupleGenerator
-```
-
-There are examples in the examples subdirectory showing how to integrate this code generation into a build, both for generating Java files pre-jar and for generating other types of files from Protocol Buffer definitions post-compile (there are examples that do this to generate [Pig](http://hadoop.apache.org/pig) loaders for a set of Protocol Buffers).
 
 ## Hadoop SequenceFiles and Pig
 
