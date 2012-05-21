@@ -124,6 +124,8 @@
             <groupId>com.hadoop</groupId>
             <artifactId>hadoop-lzo</artifactId>
             <version>0.4.15</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/../lib/hadoop-lzo-0.4.15.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
