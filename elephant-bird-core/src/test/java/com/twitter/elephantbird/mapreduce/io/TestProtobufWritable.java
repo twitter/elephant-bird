@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Java;
 import org.apache.tools.ant.types.Environment;
 import org.junit.BeforeClass;
@@ -71,35 +72,36 @@ public class TestProtobufWritable {
     assertEquals(referenceAbWritable.hashCode(), after.hashCode());
   }
 
-//  @Test
-//  public void testStableHashcodeAcrossJVMs() throws IOException {
-//    int expectedHashCode = referenceAbWritable.hashCode();
-//    Java otherJvm = new Java();
-//    otherJvm.setNewenvironment(true);
-//    otherJvm.setFork(true);
-//    otherJvm.setClassname(OtherJvmClass.class.getName());
-//    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-//      Environment.Variable var = new Environment.Variable();
-//      var.setKey(entry.getKey());
-//      var.setValue(entry.getValue());
-//      otherJvm.addEnv(var);
-//    }
-//    for (String prop : System.getProperties().stringPropertyNames()) {
-//      String propValue = System.getProperty(prop);
-//      Environment.Variable var = new Environment.Variable();
-//      var.setKey(prop);
-//      var.setValue(propValue);
-//      otherJvm.addSysproperty(var);
-//    }
-//    otherJvm.setDir(new File(System.getProperty("java.io.tmpdir")));
-//    File tmpOut = File.createTempFile("otherJvm", "txt");
-//    otherJvm.setArgs(tmpOut.getAbsolutePath());
-//    otherJvm.init();
-//    otherJvm.executeJava();
-//    DataInputStream is = new DataInputStream(new FileInputStream(tmpOut));
-//    assertEquals(expectedHashCode, is.readInt());
-//    is.close();
-//  }
+  @Test
+  public void testStableHashcodeAcrossJVMs() throws IOException {
+    int expectedHashCode = referenceAbWritable.hashCode();
+    Java otherJvm = new Java();
+    otherJvm.setNewenvironment(true);
+    otherJvm.setFork(true);
+    otherJvm.setProject(new Project());
+    otherJvm.setClassname(OtherJvmClass.class.getName());
+    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+      Environment.Variable var = new Environment.Variable();
+      var.setKey(entry.getKey());
+      var.setValue(entry.getValue());
+      otherJvm.addEnv(var);
+    }
+    for (String prop : System.getProperties().stringPropertyNames()) {
+      String propValue = System.getProperty(prop);
+      Environment.Variable var = new Environment.Variable();
+      var.setKey(prop);
+      var.setValue(propValue);
+      otherJvm.addSysproperty(var);
+    }
+    otherJvm.setDir(new File(System.getProperty("java.io.tmpdir")));
+    File tmpOut = File.createTempFile("otherJvm", "txt");
+    otherJvm.setArgs(tmpOut.getAbsolutePath());
+    otherJvm.init();
+    otherJvm.executeJava();
+    DataInputStream is = new DataInputStream(new FileInputStream(tmpOut));
+    assertEquals(expectedHashCode, is.readInt());
+    is.close();
+  }
 
   public static class OtherJvmClass {
     /* Used for testStableHashcodeAcrossJVMs */
