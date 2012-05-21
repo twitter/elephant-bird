@@ -5,23 +5,11 @@
         <groupId>com.twitter</groupId>
         <artifactId>elephant-bird</artifactId>
         <version>2.2.3-SNAPSHOT</version>
+        <relativePath>..</relativePath>        
     </parent>
          
     <modelVersion>4.0.0</modelVersion>
     <artifactId>elephant-bird-core</artifactId>
-    <packaging>jar</packaging>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>twitter</id>
-            <name>twitter</name>
-            <layout>default</layout>
-            <url>http://maven.twttr.com</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 
     <build>
         <plugins>
@@ -68,16 +56,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-release-plugin</artifactId>
-              <version>2.3</version>
-              <configuration>
-                <goals>deploy</goals>
-                <autoversionsubmodules>true</autoversionsubmodules>
-              </configuration>
-            </plugin>            
+            </plugin>       
         </plugins>
     </build>
 
