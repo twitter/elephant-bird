@@ -13,11 +13,10 @@
 
     <pluginRepositories>
         <pluginRepository>
-            <id>dtrott</id>
-            <!-- for the thrift plugin -->
-            <name>dtrott</name>
+            <id>twitter</id>
+            <name>twitter</name>
             <layout>default</layout>
-            <url>http://maven.davidtrott.com/repository</url>
+            <url>http://maven.twttr.com</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
