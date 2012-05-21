@@ -100,11 +100,9 @@
             <version>0.20.2</version>
         </dependency>
         <dependency>
-            <groupId>com.hadoop</groupId>
+            <groupId>com.hadoop.gplcompression</groupId>
             <artifactId>hadoop-lzo</artifactId>
             <version>0.4.15</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/../lib/hadoop-lzo-0.4.15.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
