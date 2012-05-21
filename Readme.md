@@ -13,8 +13,8 @@ Apache licensed.
 ## Quickstart
 
 1. Get the code: `git clone git://github.com/kevinweil/elephant-bird.git`
-1. Build the jar: `ant` (or `ant -p` to view all targets)
-1. Explore what's available: `ant javadoc` and `ant examples`
+1. Build the jar: `mvn package`
+1. Explore what's available: `mvn javadoc:javadoc`
 
 Note: For any of the LZO-based code, make sure that the native LZO libraries are on your `java.library.path`.  Generally this is done by setting `JAVA_LIBRARY_PATH` in `pig-env.sh` or `hadoop-env.sh`.  You can also add lines like
 
