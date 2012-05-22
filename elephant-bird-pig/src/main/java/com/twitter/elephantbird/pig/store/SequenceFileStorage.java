@@ -118,7 +118,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
   }
 
   @Override
-  protected Options getOptions() {
+  protected Options getKeyValueOptions() {
     @SuppressWarnings("static-access")
     Option typeOption =
         OptionBuilder
@@ -128,7 +128,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
             .withDescription(
                 "Writable type of data. Defaults to type returned by getWritableClass()"
                     + " method of configured WritableConverter.").create("t");
-    return super.getOptions().addOption(typeOption);
+    return super.getKeyValueOptions().addOption(typeOption);
   }
 
   @Override

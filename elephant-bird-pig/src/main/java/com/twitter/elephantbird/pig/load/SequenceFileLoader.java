@@ -41,12 +41,12 @@ import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.PigContext;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.UDFContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileInputFormat;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
@@ -75,6 +75,16 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  */
 public class SequenceFileLoader<K extends Writable, V extends Writable> extends FileInputLoadFunc
     implements LoadPushDown, LoadMetadata {
+  /**
+   * Counter enum for error conditions.
+   */
+  public static enum Counter {
+    /**
+     * {@link EOFException}s encountered while reading input.
+     */
+    EOFException
+  };
+
   private static final Logger LOG = LoggerFactory.getLogger(SequenceFileLoader.class);
   public static final String CONVERTER_PARAM = "converter";
   public static final String SKIP_EOF_ERRORS_PARAM = "skipEOFErrors";
@@ -94,22 +104,24 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   private RecordReader<DataInputBuffer, DataInputBuffer> reader;
   private boolean readKey = true;
   private boolean readValue = true;
-  private final PigCounterHelper counterHelper_ = new PigCounterHelper();
-  private enum SequenceFileLoaderCounters { EOFError };
-  
+  private final PigCounterHelper counterHelper = new PigCounterHelper();
+
   /**
-   * Parses key and value options from argument strings. Available options for both key and value
+   * Parses key and value options from argument strings. Available options for key and value
    * argument strings include:
+   *
    * <dl>
    * <dt>-c|--converter cls</dt>
    * <dd>{@link WritableConverter} implementation class to use for conversion of data. Defaults to
    * {@link TextConverter} for both key and value.</dd>
    * </dl>
+   *
    * Any extra arguments found will be treated as String arguments for the WritableConverter
    * constructor. For instance, the argument string {@code "-c MyConverter 123 abc"} specifies
    * WritableConverter class {@code MyConverter} along with two constructor arguments {@code "123"}
    * and {@code "abc"}. This will cause SequenceFileLoader to attempt to invoke the following
    * constructors, in order, to create a new instance of MyConverter:
+   *
    * <ol>
    * <li><code>MyConverter(String arg1, String arg2)</code> -- constructor arguments are passed as
    * explicit arguments.</li>
@@ -119,6 +131,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * <li><code>MyConverter(String argString)</code> -- constructor arguments are joined with space
    * char to create {@code argString}.</li>
    * </ol>
+   *
    * If none of these constructors exist, a RuntimeException will be thrown.
    *
    * <p>
@@ -134,19 +147,21 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * );
    * </pre>
    *
-   * @param keyArgs
-   * @param valueArgs
-   * @param otherArgs
+   * @param keyArgs argument string containing key options.
+   * @param valueArgs argument string containing value options.
+   * @param otherArgs argument string containing other options.
    * @throws ParseException
    * @throws IOException
    */
-  public SequenceFileLoader(String keyArgs, String valueArgs, String otherArgs) throws ParseException, IOException {
+  public SequenceFileLoader(String keyArgs, String valueArgs, String otherArgs)
+      throws ParseException, IOException {
     // parse key, value arguments
-    Options options = getOptions();
-    keyArguments = parseArguments(options, keyArgs);
-    valueArguments = parseArguments(options, valueArgs);
-    otherArguments = parseArguments(options, otherArgs);
-    
+    Options keyValueOptions = getKeyValueOptions();
+    Options otherOptions = getOtherOptions();
+    keyArguments = parseArguments(keyValueOptions, keyArgs);
+    valueArguments = parseArguments(keyValueOptions, valueArgs);
+    otherArguments = parseArguments(otherOptions, otherArgs);
+
     // construct key, value converters
     keyConverter = getWritableConverter(keyArguments);
     valueConverter = getWritableConverter(valueArguments);
@@ -166,7 +181,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   }
 
   /**
-   * Constructor without other args (backwards compatible).
+   * Constructor without other arguments (backwards compatible).
    *
    * @throws ParseException
    * @throws IOException
@@ -174,11 +189,11 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
   public SequenceFileLoader(String keyArgs, String valueArgs) throws ParseException, IOException {
     this(keyArgs, valueArgs, "");
   }
-  
+
   /**
    * @return Options instance containing valid key/value options.
    */
-  protected Options getOptions() {
+  protected Options getKeyValueOptions() {
     @SuppressWarnings("static-access")
     Option converterOption =
         OptionBuilder
@@ -186,15 +201,24 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
             .hasArg()
             .withArgName("cls")
             .withDescription(
-                "Converter type to use for conversion of data." + "  Defaults to '"
-                    + TextConverter.class.getName() + "'.").create("c");
-    Option skipEOFOption = 
+                String.format("Converter type to use for conversion of data. Defaults to '%s'.",
+                    TextConverter.class.getName())).create("c");
+    return new Options().addOption(converterOption);
+  }
+
+  /**
+   * @return Options instance containing valid global options.
+   */
+  protected Options getOtherOptions() {
+    @SuppressWarnings("static-access")
+    Option skipEOFOption =
         OptionBuilder
             .withLongOpt(SKIP_EOF_ERRORS_PARAM)
             .withDescription(
-                "Skip EOFExceptions if they occur while reading the data."
+                "Skip EOFExceptions if they occur while reading data." +
+                    " Useful for reading sequence files while they are being created."
             ).create();
-    return new Options().addOption(converterOption).addOption(skipEOFOption);
+    return new Options().addOption(skipEOFOption);
   }
 
   /**
@@ -399,7 +423,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * This implementation returns {@code null}.
    *
    * @see org.apache.pig.LoadMetadata#getStatistics(java.lang.String,
-   *      org.apache.hadoop.mapreduce.Job)
+   * org.apache.hadoop.mapreduce.Job)
    */
   @Override
   public ResourceStatistics getStatistics(String location, Job job) throws IOException {
@@ -410,7 +434,7 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
    * This implementation returns {@code null}.
    *
    * @see org.apache.pig.LoadMetadata#getPartitionKeys(java.lang.String,
-   *      org.apache.hadoop.mapreduce.Job)
+   * org.apache.hadoop.mapreduce.Job)
    */
   @Override
   public String[] getPartitionKeys(String location, Job job) throws IOException {
@@ -465,18 +489,20 @@ public class SequenceFileLoader<K extends Writable, V extends Writable> extends 
       }
       return tupleFactory.newTupleNoCopy(tuple);
     } catch (EOFException e) {
-      if (otherArguments.hasOption(SKIP_EOF_ERRORS_PARAM)) {
-        // prefer to keep reading rather than causing the job to fail when it hits a file still 
-        // being written
-        LOG.warn("EOFException encountered while reading input", e);
-        counterHelper_.incrCounter(SequenceFileLoaderCounters.EOFError, 1L);
-      } else {
+      if (!otherArguments.hasOption(SKIP_EOF_ERRORS_PARAM)) {
         throw e;
       }
+
+      /*
+       * Prefer to keep reading rather than causing the job to fail when it hits a file still being
+       * written.
+       */
+      LOG.warn("EOFException encountered while reading input", e);
+      counterHelper.incrCounter(Counter.EOFException, 1L);
     } catch (InterruptedException e) {
       throw new ExecException("Error while reading input", 6018, PigException.REMOTE_ENVIRONMENT, e);
     }
-    
+
     return null;
   }
 
