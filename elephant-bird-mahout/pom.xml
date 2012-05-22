@@ -1,44 +1,39 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <groupId>com.twitter</groupId>
-        <artifactId>elephant-bird</artifactId>
-        <version>2.2.3-SNAPSHOT</version>
-        <relativePath>..</relativePath>        
-    </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.twitter</groupId>
+    <artifactId>elephant-bird</artifactId>
+    <version>2.2.3-SNAPSHOT</version>
+    <relativePath>..</relativePath>
+  </parent>
 
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>elephant-bird-mahout</artifactId>
+  <artifactId>elephant-bird-mahout</artifactId>
+  <name>Elephant Bird Mahout</name>
+  <description>Mahout utilities.</description>
 
-    <dependencies>
-        <!-- library dependencies -->
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>elephant-bird-pig</artifactId>
-            <version>2.2.3-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>elephant-bird-pig</artifactId>
-            <version>2.2.3-SNAPSHOT</version>
-            <type>test-jar</type>
-            <scope>test</scope>            
-        </dependency>        
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-collections</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-core</artifactId>
-            <version>0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-math</artifactId>
-            <version>0.6</version>
-        </dependency>
-    </dependencies>
+  <dependencies>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>elephant-bird-pig</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>elephant-bird-pig</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.mahout</groupId>
+      <artifactId>mahout-collections</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.mahout</groupId>
+      <artifactId>mahout-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.mahout</groupId>
+      <artifactId>mahout-math</artifactId>
+    </dependency>
+  </dependencies>
 </project>
