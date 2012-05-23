@@ -34,7 +34,6 @@
                 rev="${maven-ant-tasks.version}" conf="test"/>
     <dependency org="org.apache.pig" name="pig" rev="${pig.version}" transitive="false"/>
     <dependency org="org.apache.thrift" name="libthrift" rev="${libthrift.version}"/>
-    <dependency org="yamlbeans" name="yamlbeans" rev="${yamlbeans.version}"/>
     <dependency org="org.apache.mahout" name="mahout-collections" rev="${mahout-collections.version}" transitive="false"/>
     <dependency org="org.apache.mahout" name="mahout-core" rev="${mahout.version}" transitive="false"/>
     <dependency org="org.apache.mahout" name="mahout-math" rev="${mahout.version}" transitive="false"/>
