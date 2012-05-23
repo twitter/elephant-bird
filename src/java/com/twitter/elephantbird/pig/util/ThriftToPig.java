@@ -80,7 +80,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     return new LazyTuple(structDesc, thriftObj);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   private static <T extends TBase>Tuple toTuple(TStructDescriptor tDesc, T tObj) {
     int size = tDesc.getFields().size();
     Tuple tuple = tupleFactory.newTuple(size);
