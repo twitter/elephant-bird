@@ -28,6 +28,7 @@ import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
+import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -100,7 +101,7 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
     private TBinaryProtocol skipProto;
 
     ProtobufWriter(TaskAttemptContext job) throws IOException {
-      super(RCFileThriftOutputFormat.this, job, makeColumnarMetadata());
+      super(RCFileThriftOutputFormat.this, job, Protobufs.toText(makeColumnarMetadata()));
     }
 
     @Override @SuppressWarnings("unchecked")

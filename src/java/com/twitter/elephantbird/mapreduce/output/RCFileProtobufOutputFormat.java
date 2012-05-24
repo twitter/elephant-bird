@@ -84,7 +84,7 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
   private class ProtobufWriter extends RCFileOutputFormat.Writer {
 
     ProtobufWriter(TaskAttemptContext job) throws IOException {
-      super(RCFileProtobufOutputFormat.this, job, makeColumnarMetadata());
+      super(RCFileProtobufOutputFormat.this, job, Protobufs.toText(makeColumnarMetadata()));
     }
 
     @Override
