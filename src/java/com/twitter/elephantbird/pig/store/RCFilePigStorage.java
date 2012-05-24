@@ -15,8 +15,6 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.builtin.PigStorage;
 import org.apache.pig.data.DataByteArray;
@@ -48,8 +46,15 @@ import com.twitter.elephantbird.mapreduce.output.RCFileOutputFormat;
 public class RCFilePigStorage extends PigStorage {
 
   private TupleFactory tupleFactory = TupleFactory.getInstance();
-  private int numColumns = -1;
+
+  // for loader
   private int[] requiredColumns = null;
+
+  // for storage
+  private int numColumns = -1;
+  private ByteStream.Output byteStream;
+  private BytesRefArrayWritable rowWritable;
+  private BytesRefWritable[] colValRefs;
 
   public RCFilePigStorage() {
     super();
@@ -68,7 +73,7 @@ public class RCFilePigStorage extends PigStorage {
 
   @Override
   public OutputFormat<NullWritable, Writable> getOutputFormat() {
-    return new TupleOutputFormat();
+    return new RCFileOutputFormat();
   }
 
   public void setLocation(String location, Job job) throws IOException {
@@ -161,60 +166,45 @@ public class RCFilePigStorage extends PigStorage {
     }
   }
 
-  /**
-   * converts output tuple to set of byte arrays and writes them to the RCFile.
-   * It converts the tuple fields to bytes the same way as PigStorage does.
-   */
-  private class TupleOutputFormat extends RCFileOutputFormat {
+  @SuppressWarnings("unchecked")
+  @Override
+  public void putNext(Tuple t) throws IOException {
+    // convert tuple fields to set of byte arrays and write to RCFile
 
-    @Override
-    public RecordWriter<NullWritable, Writable> getRecordWriter(
-            TaskAttemptContext job) throws IOException, InterruptedException {
-
+    if (rowWritable == null) { // initialize
       if (numColumns < 1) {
         throw new IOException("number of columns is not set");
       }
 
-      final RecordWriter<NullWritable, Writable> writer = super.getRecordWriter(job);
-
-      final ByteStream.Output byteStream = new ByteStream.Output();
-      final BytesRefArrayWritable rowWritable = new BytesRefArrayWritable();
-      final BytesRefWritable[] colValRefs = new BytesRefWritable[numColumns];
+      byteStream = new ByteStream.Output();
+      rowWritable = new BytesRefArrayWritable();
+      colValRefs = new BytesRefWritable[numColumns];
 
       for (int i = 0; i < numColumns; i++) {
         colValRefs[i] = new BytesRefWritable();
         rowWritable.set(i, colValRefs[i]);
       }
+    }
 
-      return new RecordWriter<NullWritable, Writable>() {
+    byteStream.reset();
 
-        @Override
-        public void close(TaskAttemptContext context) throws IOException, InterruptedException {
-          writer.close(context);
-        }
+    // write each field as a text (just like PigStorage)
+    int sz = t.size();
+    int startPos = 0;
 
-        @Override
-        public void write(NullWritable key, Writable value) throws IOException,
-                                                        InterruptedException {
-          byteStream.reset();
+    for (int i = 0; i < sz && i < numColumns; i++) {
 
-          // write each field as a text (just like PigStorage.
-          Tuple tuple = (Tuple)value;
-          int sz = tuple.size();
-          int startPos = 0;
+      StorageUtil.putField(byteStream, t.get(i));
+      colValRefs[i].set(byteStream.getData(),
+                        startPos,
+                        byteStream.getCount() - startPos);
+       startPos = byteStream.getCount();
+    }
 
-          for (int i = 0; i < sz && i < numColumns; i++) {
-
-            StorageUtil.putField(byteStream, tuple.get(i));
-            colValRefs[i].set(byteStream.getData(),
-                              startPos,
-                              byteStream.getCount() - startPos);
-             startPos = byteStream.getCount();
-          }
-
-          writer.write(null, rowWritable);
-        }
-      };
+    try {
+      writer.write(null, rowWritable);
+    } catch (InterruptedException e) {
+      throw new IOException(e);
     }
   }
 }
