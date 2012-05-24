@@ -29,12 +29,11 @@ import com.twitter.elephantbird.mapreduce.input.MapReduceInputFormatWrapper;
 import com.twitter.elephantbird.mapreduce.output.RCFileOutputFormat;
 
 /**
- * RCFile version of PigStorage.
+ * RCFile version of PigStorage. <p>
  *
  * Usage: <pre>
- * register 'libs/*hive-common*.jar; -- hive-common for RCFile
- * register 'libs/*hive-exec*.jar;  -- hive-exec for RCFile
- * register 'libs/*protobuf-java*.jar; -- protobuf-java should not be required, but for now it is.
+ * register 'libs/*hive-common*.jar;
+ * register 'libs/*hive-exec*.jar;
  *
  * a = load 'input' using RCFileStorage() as (a:int, b:chararray, c:long);
  *
