@@ -153,9 +153,13 @@ public class RCFilePigStorage extends PigStorage {
       int tupleIdx = 0;
 
       for (int i=0; i<inputSize; i++) {
-        BytesRefWritable ref = byteRefs.get(i);
-        if (ref != null && (!isProjected || i == requiredColumns[tupleIdx])) {
-          tuple.set(tupleIdx++, new DataByteArray(ref.getBytesCopy()));
+        if (!isProjected || i == requiredColumns[tupleIdx]) {
+          // set if all the fields are required or the field is projected
+          BytesRefWritable ref = byteRefs.get(i);
+          if (ref != null && ref.getLength() > 0) {
+            tuple.set(tupleIdx, new DataByteArray(ref.getBytesCopy()));
+          }
+          tupleIdx++;
         }
       }
 
