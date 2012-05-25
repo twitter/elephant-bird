@@ -1,5 +1,19 @@
 # Elephant Bird #
 
+### Version 2.2.3 ###
+
+ISSUE 205. Set map value field alias to null (Andy Schlaikjer)
+
+ISSUE 203. Remove yamlbeans from dependencies (Raghu Angadi)
+
+ISSUE 202. remove Protobuf codegen utils, use maven repo for Thrift and Protobuf jars (Raghu Angadi)
+
+ISSUE 198. Remove piggybank dependency. (Raghu Angadi)
+
+ISSUE 200. Fix typos in VectorWritableConverter javadoc (Andy Schlaikjer)
+
+ISSUE 197. Upgrade to cascading wip-288 (Argyris Zymnis)
+
 ### Version 2.2.2 ###
 
 ISSUE 193. Fix schema for Thrift struct in a map. (Raghu Angadi)
