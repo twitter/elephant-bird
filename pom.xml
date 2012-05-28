@@ -39,6 +39,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <slf4j.version>1.6.4</slf4j.version>
     <apache.hadoop.version>0.20.2</apache.hadoop.version>
     <apache.pig.version>0.9.2</apache.pig.version>
     <apache.hive.version>0.8.0</apache.hive.version>
@@ -88,8 +89,8 @@
         <artifactId>elephant-bird-pig</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
-        <scope>test</scope>            
-      </dependency>        
+        <scope>test</scope>
+      </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-rcfile</artifactId>
@@ -113,12 +114,12 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.6.4</version>
+        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
-        <version>1.6.4</version>
+        <version>${slf4j.version}</version>
         <scope>runtime</scope>
         <optional>true</optional>
       </dependency>
@@ -176,13 +177,6 @@
         <artifactId>json-simple</artifactId>
         <version>1.1</version>
       </dependency>
-      <dependency>
-        <groupId>yamlbeans</groupId>
-        <artifactId>yamlbeans</artifactId>
-        <version>0.9.3</version>
-        <scope>system</scope>
-        <systemPath>${basedir}/../lib/yamlbeans-0.9.3.jar</systemPath>
-      </dependency>
 
       <!-- hadoop -->
       <dependency>
@@ -235,8 +229,6 @@
         <groupId>org.apache.hcatalog</groupId>
         <artifactId>hcatalog</artifactId>
         <version>0.5.0-dev</version>
-        <scope>system</scope>
-        <systemPath>${basedir}/../lib/hcatalog-0.5.0-dev.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>javax.jdo</groupId>
@@ -302,6 +294,13 @@
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.12</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>2.12</version>
+            </dependency>
+          </dependencies>
         </plugin>
 
         <!-- package types -->
