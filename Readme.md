@@ -173,8 +173,9 @@ Each new release since 2.1.3 has a *tag*. The latest version on master is what w
 Major contributors are listed below. Lots of others have helped too, thanks to all of them!
 See git logs for credits.
 
-* Kevin Weil ([@kevinweil](http://twitter.com/kevinweil))
-* Dmitriy Ryaboy ([@squarecog](http://twitter.com/squarecog))
-* Raghu Angadi ([@raghuangadi](http://twitter.com/raghuangadi))
-* Andy Schlaikjer ([@sagemintblue](http://twitter.com/sagemintblue))
-* Travis Crawford ([@tc](http://twitter.com/tc))
+* Kevin Weil ([@kevinweil](https://twitter.com/kevinweil))
+* Dmitriy Ryaboy ([@squarecog](https://twitter.com/squarecog))
+* Raghu Angadi ([@raghuangadi](https://twitter.com/raghuangadi))
+* Andy Schlaikjer ([@sagemintblue](https://twitter.com/sagemintblue))
+* Travis Crawford ([@tc](https://twitter.com/tc))
+* Johan Oskarsson ([@skr](https://twitter.com/skr))

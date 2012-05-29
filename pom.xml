@@ -2,6 +2,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
+  </parent>
 
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
@@ -16,6 +21,7 @@
     LoadFuncs, Hive SerDe, HBase miscellanea, etc. The majority of these are in
     production at Twitter running over data every day.
   </description>
+
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
@@ -23,14 +29,44 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+
   <organization>
     <name>Twitter</name>
     <url>http://twitter.com/</url>
   </organization>
+
+  <developers>
+    <developer>
+      <id>kevin</id>
+      <name>Kevin Weil</name>
+    </developer>
+    <developer>
+      <id>dmitriy</id>
+      <name>Dmitriy Ryaboy</name>
+    </developer>
+    <developer>
+      <id>raghu</id>
+      <name>Raghu Angadi</name>
+    </developer>
+    <developer>
+      <id>andy</id>
+      <name>Andy Schlaikjer</name>
+    </developer>
+    <developer>
+      <id>travis</id>
+      <name>Travis Crawford</name>
+    </developer>
+    <developer>
+      <id>johan</id>
+      <name>Johan Oskarsson</name>
+    </developer>
+  </developers>
+
   <issueManagement>
     <system>github</system>
     <url>https://github.com/kevinweil/elephant-bird/issues</url>
   </issueManagement>
+
   <scm>
     <connection>scm:git:https://github.com/kevinweil/elephant-bird.git</connection>
     <developerConnection>scm:git:git@github.com:kevinweil/elephant-bird.git</developerConnection>
@@ -52,7 +88,6 @@
       <url>http://maven.twttr.com</url>
     </repository>
   </repositories>
-
   <pluginRepositories>
     <pluginRepository>
       <id>twitter</id>
@@ -337,12 +372,12 @@
           <version>2.4</version>
         </plugin>
         <plugin>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>1.4</version>
+        </plugin>
+        <plugin>
           <artifactId>maven-release-plugin</artifactId>
           <version>2.3</version>
-          <configuration>
-            <goals>deploy</goals>
-            <autoVersionSubmodules>true</autoVersionSubmodules>
-          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
@@ -466,4 +501,5 @@
     <module>elephant-bird-rcfile</module>
     <module>elephant-bird-mahout</module>
   </modules>
+
 </project>
