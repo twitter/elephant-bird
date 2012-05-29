@@ -80,7 +80,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     return new LazyTuple(structDesc, thriftObj);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   private static <T extends TBase>Tuple toTuple(TStructDescriptor tDesc, T tObj) {
     int size = tDesc.getFields().size();
     Tuple tuple = tupleFactory.newTuple(size);
@@ -270,7 +270,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
               + ". while converting to PIG Tuple, toString() is used for the key."
               + " It could result in incorrect maps.");
         }
-        return new FieldSchema(fieldName, new Schema(singleFieldToFieldSchema(fieldName, field.getMapValueField())), DataType.MAP);
+        return new FieldSchema(fieldName, new Schema(singleFieldToFieldSchema(null, field.getMapValueField())), DataType.MAP);
       default:
         return new FieldSchema(fieldName, null, getPigDataType(field));
     }
