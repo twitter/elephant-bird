@@ -9,9 +9,9 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
-import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.proto.ProtobufExtensionRegistry;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -43,8 +43,9 @@ public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
     this(typeRef, null);
   }
 
-  public ProtobufBytesToTuple(String protoClassName, ProtobufExtensionRegistry extensionRegistry) {
-    this(PigUtil.<M>getProtobufTypeRef(protoClassName), extensionRegistry);
+  public ProtobufBytesToTuple(String protoClassName, String extensionRegistryClassName) {
+    this(PigUtil.<M>getProtobufTypeRef(protoClassName), extensionRegistryClassName != null ?
+        Protobufs.getExtensionRegistry(extensionRegistryClassName) : null);
   }
 
   public ProtobufBytesToTuple(TypeRef<M> typeRef, ProtobufExtensionRegistry extensionRegistry) {

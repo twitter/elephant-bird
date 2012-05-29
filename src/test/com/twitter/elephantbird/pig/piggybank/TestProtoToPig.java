@@ -43,7 +43,7 @@ public class TestProtoToPig {
     Tuple abProtoTupleWithExt = tf_.newTuple(new DataByteArray(abProtoWithExt.toByteArray()));
     ProtobufBytesToTuple abProtoToPigWithExt =
     new ProtobufBytesToTuple(AddressBook.class.getCanonicalName(),
-        Fixtures.buildExtensionRegistry());
+        Fixtures.AddressBookExtensionRegistry.class.getCanonicalName());
     Tuple abTupleWithExt = abProtoToPigWithExt.exec(abProtoTupleWithExt);
     assertEquals("{(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)},(Rd. Foo),bar),(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)},(Rd. Foo),bar)},private",
         abTupleWithExt.toDelimitedString(","));
