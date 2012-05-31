@@ -116,6 +116,11 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-mahout</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-pig</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -129,11 +134,6 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-rcfile</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>elephant-bird-mahout</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -336,6 +336,9 @@
               <version>2.12</version>
             </dependency>
           </dependencies>
+          <configuration>
+            <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          </configuration>
         </plugin>
 
         <!-- package types -->
@@ -497,9 +500,9 @@
     <module>cascading2</module>
     <module>core</module>
     <module>hive</module>
+    <module>mahout</module>
     <module>pig</module>
     <module>rcfile</module>
-    <module>mahout</module>
   </modules>
 
 </project>
