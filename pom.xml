@@ -381,6 +381,12 @@
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
           <version>2.3</version>
+          <configuration>
+            <!-- do not auto push release commits / tag -->
+            <pushChanges>false</pushChanges>
+            <!-- check out from local when releasing -->
+            <localCheckout>true</localCheckout>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
