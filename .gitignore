@@ -7,10 +7,8 @@
 .classpath
 .generators
 .idea
-.log
-.manager
 .project
-.rakeTasks
 .settings
-build
-eclipse-bin
+**/target
+target
+core/test.txt

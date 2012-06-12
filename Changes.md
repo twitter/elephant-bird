@@ -1,5 +1,9 @@
 # Elephant Bird #
 
+### Version 3.0.0 ###
+
+ISSUE 201. mavenize and split into multiple modules (Johan Oskarsson, Andy Schlaikjer)
+
 ### Version 2.2.3 ###
 
 ISSUE 205. Set map value field alias to null (Andy Schlaikjer)

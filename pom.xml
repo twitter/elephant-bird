@@ -1,0 +1,514 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
+  </parent>
+
+  <groupId>com.twitter.elephantbird</groupId>
+  <artifactId>elephant-bird</artifactId>
+  <version>3.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Elephant Bird</name>
+  <url>https://github.com/kevinweil/elephant-bird</url>
+  <description>
+    Elephant Bird is Twitter's open source library of LZO, Thrift, and/or
+    Protocol Buffer-related Hadoop InputFormats, OutputFormats, Writables, Pig
+    LoadFuncs, Hive SerDe, HBase miscellanea, etc. The majority of these are in
+    production at Twitter running over data every day.
+  </description>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <organization>
+    <name>Twitter</name>
+    <url>http://twitter.com/</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>kevin</id>
+      <name>Kevin Weil</name>
+    </developer>
+    <developer>
+      <id>dmitriy</id>
+      <name>Dmitriy Ryaboy</name>
+    </developer>
+    <developer>
+      <id>raghu</id>
+      <name>Raghu Angadi</name>
+    </developer>
+    <developer>
+      <id>andy</id>
+      <name>Andy Schlaikjer</name>
+    </developer>
+    <developer>
+      <id>travis</id>
+      <name>Travis Crawford</name>
+    </developer>
+    <developer>
+      <id>johan</id>
+      <name>Johan Oskarsson</name>
+    </developer>
+  </developers>
+
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/kevinweil/elephant-bird/issues</url>
+  </issueManagement>
+
+  <scm>
+    <connection>scm:git:https://github.com/kevinweil/elephant-bird.git</connection>
+    <developerConnection>scm:git:git@github.com:kevinweil/elephant-bird.git</developerConnection>
+    <url>https://github.com/kevinweil/elephant-bird</url>
+  </scm>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <slf4j.version>1.6.4</slf4j.version>
+    <apache.hadoop.version>0.20.2</apache.hadoop.version>
+    <apache.pig.version>0.9.2</apache.pig.version>
+    <apache.hive.version>0.8.0</apache.hive.version>
+    <apache.mahout.version>0.6</apache.mahout.version>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>twitter</id>
+      <url>http://maven.twttr.com</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>twitter</id>
+      <url>http://maven.twttr.com</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- EB modules -->
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-cascading2</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-hive</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-mahout</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-pig</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-pig</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-rcfile</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- testing -->
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.8.2</version>
+        <scope>test</scope>
+      </dependency>
+
+      <!-- logging -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>${slf4j.version}</version>
+        <scope>runtime</scope>
+        <optional>true</optional>
+      </dependency>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.15</version>
+        <optional>true</optional>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.jms</groupId>
+            <artifactId>jms</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jdmk</groupId>
+            <artifactId>jmxtools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jmx</groupId>
+            <artifactId>jmxri</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <!-- utils -->
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.4</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>11.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr</artifactId>
+        <version>3.4</version>
+      </dependency>
+
+      <!-- serialization -->
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>2.3.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.thrift</groupId>
+        <artifactId>libthrift</artifactId>
+        <version>0.7.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.googlecode.json-simple</groupId>
+        <artifactId>json-simple</artifactId>
+        <version>1.1</version>
+      </dependency>
+
+      <!-- hadoop -->
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-common</artifactId>
+        <version>${apache.hadoop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-core</artifactId>
+        <version>${apache.hadoop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-mapred</artifactId>
+        <version>${apache.hadoop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.hadoop.gplcompression</groupId>
+        <artifactId>hadoop-lzo</artifactId>
+        <version>0.4.15</version>
+      </dependency>
+
+      <!-- cascading -->
+      <dependency>
+        <groupId>cascading</groupId>
+        <artifactId>cascading-hadoop</artifactId>
+        <version>2.0.0-wip-288</version>
+      </dependency>
+
+      <!-- pig -->
+      <dependency>
+        <groupId>org.apache.pig</groupId>
+        <artifactId>pig</artifactId>
+        <version>${apache.pig.version}</version>
+      </dependency>
+
+      <!-- hive -->
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-serde</artifactId>
+        <version>${apache.hive.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-exec</artifactId>
+        <version>${apache.hive.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hcatalog</groupId>
+        <artifactId>hcatalog</artifactId>
+        <version>0.4.0-T1</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.jdo</groupId>
+        <artifactId>jdo2-api</artifactId>
+        <version>2.3-eb</version>
+      </dependency>
+
+      <!-- mahout -->
+      <dependency>
+        <groupId>org.apache.mahout</groupId>
+        <artifactId>mahout-collections</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.mahout</groupId>
+        <artifactId>mahout-core</artifactId>
+        <version>${apache.mahout.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.mahout</groupId>
+        <artifactId>mahout-math</artifactId>
+        <version>${apache.mahout.version}</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <defaultGoal>package</defaultGoal>
+    <pluginManagement>
+      <plugins>
+
+        <!-- core -->
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>2.4.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>2.3.2</version>
+          <configuration>
+            <source>1.6</source>
+            <target>1.6</target>
+            <optimize>true</optimize>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.7</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.3.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>2.5</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.12</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>2.12</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          </configuration>
+        </plugin>
+
+        <!-- package types -->
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>2.2</version>
+        </plugin>
+
+        <!-- reporting -->
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.8.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>2.4</version>
+        </plugin>
+
+        <!-- tools -->
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>1.7</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>2.3</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>2.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>1.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.3</version>
+          <configuration>
+            <!-- do not auto push release commits / tag -->
+            <pushChanges>false</pushChanges>
+            <!-- check out from local when releasing -->
+            <localCheckout>true</localCheckout>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>2.1.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>1.7</version>
+        </plugin>
+
+        <!-- protobuf -->
+        <plugin>
+          <groupId>com.github.igor-petruk.protobuf</groupId>
+          <artifactId>protobuf-maven-plugin</artifactId>
+          <version>0.4</version>
+        </plugin>
+
+        <!-- thrift -->
+        <plugin>
+          <groupId>org.apache.thrift.tools</groupId>
+          <artifactId>maven-thrift-plugin</artifactId>
+          <version>0.1.10</version>
+          <configuration>
+            <thriftExecutable>thrift</thriftExecutable>
+          </configuration>
+        </plugin>
+
+        <!-- This plugin's configuration is used to store Eclipse M2E plugin
+             settings only. It has no influence on the Maven build itself. The
+             configuration below is required to resolve build errors reported by
+             M2E plugin. -->
+
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <versionRange>[1.6,)</versionRange>
+                    <goals>
+                      <goal>run</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <versionRange>[1.0.0,)</versionRange>
+                    <goals>
+                      <goal>copy-dependencies</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>com.github.igor-petruk.protobuf</groupId>
+                    <artifactId>protobuf-maven-plugin</artifactId>
+                    <versionRange>[0.4,)</versionRange>
+                    <goals>
+                      <goal>run</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.thrift.tools</groupId>
+                    <artifactId>maven-thrift-plugin</artifactId>
+                    <versionRange>[0.1.10,)</versionRange>
+                    <goals>
+                      <goal>compile</goal>
+                      <goal>testCompile</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <versionRange>[0.0.1,)</versionRange>
+                    <goals>
+                      <goal>add-source</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <modules>
+    <module>cascading2</module>
+    <module>core</module>
+    <module>hive</module>
+    <module>mahout</module>
+    <module>pig</module>
+    <module>rcfile</module>
+  </modules>
+
+</project>
