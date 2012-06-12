@@ -263,7 +263,7 @@
       <dependency>
         <groupId>org.apache.hcatalog</groupId>
         <artifactId>hcatalog</artifactId>
-        <version>0.5.0-dev</version>
+        <version>0.4.0-T1</version>
       </dependency>
       <dependency>
         <groupId>javax.jdo</groupId>
@@ -381,6 +381,12 @@
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
           <version>2.3</version>
+          <configuration>
+            <!-- do not auto push release commits / tag -->
+            <pushChanges>false</pushChanges>
+            <!-- check out from local when releasing -->
+            <localCheckout>true</localCheckout>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
