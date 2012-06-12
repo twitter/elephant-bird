@@ -1,8 +1,0 @@
-package com.twitter.elephantbird.examples.proto;
-
-option java_outer_classname = "Examples";
-
-message Age {
-  optional string name = 1;
-  optional int32 age = 2;
-}
