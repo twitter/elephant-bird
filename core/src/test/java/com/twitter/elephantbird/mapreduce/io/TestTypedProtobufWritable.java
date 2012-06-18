@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.mapreduce.io;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -86,6 +87,23 @@ public class TestTypedProtobufWritable {
     AddressBook ab2 = (AddressBook) after.get();
     assertEquals(referenceAb, ab2);
     assertEquals(referenceAbWritable.hashCode(), after.hashCode());
+  }
+  
+  @Test
+  public void testMessageReadWriteEmpty() throws IOException {
+
+    DataOutputStream dos = new DataOutputStream(new FileOutputStream("test3.txt"));
+    TypedProtobufWritable<AddressBook> empty = new TypedProtobufWritable<AddressBook>();
+    empty.write(dos);
+    dos.close();
+
+    DataInputStream dis = new DataInputStream(new FileInputStream("test3.txt"));
+    TypedProtobufWritable<Message> after = new TypedProtobufWritable<Message>();
+    after.readFields(dis);
+    dis.close();
+
+    AddressBook ab2 = (AddressBook) after.get();
+    assertNull(ab2);
   }
 
   @Test

@@ -1,6 +1,11 @@
 package com.twitter.elephantbird.mapreduce.io;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import com.google.protobuf.Message;
+import org.apache.hadoop.io.WritableUtils;
 
 /**
  * A Hadoop Writable wrapper around a protocol buffer of type M with support for
@@ -16,21 +21,54 @@ import com.google.protobuf.Message;
  *     }
  * }
  * </code>
- * 
+ *
  * Since this class writes the type of M to the output, it is recommended to use
  * some kind of compression on the output.
  */
-public class TypedProtobufWritable<M extends Message> extends BinaryWritable<M> { 
-    public TypedProtobufWritable() {
-        super(null, new TypedProtobufConverter<M>());
-    }
+public class TypedProtobufWritable<M extends Message> extends ProtobufWritable<M> {
+  public TypedProtobufWritable() {
+    super(null, null);
+  }
 
-    public TypedProtobufWritable(M obj) {
-        super(obj, new TypedProtobufConverter<M>());
+  public TypedProtobufWritable(M obj) {
+    super(obj, null);
+    if (obj != null) {
+      this.setConverter((Class) obj.getClass());
     }
+  }
 
-    @Override
-    protected BinaryConverter<M> getConverterFor(Class<M> clazz) {
-        return new TypedProtobufConverter();
+  @Override
+  public void readFields(DataInput in) throws IOException {
+    super.readFields(in);
+    String className = WritableUtils.readString(in);
+    if (!className.isEmpty()) {
+      Class clazz;
+      try {
+        clazz = Class.forName(className);
+      } catch (ClassNotFoundException ex) {
+        throw new IllegalArgumentException("Byte stream does not have a "
+          + "valid class identifier", ex);
+      }
+      this.setConverter(clazz);
     }
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    M obj = this.get();
+    if (obj == null) {
+      WritableUtils.writeString(out, "");
+    } else {
+      WritableUtils.writeString(out, obj.getClass().getName());
+    }
+  }
+
+  @Override
+  public void set(M m) {
+    super.set(m);
+    if (m != null) {
+      this.setConverter((Class) m.getClass());
+    }
+  }
 }
