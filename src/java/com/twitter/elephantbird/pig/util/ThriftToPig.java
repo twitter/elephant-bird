@@ -162,6 +162,10 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     HashMap<String, Object> out = new HashMap<String, Object>(map.size());
     Field valueField = field.getMapValueField();
     for(Entry<Object, Object> e : map.entrySet()) {
+      if (e.getKey() == null) {
+        LOG.warn("Thrift map to Pig : Ignoring the entry with null key");
+        continue;
+      }
       Object prev = out.put(e.getKey().toString(),
                             toPigObject(valueField, e.getValue(), lazy));
       if (prev != null) {
