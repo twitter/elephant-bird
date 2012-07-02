@@ -162,8 +162,8 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     HashMap<String, Object> out = new HashMap<String, Object>(map.size());
     Field valueField = field.getMapValueField();
     for(Entry<Object, Object> e : map.entrySet()) {
-      Object prev = out.put(e.getKey().toString(),
-                            toPigObject(valueField, e.getValue(), lazy));
+      String key = e.getKey() == null ? null : e.getKey().toString();
+      Object prev = out.put(key, toPigObject(valueField, e.getValue(), lazy));
       if (prev != null) {
         String msg = "Duplicate keys while converting to String while "
           + " processing map " + field.getName() + " (key type : "
