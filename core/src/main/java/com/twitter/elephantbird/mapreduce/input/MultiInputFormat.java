@@ -14,9 +14,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.thrift.TBase;
 
-import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
@@ -72,7 +70,7 @@ public class MultiInputFormat<M>
     HadoopUtils.setClassConf(conf, CLASS_CONF_KEY, clazz);
   }
 
-  @SuppressWarnings("unchecked") // return type is runtime dependent
+  @SuppressWarnings({ "unchecked", "rawtypes" }) // return type is runtime dependent
   @Override
   public RecordReader<LongWritable, BinaryWritable<M>>
   createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
@@ -85,8 +83,10 @@ public class MultiInputFormat<M>
 
     Format fileFormat = determineFileFormat(split, conf);
 
-    // Protobuf
-    if (Message.class.isAssignableFrom(recordClass)) {
+    // Explicit class names for Message and TBase are used so that
+    // these classes need not be present when not required.
+
+    if (isSubclass(recordClass, "com.google.protobuf.Message")) {
       switch (fileFormat) {
       case LZO_BLOCK:
         return new LzoProtobufBlockRecordReader(typeRef);
@@ -95,14 +95,7 @@ public class MultiInputFormat<M>
       }
     }
 
-    /* when types other than protobuf and thrift are supported,
-     * should use Class.forName("org.apache.thrift.TBase") instead
-     * of TBase.class so the we don't require thrift in classpath
-     * unless the recordClass is a thrift class.
-     */
-
-    // Thrift
-    if (TBase.class.isAssignableFrom(recordClass)) {
+    if (isSubclass(recordClass, "org.apache.thrift.TBase")) {
       switch (fileFormat) {
       case LZO_BLOCK:
         return new LzoThriftBlockRecordReader(typeRef);
@@ -131,6 +124,16 @@ public class MultiInputFormat<M>
     }
 
     typeRef = new TypeRef<M>(clazz){};
+  }
+
+  private static boolean isSubclass(Class<?> subClass, String superClassName) {
+    try {
+      Class<?> superClass = Class.forName(superClassName, true, subClass.getClassLoader());
+      return subClass.isAssignableFrom(superClass);
+    } catch (Exception e) {
+      // the superClassName may not be present in classpath when not required.
+      return false;
+    }
   }
 
   /**
