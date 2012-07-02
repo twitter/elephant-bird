@@ -55,6 +55,24 @@ public class Protobufs {
     return getProtobufClass(null, protoClassName);
   }
 
+  /**
+   * Returns protoClass.asSubclass(Message.class).
+   */
+  private static Class<? extends Message> asMessageSubclass(Class<?> protoClass) {
+    // use Message.class that from same class loader as protoClass.
+    // it could be different from Message.class Protobufs.class.
+
+    try {
+      @SuppressWarnings("unchecked")
+      Class<Message> messageClass = (Class<Message>)
+          Class.forName(Message.class.getName(), true, protoClass.getClassLoader());
+      return protoClass.asSubclass(messageClass);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException("Could not load " + Message.class.getName()
+                                 + " using " + protoClass.getName());
+    }
+  }
+
   private static Class<? extends Message> getProtobufClass(Configuration conf, String protoClassName) {
     // Try both normal name and canonical name of the class.
     Class<?> protoClass = null;
@@ -69,7 +87,7 @@ public class Protobufs {
       protoClass = getInnerProtobufClass(protoClassName);
     }
 
-    return protoClass.asSubclass(Message.class);
+    return asMessageSubclass(protoClass);
   }
 
   /**
@@ -92,7 +110,7 @@ public class Protobufs {
       Class<?> outerClass = Class.forName(canonicalParentName);
       for (Class<?> innerClass: outerClass.getDeclaredClasses()) {
         if (innerClass.getSimpleName().equals(subclassName)) {
-          return innerClass.asSubclass(Message.class);
+          return asMessageSubclass(innerClass);
         }
       }
     } catch (ClassNotFoundException e) {
