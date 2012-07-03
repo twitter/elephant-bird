@@ -4,19 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.FileDescriptor;
-import com.google.protobuf.Descriptors.DescriptorValidationException;
-import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
-import com.google.protobuf.DescriptorProtos.DescriptorProto;
-import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
-import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
-import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
-
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.backend.executionengine.ExecException;
@@ -28,6 +15,17 @@ import org.apache.pig.impl.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Message;
+import com.google.protobuf.Message.Builder;
 import com.twitter.elephantbird.util.Protobufs;
 
 /**
@@ -227,7 +225,7 @@ public class PigToProtobuf {
     switch (fieldDescriptor.getType()) {
     case ENUM:
       // Convert tupleField to the enum value.
-      return fieldDescriptor.getEnumType().findValueByName((String)tupleField);
+      return getEnumValueDescriptor(fieldDescriptor, tupleField);
     case BOOL:
       return Boolean.valueOf((Integer)tupleField != 0);
     case BYTES:
@@ -235,6 +233,25 @@ public class PigToProtobuf {
     default:
       return tupleField;
     }
+  }
+
+  /**
+   * @param fieldDescriptor enum field descriptor.
+   * @param tupleField name of enum value.
+   * @return enum value descriptor for enum value whose name matches {@code tupleField.toString()}.
+   * @throws IllegalArgumentException if conversion of tupleField to valid EnumValueDescriptor fails.
+   */
+  private static EnumValueDescriptor getEnumValueDescriptor(FieldDescriptor fieldDescriptor, Object tupleField) {
+    EnumValueDescriptor out =  fieldDescriptor.getEnumType().findValueByName(tupleField.toString());
+    if (out == null) {
+      throw new IllegalArgumentException(
+          String.format("Failed to convert value '%s' of type '%s'" +
+          		" to enum value of type '%s' for field '%s'",
+          		tupleField, tupleField.getClass().getName(),
+          		fieldDescriptor.getEnumType().getFullName(),
+          		fieldDescriptor.getFullName()));
+    }
+    return out;
   }
 
   /**
