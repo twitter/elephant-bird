@@ -1,5 +1,11 @@
 # Elephant Bird #
 
+### Version 3.0.1 ###
+
+ISSUE 223. handle null keys in Thrift maps (Raghu Angadi)
+
+ISSUE 222. use correct classloader for user supplied classes (Raghu Angadi)
+
 ### Version 3.0.0 ###
 
 ISSUE 201. mavenize and split into multiple modules (Johan Oskarsson, Andy Schlaikjer)
