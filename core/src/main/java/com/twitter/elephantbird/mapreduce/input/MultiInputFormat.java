@@ -129,7 +129,7 @@ public class MultiInputFormat<M>
   private static boolean isSubclass(Class<?> subClass, String superClassName) {
     try {
       Class<?> superClass = Class.forName(superClassName, true, subClass.getClassLoader());
-      return subClass.isAssignableFrom(superClass);
+      return superClass.isAssignableFrom(subClass);
     } catch (Exception e) {
       // the superClassName may not be present in classpath when not required.
       return false;
