@@ -9,7 +9,7 @@
 
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
-  <version>3.0.1</version>
+  <version>3.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Elephant Bird</name>
@@ -70,7 +70,7 @@
     <connection>scm:git:https://github.com/kevinweil/elephant-bird.git</connection>
     <developerConnection>scm:git:git@github.com:kevinweil/elephant-bird.git</developerConnection>
     <url>https://github.com/kevinweil/elephant-bird</url>
-    <tag>elephant-bird-3.0.1</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <properties>
