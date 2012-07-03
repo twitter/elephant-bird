@@ -16,6 +16,8 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
+import org.apache.thrift.TEnum;
+import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.protocol.TType;
 
 import com.twitter.elephantbird.thrift.TStructDescriptor;
@@ -66,6 +68,7 @@ public class PigToThrift<T extends TBase<?, ?>> {
   private static TBase<?, ?> toThrift(TStructDescriptor tDesc, Tuple tuple) {
     int size = tDesc.getFields().size();
     int tupleSize = tuple.size();
+    @SuppressWarnings("rawtypes")
     TBase tObj = newTInstance(tDesc.getThriftClass());
     for(int i = 0; i<size && i<tupleSize; i++) {
       Object pObj;
@@ -117,7 +120,7 @@ public class PigToThrift<T extends TBase<?, ?>> {
       case TType.LIST:
         return toThriftList(field.getListElemField(), (DataBag)value);
       case TType.ENUM:
-        return field.getEnumValueOf(value.toString());
+        return toThriftEnum(field, value);
       default:
         // standard types : I32, I64, DOUBLE, etc.
         return value;
@@ -169,6 +172,19 @@ public class PigToThrift<T extends TBase<?, ?>> {
     List<Object> list = new ArrayList<Object>((int)bag.size());
     fillThriftCollection(list, elemField, bag);
     return list;
+  }
+
+  private static TEnum toThriftEnum(Field elemField, Object value) {
+    TEnum out = elemField.getEnumValueOf(value.toString());
+    if (out == null) {
+      throw new IllegalArgumentException(
+          String.format("Failed to convert value '%s' of type '%s'" +
+              " to enum value of type '%s' for field '%s'", value,
+              value.getClass().getName(),
+              ((EnumMetaData) elemField.getField()).enumClass.getName(),
+              elemField.getName()));
+    }
+    return out;
   }
 
   private static void fillThriftCollection(Collection<Object> tColl, Field elemField, DataBag bag) {
