@@ -1,6 +1,5 @@
 package com.twitter.elephantbird.thrift;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.twitter.elephantbird.util.ThriftUtils;
+import com.twitter.elephantbird.util.Utils;
 
 
 /**
@@ -111,11 +111,23 @@ public class TStructDescriptor {
     // all the initialization is done in build().
   }
 
+  @SuppressWarnings("unchecked")
   private void build(Class<? extends TBase<?, ?>> tClass) {
-    Map<? extends TFieldIdEnum, FieldMetaData> fieldMap = FieldMetaData.getStructMetaDataMap(tClass);
+
+    Map<? extends TFieldIdEnum, FieldMetaData> fieldMap = null;
+    try {
+      // metaDataMap is a public static member of thrift classes.
+     fieldMap = (Map<? extends TFieldIdEnum, FieldMetaData>)
+                tClass.getField("metaDataMap").get(null);
+    } catch (Throwable t) {
+      throw new RuntimeException("could not find metaDataMap in "
+                                 + tClass.getName(), t);
+    }
+
     Field[] arr = new Field[fieldMap.size()];
 
-    isUnion = TUnion.class.isAssignableFrom(tClass);
+    // check if tClass implements TUnion.
+    isUnion = Utils.loadClass(TUnion.class, tClass.getClassLoader()).isAssignableFrom(tClass);
 
     int idx = 0;
     for (Entry<? extends TFieldIdEnum, FieldMetaData> e : fieldMap.entrySet()) {
