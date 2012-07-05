@@ -61,16 +61,8 @@ public class Protobufs {
   private static Class<? extends Message> asMessageSubclass(Class<?> protoClass) {
     // use Message.class that from same class loader as protoClass.
     // it could be different from Message.class Protobufs.class.
-
-    try {
-      @SuppressWarnings("unchecked")
-      Class<Message> messageClass = (Class<Message>)
-          Class.forName(Message.class.getName(), true, protoClass.getClassLoader());
-      return protoClass.asSubclass(messageClass);
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Could not load " + Message.class.getName()
-                                 + " using " + protoClass.getName());
-    }
+    return protoClass.asSubclass(Utils.loadClass(Message.class,
+                                                 protoClass.getClassLoader()));
   }
 
   private static Class<? extends Message> getProtobufClass(Configuration conf, String protoClassName) {
