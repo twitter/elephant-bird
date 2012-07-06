@@ -59,6 +59,13 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
   }
 
   /**
+   * sets converter. useful for reusing existing converter.
+   */
+  public void setConverter(BinaryConverter<M> converter) {
+    this.converter = converter;
+  }
+
+  /**
    * Returns the current object. Subsequent calls to get() may not return the
    * same object, but in stead might return a new object deserialized from same
    * set of bytes. As a result, multiple calls to get() should be avoided, and
