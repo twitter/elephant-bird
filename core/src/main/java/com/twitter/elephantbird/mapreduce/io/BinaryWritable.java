@@ -61,7 +61,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
   /**
    * sets converter. useful for reusing existing converter.
    */
-  public void SetConverter(BinaryConverter<M> converter) {
+  public void setConverter(BinaryConverter<M> converter) {
     this.converter = converter;
   }
 
