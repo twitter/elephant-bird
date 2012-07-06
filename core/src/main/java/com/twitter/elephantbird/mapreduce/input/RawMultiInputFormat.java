@@ -13,11 +13,11 @@ import com.twitter.elephantbird.mapreduce.io.RawBytesWritable;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
- * A {@link MultiInputFormat} that returns the records as raw uninterpreted
- * bytes a {@link BytesWritable}. Converts {@link RawBytesWritable}
- * returned by {@link MultiInputFormat} to BytesWritable. <p>
+ * A {@link MultiInputFormat} that returns records as uninterpreted
+ * {@link BytesWritable}. Converts {@link RawBytesWritable}
+ * returned by {@link MultiInputFormat} to a BytesWritable. <p>
  *
- * Use MultiInputForamt RawBytesWritable is required or suffices.
+ * Use MultiInputForamt if RawBytesWritable is required or suffices.
  */
 @SuppressWarnings("rawtypes")
 public class RawMultiInputFormat extends MultiInputFormat {
@@ -36,13 +36,21 @@ public class RawMultiInputFormat extends MultiInputFormat {
     return new FilterRecordReader<LongWritable, Writable>(
         super.createRecordReader(split, taskAttempt)) {
 
-      BytesWritable value = new BytesWritable();
+      // extend BytesWritable to avoid a copy.
+      byte[] bytes;
+      BytesWritable value = new BytesWritable() {
+        public byte[] getBytes() {
+          return bytes;
+        }
+
+        public int getLength() {
+          return bytes.length;
+        }
+      };
 
       @Override
       public Writable getCurrentValue() throws IOException, InterruptedException {
-        byte[] bytes = ((RawBytesWritable)super.getCurrentValue()).get();
-        // TODO extend BytesWritable to avoid extra copy in set().
-        value.set(bytes, 0, bytes.length);
+        bytes = ((RawBytesWritable)super.getCurrentValue()).get();
         return value;
       }
     };
