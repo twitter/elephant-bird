@@ -15,7 +15,10 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
+import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.mapreduce.io.IdentityBinaryConverter;
+import com.twitter.elephantbird.mapreduce.io.RawBytesWritable;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -101,6 +104,18 @@ public class MultiInputFormat<M>
         return new LzoThriftBlockRecordReader(typeRef);
       case LZO_B64LINE:
         return new LzoThriftB64LineRecordReader(typeRef);
+      }
+    }
+
+    if (recordClass.equals(byte[].class)) {
+      switch (fileFormat) {
+      case LZO_BLOCK:
+        return new LzoBinaryBlockRecordReader(typeRef,
+            new BinaryBlockReader<byte[]>(null, new IdentityBinaryConverter()){},
+            new RawBytesWritable()){};
+      case LZO_B64LINE:
+        return new LzoBinaryB64LineRecordReader(typeRef,
+            new RawBytesWritable(), new IdentityBinaryConverter());
       }
     }
 
