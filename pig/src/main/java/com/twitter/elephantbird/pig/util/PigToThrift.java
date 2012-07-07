@@ -120,7 +120,7 @@ public class PigToThrift<T extends TBase<?, ?>> {
       case TType.LIST:
         return toThriftList(field.getListElemField(), (DataBag)value);
       case TType.ENUM:
-        return toThriftEnum(field, value);
+        return toThriftEnum(field, (String) value);
       default:
         // standard types : I32, I64, DOUBLE, etc.
         return value;
@@ -174,13 +174,12 @@ public class PigToThrift<T extends TBase<?, ?>> {
     return list;
   }
 
-  private static TEnum toThriftEnum(Field elemField, Object value) {
-    TEnum out = elemField.getEnumValueOf(value.toString());
+  private static TEnum toThriftEnum(Field elemField, String name) {
+    TEnum out = elemField.getEnumValueOf(name);
     if (out == null) {
       throw new IllegalArgumentException(
-          String.format("Failed to convert value '%s' of type '%s'" +
-              " to enum value of type '%s' for field '%s'", value,
-              value.getClass().getName(),
+          String.format("Failed to convert string '%s'" +
+              " to enum value of type '%s' for field '%s'", name,
               ((EnumMetaData) elemField.getField()).enumClass.getName(),
               elemField.getName()));
     }
