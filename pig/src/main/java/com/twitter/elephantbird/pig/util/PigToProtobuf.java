@@ -241,9 +241,8 @@ public class PigToProtobuf {
     if (out == null) {
       throw new IllegalArgumentException(
           String.format("Failed to convert string '%s'" +
-              " to enum value of type '%s' for field '%s'", name,
-              fieldDescriptor.getEnumType().getFullName(),
-              fieldDescriptor.getName()));
+              " to enum value of type '%s'", name,
+              fieldDescriptor.getEnumType().getFullName()));
     }
     return out;
   }

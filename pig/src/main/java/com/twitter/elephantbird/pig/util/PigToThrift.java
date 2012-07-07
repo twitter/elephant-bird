@@ -11,17 +11,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TEnum;
-import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.protocol.TType;
 
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
+import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -41,6 +43,8 @@ import com.twitter.elephantbird.util.TypeRef;
  * Any remaining fields will be left unset.
  */
 public class PigToThrift<T extends TBase<?, ?>> {
+  public static final Logger LOG = LogManager.getLogger(PigToThrift.class);
+
   private TStructDescriptor structDesc;
 
   public static <T extends TBase<?, ?>> PigToThrift<T> newInstance(Class<T> tClass) {
@@ -127,10 +131,10 @@ public class PigToThrift<T extends TBase<?, ?>> {
       }
     } catch (Exception e) {
       // mostly a schema mismatch.
-      ThriftToPig.LOG.warn("Exception while convering Tuple to Thrift. "
-          + " from " + value.getClass() + " to " + field.getName()
-          + (field.getFieldIdEnum() == null ? "" :
-            "(field id : " + field.getFieldIdEnum().getClass() + ")"), e);
+      LOG.warn(String.format(
+          "Failed to set field '%s' of type '%s' with value '%s' of type '%s'",
+          field.getName(), ThriftUtils.getFieldValueType(field).getName(),
+          value, value.getClass().getName()), e);
     }
     return null;
   }
@@ -179,9 +183,8 @@ public class PigToThrift<T extends TBase<?, ?>> {
     if (out == null) {
       throw new IllegalArgumentException(
           String.format("Failed to convert string '%s'" +
-              " to enum value of type '%s' for field '%s'", name,
-              ((EnumMetaData) elemField.getField()).enumClass.getName(),
-              elemField.getName()));
+              " to enum value of type '%s'", name,
+              ThriftUtils.getFieldValueType(elemField).getName()));
     }
     return out;
   }
