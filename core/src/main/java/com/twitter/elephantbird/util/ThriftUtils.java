@@ -2,14 +2,17 @@ package com.twitter.elephantbird.util;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.lang.reflect.Method;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TEnum;
 import org.apache.thrift.TException;
+import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TType;
 
@@ -135,6 +138,47 @@ public class ThriftUtils {
       throw new RuntimeException("while trying to find type for " + fieldName +
                                  " in " + containingClass, e);
     }
+  }
+
+  /**
+   * Returns the value class of the given thrift field.
+   *
+   * @param field thrift field.
+   * @return class of field value, or null in the case of thrift types {@link TType#STOP} or
+   * {@link TType#VOID}.
+   */
+  public static Class<?> getFieldValueType(Field field) {
+    switch (field.getType()) {
+      case TType.BOOL:
+        return Boolean.class;
+      case TType.BYTE:
+        return Byte.class;
+      case TType.DOUBLE:
+        return Double.class;
+      case TType.ENUM:
+        return ((EnumMetaData) field.getField()).enumClass;
+      case TType.I16:
+        return Short.class;
+      case TType.I32:
+        return Integer.class;
+      case TType.I64:
+        return Long.class;
+      case TType.LIST:
+        return List.class;
+      case TType.MAP:
+        return Map.class;
+      case TType.SET:
+        return Set.class;
+      case TType.STOP:
+        return null;
+      case TType.STRING:
+        return String.class;
+      case TType.STRUCT:
+        return field.gettStructDescriptor().getThriftClass();
+      case TType.VOID:
+        return null;
+    }
+    return null;
   }
 
   private static void writeSingleFieldNoTag(TProtocol proto,
