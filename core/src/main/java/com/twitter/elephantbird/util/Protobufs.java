@@ -55,16 +55,6 @@ public class Protobufs {
     return getProtobufClass(null, protoClassName);
   }
 
-  /**
-   * Returns protoClass.asSubclass(Message.class).
-   */
-  private static Class<? extends Message> asMessageSubclass(Class<?> protoClass) {
-    // use Message.class that from same class loader as protoClass.
-    // it could be different from Message.class Protobufs.class.
-    return protoClass.asSubclass(Utils.loadClass(Message.class,
-                                                 protoClass.getClassLoader()));
-  }
-
   private static Class<? extends Message> getProtobufClass(Configuration conf, String protoClassName) {
     // Try both normal name and canonical name of the class.
     Class<?> protoClass = null;
@@ -79,7 +69,7 @@ public class Protobufs {
       protoClass = getInnerProtobufClass(protoClassName);
     }
 
-    return asMessageSubclass(protoClass);
+    return protoClass.asSubclass(Message.class);
   }
 
   /**
@@ -102,7 +92,7 @@ public class Protobufs {
       Class<?> outerClass = Class.forName(canonicalParentName);
       for (Class<?> innerClass: outerClass.getDeclaredClasses()) {
         if (innerClass.getSimpleName().equals(subclassName)) {
-          return asMessageSubclass(innerClass);
+          return innerClass.asSubclass(Message.class);
         }
       }
     } catch (ClassNotFoundException e) {
@@ -313,7 +303,7 @@ public class Protobufs {
    *
    * @param output
    * @param fd
-   * @param fieldValue
+   * @param value
    * @throws IOException
    */
   public static void writeFieldNoTag(CodedOutputStream   output,
