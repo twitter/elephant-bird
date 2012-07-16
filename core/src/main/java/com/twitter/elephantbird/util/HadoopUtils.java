@@ -16,9 +16,9 @@ public class HadoopUtils {
 
   /**
    * MapReduce counters are available only with {@link TaskInputOutputContext},
-   * but most interfaces use super classes, though the actual obejct is a
-   * subclass (e.g. Mapper.Context). <br> <br>
-   *
+   * but most interfaces use super classes, though the actual object is a
+   * subclass (e.g. Mapper.Context).
+   * <br>
    * This utility method checks the type and returns the appropriate counter.
    * In the rare (may be unexpected) case where ctx is not a
    * TaskInputOutputContext, a dummy counter is returned after printing
@@ -26,11 +26,13 @@ public class HadoopUtils {
    */
   public static Counter getCounter(JobContext ctx, String group, String counter) {
     if (ctx instanceof TaskInputOutputContext<?, ?, ?, ?>) {
-      return ((TaskInputOutputContext<?, ?, ?, ?>)ctx).getCounter(group, counter);
+      Counter c = ((TaskInputOutputContext<?, ?, ?, ?>)ctx).getCounter(group, counter);
+      if (c != null) {
+        return c;
+      }
     }
     String name = group + ":" + counter;
-    LOG.warn("Context is not a TaskInputOutputContext. "
-        + "will return a dummy counter for '" + name + "'");
+    LOG.warn("Using a dummy counter for " + name + " because it does not already exist.");
     return new Counter(name, name) {};
   }
 

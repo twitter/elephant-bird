@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
+import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -126,6 +127,52 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
     }
   }
 
+  /**
+   * A reporter that works with both mapred and mapreduce APIs.
+   */
+  private static class ReporterWrapper extends StatusReporter implements Reporter {
+    private Reporter wrappedReporter;
+
+    public ReporterWrapper(Reporter reporter) {
+      wrappedReporter = reporter;
+    }
+
+    @Override
+    public Counters.Counter getCounter(Enum<?> anEnum) {
+      return wrappedReporter.getCounter(anEnum);
+    }
+
+    @Override
+    public Counters.Counter getCounter(String s, String s1) {
+      return wrappedReporter.getCounter(s, s1);
+    }
+
+    @Override
+    public void incrCounter(Enum<?> anEnum, long l) {
+      wrappedReporter.incrCounter(anEnum, l);
+    }
+
+    @Override
+    public void incrCounter(String s, String s1, long l) {
+      wrappedReporter.incrCounter(s, s1, l);
+    }
+
+    @Override
+    public InputSplit getInputSplit() throws UnsupportedOperationException {
+      return wrappedReporter.getInputSplit();
+    }
+
+    @Override
+    public void progress() {
+      wrappedReporter.progress();
+    }
+
+    @Override
+    public void setStatus(String s) {
+      wrappedReporter.setStatus(s);
+    }
+  }
+
   private static class RecordReaderWrapper<K, V> implements RecordReader<K, V> {
 
     private org.apache.hadoop.mapreduce.RecordReader<K, V> realReader;
@@ -157,12 +204,16 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
         split = ((InputSplitWrapper)oldSplit).realSplit;
       }
 
+      TaskAttemptID taskAttemptID = TaskAttemptID.forName(oldJobConf.get("mapred.task.id"));
+      if (taskAttemptID == null) {
+        taskAttemptID = new TaskAttemptID();
+      }
+
       // create a TaskInputOutputContext
       @SuppressWarnings("unchecked")
       TaskAttemptContext taskContext =
-        new TaskInputOutputContext(
-            oldJobConf, TaskAttemptID.forName(oldJobConf.get("mapred.task.id")),
-            null, null, (StatusReporter) reporter) {
+        new TaskInputOutputContext(oldJobConf, taskAttemptID,
+            null, null, new ReporterWrapper(reporter)) {
 
               public Object getCurrentKey() throws IOException, InterruptedException {
                 throw new RuntimeException("not implemented");
