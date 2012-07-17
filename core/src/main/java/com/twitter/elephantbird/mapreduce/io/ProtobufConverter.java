@@ -45,14 +45,18 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
     this.typeRef = typeRef;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public M fromBytes(byte[] messageBuffer) {
+    return fromBytes(messageBuffer, 0, messageBuffer.length);
+  }
+
+  @SuppressWarnings("unchecked")
+  public M fromBytes(byte[] messageBuffer, int offset, int len) {
     try {
       if (protoBuilder == null) {
         protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
       }
-      return  (M) protoBuilder.clone().mergeFrom(messageBuffer).build();
+      return  (M) protoBuilder.clone().mergeFrom(messageBuffer, offset, len).build();
     } catch (InvalidProtocolBufferException e) {
       logWarning("Invalid Protobuf exception while building " + typeRef.getRawClass().getName(), e);
     } catch(UninitializedMessageException ume) {
