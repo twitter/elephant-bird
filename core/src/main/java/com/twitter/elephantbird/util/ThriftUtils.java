@@ -32,11 +32,8 @@ public class ThriftUtils {
    * Verify that clazz is a Thrift class. i.e. is a subclass of TBase
    */
   private static void verifyAncestry(Class<?> tClass) {
-    // get TBase class using the same class loader as tClass.
-    // it could be different form TBase.class visitible to ThriftUtils.class
-    Class<?> tbaseClass = Utils.classForName(TBase.class.getName(),
-                                             tClass.getClassLoader());
-    if (!tbaseClass.isAssignableFrom(tClass)) {
+    if (!TBase.class.isAssignableFrom(tClass)) {
+      Utils.ensureClassLoaderConsistency(TBase.class, tClass.getClassLoader());
       throw new ClassCastException(tClass.getName() + " is not a Thrift class");
     }
   }
