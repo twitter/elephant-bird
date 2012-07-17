@@ -82,11 +82,10 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
     @Override
     public void initialize(InputSplit split, TaskAttemptContext ctx)
                            throws IOException, InterruptedException {
-      /* set up columns that needs to read from the RCFile.
-       * if one of the required fields is one of the stored columns,
+      /* set up columns that needs to be read from the RCFile.
+       * if any of the required fields is not among stored columns,
        * read the the "unknowns" column (the last column).
-       *
-       */
+      */
       msgBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
       Descriptor msgDesc = msgBuilder.getDescriptorForType();
       final List<FieldDescriptor> msgFields = msgDesc.getFields();
