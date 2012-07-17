@@ -4,6 +4,7 @@ import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.util.TypeRef;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.Deserializer;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
@@ -30,17 +31,15 @@ import java.util.Properties;
  */
 public class ProtobufDeserializer implements Deserializer {
 
-  private ProtobufConverter<Message> protobufConverter = null;
+  private ProtobufConverter<? extends Message> protobufConverter = null;
   private Class<? extends Message> protobufClass;
 
   @Override
   public void initialize(Configuration conf, Properties tbl) throws SerDeException {
     try {
-      String className = tbl
-              .getProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_CLASS);
-
+      String className = tbl.getProperty(Constants.SERIALIZATION_CLASS);
       protobufClass = conf.getClassByName(className).asSubclass(Message.class);
-      protobufConverter = ProtobufConverter.newInstance(new TypeRef<Message>(protobufClass){});
+      protobufConverter = ProtobufConverter.newInstance(protobufClass);
     } catch (Exception e) {
       throw new SerDeException(e);
     }
