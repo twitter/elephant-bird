@@ -232,7 +232,7 @@
       <dependency>
         <groupId>com.hadoop.gplcompression</groupId>
         <artifactId>hadoop-lzo</artifactId>
-        <version>0.4.15</version>
+        <version>0.4.16</version>
       </dependency>
 
       <!-- cascading -->
@@ -338,6 +338,7 @@
           </dependencies>
           <configuration>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            <argLine>-Djava.library.path=${test.library.path}</argLine>
           </configuration>
         </plugin>
 
