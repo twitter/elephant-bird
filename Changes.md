@@ -1,5 +1,27 @@
 # Elephant Bird #
 
+### Version 3.0.2 ###
+
+ISSUE 235. Update build so LZO tests work correctly (Travis Crawford)
+
+ISSUE 234. Hive protobuf deserializer (Raghu Angadi)
+
+ISSUE 233. Redo classloader checks (Raghu Angadi)
+
+ISSUE 230. Add DeprecatedRawMultiInputFormat (Travis Crawford)
+
+ISSUE 231. Removes m2e filtering of build-helper-maven-plugin (Andy Schlaikjer)
+
+ISSUE 232. merge two versions of TestThriftToPig (Raghu Angadi)
+
+ISSUE 229. Lzo raw input format (Raghu Angadi)
+
+ISSUE 227. More class visibility fixes (Raghu Angadi)
+
+ISSUE 225. fix subclass check in MultiInputFormat (Raghu Angadi)
+
+ISSUE 224. change log for 3.0.1 (Raghu Angadi)
+
 ### Version 3.0.1 ###
 
 ISSUE 223. handle null keys in Thrift maps (Raghu Angadi)
