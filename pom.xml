@@ -338,7 +338,7 @@
           </dependencies>
           <configuration>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
-	    <argLine>-Djava.library.path=${test.library.path}</argLine>
+            <argLine>-Djava.library.path=${test.library.path}</argLine>
           </configuration>
         </plugin>
 
