@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.BagFactory;
@@ -23,6 +21,8 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.twitter.elephantbird.pig.load.ThriftPigLoader;
@@ -37,7 +37,7 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class ThriftToPig<M extends TBase<?, ?>> {
 
-  public static final Logger LOG = LogManager.getLogger(ThriftToPig.class);
+  public static final Logger LOG = LoggerFactory.getLogger(ThriftToPig.class);
 
   private static BagFactory bagFactory = BagFactory.getInstance();
   private static TupleFactory tupleFactory  = TupleFactory.getInstance();
