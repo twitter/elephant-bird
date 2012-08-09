@@ -47,4 +47,7 @@ public class ThriftBinaryDeserializer extends TDeserializer {
     protocol.setReadLength(bytes.length); // the class exists to do this
     super.deserialize(base, bytes);
   }
+
+  // TODO: should add deserialize(TBase, bytes, offset, length).
+  // it could avoid a copy in many cases.
 }
