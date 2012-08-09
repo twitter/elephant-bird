@@ -44,7 +44,9 @@ public class ThriftBinaryDeserializer extends TDeserializer {
 
   @Override
   public void deserialize(TBase base, byte[] bytes) throws TException {
-    protocol.setReadLength(bytes.length); // the class exists to do this
+    // set upper bound on bytes available so that protocol does not try
+    // to allocate and read large amounts of data in case of corrupt input
+    protocol.setReadLength(bytes.length);
     super.deserialize(base, bytes);
   }
 
