@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.mapreduce.io;
 
+import com.twitter.elephantbird.thrift.ThriftBinaryDeserializer;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TBase;
@@ -47,7 +48,7 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
   @Override
   public M fromBytes(byte[] messageBuffer) {
     if (deserializer == null)
-      deserializer = new TDeserializer();
+      deserializer = new ThriftBinaryDeserializer();
     try {
       M message = typeRef.safeNewInstance();
       deserializer.deserialize(message, messageBuffer);
