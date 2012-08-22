@@ -103,6 +103,7 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
 
           FieldDescriptor fd = msgFields.get(i);
           if (fd.isRepeated() || msg.hasField(fd)) {
+            // match protobuf's serialization (write only if hasField() is true)
             Protobufs.writeFieldNoTag(protoStream, fd, msg.getField(fd));
           }
 

@@ -189,13 +189,17 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
 
       for (int i=0; i < knownRequiredFields.size(); i++) {
         BytesRefWritable buf = byteRefs.get(columnsBeingRead.get(i));
+        FieldDescriptor fd = knownRequiredFields.get(i);
+        Object value = null;
         if (buf.getLength() > 0) {
-          Object value = Protobufs.readFieldNoTag(
+          value = Protobufs.readFieldNoTag(
               CodedInputStream.newInstance(buf.getData(), buf.getStart(), buf.getLength()),
               knownRequiredFields.get(i),
               msgBuilder);
-          tuple.set(i, protoToPig.fieldToPig(knownRequiredFields.get(i), value));
+        } else if (fd.getType() != FieldDescriptor.Type.MESSAGE) {
+          value = fd.getDefaultValue();
         }
+        tuple.set(i, protoToPig.fieldToPig(fd, value));
       }
 
       if (readUnknownsColumn) {

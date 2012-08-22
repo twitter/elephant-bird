@@ -171,6 +171,8 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
           tObj.setFieldValue(field.getFieldIdEnum(),
                              ThriftUtils.readFieldNoTag(tProto, field));
         }
+        // else no need to set default value since any default value
+        // would have been serialized when this record was written.
       }
 
       // parse unknowns column if required
