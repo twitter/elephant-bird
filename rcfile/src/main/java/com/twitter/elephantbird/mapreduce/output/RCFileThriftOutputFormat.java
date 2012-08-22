@@ -133,9 +133,7 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
         if (i < (numColumns - 1)) {
 
           Field fd = tFields.get(i);
-          if (tObj.isSet(fd.getFieldIdEnum())) {
-            ThriftUtils.writeFieldNoTag(tProto, fd, tDesc.getFieldValue(i, tObj));
-          }
+          ThriftUtils.writeFieldNoTag(tProto, fd, tDesc.getFieldValue(i, tObj));
 
         } // else { }  : no 'unknown fields' in thrift object
 
