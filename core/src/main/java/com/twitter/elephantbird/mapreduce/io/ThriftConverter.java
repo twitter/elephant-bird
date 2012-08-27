@@ -1,18 +1,18 @@
 package com.twitter.elephantbird.mapreduce.io;
 
 import com.twitter.elephantbird.thrift.ThriftBinaryDeserializer;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.util.TypeRef;
 
 public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M> {
 
-  public static final Logger LOG = LogManager.getLogger(ThriftConverter.class);
+  public static final Logger LOG = LoggerFactory.getLogger(ThriftConverter.class);
 
   private TypeRef<M> typeRef;
   private TSerializer serializer;
