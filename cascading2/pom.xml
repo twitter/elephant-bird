@@ -29,10 +29,6 @@
       <artifactId>slf4j-simple</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-    </dependency>
-    <dependency>
       <groupId>cascading</groupId>
       <artifactId>cascading-hadoop</artifactId>
     </dependency>
