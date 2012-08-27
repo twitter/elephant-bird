@@ -2,8 +2,6 @@ package com.twitter.elephantbird.util;
 
 import java.util.Map;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.meta_data.FieldMetaData;
@@ -30,8 +28,8 @@ import com.google.protobuf.Descriptors.FieldDescriptor.Type;
  * @param <T> Source thrift class
  * @param <P> Target Protocol Buffer Message class
  */
+@SuppressWarnings("rawtypes")
 public class ThriftToProto<T extends TBase, P extends Message> {
-  private static final Logger LOG = LogManager.getLogger(ThriftToProto.class);
 
   Message.Builder protoBuilder_;
   P protoObj_;

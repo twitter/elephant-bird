@@ -3,8 +3,6 @@ package com.twitter.elephantbird.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TType;
 
@@ -29,7 +27,6 @@ import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
  * @param <T> Source thrift class
  */
 public class ThriftToDynamicProto<T extends TBase<?,?>> {
-  private static final Logger LOG = LogManager.getLogger(ThriftToDynamicProto.class);
 
   DynamicMessage.Builder protoBuilder;
   Descriptors.Descriptor msgDescriptor;

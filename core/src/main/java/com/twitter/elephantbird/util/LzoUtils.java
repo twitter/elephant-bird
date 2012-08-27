@@ -9,8 +9,8 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzoIndexer;
@@ -21,7 +21,7 @@ import com.hadoop.compression.lzo.LzopCodec;
  */
 public class LzoUtils {
 
-  public static final Logger LOG = LogManager.getLogger(LzoUtils.class);
+  public static final Logger LOG = LoggerFactory.getLogger(LzoUtils.class);
 
   /**
    * A work-around to support environments with older versions of LzopCodec.
