@@ -5,7 +5,6 @@ import java.io.IOException;
 import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DataInputBuffer;
@@ -44,7 +43,7 @@ public class RawSequenceFileRecordReader extends RecordReader<DataInputBuffer, D
     FileSplit fileSplit = (FileSplit) inputSplit;
     Path path = fileSplit.getPath();
     // inhibit class loading during SequenceFile.Reader initialization
-    reader = new SequenceFile.Reader(FileSystem.get(conf), path, conf) {
+    reader = new SequenceFile.Reader(path.getFileSystem(conf), path, conf) {
       @Override
       public synchronized Class<?> getKeyClass() {
         return BytesWritable.class;
