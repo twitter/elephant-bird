@@ -8,7 +8,6 @@ import java.util.Map;
 import com.twitter.elephantbird.util.W3CLogParser;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -58,8 +57,8 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
     in_ = new LineReader(input, conf);
 
     String fileURI = getFieldDefinitionFile();
-    FileSystem fs = FileSystem.get(URI.create(fileURI), conf);
-    InputStream is = fs.open(new Path(fileURI));
+    Path path = new Path(fileURI);
+    InputStream is = path.getFileSystem(conf).open(path);
     w3cLogParser_ = new W3CLogParser(is);
     is.close();
   }
