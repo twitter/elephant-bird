@@ -7,13 +7,12 @@ import java.util.List;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Message.Builder;
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
-import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
 
@@ -226,8 +225,7 @@ public class PigToProtobuf {
     // type convertion should match with ProtobufToPig.getPigScriptDataType
     switch (fieldDescriptor.getType()) {
     case ENUM:
-      // Convert tupleField to the enum value.
-      return fieldDescriptor.getEnumType().findValueByName((String)tupleField);
+      return toEnumValueDescriptor(fieldDescriptor, (String) tupleField);
     case BOOL:
       return Boolean.valueOf((Integer)tupleField != 0);
     case BYTES:
@@ -235,6 +233,18 @@ public class PigToProtobuf {
     default:
       return tupleField;
     }
+  }
+
+  private static EnumValueDescriptor toEnumValueDescriptor(FieldDescriptor fieldDescriptor,
+      String name) {
+    EnumValueDescriptor out = fieldDescriptor.getEnumType().findValueByName(name);
+    if (out == null) {
+      throw new IllegalArgumentException(
+          String.format("Failed to convert string '%s'" +
+              " to enum value of type '%s'", name,
+              fieldDescriptor.getEnumType().getFullName()));
+    }
+    return out;
   }
 
   /**
