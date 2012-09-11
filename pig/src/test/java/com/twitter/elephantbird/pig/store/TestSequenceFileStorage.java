@@ -76,7 +76,7 @@ public class TestSequenceFileStorage {
     tempFilename = tempFile.getAbsolutePath();
     Path path = new Path("file:///" + tempFilename);
     Configuration conf = new Configuration();
-    FileSystem fs = FileSystem.get(path.toUri(), conf);
+    FileSystem fs = path.getFileSystem(conf);
     IntWritable key = new IntWritable();
     Text value = new Text();
     SequenceFile.Writer writer = null;
