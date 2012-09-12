@@ -15,7 +15,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public class ProtobufConverter<M extends Message> implements BinaryConverter<M> {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufConverter.class);
 
-  private Message.Builder protoBuilder;
+  private Message defaultInstance;
   private TypeRef<M> typeRef;
 
   // limit the number of warnings in case of serialization errors.
@@ -53,10 +53,13 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   @SuppressWarnings("unchecked")
   public M fromBytes(byte[] messageBuffer, int offset, int len) {
     try {
-      if (protoBuilder == null) {
-        protoBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+      if (defaultInstance == null) {
+        defaultInstance = Protobufs.getMessageBuilder(typeRef.getRawClass())
+                                   .getDefaultInstanceForType();
       }
-      return  (M) protoBuilder.clone().mergeFrom(messageBuffer, offset, len).build();
+      return (M) defaultInstance.newBuilderForType()
+                                .mergeFrom(messageBuffer, offset, len)
+                                .build();
     } catch (InvalidProtocolBufferException e) {
       logWarning("Invalid Protobuf exception while building " + typeRef.getRawClass().getName(), e);
     } catch(UninitializedMessageException ume) {
