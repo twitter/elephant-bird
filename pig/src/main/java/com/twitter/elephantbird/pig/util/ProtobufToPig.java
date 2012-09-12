@@ -69,7 +69,7 @@ public class ProtobufToPig {
       // Walk through all the possible fields in the message.
       for (FieldDescriptor fieldDescriptor : msgDescriptor.getFields()) {
         // Get the set value, or the default value, or null.
-        Object fieldValue = getFieldValue(msg, fieldDescriptor);
+        Object fieldValue = msg.getField(fieldDescriptor);
 
         if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
           tuple.set(curField++, messageToTuple(fieldDescriptor, fieldValue));
@@ -90,6 +90,10 @@ public class ProtobufToPig {
    * on whether the field is a Message or a simple field.
    */
   public Object fieldToPig(FieldDescriptor fieldDescriptor, Object fieldValue) {
+    if (fieldValue == null) {
+      // protobufs unofficially ensures values are not null. just in case:
+      return null;
+    }
     if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
       return messageToTuple(fieldDescriptor, fieldValue);
     } else {
@@ -106,6 +110,10 @@ public class ProtobufToPig {
    */
   @SuppressWarnings("unchecked")
   protected Object messageToTuple(FieldDescriptor fieldDescriptor, Object fieldValue) {
+    if (fieldValue == null) {
+      // protobufs unofficially ensures values are not null. just in case:
+      return null;
+    }
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToTuple called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {
@@ -189,26 +197,6 @@ public class ProtobufToPig {
       return new DataByteArray(bsValue.toByteArray());
     }
     return fieldValue;
-  }
-
-  /**
-   * A utility function for getting the value of a field in a protobuf message.  It first tries the
-   * literal set value in the protobuf's field list.  If the value isn't set, and the field has a default
-   * value, it uses that.  Otherwise, it returns null.
-   * @param msg the protobuf message
-   * @param fieldDescriptor the descriptor object for the given field.
-   * @return the value of the field, or null if none can be assigned.
-   */
-  protected Object getFieldValue(Message msg, FieldDescriptor fieldDescriptor) {
-    Object o = null;
-    Map<FieldDescriptor, Object> setFields = msg.getAllFields();
-    if (setFields.containsKey(fieldDescriptor)) {
-      o = setFields.get(fieldDescriptor);
-    } else if (fieldDescriptor.hasDefaultValue()) {
-      o = fieldDescriptor.getDefaultValue();
-    }
-
-    return o;
   }
 
   /**
