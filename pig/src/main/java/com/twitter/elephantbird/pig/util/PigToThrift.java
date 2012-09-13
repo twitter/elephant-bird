@@ -11,8 +11,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
@@ -43,7 +44,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * Any remaining fields will be left unset.
  */
 public class PigToThrift<T extends TBase<?, ?>> {
-  public static final Logger LOG = LogManager.getLogger(PigToThrift.class);
+  public static final Logger LOG = LoggerFactory.getLogger(PigToThrift.class);
 
   private TStructDescriptor structDesc;
 
