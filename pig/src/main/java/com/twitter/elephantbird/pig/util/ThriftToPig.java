@@ -10,10 +10,10 @@ import java.util.Map.Entry;
 
 import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
+import org.apache.pig.data.NonSpillableDataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
@@ -39,7 +39,6 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
   public static final Logger LOG = LoggerFactory.getLogger(ThriftToPig.class);
 
-  private static BagFactory bagFactory = BagFactory.getInstance();
   private static TupleFactory tupleFactory  = TupleFactory.getInstance();
 
   private TStructDescriptor structDesc;
@@ -188,7 +187,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
         tuples.add(tupleFactory.newTuple(pValue));
       }
     }
-    return bagFactory.newDefaultBag(tuples);
+    return new NonSpillableDataBag(tuples);
   }
 
   @SuppressWarnings("serial")

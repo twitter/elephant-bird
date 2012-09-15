@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.pig.util;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -13,10 +14,10 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.Misc.CountedMap;
 import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
+import org.apache.pig.data.NonSpillableDataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
@@ -34,7 +35,6 @@ public class ProtobufToPig {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufToPig.class);
 
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
-  private static BagFactory bagFactory_ = BagFactory.getInstance();
 
   public enum CoercionLevel { kNoCoercion, kAllowCoercionToPigMaps }
 
@@ -133,7 +133,7 @@ public class ProtobufToPig {
         }
         return map;
       } else {
-        DataBag bag = bagFactory_.newDefaultBag();
+        DataBag bag = new NonSpillableDataBag(messageList.size());
         for (Message m : messageList) {
           bag.add(new ProtobufTuple(m));
         }
@@ -160,8 +160,8 @@ public class ProtobufToPig {
       // The protobuf contract is that if the field is repeated, then the object returned is actually a List
       // of the underlying datatype, which in this case is a "primitive" like int, float, String, etc.
       // We have to make a single-item tuple out of it to put it in the bag.
-      DataBag bag = bagFactory_.newDefaultBag();
-      List<Object> fieldValueList = (List<Object>) (fieldValue != null ? fieldValue : Lists.newArrayList());
+      List<Object> fieldValueList = (List<Object>) (fieldValue != null ? fieldValue : Collections.emptyList());
+      DataBag bag = new NonSpillableDataBag(fieldValueList.size());
       for (Object singleFieldValue : fieldValueList) {
         Object nonEnumFieldValue = coerceToPigTypes(fieldDescriptor, singleFieldValue);
         Tuple innerTuple = tupleFactory_.newTuple(1);
