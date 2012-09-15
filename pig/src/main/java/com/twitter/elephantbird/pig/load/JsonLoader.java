@@ -13,9 +13,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
-import org.apache.pig.data.DefaultBagFactory;
+import org.apache.pig.data.NonSpillableDataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.PigContext;
@@ -45,7 +44,6 @@ import java.util.Map;
 public class JsonLoader extends LzoBaseLoadFunc {
   private static final Logger LOG = LoggerFactory.getLogger(JsonLoader.class);
   private static final TupleFactory tupleFactory = TupleFactory.getInstance();
-  private static final BagFactory bagFactory = DefaultBagFactory.getInstance();
   
   public static final String NESTED_LOAD_KEY = "elephantbird.jsonloader.nestedLoad";
   
@@ -190,7 +188,7 @@ public class JsonLoader extends LzoBaseLoadFunc {
     }  else if (isNestedLoadEnabled && value instanceof JSONArray) {
       
       JSONArray a = (JSONArray) value;
-      DataBag mapValue = bagFactory.newDefaultBag();
+      DataBag mapValue = new NonSpillableDataBag(a.size());
       for (int i=0; i<a.size(); i++) {
         Tuple t = tupleFactory.newTuple(wrap(a.get(i)));
         mapValue.add(t);

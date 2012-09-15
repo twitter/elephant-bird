@@ -1,10 +1,12 @@
 package com.twitter.elephantbird.pig.piggybank;
 
 import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
+import org.apache.pig.data.NonSpillableDataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+
+import com.google.common.collect.Lists;
 
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
@@ -14,7 +16,6 @@ import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneType;
 public class Fixtures {
 
   public static TupleFactory tf_ = TupleFactory.getInstance();
-  public static BagFactory bf_ = BagFactory.getInstance();
 
   public static AddressBook buildAddressBookProto() {
     AddressBook abProto = AddressBook.newBuilder()
@@ -36,10 +37,10 @@ public class Fixtures {
   }
   
   public static Tuple buildPersonTuple() throws ExecException {
-    DataBag phoneBag = bf_.newDefaultBag();
-    phoneBag.add(makePhoneNumberTuple("415-999-9999", null));
-    phoneBag.add(makePhoneNumberTuple("415-666-6666", "MOBILE"));
-    phoneBag.add(makePhoneNumberTuple("415-333-3333", "WORK"));
+    DataBag phoneBag = new NonSpillableDataBag(
+      Lists.newArrayList(makePhoneNumberTuple("415-999-9999", null), 
+      makePhoneNumberTuple("415-666-6666", "MOBILE"),
+      makePhoneNumberTuple("415-333-3333", "WORK")));
     
     Tuple entryTuple = tf_.newTuple(4);
     entryTuple.set(0, "Elephant Bird");
@@ -50,9 +51,9 @@ public class Fixtures {
   }
   // {(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)})}
   public static Tuple buildAddressBookTuple() throws ExecException {
-    DataBag entryBag = bf_.newDefaultBag();
-    entryBag.add(buildPersonTuple());
-    entryBag.add(buildPersonTuple());
+    DataBag entryBag = new NonSpillableDataBag(
+     Lists.newArrayList(buildPersonTuple(),
+     buildPersonTuple()));
     return tf_.newTuple(entryBag);
   }
 

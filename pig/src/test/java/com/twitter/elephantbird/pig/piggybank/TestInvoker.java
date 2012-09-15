@@ -24,8 +24,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 
 import org.apache.pig.EvalFunc;
-import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
+import org.apache.pig.data.NonSpillableDataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
@@ -44,7 +44,6 @@ import com.twitter.elephantbird.pig.piggybank.InvokeForString;
 public class TestInvoker {
 
     private final TupleFactory tf_ = TupleFactory.getInstance();
-    private final BagFactory bf_ = BagFactory.getInstance();
 
     @Test
     public void testStringInvoker() throws SecurityException, ClassNotFoundException, NoSuchMethodException, IOException {
@@ -149,7 +148,7 @@ public class TestInvoker {
     }
 
     private DataBag newSimpleBag(Object... objects) {
-      DataBag bag = bf_.newDefaultBag();
+      DataBag bag = new NonSpillableDataBag(objects.length);
       for (Object o : objects) {
         bag.add(tf_.newTuple(o));
       }
