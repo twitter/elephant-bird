@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.pig.util;
 
-import org.apache.pig.data.BagFactory;
+import org.apache.pig.data.NonSpillableDataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.junit.Assert;
@@ -27,10 +27,9 @@ public class TestPigToThrift {
   private static Tuple personTuple(String name, int id, String email, String phoneNumber,
       String phoneType) {
     TupleFactory tf = TupleFactory.getInstance();
-    BagFactory bf = BagFactory.getInstance();
     return tf.newTupleNoCopy(Lists.<Object> newArrayList(
         tf.newTupleNoCopy(Lists.<Object> newArrayList(name, null)), id, email,
-        bf.newDefaultBag(Lists.newArrayList(tf.newTupleNoCopy(Lists.<Object> newArrayList(
+        new NonSpillableDataBag(Lists.newArrayList(tf.newTupleNoCopy(Lists.<Object> newArrayList(
             phoneNumber, phoneType))))));
   }
 
