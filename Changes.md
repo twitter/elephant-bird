@@ -1,5 +1,51 @@
 # Elephant Bird #
 
+### Version 3.0.2 ###
+
+ISSUE 235. Update build so LZO tests work correctly (Travis Crawford)
+
+ISSUE 234. Hive protobuf deserializer (Raghu Angadi)
+
+ISSUE 233. Redo classloader checks (Raghu Angadi)
+
+ISSUE 230. Add DeprecatedRawMultiInputFormat (Travis Crawford)
+
+ISSUE 231. Removes m2e filtering of build-helper-maven-plugin (Andy Schlaikjer)
+
+ISSUE 232. merge two versions of TestThriftToPig (Raghu Angadi)
+
+ISSUE 229. Lzo raw input format (Raghu Angadi)
+
+ISSUE 227. More class visibility fixes (Raghu Angadi)
+
+ISSUE 225. fix subclass check in MultiInputFormat (Raghu Angadi)
+
+ISSUE 224. change log for 3.0.1 (Raghu Angadi)
+
+### Version 3.0.1 ###
+
+ISSUE 223. handle null keys in Thrift maps (Raghu Angadi)
+
+ISSUE 222. use correct classloader for user supplied classes (Raghu Angadi)
+
+### Version 3.0.0 ###
+
+ISSUE 201. mavenize and split into multiple modules (Johan Oskarsson, Andy Schlaikjer)
+
+### Version 2.2.3 ###
+
+ISSUE 205. Set map value field alias to null (Andy Schlaikjer)
+
+ISSUE 203. Remove yamlbeans from dependencies (Raghu Angadi)
+
+ISSUE 202. remove Protobuf codegen utils, use maven repo for Thrift and Protobuf jars (Raghu Angadi)
+
+ISSUE 198. Remove piggybank dependency. (Raghu Angadi)
+
+ISSUE 200. Fix typos in VectorWritableConverter javadoc (Andy Schlaikjer)
+
+ISSUE 197. Upgrade to cascading wip-288 (Argyris Zymnis)
+
 ### Version 2.2.2 ###
 
 ISSUE 193. Fix schema for Thrift struct in a map. (Raghu Angadi)
