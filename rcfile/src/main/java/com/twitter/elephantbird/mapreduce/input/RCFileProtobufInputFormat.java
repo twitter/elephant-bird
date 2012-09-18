@@ -63,6 +63,7 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
     private final TupleFactory tf = TupleFactory.getInstance();
     private final ProtobufToPig protoToPig = new ProtobufToPig();
 
+    private Message               msgInstance;
     private Builder               msgBuilder;
     private boolean               readUnknownsColumn = false;
     private List<FieldDescriptor> knownRequiredFields = Lists.newArrayList();
@@ -87,6 +88,7 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
        * read the the "unknowns" column (the last column).
       */
       msgBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+      msgInstance = msgBuilder.getDefaultInstanceForType();
       Descriptor msgDesc = msgBuilder.getDescriptorForType();
       final List<FieldDescriptor> msgFields = msgDesc.getFields();
 
@@ -149,7 +151,7 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
         return null;
       }
 
-      Builder builder = msgBuilder.clone();
+      Builder builder = msgInstance.newBuilderForType();
 
       for (int i=0; i < knownRequiredFields.size(); i++) {
         BytesRefWritable buf = byteRefs.get(columnsBeingRead.get(i));
@@ -196,8 +198,8 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
               CodedInputStream.newInstance(buf.getData(), buf.getStart(), buf.getLength()),
               knownRequiredFields.get(i),
               msgBuilder);
-        } else if (fd.getType() != FieldDescriptor.Type.MESSAGE) {
-          value = fd.getDefaultValue();
+        } else { // use the value from default instance
+          value = msgInstance.getField(fd);
         }
         tuple.set(i, protoToPig.fieldToPig(fd, value));
       }
