@@ -33,21 +33,6 @@ public class RCFileThriftPigLoader extends ThriftPigLoader<TBase<?,?>> {
     return new RCFileThriftInputFormat(typeRef);
   }
 
-  @SuppressWarnings("unchecked")
-  protected <M> M getNextBinaryValue(TypeRef<M> typeRef) throws IOException {
-    try {
-      if (thriftReader.nextKeyValue()) {
-        return (M) thriftReader.getCurrentThriftValue();
-      }
-    } catch (TException e) {
-      throw new IOException(e);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
-    }
-
-    return null;
-  }
-
   @Override
   public Tuple getNext() throws IOException {
     if (thriftReader.isReadingUnknonwsColumn()) {
@@ -71,8 +56,7 @@ public class RCFileThriftPigLoader extends ThriftPigLoader<TBase<?,?>> {
 
   @Override @SuppressWarnings("unchecked")
   public void prepareToRead(RecordReader reader, PigSplit split) {
-    // pass null so that, there is no way it could be misused
-    super.prepareToRead(null, split);
+    super.prepareToRead(reader, split);
     thriftReader = (RCFileThriftInputFormat.ThriftReader) reader;
   }
 
