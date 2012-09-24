@@ -483,6 +483,7 @@
     <module>mahout</module>
     <module>pig</module>
     <module>rcfile</module>
+    <module>examples</module>
   </modules>
 
 </project>
