@@ -137,6 +137,11 @@
         <artifactId>elephant-bird-rcfile</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-example</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- testing -->
       <dependency>
