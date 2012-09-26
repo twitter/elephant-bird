@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
@@ -16,8 +15,6 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.pig.data.Tuple;
-import org.apache.pig.data.TupleFactory;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -29,27 +26,22 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
-import com.twitter.elephantbird.pig.util.RCFileUtil;
-import com.twitter.elephantbird.pig.util.ThriftToPig;
+import com.twitter.elephantbird.util.RCFileUtil;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWritable, Writable> {
+public class RCFileThriftInputFormat extends RCFileBaseInputFormat {
 
   private static final Logger LOG = LoggerFactory.getLogger(RCFileThriftInputFormat.class);
 
   private TypeRef<? extends TBase<?, ?>> typeRef;
 
-  /** internal, for MR use only. */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public RCFileThriftInputFormat() {
-    super(new RCFileInputFormat());
-  }
+  // for MR
+  public RCFileThriftInputFormat() {}
 
   public RCFileThriftInputFormat(TypeRef<? extends TBase<?, ?>> typeRef) {
-    this();
     this.typeRef = typeRef;
   }
 
@@ -68,23 +60,20 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
     if (typeRef == null) {
       typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), RCFileThriftInputFormat.class);
     }
-    return new ThriftReader(super.createRecordReader(split, taskAttempt));
+    return new ThriftReader(createUnwrappedRecordReader(split, taskAttempt));
   }
 
   public class ThriftReader extends FilterRecordReader<LongWritable, Writable> {
 
-    private final TupleFactory tf = TupleFactory.getInstance();
+    protected TStructDescriptor     tDesc;
+    protected boolean               readUnknownsColumn = false;
+    protected List<Field>           knownRequiredFields = Lists.newArrayList();
+    protected ArrayList<Integer>    columnsBeingRead = Lists.newArrayList();
 
-    private TStructDescriptor     tDesc;
-    private boolean               readUnknownsColumn = false;
-    private List<Field>           knownRequiredFields = Lists.newArrayList();
-    private ArrayList<Integer>    columnsBeingRead = Lists.newArrayList();
+    protected TMemoryInputTransport memTransport = new TMemoryInputTransport();
+    protected TBinaryProtocol tProto = new TBinaryProtocol(memTransport);
 
-    private TMemoryInputTransport memTransport = new TMemoryInputTransport();
-    private TBinaryProtocol tProto = new TBinaryProtocol(memTransport);
-
-    private TBase<?, ?>           currentValue;
-    private ThriftWritable<TBase<?, ?>> thriftWritable;
+    protected ThriftWritable<TBase<?, ?>> thriftWritable;
 
     /**
      * The reader is expected to be a
@@ -148,12 +137,6 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
       super.initialize(split, ctx);
     }
 
-    @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
-      currentValue = null;
-      return super.nextKeyValue();
-    }
-
     @Override @SuppressWarnings({ "unchecked", "rawtypes" })
     public Writable getCurrentValue() throws IOException, InterruptedException {
       try {
@@ -165,17 +148,20 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
       }
     }
 
+    /** returns <code>super.getCurrentValue()</code> */
+    public BytesRefArrayWritable getCurrentBytesRefArrayWritable() throws IOException, InterruptedException {
+      return (BytesRefArrayWritable) super.getCurrentValue();
+    }
+
     /**
      * Builds Thrift object from the raw bytes returned by RCFile reader.
      * @throws TException
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public TBase<?, ?> getCurrentThriftValue() throws IOException, InterruptedException, TException {
-      if (currentValue != null) {
-        return currentValue;
-      }
 
-      BytesRefArrayWritable byteRefs = (BytesRefArrayWritable) super.getCurrentValue();
+      BytesRefArrayWritable byteRefs = getCurrentBytesRefArrayWritable();
+
       if (byteRefs == null) {
         return null;
       }
@@ -205,39 +191,8 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
         }
       }
 
-      currentValue = tObj;
-      return currentValue;
+      return tObj;
     }
 
-    /**
-     * Returns a Tuple consisting of required fields with out creating
-     * a Thrift message at the top level.
-     */
-    public Tuple getCurrentTupleValue() throws IOException, InterruptedException, TException {
-
-      BytesRefArrayWritable byteRefs = (BytesRefArrayWritable) super.getCurrentValue();
-      if (byteRefs == null) {
-        return null;
-      }
-
-      Tuple tuple = tf.newTuple(knownRequiredFields.size());
-
-      for (int i=0; i < knownRequiredFields.size(); i++) {
-        BytesRefWritable buf = byteRefs.get(columnsBeingRead.get(i));
-        if (buf.getLength() > 0) {
-          memTransport.reset(buf.getData(), buf.getStart(), buf.getLength());
-
-          Field field = knownRequiredFields.get(i);
-          Object value = ThriftUtils.readFieldNoTag(tProto, field);
-          tuple.set(i, ThriftToPig.toPigObject(field, value, false));
-        }
-      }
-
-      if (readUnknownsColumn) {
-        throw new IOException("getCurrentTupleValue() is not supported when 'readUnknownColumns' is set");
-      }
-
-      return tuple;
-    }
   }
 }

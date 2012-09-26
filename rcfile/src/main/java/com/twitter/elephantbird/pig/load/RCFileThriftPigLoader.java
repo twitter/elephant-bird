@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.mapreduce.input.RCFileThriftTupleInputFormat;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -11,15 +12,14 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 
 import com.twitter.elephantbird.mapreduce.input.RCFileThriftInputFormat;
-import com.twitter.elephantbird.pig.util.RCFileUtil;
-import com.twitter.elephantbird.util.TypeRef;
+import com.twitter.elephantbird.util.RCFileUtil;
 
 /**
  * Pig loader for Thrift object stored in RCFiles.
  */
 public class RCFileThriftPigLoader extends ThriftPigLoader<TBase<?,?>> {
 
-  private RCFileThriftInputFormat.ThriftReader thriftReader;
+  private RCFileThriftTupleInputFormat.TupleReader thriftReader;
 
   /**
    * @param thriftClassName fully qualified name of the thrift class
@@ -30,7 +30,7 @@ public class RCFileThriftPigLoader extends ThriftPigLoader<TBase<?,?>> {
 
   @Override @SuppressWarnings("unchecked")
   public InputFormat getInputFormat() throws IOException {
-    return new RCFileThriftInputFormat(typeRef);
+    return new RCFileThriftTupleInputFormat(typeRef);
   }
 
   @Override
@@ -57,7 +57,7 @@ public class RCFileThriftPigLoader extends ThriftPigLoader<TBase<?,?>> {
   @Override @SuppressWarnings("unchecked")
   public void prepareToRead(RecordReader reader, PigSplit split) {
     super.prepareToRead(reader, split);
-    thriftReader = (RCFileThriftInputFormat.ThriftReader) reader;
+    thriftReader = (RCFileThriftTupleInputFormat.TupleReader) reader;
   }
 
   @Override
