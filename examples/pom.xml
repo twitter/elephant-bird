@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>3.0.3-SNAPSHOT</version>
+    <version>3.0.4-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -16,14 +16,6 @@
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-pig</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.twitter.elephantbird</groupId>
-      <artifactId>elephant-bird-hive</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.twitter.elephantbird</groupId>
-      <artifactId>elephant-bird-cascading2</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
