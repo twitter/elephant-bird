@@ -138,7 +138,7 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>elephant-bird-example</artifactId>
+        <artifactId>elephant-bird-examples</artifactId>
         <version>${project.version}</version>
       </dependency>
 
