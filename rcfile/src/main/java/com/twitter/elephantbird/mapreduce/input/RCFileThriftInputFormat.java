@@ -11,6 +11,7 @@ import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.pig.util.RCFileUtil;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
@@ -34,15 +36,16 @@ import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWritable, BytesRefArrayWritable> {
+public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWritable, Writable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RCFileThriftInputFormat.class);
 
   private TypeRef<? extends TBase<?, ?>> typeRef;
 
   /** internal, for MR use only. */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public RCFileThriftInputFormat() {
-    super(new RCFileInputFormat<LongWritable, BytesRefArrayWritable>());
+    super(new RCFileInputFormat());
   }
 
   public RCFileThriftInputFormat(TypeRef<? extends TBase<?, ?>> typeRef) {
@@ -58,10 +61,9 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
     ThriftUtils.setClassConf(conf, RCFileThriftInputFormat.class, thriftClass);
   }
 
-
-  @Override @SuppressWarnings("unchecked")
-  public RecordReader createRecordReader(InputSplit split,
-                                         TaskAttemptContext taskAttempt)
+  @Override
+  public RecordReader<LongWritable, Writable>
+  createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
                                     throws IOException, InterruptedException {
     if (typeRef == null) {
       typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), RCFileThriftInputFormat.class);
@@ -69,7 +71,7 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
     return new ThriftReader(super.createRecordReader(split, taskAttempt));
   }
 
-  public class ThriftReader extends FilterRecordReader<LongWritable, BytesRefArrayWritable> {
+  public class ThriftReader extends FilterRecordReader<LongWritable, Writable> {
 
     private final TupleFactory tf = TupleFactory.getInstance();
 
@@ -81,9 +83,15 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
     private TMemoryInputTransport memTransport = new TMemoryInputTransport();
     private TBinaryProtocol tProto = new TBinaryProtocol(memTransport);
 
-    private TBase<?, ?>     currentValue;
+    private TBase<?, ?>           currentValue;
+    private ThriftWritable<TBase<?, ?>> thriftWritable;
 
-    public ThriftReader(RecordReader<LongWritable, BytesRefArrayWritable> reader) {
+    /**
+     * The reader is expected to be a
+     * <code>RecordReader< LongWritable, BytesRefArrayWritable ></code>
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ThriftReader(RecordReader reader) {
       super(reader);
     }
 
@@ -92,12 +100,13 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
       return readUnknownsColumn;
     }
 
-    @Override
+    @Override @SuppressWarnings("unchecked")
     public void initialize(InputSplit split, TaskAttemptContext ctx)
                            throws IOException, InterruptedException {
       // set up columns that needs to read from the RCFile.
 
       tDesc = TStructDescriptor.getInstance(typeRef.getRawClass());
+      thriftWritable = ThriftWritable.newInstance((Class<TBase<?, ?>>)typeRef.getRawClass());
       final List<Field> tFields = tDesc.getFields();
 
       FileSplit fsplit = (FileSplit)split;
@@ -145,17 +154,28 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
       return super.nextKeyValue();
     }
 
+    @Override @SuppressWarnings({ "unchecked", "rawtypes" })
+    public Writable getCurrentValue() throws IOException, InterruptedException {
+      try {
+        thriftWritable.set(getCurrentThriftValue());
+        return thriftWritable;
+      } catch (TException e) {
+        //TODO : add error tracking
+        throw new IOException(e);
+      }
+    }
+
     /**
      * Builds Thrift object from the raw bytes returned by RCFile reader.
      * @throws TException
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public TBase<?, ?> getCurrentThriftValue() throws IOException, InterruptedException, TException {
       if (currentValue != null) {
         return currentValue;
       }
 
-      BytesRefArrayWritable byteRefs = getCurrentValue();
+      BytesRefArrayWritable byteRefs = (BytesRefArrayWritable) super.getCurrentValue();
       if (byteRefs == null) {
         return null;
       }
@@ -195,7 +215,7 @@ public class RCFileThriftInputFormat extends MapReduceInputFormatWrapper<LongWri
      */
     public Tuple getCurrentTupleValue() throws IOException, InterruptedException, TException {
 
-      BytesRefArrayWritable byteRefs = getCurrentValue();
+      BytesRefArrayWritable byteRefs = (BytesRefArrayWritable) super.getCurrentValue();
       if (byteRefs == null) {
         return null;
       }

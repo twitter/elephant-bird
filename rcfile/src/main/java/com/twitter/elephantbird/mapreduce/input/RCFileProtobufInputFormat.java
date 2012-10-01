@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
@@ -11,6 +12,7 @@ import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -34,15 +36,16 @@ import com.twitter.elephantbird.pig.util.RCFileUtil;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongWritable, BytesRefArrayWritable> {
+public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongWritable, Writable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RCFileProtobufInputFormat.class);
 
   private TypeRef<Message> typeRef;
 
   /** internal, for MR use only. */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public RCFileProtobufInputFormat() {
-    super(new RCFileInputFormat<LongWritable, BytesRefArrayWritable>());
+    super(new RCFileInputFormat());
   }
 
   public RCFileProtobufInputFormat(TypeRef<Message> typeRef) {
@@ -58,7 +61,7 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
     Protobufs.setClassConf(conf, RCFileProtobufInputFormat.class, protoClass);
   }
 
-  public class ProtobufReader extends FilterRecordReader<LongWritable, BytesRefArrayWritable> {
+  public class ProtobufReader extends FilterRecordReader<LongWritable, Writable> {
 
     private final TupleFactory tf = TupleFactory.getInstance();
     private final ProtobufToPig protoToPig = new ProtobufToPig();
@@ -69,8 +72,14 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
     private ArrayList<Integer>    columnsBeingRead = Lists.newArrayList();
 
     private Message               currentValue;
+    private ProtobufWritable<Message> protoWritable;
 
-    public ProtobufReader(RecordReader<LongWritable, BytesRefArrayWritable> reader) {
+    /**
+     * The reader is expected to be a
+     * <code>RecordReader< LongWritable, BytesRefArrayWritable ></code>.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ProtobufReader(RecordReader reader) {
       super(reader);
     }
 
@@ -87,6 +96,7 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
        * read the the "unknowns" column (the last column).
       */
       msgBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+      protoWritable = ProtobufWritable.newInstance(typeRef.getRawClass());
       Descriptor msgDesc = msgBuilder.getDescriptorForType();
       final List<FieldDescriptor> msgFields = msgDesc.getFields();
 
@@ -136,6 +146,12 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
       return super.nextKeyValue();
     }
 
+    @Override
+    public Writable getCurrentValue() throws IOException, InterruptedException {
+      protoWritable.set(getCurrentProtobufValue());
+      return protoWritable;
+    }
+
     /**
      * Builds protobuf message from the raw bytes returned by RCFile reader.
      */
@@ -144,7 +160,7 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
         return currentValue;
       }
 
-      BytesRefArrayWritable byteRefs = getCurrentValue();
+      BytesRefArrayWritable byteRefs = (BytesRefArrayWritable) super.getCurrentValue();
       if (byteRefs == null) {
         return null;
       }
@@ -180,7 +196,7 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
      */
     public Tuple getCurrentTupleValue() throws IOException, InterruptedException {
 
-      BytesRefArrayWritable byteRefs = getCurrentValue();
+      BytesRefArrayWritable byteRefs = (BytesRefArrayWritable) super.getCurrentValue();
       if (byteRefs == null) {
         return null;
       }
@@ -211,9 +227,9 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
     }
   }
 
-  @Override @SuppressWarnings("unchecked")
-  public RecordReader createRecordReader(InputSplit split,
-                                         TaskAttemptContext taskAttempt)
+  @Override
+  public RecordReader<LongWritable, Writable>
+  createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
                                     throws IOException, InterruptedException {
     if (typeRef == null) {
       typeRef = Protobufs.getTypeRef(taskAttempt.getConfiguration(), RCFileProtobufInputFormat.class);

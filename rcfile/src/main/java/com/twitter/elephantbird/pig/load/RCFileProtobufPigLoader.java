@@ -32,20 +32,6 @@ public class RCFileProtobufPigLoader extends ProtobufPigLoader<Message> {
     return new RCFileProtobufInputFormat(typeRef);
   }
 
-  @SuppressWarnings("unchecked")
-  protected <M> M getNextBinaryValue(TypeRef<M> typeRef) throws IOException {
-    try {
-      if (protoReader.nextKeyValue()) {
-        return (M) protoReader.getCurrentProtobufValue();
-      }
-    } catch (InterruptedException e) {
-      throw new IOException(e);
-    }
-
-    return null;
-  }
-
-
   @Override
   public Tuple getNext() throws IOException {
     if (protoReader.isReadingUnknonwsColumn()) {
@@ -67,8 +53,7 @@ public class RCFileProtobufPigLoader extends ProtobufPigLoader<Message> {
 
   @Override @SuppressWarnings("unchecked")
   public void prepareToRead(RecordReader reader, PigSplit split) {
-    // pass null so that, there is no way it could be misused
-    super.prepareToRead(null, split);
+    super.prepareToRead(reader, split);
     protoReader = (RCFileProtobufInputFormat.ProtobufReader) reader;
   }
 
