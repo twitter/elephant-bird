@@ -4,20 +4,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-import org.apache.pig.data.Tuple;
-import org.apache.pig.data.TupleFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,24 +28,20 @@ import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
-import com.twitter.elephantbird.pig.util.ProtobufToPig;
-import com.twitter.elephantbird.pig.util.RCFileUtil;
+import com.twitter.elephantbird.util.RCFileUtil;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
-public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongWritable, BytesRefArrayWritable> {
+public class RCFileProtobufInputFormat extends RCFileBaseInputFormat {
 
   private static final Logger LOG = LoggerFactory.getLogger(RCFileProtobufInputFormat.class);
 
   private TypeRef<Message> typeRef;
 
-  /** internal, for MR use only. */
-  public RCFileProtobufInputFormat() {
-    super(new RCFileInputFormat<LongWritable, BytesRefArrayWritable>());
-  }
+  // for MR
+  public  RCFileProtobufInputFormat() {}
 
   public RCFileProtobufInputFormat(TypeRef<Message> typeRef) {
-    this();
     this.typeRef = typeRef;
   }
 
@@ -58,19 +53,31 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
     Protobufs.setClassConf(conf, RCFileProtobufInputFormat.class, protoClass);
   }
 
-  public class ProtobufReader extends FilterRecordReader<LongWritable, BytesRefArrayWritable> {
+  @Override
+  public RecordReader<LongWritable, Writable>
+  createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
+          throws IOException, InterruptedException {
+    if (typeRef == null) {
+      typeRef = Protobufs.getTypeRef(taskAttempt.getConfiguration(), RCFileProtobufInputFormat.class);
+    }
+    return new ProtobufReader(createUnwrappedRecordReader(split, taskAttempt));
+  }
 
-    private final TupleFactory tf = TupleFactory.getInstance();
-    private final ProtobufToPig protoToPig = new ProtobufToPig();
+  public class ProtobufReader extends FilterRecordReader<LongWritable, Writable> {
 
-    private Builder               msgBuilder;
-    private boolean               readUnknownsColumn = false;
-    private List<FieldDescriptor> knownRequiredFields = Lists.newArrayList();
-    private ArrayList<Integer>    columnsBeingRead = Lists.newArrayList();
+    protected Builder               msgBuilder;
+    protected boolean               readUnknownsColumn = false;
+    protected List<FieldDescriptor> knownRequiredFields = Lists.newArrayList();
+    protected ArrayList<Integer>    columnsBeingRead = Lists.newArrayList();
 
-    private Message               currentValue;
+    protected ProtobufWritable<Message> protoWritable;
 
-    public ProtobufReader(RecordReader<LongWritable, BytesRefArrayWritable> reader) {
+    /**
+     * The reader is expected to be a
+     * <code>RecordReader< LongWritable, BytesRefArrayWritable ></code>.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ProtobufReader(RecordReader reader) {
       super(reader);
     }
 
@@ -87,6 +94,7 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
        * read the the "unknowns" column (the last column).
       */
       msgBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+      protoWritable = ProtobufWritable.newInstance(typeRef.getRawClass());
       Descriptor msgDesc = msgBuilder.getDescriptorForType();
       final List<FieldDescriptor> msgFields = msgDesc.getFields();
 
@@ -131,20 +139,21 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
     }
 
     @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
-      currentValue = null;
-      return super.nextKeyValue();
+    public Writable getCurrentValue() throws IOException, InterruptedException {
+      protoWritable.set(getCurrentProtobufValue());
+      return protoWritable;
+    }
+
+    /** returns <code>super.getCurrentValue()</code> */
+    public BytesRefArrayWritable getCurrentBytesRefArrayWritable() throws IOException, InterruptedException {
+      return (BytesRefArrayWritable) super.getCurrentValue();
     }
 
     /**
      * Builds protobuf message from the raw bytes returned by RCFile reader.
      */
     public Message getCurrentProtobufValue() throws IOException, InterruptedException {
-      if (currentValue != null) {
-        return currentValue;
-      }
-
-      BytesRefArrayWritable byteRefs = getCurrentValue();
+      BytesRefArrayWritable byteRefs = getCurrentBytesRefArrayWritable();
       if (byteRefs == null) {
         return null;
       }
@@ -170,54 +179,8 @@ public class RCFileProtobufInputFormat extends MapReduceInputFormatWrapper<LongW
         }
       }
 
-      currentValue = builder.build();
-      return currentValue;
-    }
-
-    /**
-     * Returns a Tuple consisting of required fields with out creating
-     * a Protobuf message at the top level.
-     */
-    public Tuple getCurrentTupleValue() throws IOException, InterruptedException {
-
-      BytesRefArrayWritable byteRefs = getCurrentValue();
-      if (byteRefs == null) {
-        return null;
-      }
-
-      Tuple tuple = tf.newTuple(knownRequiredFields.size());
-
-      for (int i=0; i < knownRequiredFields.size(); i++) {
-        BytesRefWritable buf = byteRefs.get(columnsBeingRead.get(i));
-        FieldDescriptor fd = knownRequiredFields.get(i);
-        Object value = null;
-        if (buf.getLength() > 0) {
-          value = Protobufs.readFieldNoTag(
-              CodedInputStream.newInstance(buf.getData(), buf.getStart(), buf.getLength()),
-              knownRequiredFields.get(i),
-              msgBuilder);
-        } else if (fd.getType() != FieldDescriptor.Type.MESSAGE) {
-          value = fd.getDefaultValue();
-        }
-        tuple.set(i, protoToPig.fieldToPig(fd, value));
-      }
-
-      if (readUnknownsColumn) {
-        // we can handle this if needed.
-        throw new IOException("getCurrentTupleValue() is not supported when 'readUnknownColumns' is set");
-      }
-
-      return tuple;
+      return builder.build();
     }
   }
 
-  @Override @SuppressWarnings("unchecked")
-  public RecordReader createRecordReader(InputSplit split,
-                                         TaskAttemptContext taskAttempt)
-                                    throws IOException, InterruptedException {
-    if (typeRef == null) {
-      typeRef = Protobufs.getTypeRef(taskAttempt.getConfiguration(), RCFileProtobufInputFormat.class);
-    }
-    return new ProtobufReader(super.createRecordReader(split, taskAttempt));
-  }
-}
+ }
