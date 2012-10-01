@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twitter.data.proto.Misc.ColumnarMetadata;
-import com.twitter.elephantbird.pig.util.RCFileUtil;
+import com.twitter.elephantbird.util.RCFileUtil;
 import com.twitter.elephantbird.util.Protobufs;
 
 /**
