@@ -22,7 +22,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * use the following code:
  * <code>
  * Configuration conf = new Configuration();
- * FileSystem fs = FileSystem.get(conf);
+ * FileSystem fs = lzoPath.getFileSystem(conf);
  * FSDataOutputStream outputStream = fs.create(lzoPath, true);
  * LzopCodec codec = new LzopCodec();
  * codec.setConf(conf);

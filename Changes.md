@@ -1,5 +1,25 @@
 # Elephant Bird #
 
+### Version 3.0.3 ###
+
+ISSUE 245. Stop using DefaultDataBags, use NonSpillable ones instead (Dmitriy Ryaboy)
+
+ISSUE 244. Fixing mvn package build error because of log4j (Eli Finkelshteyn)
+
+ISSUE 243. Fix how SequenceFileLoader initializes FileSystem (Raghu Angadi)
+
+ISSUE 242. Handle null values during Protobuf to tuple conversion (Raghu Angadi)
+
+ISSUE 241. Default values during RCFile protobuf columns to tuple conversion (Raghu Angadi)
+
+ISSUE 239. Set read limit while deserializing Thrift objects (Raghu Angadi)
+
+ISSUE 238. Updates logging deps, normalizing on slf4j (Andy Schlaikjer)
+
+ISSUE 237. Avoid repeating some of dependencies in sub modules (Raghu Angadi)
+
+ISSUE 226. Improve handling of pig to thrift enum value conversion failure (Andy Schlaikjer)
+
 ### Version 3.0.2 ###
 
 ISSUE 235. Update build so LZO tests work correctly (Travis Crawford)

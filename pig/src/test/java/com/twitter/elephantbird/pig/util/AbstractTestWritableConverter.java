@@ -107,7 +107,7 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
     tempFilename = tempFile.getAbsolutePath();
     final Path path = new Path("file:///" + tempFilename);
     final Configuration conf = new Configuration();
-    final FileSystem fs = FileSystem.get(path.toUri(), conf);
+    final FileSystem fs = path.getFileSystem(conf);
     final IntWritable key = new IntWritable();
     SequenceFile.Writer writer = null;
     try {

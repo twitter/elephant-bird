@@ -297,6 +297,21 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     }
   }
 
+  /**
+   * Does nothing. Added to avoid exception when running Pig 11. See
+   * https://issues.apache.org/jira/browse/PIG-1891.
+   *
+   * TODO(Andy Schlaikjer): Refactor SequenceFileLoader, SequenceFileStorage to extend BaseLoadFunc,
+   * LzoBaseStoreFunc to future proof these classes.
+   *
+   * @param location
+   * @param job
+   * @throws IOException
+   */
+  public void cleanupOnSuccess(String location, Job job) throws IOException {
+    // noop
+  }
+
   @Override
   public void cleanupOnFailure(String location, Job job) throws IOException {
     StoreFunc.cleanupOnFailureImpl(location, job);

@@ -1,9 +1,17 @@
 package com.twitter.elephantbird.pig.util;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
+import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
+import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneNumber;
+import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneType;
+
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.data.DataType;
+import org.apache.pig.data.NonSpillableDataBag;
+import org.apache.pig.data.Tuple;
+import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.util.Pair;
 import org.junit.Assert;
@@ -99,5 +107,37 @@ public class TestPigToProtobuf {
                                            String name, Descriptors.FieldDescriptor.Type type) {
     Assert.assertEquals("Incorrect field name", name, fieldDescriptor.getName());
     Assert.assertEquals("Incorrect field type", type, fieldDescriptor.getType());
+  }
+
+  private static Person personMessage(String name, int id, String email, String phoneNumber,
+      String phoneType) {
+    Person.Builder pb = Person.newBuilder().setName(name).setId(id);
+    if (email != null) pb.setEmail(email);
+    PhoneNumber.Builder pnb = PhoneNumber.newBuilder().setNumber(phoneNumber);
+    if (phoneType != null) pnb.setType(PhoneType.valueOf(phoneType));
+    pb.addPhone(pnb);
+    return pb.build();
+  }
+
+  private static Tuple personTuple(String name, int id, String email, String phoneNumber,
+      String phoneType) {
+    TupleFactory tf = TupleFactory.getInstance();
+    return tf.newTupleNoCopy(Lists.<Object> newArrayList(name, id, email,
+        new NonSpillableDataBag(Lists.newArrayList(tf.newTupleNoCopy(Lists.<Object> newArrayList(
+            phoneNumber, phoneType))))));
+  }
+
+  @Test
+  public void testPerson() {
+    Person expected = personMessage("Joe", 1, null, "123-456-7890", "HOME");
+    Person actual = PigToProtobuf.tupleToMessage(Person.class,
+        personTuple("Joe", 1, null, "123-456-7890", "HOME"));
+    Assert.assertNotNull(actual);
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testPersonBadEnumValue() {
+    PigToProtobuf.tupleToMessage(Person.class, personTuple("Joe", 1, null, "123-456-7890", "ASDF"));
   }
 }

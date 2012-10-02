@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.pig.util;
+package com.twitter.elephantbird.util;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.twitter.data.proto.Misc.ColumnarMetadata;
-import com.twitter.elephantbird.util.Protobufs;
 
 public class RCFileUtil {
 

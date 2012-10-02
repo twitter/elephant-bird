@@ -108,7 +108,7 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
     public void write(NullWritable key, Writable value) throws IOException, InterruptedException {
       try {
         if (value instanceof BytesWritable) {
-          // TODO: handled errors
+          // TODO: handle errors
           fromBytes((BytesWritable)value);
         } else {
           fromObject((TBase<?, ?>)((ThriftWritable)value).get());

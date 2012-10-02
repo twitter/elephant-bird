@@ -18,7 +18,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.twitter.elephantbird.pig.util.RCFileUtil;
+import com.twitter.elephantbird.util.RCFileUtil;
 
 /**
  * Hive's {@link org.apache.hadoop.hive.ql.io.RCFileOutputFormat} is written for

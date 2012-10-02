@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.pig.util;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -13,10 +14,10 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.Misc.CountedMap;
 import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
+import org.apache.pig.data.NonSpillableDataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
@@ -34,7 +35,6 @@ public class ProtobufToPig {
   private static final Logger LOG = LoggerFactory.getLogger(ProtobufToPig.class);
 
   private static final TupleFactory tupleFactory_ = TupleFactory.getInstance();
-  private static BagFactory bagFactory_ = BagFactory.getInstance();
 
   public enum CoercionLevel { kNoCoercion, kAllowCoercionToPigMaps }
 
@@ -69,7 +69,7 @@ public class ProtobufToPig {
       // Walk through all the possible fields in the message.
       for (FieldDescriptor fieldDescriptor : msgDescriptor.getFields()) {
         // Get the set value, or the default value, or null.
-        Object fieldValue = getFieldValue(msg, fieldDescriptor);
+        Object fieldValue = msg.getField(fieldDescriptor);
 
         if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
           tuple.set(curField++, messageToTuple(fieldDescriptor, fieldValue));
@@ -90,6 +90,10 @@ public class ProtobufToPig {
    * on whether the field is a Message or a simple field.
    */
   public Object fieldToPig(FieldDescriptor fieldDescriptor, Object fieldValue) {
+    if (fieldValue == null) {
+      // protobufs unofficially ensures values are not null. just in case:
+      return null;
+    }
     if (fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE) {
       return messageToTuple(fieldDescriptor, fieldValue);
     } else {
@@ -106,6 +110,10 @@ public class ProtobufToPig {
    */
   @SuppressWarnings("unchecked")
   protected Object messageToTuple(FieldDescriptor fieldDescriptor, Object fieldValue) {
+    if (fieldValue == null) {
+      // protobufs unofficially ensures values are not null. just in case:
+      return null;
+    }
     assert fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE : "messageToTuple called with field of type " + fieldDescriptor.getType();
 
     if (fieldDescriptor.isRepeated()) {
@@ -125,7 +133,7 @@ public class ProtobufToPig {
         }
         return map;
       } else {
-        DataBag bag = bagFactory_.newDefaultBag();
+        DataBag bag = new NonSpillableDataBag(messageList.size());
         for (Message m : messageList) {
           bag.add(new ProtobufTuple(m));
         }
@@ -152,8 +160,8 @@ public class ProtobufToPig {
       // The protobuf contract is that if the field is repeated, then the object returned is actually a List
       // of the underlying datatype, which in this case is a "primitive" like int, float, String, etc.
       // We have to make a single-item tuple out of it to put it in the bag.
-      DataBag bag = bagFactory_.newDefaultBag();
-      List<Object> fieldValueList = (List<Object>) (fieldValue != null ? fieldValue : Lists.newArrayList());
+      List<Object> fieldValueList = (List<Object>) (fieldValue != null ? fieldValue : Collections.emptyList());
+      DataBag bag = new NonSpillableDataBag(fieldValueList.size());
       for (Object singleFieldValue : fieldValueList) {
         Object nonEnumFieldValue = coerceToPigTypes(fieldDescriptor, singleFieldValue);
         Tuple innerTuple = tupleFactory_.newTuple(1);
@@ -189,26 +197,6 @@ public class ProtobufToPig {
       return new DataByteArray(bsValue.toByteArray());
     }
     return fieldValue;
-  }
-
-  /**
-   * A utility function for getting the value of a field in a protobuf message.  It first tries the
-   * literal set value in the protobuf's field list.  If the value isn't set, and the field has a default
-   * value, it uses that.  Otherwise, it returns null.
-   * @param msg the protobuf message
-   * @param fieldDescriptor the descriptor object for the given field.
-   * @return the value of the field, or null if none can be assigned.
-   */
-  protected Object getFieldValue(Message msg, FieldDescriptor fieldDescriptor) {
-    Object o = null;
-    Map<FieldDescriptor, Object> setFields = msg.getAllFields();
-    if (setFields.containsKey(fieldDescriptor)) {
-      o = setFields.get(fieldDescriptor);
-    } else if (fieldDescriptor.hasDefaultValue()) {
-      o = fieldDescriptor.getDefaultValue();
-    }
-
-    return o;
   }
 
   /**
