@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.twitter.elephantbird.mapreduce.input.RawSequenceFileRecordReader;
+import com.twitter.elephantbird.pig.load.SequenceFileLoader;
 import com.twitter.elephantbird.pig.store.SequenceFileStorage;
 
 /**
@@ -67,7 +68,7 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
       String valueSchema)
       throws IOException {
     pigServer.registerQuery(String.format("A = LOAD 'file:%s' USING %s('-c %s', '-c %s %s')%s;",
-        filename, SequenceFileStorage.class.getName(), IntWritableConverter.class.getName(),
+        filename, SequenceFileLoader.class.getName(), IntWritableConverter.class.getName(),
         writableConverterClass.getName(), writableConverterArguments, valueSchema == null
             || valueSchema.isEmpty() ? "" : String.format(" AS (key: int, value: %s)", valueSchema)));
   }
@@ -125,14 +126,14 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
   public void readOutsidePig() throws ClassCastException, ParseException, ClassNotFoundException,
       InstantiationException, IllegalAccessException, IOException, InterruptedException {
     // simulate Pig front-end runtime
-    final SequenceFileStorage<IntWritable, Text> storage =
-        new SequenceFileStorage<IntWritable, Text>(String.format("-t %s -c %s",
-            IntWritable.class.getName(), IntWritableConverter.class.getName()), String.format(
-            "-t %s -c %s %s", writableClass.getName(), writableConverterClass.getName(),
+    final SequenceFileLoader<IntWritable, Text> loader =
+        new SequenceFileLoader<IntWritable, Text>(String.format("-c %s",
+            IntWritableConverter.class.getName()), String.format(
+            "-c %s %s", writableConverterClass.getName(),
             writableConverterArguments));
     Job job = new Job();
-    storage.setUDFContextSignature("12345");
-    storage.setLocation(tempFilename, job);
+    loader.setUDFContextSignature("12345");
+    loader.setLocation(tempFilename, job);
 
     // simulate Pig back-end runtime
     final RecordReader<DataInputBuffer, DataInputBuffer> reader = new RawSequenceFileRecordReader();
@@ -148,10 +149,10 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
     final int splitIndex = 0;
     final PigSplit split = new PigSplit(wrappedSplits, inputIndex, targetOps, splitIndex);
     split.setConf(job.getConfiguration());
-    storage.prepareToRead(reader, split);
+    loader.prepareToRead(reader, split);
 
     // read tuples and validate
-    validate(new LoadFuncTupleIterator(storage));
+    validate(new LoadFuncTupleIterator(loader));
   }
 
   @Test

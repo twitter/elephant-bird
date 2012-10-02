@@ -15,14 +15,11 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
-import org.apache.pig.StoreFunc;
-import org.apache.pig.StoreFuncInterface;
 import org.apache.pig.backend.hadoop.executionengine.util.MapRedUtil;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.PigContext;
@@ -32,11 +29,12 @@ import com.google.common.base.Preconditions;
 import com.twitter.elephantbird.pig.load.SequenceFileLoader;
 import com.twitter.elephantbird.pig.util.GenericWritableConverter;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
+import com.twitter.elephantbird.pig.util.SequenceFileConfig;
 import com.twitter.elephantbird.pig.util.WritableConverter;
 
 /**
- * Pig StoreFunc supporting conversion between Pig tuples and arbitrary key-value pairs stored
- * within {@link SequenceFile}s. Example usage:
+ * Pig StoreFunc supporting conversion from Pig tuples to arbitrary key-value pairs stored within
+ * {@link SequenceFile}s. Example usage:
  *
  * <pre>
  * pairs = LOAD '$INPUT' AS (key: int, value: chararray);
@@ -48,13 +46,13 @@ import com.twitter.elephantbird.pig.util.WritableConverter;
  * </pre>
  *
  * @author Andy Schlaikjer
+ * @see SequenceFileConfig
+ * @see WritableConverter
+ * @see SequenceFileLoader
  */
-public class SequenceFileStorage<K extends Writable, V extends Writable> extends
-    SequenceFileLoader<K, V> implements StoreFuncInterface {
+public class SequenceFileStorage<K extends Writable, V extends Writable> extends BaseStoreFunc {
   /**
    * Failure modes for use with {@link PigCounterHelper} to keep track of runtime error counts.
-   *
-   * @author Andy Schlaikjer
    */
   public static enum Error {
     /**
@@ -77,11 +75,78 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     NULL_VALUE;
   }
 
-  public static final String TYPE_PARAM = "type";
-  private final PigCounterHelper counterHelper = new PigCounterHelper();
-  private Class<K> keyClass;
-  private Class<V> valueClass;
-  private RecordWriter<K, V> writer;
+  /**
+   * Refinement of {@link SequenceFileConfig} which adds key/value "type" option.
+   */
+  private class Config extends SequenceFileConfig<K, V> {
+    public static final String TYPE_PARAM = "type";
+    public Class<K> keyClass;
+    public Class<V> valueClass;
+
+    public Config(String keyArgs, String valueArgs, String otherArgs)
+        throws ParseException, IOException {
+      super(keyArgs, valueArgs, otherArgs);
+    }
+
+    @Override
+    protected Options getKeyValueOptions() {
+      @SuppressWarnings("static-access")
+      Option typeOption =
+          OptionBuilder
+              .withLongOpt(TYPE_PARAM)
+              .hasArg()
+              .withArgName("cls")
+              .withDescription(
+                  "Writable type of data. Defaults to type returned by getWritableClass()"
+                      + " method of configured WritableConverter.").create("t");
+      return super.getKeyValueOptions().addOption(typeOption);
+    }
+
+    @Override
+    protected void initialize() throws IOException {
+      /*
+       * Attempt to initialize key, value classes using arguments. If user doesn't specify '--type'
+       * arg, then class will be null.
+       */
+      keyClass = getWritableClass(keyArguments.getOptionValue(TYPE_PARAM));
+      valueClass = getWritableClass(valueArguments.getOptionValue(TYPE_PARAM));
+
+      // initialize key, value converters
+      keyConverter.initialize(keyClass);
+      valueConverter.initialize(valueClass);
+
+      // allow converters to define writable classes if not already defined
+      if (keyClass == null) {
+        keyClass = keyConverter.getWritableClass();
+      }
+      if (valueClass == null) {
+        valueClass = valueConverter.getWritableClass();
+      }
+    }
+
+    /**
+     * @param writableClassName
+     * @return {@code null} if writableClassName is {@code null}, otherwise the Class instance named
+     * by writableClassName.
+     * @throws IOException
+     */
+    @SuppressWarnings("unchecked")
+    private <W extends Writable> Class<W> getWritableClass(String writableClassName)
+        throws IOException {
+      if (writableClassName == null) {
+        return null;
+      }
+      try {
+        return PigContext.resolveClassName(writableClassName);
+      } catch (Exception e) {
+        throw new IOException(
+            String.format("Failed to load Writable class '%s'", writableClassName),
+            e);
+      }
+    }
+  }
+
+  private final Config config;
 
   /**
    * Parses key and value options from argument strings. Available options for both key and value
@@ -96,13 +161,32 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
    *
    * @param keyArgs
    * @param valueArgs
+   * @param otherArgs
+   * @throws ParseException
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  public SequenceFileStorage(String keyArgs, String valueArgs, String otherArgs)
+      throws ParseException, IOException,
+      ClassNotFoundException {
+    super();
+    this.config = new Config(keyArgs, valueArgs, otherArgs);
+  }
+
+  /**
+   * Delegates to {@link #SequenceFileStorage(String, String, String)}, passing empty string for
+   * {@code otherArgs} param.
+   *
+   * @param keyArgs
+   * @param valueArgs
    * @throws ParseException
    * @throws IOException
    * @throws ClassNotFoundException
    */
   public SequenceFileStorage(String keyArgs, String valueArgs) throws ParseException, IOException,
       ClassNotFoundException {
-    super(keyArgs, valueArgs);
+    super();
+    this.config = new Config(keyArgs, valueArgs, "");
   }
 
   /**
@@ -114,68 +198,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
    * @see #SequenceFileStorage(String, String)
    */
   public SequenceFileStorage() throws ParseException, IOException, ClassNotFoundException {
-    this("", "");
-  }
-
-  @Override
-  protected Options getKeyValueOptions() {
-    @SuppressWarnings("static-access")
-    Option typeOption =
-        OptionBuilder
-            .withLongOpt(TYPE_PARAM)
-            .hasArg()
-            .withArgName("cls")
-            .withDescription(
-                "Writable type of data. Defaults to type returned by getWritableClass()"
-                    + " method of configured WritableConverter.").create("t");
-    return super.getKeyValueOptions().addOption(typeOption);
-  }
-
-  @Override
-  protected void initialize() throws IOException {
-    /*
-     * Attempt to initialize key, value classes using arguments. If user doesn't specify '--type'
-     * arg, then class will be null.
-     */
-    keyClass = getWritableClass(keyArguments.getOptionValue(TYPE_PARAM));
-    valueClass = getWritableClass(valueArguments.getOptionValue(TYPE_PARAM));
-
-    // initialize key, value converters
-    keyConverter.initialize(keyClass);
-    valueConverter.initialize(valueClass);
-
-    // allow converters to define writable classes if not already defined
-    if (keyClass == null) {
-      keyClass = keyConverter.getWritableClass();
-    }
-    if (valueClass == null) {
-      valueClass = valueConverter.getWritableClass();
-    }
-  }
-
-  /**
-   * @param writableClassName
-   * @return {@code null} if writableClassName is {@code null}, otherwise the Class instance named
-   * by writableClassName.
-   * @throws IOException
-   */
-  @SuppressWarnings("unchecked")
-  private static <W extends Writable> Class<W> getWritableClass(String writableClassName)
-      throws IOException {
-    if (writableClassName == null) {
-      return null;
-    }
-    try {
-      return PigContext.resolveClassName(writableClassName);
-    } catch (Exception e) {
-      throw new IOException(String.format("Failed to load Writable class '%s'", writableClassName),
-          e);
-    }
-  }
-
-  @Override
-  public void setStoreFuncUDFContextSignature(String signature) {
-    this.signature = signature;
+    this("", "", "");
   }
 
   @Override
@@ -185,8 +208,8 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
     Preconditions.checkNotNull(fields, "Schema fields are undefined");
     Preconditions.checkArgument(2 == fields.length,
         "Expecting 2 schema fields but found %s", fields.length);
-    keyConverter.checkStoreSchema(fields[0]);
-    valueConverter.checkStoreSchema(fields[1]);
+    config.keyConverter.checkStoreSchema(fields[0]);
+    config.valueConverter.checkStoreSchema(fields[1]);
   }
 
   @Override
@@ -198,11 +221,11 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
     ensureUDFContext(job.getConfiguration());
-    verifyWritableClass(keyClass, true, keyConverter);
-    verifyWritableClass(valueClass, false, valueConverter);
-    job.setOutputKeyClass(keyClass);
-    job.setOutputValueClass(valueClass);
-    FileOutputFormat.setOutputPath(job, new Path(location));
+    verifyWritableClass(config.keyClass, true, config.keyConverter);
+    verifyWritableClass(config.valueClass, false, config.valueConverter);
+    job.setOutputKeyClass(config.keyClass);
+    job.setOutputValueClass(config.valueClass);
+    super.setStoreLocation(location, job);
     if ("true".equals(job.getConfiguration().get("output.compression.enabled"))) {
       FileOutputFormat.setCompressOutput(job, true);
       String codec = job.getConfiguration().get("output.compression.codec");
@@ -253,67 +276,37 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
   }
 
   @Override
-  public OutputFormat<K, V> getOutputFormat() throws IOException {
+  public OutputFormat<K, V> getOutputFormat() {
     return new SequenceFileOutputFormat<K, V>();
-  }
-
-  @Override
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  public void prepareToWrite(RecordWriter writer) throws IOException {
-    this.writer = writer;
   }
 
   @Override
   public void putNext(Tuple t) throws IOException {
     // validate input tuple
     if (t == null) {
-      counterHelper.incrCounter(Error.NULL_TUPLE, 1);
+      incrCounter(Error.NULL_TUPLE, 1);
       return;
     }
     if (t.size() != 2) {
-      counterHelper.incrCounter(Error.TUPLE_SIZE, 1);
+      incrCounter(Error.TUPLE_SIZE, 1);
       return;
     }
 
     // convert key from pig to writable
-    K key = keyConverter.toWritable(t.get(0));
+    K key = config.keyConverter.toWritable(t.get(0));
     if (key == null) {
-      counterHelper.incrCounter(Error.NULL_KEY, 1);
+      incrCounter(Error.NULL_KEY, 1);
       return;
     }
 
     // convert value from pig to writable
-    V value = valueConverter.toWritable(t.get(1));
+    V value = config.valueConverter.toWritable(t.get(1));
     if (value == null) {
-      counterHelper.incrCounter(Error.NULL_VALUE, 1);
+      incrCounter(Error.NULL_VALUE, 1);
       return;
     }
 
     // write key-value pair
-    try {
-      writer.write(key, value);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
-    }
-  }
-
-  /**
-   * Does nothing. Added to avoid exception when running Pig 11. See
-   * https://issues.apache.org/jira/browse/PIG-1891.
-   *
-   * TODO(Andy Schlaikjer): Refactor SequenceFileLoader, SequenceFileStorage to extend BaseLoadFunc,
-   * LzoBaseStoreFunc to future proof these classes.
-   *
-   * @param location
-   * @param job
-   * @throws IOException
-   */
-  public void cleanupOnSuccess(String location, Job job) throws IOException {
-    // noop
-  }
-
-  @Override
-  public void cleanupOnFailure(String location, Job job) throws IOException {
-    StoreFunc.cleanupOnFailureImpl(location, job);
+    writeRecord(key, value);
   }
 }

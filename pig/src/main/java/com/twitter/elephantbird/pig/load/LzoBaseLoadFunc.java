@@ -34,7 +34,7 @@ import com.twitter.elephantbird.util.TypeRef;
 public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, LoadPushDown {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBaseLoadFunc.class);
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   protected RecordReader reader;
 
   // Making accessing Hadoop counters from Pig slightly more convenient.
@@ -153,7 +153,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
   }
 
   @Override
-  public void prepareToRead(@SuppressWarnings("unchecked") RecordReader reader, PigSplit split) {
+  public void prepareToRead(@SuppressWarnings("rawtypes") RecordReader reader, PigSplit split) {
       this.reader = reader;
   }
 
