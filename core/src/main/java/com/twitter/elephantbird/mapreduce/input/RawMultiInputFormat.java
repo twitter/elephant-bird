@@ -17,7 +17,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * {@link BytesWritable}. Converts {@link RawBytesWritable}
  * returned by {@link MultiInputFormat} to a BytesWritable. <p>
  *
- * Use MultiInputForamt if RawBytesWritable is required or suffices.
+ * Use MultiInputFormat if RawBytesWritable is required or suffices.
  */
 @SuppressWarnings("rawtypes")
 public class RawMultiInputFormat extends MultiInputFormat {
