@@ -41,7 +41,10 @@ public class TestLzoRawBytesStorage {
   private String tempFilename;
 
   public DataOutputStream getTempOutputStream() throws IOException {
-    File tempFile = File.createTempFile("test", ".dat");
+    File tempPath = new File(System.getProperty("test.build.data"),
+        TestLzoRawBytesStorage.class.getName());
+    tempPath.mkdirs();
+    File tempFile = File.createTempFile("test", ".dat", tempPath);
     tempFilename = tempFile.getAbsolutePath();
     Path path = new Path("file:///" + tempFilename);
     Configuration conf = new Configuration();
