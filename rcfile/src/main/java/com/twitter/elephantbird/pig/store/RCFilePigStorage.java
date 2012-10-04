@@ -125,7 +125,7 @@ public class RCFilePigStorage extends PigStorage {
   @Override
   public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
                                              throws FrontendException {
-    // don't need to invoke super.pushProjection();
+    // no need to invoke super.pushProjection();
     try {
       getUDFProperties().setProperty("requiredFieldList",
                                      ObjectSerializer.serialize(requiredFieldList));
