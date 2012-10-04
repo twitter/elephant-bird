@@ -59,6 +59,12 @@ public class RCFilePigStorage extends PigStorage {
     super();
   }
 
+  /* TODO(raghu): support extra options for PigStorage() with pig 11
+   * public RCFilePigStorage(String options) {
+   *   super("\t", options); // delimiter does not affect us
+   * }
+   */
+
   private Properties getUDFProperties() {
     return UDFContext.getUDFContext()
               .getUDFProperties(this.getClass(), new String[] { signature });
