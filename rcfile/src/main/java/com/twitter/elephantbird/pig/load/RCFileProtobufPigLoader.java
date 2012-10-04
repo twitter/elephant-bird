@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.mapreduce.input.RCFileProtobufTupleInputFormat;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -9,16 +10,14 @@ import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 
 import com.google.protobuf.Message;
-import com.twitter.elephantbird.mapreduce.input.RCFileProtobufInputFormat;
-import com.twitter.elephantbird.pig.util.RCFileUtil;
-import com.twitter.elephantbird.util.TypeRef;
+import com.twitter.elephantbird.util.RCFileUtil;
 
 /**
  * Pig loader for Protobufs stored in RCFiles.
  */
 public class RCFileProtobufPigLoader extends ProtobufPigLoader<Message> {
 
-  private RCFileProtobufInputFormat.ProtobufReader protoReader;
+  private RCFileProtobufTupleInputFormat.TupleReader protoReader;
 
   /**
    * @param protoClassName fully qualified name of the protobuf class
@@ -29,22 +28,8 @@ public class RCFileProtobufPigLoader extends ProtobufPigLoader<Message> {
 
   @Override @SuppressWarnings("unchecked")
   public InputFormat getInputFormat() throws IOException {
-    return new RCFileProtobufInputFormat(typeRef);
+    return new RCFileProtobufTupleInputFormat(typeRef);
   }
-
-  @SuppressWarnings("unchecked")
-  protected <M> M getNextBinaryValue(TypeRef<M> typeRef) throws IOException {
-    try {
-      if (protoReader.nextKeyValue()) {
-        return (M) protoReader.getCurrentProtobufValue();
-      }
-    } catch (InterruptedException e) {
-      throw new IOException(e);
-    }
-
-    return null;
-  }
-
 
   @Override
   public Tuple getNext() throws IOException {
@@ -67,9 +52,8 @@ public class RCFileProtobufPigLoader extends ProtobufPigLoader<Message> {
 
   @Override @SuppressWarnings("unchecked")
   public void prepareToRead(RecordReader reader, PigSplit split) {
-    // pass null so that, there is no way it could be misused
-    super.prepareToRead(null, split);
-    protoReader = (RCFileProtobufInputFormat.ProtobufReader) reader;
+    super.prepareToRead(reader, split);
+    protoReader = (RCFileProtobufTupleInputFormat.TupleReader) reader;
   }
 
   @Override

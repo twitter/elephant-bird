@@ -8,46 +8,18 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <artifactId>elephant-bird-core</artifactId>
-  <name>Elephant Bird Core</name>
-  <description>Core utilities.</description>
+  <artifactId>elephant-bird-examples</artifactId>
+  <name>Elephant Bird Examples</name>
+  <description>Elephant Bird Examples.</description>
 
   <dependencies>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
+      <groupId>com.twitter.elephantbird</groupId>
+      <artifactId>elephant-bird-pig</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.thrift</groupId>
-      <artifactId>libthrift</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.googlecode.json-simple</groupId>
-      <artifactId>json-simple</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.hadoop.gplcompression</groupId>
-      <artifactId>hadoop-lzo</artifactId>
     </dependency>
   </dependencies>
 
@@ -79,13 +51,6 @@
               <goal>compile</goal>
             </goals>
           </execution>
-          <execution>
-            <id>thrift-test-sources</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-          </execution>
         </executions>
       </plugin>
 
@@ -107,7 +72,7 @@
               </sources>
             </configuration>
           </execution>
-        </executions>        
+        </executions>
       </plugin>
 
     </plugins>
