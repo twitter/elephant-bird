@@ -15,6 +15,9 @@ import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.TypeRef;
 
+/**
+ * Loads raw bytes.
+ */
 public class LzoRawBytesLoader extends LzoBaseLoadFunc {
 
   private static final TupleFactory tupleFactory = TupleFactory.getInstance();
