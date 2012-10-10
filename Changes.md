@@ -1,5 +1,13 @@
 # Elephant Bird #
 
+### Version 3.1.0 ###
+
+*** The issues starred below have introduced breaking API changes. Please make sure your java code and pig scripts are updated to use changed APIs correctly.
+
+ISSUE 257. Adds LzoRawBytesStorage to mirror LzoRawBytesLoader (Andy Schlaikjer)
+
+ISSUE 256. *** Refactors SequenceFile{Loader, Storage}. SequenceFileStorage no longer extends SequenceFileLoader. (Andy Schlaikjer)
+
 ### Version 3.0.3 ###
 
 ISSUE 245. Stop using DefaultDataBags, use NonSpillable ones instead (Dmitriy Ryaboy)
@@ -336,7 +344,7 @@ NO TICKET. Protobuf Pig storage : do not reuse builder object.
 
 ISSUE 28. Equals is now consistent with CompareTo for ProtobufWritables (rangadi)
 
-ISSUE 30.  Handle Boolean and Bytes in ProtobufStorage, and add generators. (rangadi) 
+ISSUE 30.  Handle Boolean and Bytes in ProtobufStorage, and add generators. (rangadi)
 
 ISSUE 30.  Handle Thrift binary and double types in ThriftToPig schema (rangadi)
 
