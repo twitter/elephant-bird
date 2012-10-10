@@ -98,7 +98,7 @@ public class TestSequenceFileStorage {
     pigServer.registerQuery(String.format(
         "A = LOAD 'file:%s' USING %s('%s', '%s') %s;",
         tempFilename,
-        SequenceFileStorage.class.getName(),
+        SequenceFileLoader.class.getName(),
         buildWritableConverterArgString(keyConverterClass, keyConverterCtorArgs, keyWritableClass),
         buildWritableConverterArgString(valueConverterClass, valueConverterCtorArgs,
             valueWritableClass), schema == null ? "" : " AS (" + schema + ")"));
@@ -172,8 +172,8 @@ public class TestSequenceFileStorage {
   public void readOutsidePig() throws ClassCastException, ParseException, ClassNotFoundException,
       InstantiationException, IllegalAccessException, IOException, InterruptedException {
     // simulate Pig front-end runtime
-    final SequenceFileStorage<IntWritable, Text> storage =
-        new SequenceFileStorage<IntWritable, Text>("-c " + IntWritableConverter.class.getName(),
+    final SequenceFileLoader<IntWritable, Text> storage =
+        new SequenceFileLoader<IntWritable, Text>("-c " + IntWritableConverter.class.getName(),
             "-c " + TextConverter.class.getName());
     Job job = new Job();
     storage.setUDFContextSignature("12345");
