@@ -329,6 +329,12 @@
           </dependencies>
           <configuration>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            <systemProperties>
+              <property>
+                <name>test.build.data</name>
+                <value>${basedir}/target/surefire/data</value>
+              </property>
+            </systemProperties>
             <argLine>-Djava.library.path=${test.library.path}</argLine>
           </configuration>
         </plugin>
