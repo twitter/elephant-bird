@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.twitter.elephantbird.util.UnitTestUtil;
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.backend.executionengine.ExecException;

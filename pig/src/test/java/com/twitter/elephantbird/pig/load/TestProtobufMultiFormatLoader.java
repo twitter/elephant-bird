@@ -23,7 +23,7 @@ import com.twitter.elephantbird.mapreduce.io.ProtobufBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoBinaryB64LineRecordWriter;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
-import com.twitter.elephantbird.util.UnitTestUtil;
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 
 /**
  * Test {@link MultiFormatLoader} using a Protobuf.
