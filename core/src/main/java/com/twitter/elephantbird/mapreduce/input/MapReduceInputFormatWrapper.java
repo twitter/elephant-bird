@@ -144,7 +144,7 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
 
 
     @Override
-    public void initialize(InputSplit split, TaskAttemptContext context)
+    public void initialize(InputSplit split, final TaskAttemptContext context)
         throws IOException, InterruptedException {
 
       org.apache.hadoop.mapred.InputSplit oldSplit;
@@ -160,21 +160,28 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
       }
 
       @SuppressWarnings("unchecked")
-      final TaskInputOutputContext ctx = (TaskInputOutputContext)context;
       Reporter reporter = new Reporter() { // Reporter interface over ctx
-        public void progress() { ctx.progress(); }
+
+        final TaskInputOutputContext ioCtx =
+                context instanceof TaskInputOutputContext ?
+                       (TaskInputOutputContext) context : null;
+
+        public void progress() { context.progress(); }
 
         public void setStatus(String status) {
-          ctx.setStatus(status);
+          if (ioCtx != null)
+            ioCtx.setStatus(status);
         }
 
         public void incrCounter(String group, String counter, long amount) {
-          ctx.getCounter(group, counter).increment(amount);
+          if (ioCtx != null)
+            ioCtx.getCounter(group, counter).increment(amount);
         }
 
         @SuppressWarnings("unchecked")
         public void incrCounter(Enum<?> key, long amount) {
-          ctx.getCounter(key).increment(amount);
+          if (ioCtx != null)
+            ioCtx.getCounter(key).increment(amount);
         }
 
         public org.apache.hadoop.mapred.InputSplit getInputSplit()
@@ -183,12 +190,14 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
         }
 
         public Counter getCounter(String group, String name) {
-          return (Counter)ctx.getCounter(group, name);
+          return ioCtx != null ?
+            (Counter)ioCtx.getCounter(group, name) : null;
         }
 
         @SuppressWarnings("unchecked")
         public Counter getCounter(Enum<?> name) {
-          return (Counter)ctx.getCounter(name);
+          return ioCtx != null ?
+             (Counter)ioCtx.getCounter(name) : null;
         }
       };
 
