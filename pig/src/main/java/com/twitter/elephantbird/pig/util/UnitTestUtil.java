@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.util;
+package com.twitter.elephantbird.pig.util;
 
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
@@ -24,5 +24,9 @@ public class UnitTestUtil {
         "pig.temp.dir", System.getProperty("test.build.data") + "/pig-temp");
 
     return pigServer;
+  }
+
+  static public String getTestDataDir(Class<?> testClass) {
+    return System.getProperty("test.build.data") + "/" + testClass.getName();
   }
 }
