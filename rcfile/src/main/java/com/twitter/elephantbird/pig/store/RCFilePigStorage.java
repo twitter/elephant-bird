@@ -81,6 +81,20 @@ public class RCFilePigStorage extends PigStorage {
     return new RCFileOutputFormat();
   }
 
+  @Override
+  public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
+          throws FrontendException {
+    // no need to invoke super.pushProjection();
+    try {
+      getUDFProperties().setProperty("requiredFieldList",
+              ObjectSerializer.serialize(requiredFieldList));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    return new RequiredFieldResponse(true);
+  }
+
   public void setLocation(String location, Job job) throws IOException {
     super.setLocation(location, job);
 
@@ -126,20 +140,6 @@ public class RCFilePigStorage extends PigStorage {
     if (numColumns > 0) {
       RCFileOutputFormat.setColumnNumber(job.getConfiguration(), numColumns);
     }
-  }
-
-  @Override
-  public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
-                                             throws FrontendException {
-    // no need to invoke super.pushProjection();
-    try {
-      getUDFProperties().setProperty("requiredFieldList",
-                                     ObjectSerializer.serialize(requiredFieldList));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    return new RequiredFieldResponse(true);
   }
 
   @Override
