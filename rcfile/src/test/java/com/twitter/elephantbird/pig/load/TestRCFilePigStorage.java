@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.load;
 
 import com.google.common.collect.Lists;
 import com.twitter.elephantbird.pig.store.RCFilePigStorage;
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
@@ -22,7 +23,7 @@ public class TestRCFilePigStorage {
 
   private PigServer pigServer;
   private final String testDir =
-          System.getProperty("test.build.data") + "/TestRCFFilePigStorage";
+                       UnitTestUtil.getTestDataDir(TestRCFilePigStorage.class);
   private final File pigDir = new File(testDir, "pig_in");
   private final File rcfileDir = new File(testDir, "rcfile_in");
   private final int numRecords = 5;
@@ -34,7 +35,7 @@ public class TestRCFilePigStorage {
 
     FileUtil.fullyDelete(new File(testDir));
 
-    pigServer = new PigServer(ExecType.LOCAL);
+    pigServer = UnitTestUtil.makePigServer();
 
     pigDir.mkdirs();
 

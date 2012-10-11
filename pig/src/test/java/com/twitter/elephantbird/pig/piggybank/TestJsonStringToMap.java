@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.twitter.elephantbird.util.UnitTestUtil;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.backend.executionengine.ExecException;
@@ -57,7 +58,7 @@ public class TestJsonStringToMap {
     PrintWriter pw = new PrintWriter(tempFile);
     pw.println("1\t{\"name\": \"bob\", \"number\": 2}");
     pw.close();
-    PigServer pig = new PigServer(ExecType.LOCAL);
+    PigServer pig = UnitTestUtil.makePigServer();
     try {
       pig.registerQuery(String.format("DEFINE JsonStringToMap %s();",
           JsonStringToMap.class.getName()));

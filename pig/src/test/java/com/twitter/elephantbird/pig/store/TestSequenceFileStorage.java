@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import com.twitter.elephantbird.util.UnitTestUtil;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -69,7 +70,7 @@ public class TestSequenceFileStorage {
   @Before
   public void setUp() throws Exception {
     // create local Pig server
-    pigServer = new PigServer(ExecType.LOCAL);
+    pigServer = UnitTestUtil.makePigServer();
 
     // create temp SequenceFile
     File tempFile = File.createTempFile("test", ".txt");
