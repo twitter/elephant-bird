@@ -76,8 +76,8 @@ public class RCFileProtobufTupleInputFormat extends RCFileProtobufInputFormat {
                   CodedInputStream.newInstance(buf.getData(), buf.getStart(), buf.getLength()),
                   knownRequiredFields.get(i),
                   msgBuilder);
-        } else if (fd.getType() != Descriptors.FieldDescriptor.Type.MESSAGE) {
-          value = fd.getDefaultValue();
+        } else { // use the value from default instance
+          value = msgInstance.getField(fd);
         }
         tuple.set(i, protoToPig.fieldToPig(fd, value));
       }

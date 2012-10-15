@@ -65,6 +65,7 @@ public class RCFileProtobufInputFormat extends RCFileBaseInputFormat {
 
   public class ProtobufReader extends FilterRecordReader<LongWritable, Writable> {
 
+    protected Message               msgInstance;
     protected Builder               msgBuilder;
     protected boolean               readUnknownsColumn = false;
     protected List<FieldDescriptor> knownRequiredFields = Lists.newArrayList();
@@ -94,7 +95,10 @@ public class RCFileProtobufInputFormat extends RCFileBaseInputFormat {
        * read the the "unknowns" column (the last column).
       */
       msgBuilder = Protobufs.getMessageBuilder(typeRef.getRawClass());
+      msgInstance = msgBuilder.getDefaultInstanceForType();
+
       protoWritable = ProtobufWritable.newInstance(typeRef.getRawClass());
+
       Descriptor msgDesc = msgBuilder.getDescriptorForType();
       final List<FieldDescriptor> msgFields = msgDesc.getFields();
 
@@ -158,7 +162,7 @@ public class RCFileProtobufInputFormat extends RCFileBaseInputFormat {
         return null;
       }
 
-      Builder builder = msgBuilder.clone();
+      Builder builder = msgInstance.newBuilderForType();
 
       for (int i=0; i < knownRequiredFields.size(); i++) {
         BytesRefWritable buf = byteRefs.get(columnsBeingRead.get(i));
