@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
@@ -42,7 +43,7 @@ public class TestRCFileProtobufStorage {
 
   private PigServer pigServer;
   private final String testDir =
-    System.getProperty("test.build.data") + "/TestRCFileProtobufStorage";
+          UnitTestUtil.getTestDataDir(TestRCFileProtobufStorage.class);
   private final File inputDir = new File(testDir, "in");
   private final File rcfile_in = new File(testDir, "rcfile_in");
 
@@ -70,7 +71,7 @@ public class TestRCFileProtobufStorage {
 
     FileUtil.fullyDelete(new File(testDir));
 
-    pigServer = new PigServer(ExecType.LOCAL);
+    pigServer = UnitTestUtil.makePigServer();
 
     pigServer.getPigContext().getProperties().setProperty(
         "mapred.output.compress", "true"); //default codec

@@ -18,9 +18,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.util.RCFileUtil;
-import com.twitter.elephantbird.util.Protobufs;
 
 /**
  * Hive's {@link org.apache.hadoop.hive.ql.io.RCFileOutputFormat} is written for
@@ -66,7 +64,7 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
   }
 
   protected RCFile.Writer createRCFileWriter(TaskAttemptContext job,
-                                             ColumnarMetadata columnInfo)
+                                             Text columnMetadata)
                                              throws IOException {
     Configuration conf = job.getConfiguration();
 
@@ -84,9 +82,9 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
     }
 
     Metadata metadata = null;
-    if (columnInfo != null) {
+    if (columnMetadata != null) {
       metadata = new Metadata();
-      metadata.set(new Text(RCFileUtil.COLUMN_METADATA_PROTOBUF_KEY), Protobufs.toText(columnInfo));
+      metadata.set(new Text(RCFileUtil.COLUMN_METADATA_PROTOBUF_KEY), columnMetadata);
     }
 
     String ext = conf.get(EXTENSION_OVERRIDE_CONF, DEFAULT_EXTENSION);
@@ -106,8 +104,8 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
 
     protected Writer(RCFileOutputFormat outputFormat,
                      TaskAttemptContext job,
-                     ColumnarMetadata columnInfo) throws IOException {
-      rcfile = outputFormat.createRCFileWriter(job, columnInfo);
+                     Text columnMetadata) throws IOException {
+      rcfile = outputFormat.createRCFileWriter(job, columnMetadata);
     }
 
     @Override

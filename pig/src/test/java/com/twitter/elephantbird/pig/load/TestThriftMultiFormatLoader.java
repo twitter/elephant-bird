@@ -24,7 +24,7 @@ import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.thrift.test.TestName;
 import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
-import com.twitter.elephantbird.util.UnitTestUtil;
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 
 /**
  * Test {@link MultiFormatLoader} using a Thrift struct.
