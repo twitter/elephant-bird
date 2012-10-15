@@ -47,9 +47,13 @@ public class TestRCFileProtobufStorage {
   private final File inputDir = new File(testDir, "in");
   private final File rcfile_in = new File(testDir, "rcfile_in");
 
-  private final Person[] records = new Person[]{  makePerson(0),
-                                                  makePerson(1),
-                                                  makePerson(2) };
+  private final Person[] records = new Person[]{
+                                          makePerson(0),
+                                          makePerson(1),
+                                          makePerson(2),
+                                          makePersonWithDefaults(3, true),
+                                          makePersonWithDefaults(4, false),
+                                          makePersonWithDefaults(4, true) };
 
   private static final Base64 base64 = Codecs.createStandardBase64();
 
@@ -90,8 +94,9 @@ public class TestRCFileProtobufStorage {
 
   @Test
   public void testRCFileStorage() throws Exception {
-    /* create a directory with two rcfiles :
+    /* create a directory with three rcfiles :
      *  - one created with normal Person objects using RCFileProtobufPigStorage.
+     *  - one created with Person objects where the optional fields are not set.
      *  - other with PersonWithoutEmail (for testing unknown fields)
      *    using the same objects as the first one.
      *
@@ -118,22 +123,37 @@ public class TestRCFileProtobufStorage {
       pigServer.registerQuery(line + "\n");
     }
 
-    // create an rcFile with PersonWithoutEmail to test unknown fields
+    // create an rcfile with Person objects directly with out converting to a
+    // tuple so that optional fields that are not set are null in RCFile
 
-    ProtobufWritable<PersonWithoutEmail> protoWritable =
-      ProtobufWritable.newInstance(PersonWithoutEmail.class);
+    ProtobufWritable<Person> personWritable = ProtobufWritable.newInstance(Person.class);
 
     RecordWriter<Writable, Writable> protoWriter =
-      createProtoWriter(PersonWithoutEmail.class, new File(rcfile_in, "persons_with_unknows.rc"));
+            createProtoWriter(Person.class,
+                              new File(rcfile_in, "persons_with_unset_fields.rc"));
 
-    for(int i=0; i<records.length; i++) {
-      protoWritable.set(PersonWithoutEmail.newBuilder()
-                         .mergeFrom(records[i].toByteArray()).build());
-      protoWriter.write(null, protoWritable);
+    for(Person person : records) {
+      personWritable.set(person);
+      protoWriter.write(null, personWritable);
     }
     protoWriter.close(null);
 
-    // load both files
+    // create an rcFile with PersonWithoutEmail to test unknown fields
+
+    ProtobufWritable<PersonWithoutEmail> pweWritable =
+            ProtobufWritable.newInstance(PersonWithoutEmail.class);
+
+    protoWriter = createProtoWriter(PersonWithoutEmail.class,
+                                    new File(rcfile_in, "persons_with_unknows.rc"));
+
+    for(Person person : records) {
+      pweWritable.set(PersonWithoutEmail.newBuilder()
+                        .mergeFrom(person.toByteArray()).build());
+      protoWriter.write(null, pweWritable);
+    }
+    protoWriter.close(null);
+
+    // load all the files
     pigServer.registerQuery(String.format(
         "A = load '%s' using %s('%s');\n"
         , rcfile_in.toURI().toString()
@@ -142,7 +162,7 @@ public class TestRCFileProtobufStorage {
 
     // verify the result:
     Iterator<Tuple> rows = pigServer.openIterator("A");
-    for (int i=0; i<2; i++) {
+    for (int i=0; i<3; i++) {
       for(Person person : records) {
         String expected = personToString(person);
         Assert.assertEquals(expected, rows.next().toString());
@@ -187,6 +207,19 @@ public class TestRCFileProtobufStorage {
               .setNumber("408-555-" + (5555 + index))
               .setType(PhoneType.MOBILE))
       .build();
+  }
+
+  // return a Person object. don't set optional fields
+  private static Person makePersonWithDefaults(int index, boolean add_phone) {
+    Person.Builder builder =
+            Person.newBuilder()
+            .setName("bob_" + index + " jenkins")
+            .setId(index);
+    if (add_phone) {
+      builder.addPhone(PhoneNumber.newBuilder()
+                                  .setNumber("408-555-" + (5555 + index)));
+    }
+    return builder.build();
   }
 
   private static String personToString(Person person) {
