@@ -31,7 +31,7 @@ import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
 import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
-import com.twitter.elephantbird.util.UnitTestUtil;
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 
 /**
  * 1. Test to ensure that empty records in B64Line and Block formats are

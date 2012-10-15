@@ -25,5 +25,10 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.twitter.elephantbird</groupId>
+      <artifactId>elephant-bird-pig</artifactId>
+      <type>test-jar</type>
+    </dependency>
   </dependencies>
 </project>
