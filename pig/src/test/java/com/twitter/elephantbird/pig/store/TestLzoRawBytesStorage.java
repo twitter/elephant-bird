@@ -1,15 +1,14 @@
 package com.twitter.elephantbird.pig.store;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
+
+import com.google.common.io.Files;
+import com.hadoop.compression.lzo.GPLNativeCodeLoader;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -21,14 +20,16 @@ import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.junit.Test;
 
-import com.google.common.io.Files;
-import com.hadoop.compression.lzo.GPLNativeCodeLoader;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.load.LzoRawBytesLoader;
 import com.twitter.elephantbird.pig.test.thrift.Name;
 import com.twitter.elephantbird.pig.test.thrift.Person;
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import com.twitter.elephantbird.util.ThriftUtils;
-import com.twitter.elephantbird.util.UnitTestUtil;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for {@link LzoRawBytesLoader} and {@link LzoRawBytesStorage}.
