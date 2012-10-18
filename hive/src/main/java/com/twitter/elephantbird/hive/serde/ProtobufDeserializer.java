@@ -1,15 +1,15 @@
 package com.twitter.elephantbird.hive.serde;
 
 import com.google.protobuf.Message;
+import com.google.protobuf.Descriptors.Descriptor;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
-import com.twitter.elephantbird.util.TypeRef;
+import com.twitter.elephantbird.util.Protobufs;
+
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.Deserializer;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Writable;
 
@@ -32,14 +32,20 @@ import java.util.Properties;
 public class ProtobufDeserializer implements Deserializer {
 
   private ProtobufConverter<? extends Message> protobufConverter = null;
-  private Class<? extends Message> protobufClass;
+  private ObjectInspector objectInspector;
 
   @Override
-  public void initialize(Configuration conf, Properties tbl) throws SerDeException {
+  public void initialize(Configuration job, Properties tbl) throws SerDeException {
     try {
-      String className = tbl.getProperty(Constants.SERIALIZATION_CLASS);
-      protobufClass = conf.getClassByName(className).asSubclass(Message.class);
+      String protoClassName = tbl
+          .getProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_CLASS);
+
+      Class<? extends Message> protobufClass = job.getClassByName(protoClassName)
+          .asSubclass(Message.class);
       protobufConverter = ProtobufConverter.newInstance(protobufClass);
+
+      Descriptor descriptor = Protobufs.getMessageDescriptor(protobufClass);
+      objectInspector = new ProtobufStructObjectInspector(descriptor);
     } catch (Exception e) {
       throw new SerDeException(e);
     }
@@ -47,18 +53,18 @@ public class ProtobufDeserializer implements Deserializer {
 
   @Override
   public Object deserialize(Writable blob) throws SerDeException {
-    BytesWritable bytes = (BytesWritable)blob;
+    BytesWritable bytes = (BytesWritable) blob;
     return protobufConverter.fromBytes(bytes.getBytes(), 0, bytes.getLength());
   }
 
   @Override
   public ObjectInspector getObjectInspector() throws SerDeException {
-    return ObjectInspectorFactory.getReflectionObjectInspector(
-            protobufClass, ObjectInspectorFactory.ObjectInspectorOptions.PROTOCOL_BUFFERS);
+    return objectInspector;
   }
 
   @Override
   public SerDeStats getSerDeStats() {
+    // no support for statistics
     return null;
   }
 }
