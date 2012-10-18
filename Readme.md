@@ -85,7 +85,7 @@ Loaders and storers are available for the input and output formats listed above.
 
 ### Hive Support
 
-Elephant-Bird has experimental Hive support. For more information, see [How to use Elephant Bird with Hive](https://github.com/kevinweil/elephant-bird/wiki/How-to-use-Elephant-Bird-with-Hive).
+Elephant-Bird provides Hive support for reading thrift and protocol buffers. For more information, see [How to use Elephant Bird with Hive](https://github.com/kevinweil/elephant-bird/wiki/How-to-use-Elephant-Bird-with-Hive).
 
 ### Utilities
 * Counters in Pig
