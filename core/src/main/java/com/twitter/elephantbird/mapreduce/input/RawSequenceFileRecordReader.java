@@ -11,14 +11,23 @@ import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.ValueBytes;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
+import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
+
 /**
  * {@link RecordReader} implementation which returns keys and values as {@link DataInputBuffer}
- * instances.
+ * instances containing raw bytes. Note that when key or value bytes represent a serialized
+ * {@link BinaryWritable} or {@link BytesWritable} instance (or child types such as
+ * {@link ThriftWritable}), the first four bytes of the returned buffer will contain run length, as
+ * defined by these classes' {@link Writable#write(java.io.DataOutput)} implementation. This 4 byte
+ * prefix must be stripped if you're after only the bytes which the original BinaryWritable instance
+ * contained.
  *
  * @author Andy Schlaikjer
  */
