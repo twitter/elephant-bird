@@ -4,8 +4,10 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.JavaType;
+import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.Message;
 
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -23,6 +25,7 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     private String comment = null;
     private FieldDescriptor fieldDescriptor;
 
+    @SuppressWarnings("unchecked")
     public ProtobufStructField(FieldDescriptor fieldDescriptor) {
       this.fieldDescriptor = fieldDescriptor;
       oi = this.createOIForField();
@@ -151,7 +154,12 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     }
     Message m = (Message) data;
     ProtobufStructField psf = (ProtobufStructField) structField;
-    return m.getField(psf.getFieldDescriptor());
+    FieldDescriptor fieldDescriptor = psf.getFieldDescriptor();
+    Object result = m.getField(fieldDescriptor);
+    if (fieldDescriptor.getType() == Type.ENUM) {
+      return ((EnumValueDescriptor)result).getName();
+    }
+    return result;
   }
 
   @Override
