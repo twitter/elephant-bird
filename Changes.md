@@ -1,5 +1,19 @@
 # Elephant Bird #
 
+### Version 3.0.5 ###
+
+ISSUE 274. Correct 3.0.4 version number in changes log (Travis Crawford)
+
+ISSUE 271. Update protobuf deserializer to present enums as strings (Feng Peng)
+
+ISSUE 270. Add LzoByteArrayScheme (Sam Ritchie)
+
+ISSUE 269. Adds Travis CI build link to readme (Andy Schlaikjer)
+
+ISSUE 268. Adds travis-ci configuration (Andy Schlaikjer)
+
+ISSUE 266. Improves RawSequenceFileRecordReader javadoc (Andy Schlaikjer)
+
 ### Version 3.0.4 ###
 
 *** The issues starred below have introduced breaking API changes. Please make sure your java code and pig scripts are updated to use changed APIs correctly.
