@@ -1,6 +1,6 @@
 # Elephant Bird #
 
-### Version 3.1.0 ###
+### Version 3.0.4 ###
 
 *** The issues starred below have introduced breaking API changes. Please make sure your java code and pig scripts are updated to use changed APIs correctly.
 
