@@ -16,16 +16,22 @@ import org.apache.hadoop.io.BytesWritable;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.Message;
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneNumber;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneType;
+import com.twitter.elephantbird.hive.serde.ProtobufStructObjectInspector.ProtobufStructField;
 
 public class ProtobufDeserializerTest {
 
   private AddressBook test_ab;
   private PhoneNumber test_pn;
   private ProtobufDeserializer deserializer;
+  private ProtobufStructObjectInspector protobufOI;
 
   @Before
   public void setUp() throws SerDeException {
@@ -47,6 +53,7 @@ public class ProtobufDeserializerTest {
     properties.setProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_CLASS,
         AddressBook.class.getName());
     deserializer.initialize(new Configuration(), properties);
+    protobufOI = (ProtobufStructObjectInspector) deserializer.getObjectInspector();
   }
 
   @Test
@@ -79,6 +86,26 @@ public class ProtobufDeserializerTest {
     assertEquals(persons.get(2).getPhoneCount(), 0);
     assertEquals(persons.get(2).getId(), 3);
     assertEquals(persons.get(2).getEmail(), "");
+  }
+
+  @Test
+  public final void testObjectInspectorGetStructFieldData() throws SerDeException {
+    checkFields(AddressBook.getDescriptor().getFields(), test_ab);
+    checkFields(PhoneNumber.getDescriptor().getFields(), test_pn);
+  }
+
+  private void checkFields(List<FieldDescriptor> fields, Message message) {
+    for (FieldDescriptor fieldDescriptor : fields) {
+      ProtobufStructField psf = new ProtobufStructField(fieldDescriptor);
+      Object data = protobufOI.getStructFieldData(message, psf);
+      Object target = message.getField(fieldDescriptor);
+      if (fieldDescriptor.getType() == Type.ENUM) {
+        assertEquals(String.class, data.getClass());
+        assertEquals(data, ((EnumValueDescriptor) target).getName());
+      } else {
+        assertEquals(data, target);
+      }
+    }
   }
 
   @Test
