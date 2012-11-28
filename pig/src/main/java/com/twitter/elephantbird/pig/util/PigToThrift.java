@@ -105,7 +105,10 @@ public class PigToThrift<T extends TBase<?, ?>> {
   }
 
   /**
-   * For a given Pig value, return a Thrift object of the same type as the Thrift field passed.
+   * For a given Pig value, return a Thrift object of the same type as the Thrift field passed. The
+   * thrift field is expected to be compatible with the value passed. If it is not, a warning will
+   * be logged and a null value will be returned.
+   *
    * @param thriftField the Thrift field used to determine the type of the response object
    * @param pigValue the value to convert to Thrift
    * @return a Thrift object
