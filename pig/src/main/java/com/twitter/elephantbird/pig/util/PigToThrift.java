@@ -105,7 +105,7 @@ public class PigToThrift<T extends TBase<?, ?>> {
   }
 
   @SuppressWarnings("unchecked")
-  private static Object toThriftValue(Field field, Object value) {
+  public static Object toThriftValue(Field field, Object value) {
     try {
       switch (field.getType()) {
       case TType.BOOL:
