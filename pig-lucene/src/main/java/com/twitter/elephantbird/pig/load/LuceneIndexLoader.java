@@ -179,7 +179,7 @@ public abstract class LuceneIndexLoader<T extends Writable>
 
       return recordToTuple(key, value);
     } catch (InterruptedException e) {
-      // TODO: do I need to clear the interrupted flag?
+      Thread.currentThread().interrupt();
       throw new IOException(e);
     }
   }

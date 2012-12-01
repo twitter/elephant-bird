@@ -84,7 +84,7 @@ public class LuceneIndexStorage extends StoreFunc {
     try {
       this.recordWriter.write(NullWritable.get(), tuple);
     } catch (InterruptedException e) {
-      // TODO: do I need to clear the interrupted flag?
+      Thread.currentThread().interrupt();
       throw new IOException(e);
     }
   }
