@@ -29,24 +29,26 @@ import com.twitter.elephantbird.mapreduce.input.LuceneIndexRecordReader;
 import com.twitter.elephantbird.util.HdfsUtils;
 
 /**
- * <p>Base class for LoadFuncs that load data from lucene indexes.</p>
- * <p>Wraps {@link LuceneIndexInputFormat}</p>
+ * Base class for LoadFuncs that load data from lucene indexes.
  * <p>
- *    Subclasses must provide a {@link LuceneIndexInputFormat}, specify how to convert an MR
- *    record to a tuple, and the schema for tuples output from this loader
- * </p>
+*  Wraps {@link LuceneIndexInputFormat}
  * <p>
- *    Constructor has two formats, one for loading queries from a file and one for supplying them
- *    directly as pig string literals.
- *    For example:
- *    x = load '/some/path' using MyLuceneIndexLoader('queries', 'a query', 'another query');
- *    or
- *    x = load '/some/path' using MyLuceneIndexLoader('file', 'path/to/local/file');
+ * Subclasses must provide a {@link LuceneIndexInputFormat}, specify how to convert an MR
+ * record to a tuple, and the schema for tuples output from this loader
+ * <p>
+ * Constructor has two formats, one for loading queries from a file and one for supplying them
+ * directly as pig string literals.
+ * For example:
+ * x = load '/some/path' using MyLuceneIndexLoader('queries', 'a query', 'another query');
+ * or
+ * x = load '/some/path' using MyLuceneIndexLoader('file', 'path/to/local/file');
  *
- *    The file should have one query per line and be UTF-8 encoded
- *    In both cases, the strings provided (as literals or in a file) are the serialized form
- *    of the query used by {@link LuceneIndexInputFormat#setQueries(List, Configuration)}
- * </p>
+ * The file should have one query per line and be UTF-8 encoded
+ * In both cases, the strings provided (as literals or in a file) are the serialized form
+ * of the query used by {@link LuceneIndexInputFormat#setQueries(List, Configuration)}
+ *
+ * @param <T> type of records that will be converted to tuples
+ * @author Alex Levenson
  */
 public abstract class LuceneIndexLoader<T extends Writable>
     extends LoadFunc implements LoadMetadata {

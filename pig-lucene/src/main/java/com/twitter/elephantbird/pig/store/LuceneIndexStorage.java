@@ -13,15 +13,14 @@ import org.apache.pig.data.Tuple;
 import com.twitter.elephantbird.mapreduce.output.LuceneIndexOutputFormat;
 
 /**
+ * A StoreFunc that writes lucene indexes by wrapping a
+ * {@link PigFriendlyLuceneIndexOutputFormat}
  * <p>
- *    A StoreFunc that writes lucene indexes by wrapping a
- *    {@link PigFriendlyLuceneIndexOutputFormat}
- * </p>
- * <p>
- *   Usage:
- *   store x into '/some/path'
- *   using LuceneIndexStorage('com.example.MyPigFriendlyLuceneIndexOutputFormat');
- * </p>
+ * Usage:
+ * <code>
+ * store x into '/some/path'
+ * using LuceneIndexStorage('com.example.MyPigFriendlyLuceneIndexOutputFormat');
+ * </code>
  *
  * @author Alex Levenson
  */

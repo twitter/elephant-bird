@@ -49,7 +49,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * <p>End-to-end test of {@link LuceneIndexOutputFormat} and {@link LuceneIndexInputFormat}</p>
+ * End-to-end test of {@link LuceneIndexOutputFormat} and {@link LuceneIndexInputFormat}
  * <ol>
  *   <li>Builds three indexes of small documents (text from the Iliad and Macbeth)</li>
  *   <li>Searches the indexes</li>

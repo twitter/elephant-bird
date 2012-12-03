@@ -37,9 +37,10 @@ import com.twitter.elephantbird.pig.store.LuceneIndexStorage.PigFriendlyLuceneIn
 import static org.junit.Assert.assertEquals;
 
 /**
- * <p>End-to-end test of
- * {@link com.twitter.elephantbird.pig.store.LuceneIndexStorage} and {@link LuceneIndexLoader}</p>
- * <p>Similar to {@link LuceneIndexingIntegrationTest}</p>
+ * End-to-end test of
+ * {@link com.twitter.elephantbird.pig.store.LuceneIndexStorage} and {@link LuceneIndexLoader}
+ * <p>
+ * Similar to {@link LuceneIndexingIntegrationTest}
  * <ol>
  *   <li>Builds three indexes of small documents (text from the Iliad and Macbeth)</li>
  *   <li>Searches the indexes using queries supplied as string literals</li>

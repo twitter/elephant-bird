@@ -30,6 +30,7 @@ import com.twitter.elephantbird.mapreduce.input.LuceneIndexInputFormat.LuceneInd
 /**
  * See {@link LuceneIndexInputFormat}
  *
+ * @param <T> - the type that your lucene Documents will be converted to
  * @author Alex Levenson
  */
 public abstract class LuceneIndexRecordReader<T extends Writable>

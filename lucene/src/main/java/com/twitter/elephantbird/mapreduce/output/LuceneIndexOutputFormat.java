@@ -34,12 +34,12 @@ import com.twitter.elephantbird.util.HdfsUtils;
 import com.twitter.elephantbird.util.ReducerHeartbeatThread;
 
 /**
- * <p>Base class for output formats that write lucene indexes</p>
- * <p>Subclasses must specify how to convert a key value pair into a {@link Document}</p>
+ * Base class for output formats that write lucene indexes
  * <p>
- *    Subclasses may provide an {@link Analyzer} to use during index creation
- *    (which may be used depending on how documents are created by the subclass)
- * </p>
+ * Subclasses must specify how to convert a key value pair into a {@link Document}
+ * <p>
+ * Subclasses may provide an {@link Analyzer} to use during index creation
+ * (which may be used depending on how documents are created by the subclass)
  *
  * @author Alex Levenson, based on code written by Kyle Maxwell
  */

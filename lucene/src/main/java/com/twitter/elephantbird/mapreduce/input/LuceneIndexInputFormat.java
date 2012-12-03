@@ -27,27 +27,20 @@ import org.json.simple.JSONValue;
 import com.twitter.elephantbird.util.HdfsUtils;
 
 /**
+ * Base class for input formats that read lucene indexes stored in HDFS directories.
+ * Given a list of indexes and queries, runs each query over each index. Implements split
+ * combining (combines multiple indexes into one split) based on
+ * the total size of the index directory and the configured max combined split size.
  * <p>
- *    Base class for input formats that read lucene indexes stored in HDFS directories.
- *    Given a list of indexes and queries, runs each query over each index. Implements split
- *    combining (combines multiple indexes into one split) based on
- *    the total size of the index directory and the configured max combined split size.
- * </p>
+ * Emits key, value records where key is the query that resulted in value
+ * (key is is actually the position in the list of queries, not the query string itself)
  * <p>
- *    Emits key, value records where key is the query that resulted in value
- *    (key is is actually the position in the list of queries, not the query string itself)
- * </p>
- * <p>
- *    Subclasses must provide:
- *    <ul>
- *      a {@link PathFilter} for identifying HDFS
- *      directories that contain lucene indexes
- *    </ul>
- *    <ul>
- *      a {@link LuceneIndexRecordReader} which describes how to convert a String into a
- *      Query and how to convert a Document into a value of type T
- *    </ul>
- * </p>
+ * Subclasses must provide:
+ * <ul>
+*   <li> a {@link PathFilter} for identifying HDFS directories that contain lucene indexes</li>
+ *  <li>a {@link LuceneIndexRecordReader} which describes how to convert a String into a
+ *      Query and how to convert a Document into a value of type T</li>
+ * </ul>
  *
  * @param <T> - the type that your lucene Documents will be converted to
  * @author Alex Levenson
@@ -98,23 +91,21 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   }
 
   /**
-   * <p>
    * Creates splits with multiple indexes per split
    * (if they are smaller than maxCombineSplitSizeBytes).
    * It is possible for a split to be larger than maxCombineSplitSizeBytes,
    * if it consists of a single index that is
    * larger than maxCombineSplitSizeBytes.
-   * </p>
-   * <p>All inputPaths will be searched for indexes recursively</p>
    * <p>
-   *   The bin-packing problem of combining splits is solved naively:
-   *   <ol>
-   *     <li>Sort all indexes by size</li>
-   *     <li>Begin packing indexes into splits until adding the next split would cause the split to
-   *         exceed maxCombineSplitSizeBytes</li>
-   *     <li>Begin packing subsequent indexes into the next split, and so on</li>
-   *   </ol>
-   * </p>
+   * All inputPaths will be searched for indexes recursively
+   * <p>
+   * The bin-packing problem of combining splits is solved naively:
+   * <ol>
+   *   <li>Sort all indexes by size</li>
+   *   <li>Begin packing indexes into splits until adding the next split would cause the split to
+   *       exceed maxCombineSplitSizeBytes</li>
+   *   <li>Begin packing subsequent indexes into the next split, and so on</li>
+   * </ol>
    */
   @Override
   public List<InputSplit> getSplits(JobContext job) throws IOException, InterruptedException {
