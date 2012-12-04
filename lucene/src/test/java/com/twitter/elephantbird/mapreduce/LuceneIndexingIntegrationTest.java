@@ -41,8 +41,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.twitter.elephantbird.mapreduce.input.LuceneIndexCollectAllRecordReader;
 import com.twitter.elephantbird.mapreduce.input.LuceneIndexInputFormat;
-import com.twitter.elephantbird.mapreduce.input.LuceneIndexRecordReader;
 import com.twitter.elephantbird.mapreduce.output.LuceneIndexOutputFormat;
 
 import static org.junit.Assert.assertEquals;
@@ -139,7 +139,7 @@ public class LuceneIndexingIntegrationTest {
       createRecordReader(InputSplit split, TaskAttemptContext context)
       throws IOException, InterruptedException {
 
-      return new LuceneIndexRecordReader<Text>() {
+      return new LuceneIndexCollectAllRecordReader<Text>() {
         private QueryParser parser = new QueryParser(Version.LUCENE_40,
             "text",
              new WhitespaceAnalyzer(Version.LUCENE_40));

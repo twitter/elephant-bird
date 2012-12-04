@@ -11,17 +11,27 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.easymock.EasyMockSupport;
+import org.easymock.IAnswer;
 import org.junit.Test;
 
 import com.twitter.elephantbird.mapreduce.input.LuceneIndexInputFormat.LuceneIndexInputSplit;
 
+import static org.easymock.EasyMock.anyByte;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -120,15 +130,7 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
     docs[4], 14
   );
 
-  private static TopDocs makeTopDocs(ArrayList<Integer> docIds) {
-    ScoreDoc[] scoreDocs = new ScoreDoc[docIds.size()];
-    for (int i = 0; i < docIds.size(); i++) {
-      scoreDocs[i] = new ScoreDoc(docIds.get(i), 1);
-    }
-    return new TopDocs(scoreDocs.length, scoreDocs, 1);
-  }
-
-  private static abstract class MockRecordReader extends LuceneIndexRecordReader<IntWritable> {
+  private static abstract class MockRecordReader extends LuceneIndexCollectAllRecordReader<IntWritable> {
     @Override
     protected IntWritable docToValue(Document doc) {
       return new IntWritable(Integer.valueOf(docsAndValues.get(doc)));
@@ -174,8 +176,20 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
       expect(rr.createSearcher(reader)).andReturn(searcher);
 
       for (int query = 0; query < queries.length; query++) {
-        ArrayList<Integer> ids = indexesQueriesDocIds.get(index).get(query);
-        expect(searcher.search(queries[query], Integer.MAX_VALUE)).andReturn(makeTopDocs(ids));
+        final ArrayList<Integer> ids = indexesQueriesDocIds.get(index).get(query);
+        final Capture<Collector> collectorCapture = new Capture<Collector>();
+        searcher.search(eq(queries[query]), capture(collectorCapture));
+
+        expectLastCall().andAnswer(new IAnswer<Void>() {
+          @Override
+          public Void answer() throws Throwable {
+            for (int id : ids) {
+              collectorCapture.getValue().collect(id);
+            }
+            return null;
+          }
+        });
+
         for (int docId : ids) {
           expect(searcher.doc(docId)).andReturn(docs[docId]);
         }

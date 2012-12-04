@@ -57,9 +57,10 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   public static final String MAX_COMBINE_SPLIT_SIZE_KEY =
     LuceneIndexInputFormat.class.getCanonicalName() + ".maxcombinesplitsize";
 
-  // default to 1GB
-  // TODO: choose a reasonable default
-  private static final long DEFAULT_MAX_COMBINE_SPLIT_SIZE_BYTES = 1024*1024*1024L;
+  // default to 10GB
+  // back of the envelope reasoning:
+  // Assume 1 mapper should process 1 GB, and each index will return 1/10th its size in records
+  private static final long DEFAULT_MAX_COMBINE_SPLIT_SIZE_BYTES = 10*1024*1024*1024L;
 
   private static final String[] EMPTY_NODE_ARRAY = new String[0];
 
