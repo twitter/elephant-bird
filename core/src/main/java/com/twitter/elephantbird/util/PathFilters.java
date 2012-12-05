@@ -43,7 +43,7 @@ public final class PathFilters {
   /**
    * Creates a filter that accepts all paths that are files, and excludes
    * all paths that are directories
-   * 
+   *
    * @param conf job conf
    * @return the path filter
    */

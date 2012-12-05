@@ -16,11 +16,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.pig.Expression;
 import org.apache.pig.LoadFunc;
-import org.apache.pig.LoadMetadata;
-import org.apache.pig.ResourceSchema;
-import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 
@@ -33,15 +29,19 @@ import com.twitter.elephantbird.util.HdfsUtils;
  * <p>
 *  Wraps {@link LuceneIndexInputFormat}
  * <p>
- * Subclasses must provide a {@link LuceneIndexInputFormat}, specify how to convert an MR
- * record to a tuple, and the schema for tuples output from this loader
+ * Subclasses must provide a {@link LuceneIndexInputFormat} and specify how to convert an MR
+ * record to a tuple
  * <p>
  * Constructor has two formats, one for loading queries from a file and one for supplying them
  * directly as pig string literals.
  * For example:
- * x = load '/some/path' using MyLuceneIndexLoader('queries', 'a query', 'another query');
+ * <code>
+ * x = load '/some/path' using MyLuceneIndexLoader('--queries', 'a query', 'another query');
+ * </code>
  * or
- * x = load '/some/path' using MyLuceneIndexLoader('file', 'path/to/local/file');
+ * <code>
+ * x = load '/some/path' using MyLuceneIndexLoader('--file', 'path/to/local/file');
+ *</code>
  *
  * The file should have one query per line and be UTF-8 encoded
  * In both cases, the strings provided (as literals or in a file) are the serialized form
@@ -50,12 +50,11 @@ import com.twitter.elephantbird.util.HdfsUtils;
  * @param <T> type of records that will be converted to tuples
  * @author Alex Levenson
  */
-public abstract class LuceneIndexLoader<T extends Writable>
-    extends LoadFunc implements LoadMetadata {
+public abstract class LuceneIndexLoader<T extends Writable> extends LoadFunc {
 
   private static final String USAGE_HELP = "LuceneIndexLoader's constructor usage:\n"
-    + "LuceneIndexLoader('queries', 'a query', 'another query')\nor\n"
-    + "LuceneIndexLoader('file', 'path/to/local/file')";
+    + "LuceneIndexLoader('--queries', 'a query', 'another query')\nor\n"
+    + "LuceneIndexLoader('--file', 'path/to/local/file')";
 
   private LuceneIndexRecordReader<T> reader;
   private List<String> queries = null;
@@ -77,17 +76,14 @@ public abstract class LuceneIndexLoader<T extends Writable>
    */
   protected abstract LuceneIndexInputFormat<T> getLuceneIndexInputFormat() throws IOException;
 
-  @Override
-  public abstract ResourceSchema getSchema(String location, Job job) throws IOException;
-
   public LuceneIndexLoader(String[] args) {
     Preconditions.checkNotNull(args, USAGE_HELP);
     Preconditions.checkArgument(args.length >= 2, USAGE_HELP);
     Preconditions.checkNotNull(args[0], USAGE_HELP);
 
-    if (args[0].equals("queries")) {
+    if (args[0].equals("--queries")) {
       queries = Lists.newArrayList(Arrays.copyOfRange(args, 1, args.length));
-    } else if (args[0].equals("file")) {
+    } else if (args[0].equals("--file")) {
       Preconditions.checkArgument(args.length == 2, USAGE_HELP);
       queryFile = args[1];
       Preconditions.checkArgument(new File(queryFile).exists(),
@@ -96,23 +92,6 @@ public abstract class LuceneIndexLoader<T extends Writable>
       throw new IllegalArgumentException(USAGE_HELP);
     }
   }
-
-  /* ---------------------------------------- LoadMetadata --------------------------------------*/
-
-  @Override
-  public String[] getPartitionKeys(String location, Job job) {
-    return null;
-  }
-
-  @Override
-  public ResourceStatistics getStatistics(String location, Job job) {
-    return null;
-  }
-
-  @Override
-  public void setPartitionFilter(Expression partitionFilter) { }
-
-  /* ---------------------------------------- LoadFunc-------------------------------------------*/
 
   /**
    * THIS INVOLVES AN UNCHECKED CAST

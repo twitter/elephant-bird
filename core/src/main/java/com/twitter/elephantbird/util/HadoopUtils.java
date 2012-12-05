@@ -5,13 +5,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.List;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
-
+import org.json.simple.JSONArray;
+import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +25,8 @@ import org.slf4j.LoggerFactory;
  */
 public class HadoopUtils {
   private static final Logger LOG = LoggerFactory.getLogger(HadoopUtils.class);
+
+  private HadoopUtils() { }
 
   /**
    * MapReduce counters are available only with {@link TaskInputOutputContext},
@@ -119,5 +126,35 @@ public class HadoopUtils {
       LOG.error("Couldn't cast object read from config with key " + key, e);
       throw new IOException(e);
     }
+  }
+
+  /**
+   * Writes a list of strings into a configuration by converting it to a json array
+   *
+   * @param key for the configuration
+   * @param list to write
+   * @param conf to write to
+   */
+  public static void writeStringListToConfAsJson(String key,
+                                                 List<String> list,
+                                                 Configuration conf) {
+    Preconditions.checkNotNull(list);
+    conf.set(key, JSONArray.toJSONString(list));
+  }
+
+  /**
+   * Reads a list of strings stored as a json array from  a configuration
+   *
+   * @param key for the configuration
+   * @param conf to read from
+   * @return the read list of strings, or null if key is not present in conf
+   */
+  @SuppressWarnings("unchecked")
+  public static List<String> readStringListFromConfAsJson(String key, Configuration conf) {
+    String json = conf.get(key);
+    if (json == null) {
+      return null;
+    }
+    return Lists.<String>newArrayList(((JSONArray) JSONValue.parse(json)));
   }
 }

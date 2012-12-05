@@ -8,7 +8,6 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.pig.ResourceSchema;
 import org.apache.pig.data.Tuple;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,11 +41,6 @@ public class TestLuceneIndexLoader {
     protected LuceneIndexInputFormat<NullWritable> getLuceneIndexInputFormat() throws IOException {
       return null;
     }
-
-    @Override
-    public ResourceSchema getSchema(String location, Job job) throws IOException {
-      return null;
-    }
   }
 
   @Rule
@@ -75,23 +69,22 @@ public class TestLuceneIndexLoader {
 
     }
 
-
     try {
-      new Loader(new String[]{"queries"});
+      new Loader(new String[]{"--queries"});
       fail("This should throw an IllegalArgumentException");
     } catch (IllegalArgumentException e) {
 
     }
 
     try {
-      new Loader(new String[]{"file"});
+      new Loader(new String[]{"--file"});
       fail("This should throw an IllegalArgumentException");
     } catch (IllegalArgumentException e) {
 
     }
 
     try {
-      new Loader(new String[]{"file", "one", "two"});
+      new Loader(new String[]{"--file", "one", "two"});
       fail("This should throw an IllegalArgumentException");
     } catch (IllegalArgumentException e) {
 
@@ -99,7 +92,7 @@ public class TestLuceneIndexLoader {
 
     try {
       String fakeFile = new File(tempDir.getRoot(), "nonexistant").getAbsolutePath();
-      new Loader(new String[]{"file", fakeFile});
+      new Loader(new String[]{"--file", fakeFile});
       fail("This should throw an IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       assertTrue(e.getMessage()
@@ -107,9 +100,9 @@ public class TestLuceneIndexLoader {
     }
 
     // valid constructor usages
-    new Loader(new String[]{"queries", "query1"});
-    new Loader(new String[]{"queries", "query1", "query2", "query3"});
-    new Loader(new String[]{"file",
+    new Loader(new String[]{"--queries", "query1"});
+    new Loader(new String[]{"--queries", "query1", "query2", "query3"});
+    new Loader(new String[]{"--file",
         "src/test/resources/com/twitter/elephantbird/pig/load/queryfile.txt"});
   }
 
@@ -132,12 +125,12 @@ public class TestLuceneIndexLoader {
 
   @Test
   public void testSetLocationQueries() throws Exception {
-    doTestSetLocation(new Loader(new String[]{"queries", "+hello -goodbye", "+test", "+こにちは"}));
+    doTestSetLocation(new Loader(new String[]{"--queries", "+hello -goodbye", "+test", "+こにちは"}));
   }
 
   @Test
   public void testSetLocationFile() throws Exception {
-    doTestSetLocation(new Loader(new String[]{"file",
+    doTestSetLocation(new Loader(new String[]{"--file",
       "src/test/resources/com/twitter/elephantbird/pig/load/queryfile.txt"}));
   }
 }

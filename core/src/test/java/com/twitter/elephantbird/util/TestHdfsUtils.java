@@ -48,13 +48,11 @@ public class TestHdfsUtils {
   @Test
   public void testCollectPathsWithDirs() throws Exception {
     List<Path> accumulator = Lists.newLinkedList();
-
+    Path p = new Path(SAMPLE_DIR_LOCATION + "sample_dir");
     HdfsUtils.collectPaths(
-      new Path(SAMPLE_DIR_LOCATION + "sample_dir"),
-      SKIP_A_PATH_FILTER,
-      new Configuration(),
-      accumulator
-    );
+      p,
+      p.getFileSystem(new Configuration()),
+      SKIP_A_PATH_FILTER, accumulator);
 
     Set<String> expected = Sets.newHashSet(
       "sample_dir",
@@ -74,12 +72,13 @@ public class TestHdfsUtils {
   public  void testCollectPathsWithoutDirs() throws Exception {
     List<Path> accumulator = Lists.newLinkedList();
     Configuration conf = new Configuration();
+    Path p = new Path(SAMPLE_DIR_LOCATION + "sample_dir");
     HdfsUtils.collectPaths(
-      new Path(SAMPLE_DIR_LOCATION + "sample_dir"),
+      p,
+      p.getFileSystem(conf),
       new PathFilters.CompositePathFilter(
           PathFilters.newExcludeDirectoriesFilter(conf),
           SKIP_A_PATH_FILTER),
-      conf,
       accumulator
     );
 
@@ -96,10 +95,8 @@ public class TestHdfsUtils {
 
   @Test
   public void testGetDirectorySize() throws Exception {
-    long size = HdfsUtils.getDirectorySize(
-        new Path(SAMPLE_DIR_LOCATION + "sample_dir"),
-        new Configuration());
-
+    Path p = new Path(SAMPLE_DIR_LOCATION + "sample_dir");
+    long size = HdfsUtils.getDirectorySize(p, p.getFileSystem(new Configuration()));
     assertEquals(460, size);
   }
 

@@ -21,9 +21,8 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONValue;
 
+import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.HdfsUtils;
 
 /**
@@ -33,7 +32,7 @@ import com.twitter.elephantbird.util.HdfsUtils;
  * the total size of the index directory and the configured max combined split size.
  * <p>
  * Emits key, value records where key is the query that resulted in value
- * (key is is actually the position in the list of queries, not the query string itself)
+ * (key is actually the position in the list of queries, not the query string itself)
  * <p>
  * Subclasses must provide:
  * <ul>
@@ -123,28 +122,33 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
     return combinedSplits;
   }
 
-  @VisibleForTesting
-  PriorityQueue<LuceneIndexInputSplit> findSplits(Configuration conf) throws IOException {
+  /**
+   * Finds and creates all the index splits based on the input paths set in conf
+   * @param conf job conf
+   * @return a priority queue of the splits, default is sorted by size
+   * @throws IOException
+   */
+  protected PriorityQueue<LuceneIndexInputSplit> findSplits(Configuration conf) throws IOException {
     PriorityQueue<LuceneIndexInputSplit> splits = new PriorityQueue<LuceneIndexInputSplit>();
     List<Path> indexDirs = Lists.newLinkedList();
 
     // find all indexes nested under all the input paths
     // (which happen to be directories themselves)
     for (Path path : inputPaths) {
-      HdfsUtils.collectPaths(path, indexDirPathFilter, conf, true, indexDirs);
+      HdfsUtils.collectPaths(path, path.getFileSystem(conf), indexDirPathFilter, indexDirs);
     }
 
     // compute the size of each index
     // and create a single split per index
     for (Path indexDir : indexDirs) {
-      long size = HdfsUtils.getDirectorySize(indexDir, conf);
+      long size = HdfsUtils.getDirectorySize(indexDir, indexDir.getFileSystem(conf));
       splits.add(new LuceneIndexInputSplit(Lists.newLinkedList(Arrays.asList(indexDir)), size));
     }
     return splits;
   }
 
-  @VisibleForTesting
-  static List<InputSplit> combineSplits(PriorityQueue<LuceneIndexInputSplit> splits, long maxSize) {
+  protected List<InputSplit> combineSplits(PriorityQueue<LuceneIndexInputSplit> splits,
+                                           long maxSize) {
     // now take the one-split-per-index splits and combine them into multi-index-per-split splits
     List<InputSplit> combinedSplits = Lists.newLinkedList();
     LuceneIndexInputSplit currentSplit = splits.poll();
@@ -180,7 +184,7 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   public static void setQueries(List<String> queries, Configuration conf) throws IOException {
     Preconditions.checkNotNull(queries);
     Preconditions.checkArgument(!queries.isEmpty());
-    conf.set(QUERIES_KEY, JSONArray.toJSONString(queries));
+    HadoopUtils.writeStringListToConfAsJson(QUERIES_KEY, queries, conf);
   }
 
   /**
@@ -193,9 +197,8 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
    */
   @SuppressWarnings("unchecked")
   public static List<String> getQueries(Configuration conf) throws IOException {
-    String queries = Preconditions.checkNotNull(conf.get(QUERIES_KEY),
-        "You must call LuceneIndexInputFormat.setQueries()");
-    return Lists.<String>newArrayList(((JSONArray) JSONValue.parse(queries)));
+    return Preconditions.checkNotNull(HadoopUtils.readStringListFromConfAsJson(QUERIES_KEY, conf),
+      "You must call LuceneIndexInputFormat.setQueries()");
   }
 
   /**

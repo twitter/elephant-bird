@@ -14,18 +14,18 @@ import com.twitter.elephantbird.mapreduce.output.LuceneIndexOutputFormat;
 
 /**
  * A StoreFunc that writes lucene indexes by wrapping a
- * {@link PigFriendlyLuceneIndexOutputFormat}
+ * {@link PigLuceneIndexOutputFormat}
  * <p>
  * Usage:
  * <code>
  * store x into '/some/path'
- * using LuceneIndexStorage('com.example.MyPigFriendlyLuceneIndexOutputFormat');
+ * using LuceneIndexStorage('com.example.MyPigLuceneIndexOutputFormat');
  * </code>
  *
  * @author Alex Levenson
  */
 public class LuceneIndexStorage extends StoreFunc {
-  private PigFriendlyLuceneIndexOutputFormat outputFormat;
+  private PigLuceneIndexOutputFormat outputFormat;
   private RecordWriter<NullWritable, Tuple> recordWriter;
 
   /**
@@ -33,7 +33,7 @@ public class LuceneIndexStorage extends StoreFunc {
    *
    * @param outputFormatClass output format to delegate to
    */
-  protected LuceneIndexStorage(Class<? extends PigFriendlyLuceneIndexOutputFormat>
+  protected LuceneIndexStorage(Class<? extends PigLuceneIndexOutputFormat>
                                outputFormatClass) {
     try {
       outputFormat = outputFormatClass.newInstance();
@@ -51,7 +51,7 @@ public class LuceneIndexStorage extends StoreFunc {
    */
   public LuceneIndexStorage(String outputFormatClass) {
     try {
-      outputFormat = (PigFriendlyLuceneIndexOutputFormat)
+      outputFormat = (PigLuceneIndexOutputFormat)
          Class.forName(outputFormatClass).newInstance();
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
@@ -92,6 +92,6 @@ public class LuceneIndexStorage extends StoreFunc {
    * This helper base class lets us load {@link LuceneIndexOutputFormat} reflectively
    * without unsafe casts.
    */
-  public static abstract class PigFriendlyLuceneIndexOutputFormat
-    extends  LuceneIndexOutputFormat<NullWritable, Tuple> { }
+  public static abstract class PigLuceneIndexOutputFormat
+    extends LuceneIndexOutputFormat<NullWritable, Tuple>  { }
 }

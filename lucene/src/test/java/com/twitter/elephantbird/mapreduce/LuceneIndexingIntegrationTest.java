@@ -131,7 +131,7 @@ public class LuceneIndexingIntegrationTest {
 
     @Override
     public PathFilter getIndexDirPathFilter(Configuration conf) throws IOException {
-      return new LuceneIndexOutputFormat.IndexDirFilter(conf);
+      return LuceneIndexOutputFormat.newIndexDirFilter(conf);
     }
 
     @Override

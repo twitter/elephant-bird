@@ -18,7 +18,7 @@ import static org.junit.Assert.fail;
 public class TestHadoopUtils {
 
   @Test
-  public void testReadWriteToConfAsBase64() throws Exception {
+  public void testReadWriteObjectToConfAsBase64() throws Exception {
     Map<Integer, String> anObject = Maps.newHashMap();
     anObject.put(7, "seven");
     anObject.put(8, "eight");
@@ -35,17 +35,17 @@ public class TestHadoopUtils {
     } catch (ClassCastException e) {
 
     }
+
+    conf = new Configuration();
+    Object nullObj = null;
+
+    HadoopUtils.writeObjectToConfAsBase64("anobject", null, conf);
+    Object copyObj = HadoopUtils.readObjectFromConfAsBase64("anobject", conf);
+    assertEquals(nullObj, copyObj);
   }
 
   @Test
-  public void testReadWriteNullToConfAsBase64() throws Exception {
-    Object nullObj = null;
-    Configuration conf = new Configuration();
-
-    HadoopUtils.writeObjectToConfAsBase64("anobject", null, conf);
-    Object copy = HadoopUtils.readObjectFromConfAsBase64("anobject", conf);
-    assertEquals(nullObj, copy);
-
-    assertNull(HadoopUtils.readObjectFromConfAsBase64("non-existant-key", conf));
+  public void readObjectFromConfAsBase64UnsetKey() throws Exception {
+    assertNull(HadoopUtils.readObjectFromConfAsBase64("non-existant-key", new Configuration()));
   }
 }

@@ -19,8 +19,11 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.pig.ExecType;
+import org.apache.pig.Expression;
+import org.apache.pig.LoadMetadata;
 import org.apache.pig.PigServer;
 import org.apache.pig.ResourceSchema;
+import org.apache.pig.ResourceStatistics;
 import org.apache.pig.backend.executionengine.ExecJob;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
@@ -32,7 +35,7 @@ import org.junit.rules.TemporaryFolder;
 import com.twitter.elephantbird.mapreduce.LuceneIndexingIntegrationTest;
 import com.twitter.elephantbird.mapreduce.input.LuceneIndexInputFormat;
 import com.twitter.elephantbird.pig.load.LuceneIndexLoader;
-import com.twitter.elephantbird.pig.store.LuceneIndexStorage.PigFriendlyLuceneIndexOutputFormat;
+import com.twitter.elephantbird.pig.store.LuceneIndexStorage;
 
 import static org.junit.Assert.assertEquals;
 
@@ -53,7 +56,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class PigLuceneIndexingIntegrationTest {
 
-  public static class IndexOutputFormat extends PigFriendlyLuceneIndexOutputFormat {
+  public static class IndexOutputFormat extends LuceneIndexStorage.PigLuceneIndexOutputFormat {
     private LuceneIndexingIntegrationTest.IndexOutputFormat delegate =
       new LuceneIndexingIntegrationTest.IndexOutputFormat();
 
@@ -71,7 +74,7 @@ public class PigLuceneIndexingIntegrationTest {
     }
   }
 
-  public static class Loader extends LuceneIndexLoader<Text> {
+  public static class Loader extends LuceneIndexLoader<Text> implements LoadMetadata {
     private static final TupleFactory TF = TupleFactory.getInstance();
     public Loader(String[] args) {
       super(args);
@@ -90,6 +93,20 @@ public class PigLuceneIndexingIntegrationTest {
     @Override
     public ResourceSchema getSchema(String location, Job job) throws IOException {
       return new ResourceSchema(Utils.getSchemaFromString("queryId:int, text:chararray"));
+    }
+
+    @Override
+    public ResourceStatistics getStatistics(String s, Job job) throws IOException {
+      return null;
+    }
+
+    @Override
+    public String[] getPartitionKeys(String s, Job job) throws IOException {
+      return new String[0];
+    }
+
+    @Override
+    public void setPartitionFilter(Expression expression) throws IOException {
     }
   }
 

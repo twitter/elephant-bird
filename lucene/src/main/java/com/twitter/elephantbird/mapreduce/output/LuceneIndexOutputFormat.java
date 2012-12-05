@@ -2,14 +2,11 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import com.google.common.io.Files;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
@@ -29,9 +26,11 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NoLockFactory;
 import org.apache.lucene.store.SimpleFSDirectory;
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.twitter.elephantbird.util.HdfsUtils;
-import com.twitter.elephantbird.util.ReducerHeartbeatThread;
+import com.twitter.elephantbird.util.PathFilters;
+import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
 /**
  * Base class for output formats that write lucene indexes
@@ -44,7 +43,7 @@ import com.twitter.elephantbird.util.ReducerHeartbeatThread;
  * @author Alex Levenson, based on code written by Kyle Maxwell
  */
 public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, V> {
-  private static final Logger LOG = Logger.getLogger(LuceneIndexOutputFormat.class.getName());
+  private static final Logger LOG = LoggerFactory.getLogger(LuceneIndexOutputFormat.class);
 
   /**
    * Convert a record from the MR framework into a lucene {@link Document}
@@ -119,7 +118,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
 
     @Override
     public void close(final TaskAttemptContext context) throws IOException, InterruptedException {
-      ReducerHeartbeatThread heartBeat = new ReducerHeartbeatThread(context) {
+      TaskHeartbeatThread heartBeat = new TaskHeartbeatThread(context) {
         @Override
         public void progress() {
           String[] filesLeft = tmpDirFile.list();
@@ -160,7 +159,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
         FileUtils.deleteDirectory(tmpDirFile);
         LOG.info("Index written to: " + out);
       } catch (IOException e) {
-        LOG.log(Level.SEVERE, "Error committing index", e);
+        LOG.error("Error committing index", e);
         throw e;
       } finally {
         // all things must die, eventually
@@ -181,29 +180,20 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
   }
 
   /**
-   * Accepts non-hidden directories that start with "index-"
+   * Creates a path filter that accepts non-hidden directories that start with "index-"
    * This is what the indexes created by this output format look like,
    * so this is useful for finding them when traversing the file system
    */
-  public static class IndexDirFilter implements PathFilter {
-    private Configuration conf;
-
-    public IndexDirFilter(Configuration conf) {
-      this.conf = conf;
-    }
-
-    @Override
-    public boolean accept(Path path) {
-      if (!HdfsUtils.EXCLUDE_HIDDEN_PATHS_FILTER.accept(path)) {
-        return false;
+  public static PathFilter newIndexDirFilter(Configuration conf) {
+    return new PathFilters.CompositePathFilter(
+      PathFilters.newExcludeFilesFilter(conf),
+      PathFilters.EXCLUDE_HIDDEN_PATHS_FILTER,
+      new PathFilter() {
+        @Override
+        public boolean accept(Path path) {
+          return path.getName().startsWith("index-");
+        }
       }
-      try {
-        FileSystem fs = path.getFileSystem(conf);
-        FileStatus fileStatus = fs.getFileStatus(path);
-        return fileStatus.isDir() && path.getName().startsWith("index-");
-      } catch (IOException e) {
-        throw new RuntimeException("Could not get file status for path " + path, e);
-      }
-    }
+    );
   }
 }

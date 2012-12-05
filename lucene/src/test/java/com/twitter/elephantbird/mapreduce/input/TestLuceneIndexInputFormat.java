@@ -56,20 +56,29 @@ public class TestLuceneIndexInputFormat {
         + "sample_indexes/more-indexes/index-3")));
   }
 
-  private void findSplitsHelper(List<Path> inputPaths) throws IOException {
-    LuceneIndexInputFormat<IntWritable> lif = new LuceneIndexInputFormat<IntWritable>(){
-      @Override
-      public PathFilter getIndexDirPathFilter(Configuration conf) throws IOException {
-        return new LuceneIndexOutputFormat.IndexDirFilter(conf);
-      }
+  private static class DummyLuceneInputFormat extends LuceneIndexInputFormat<IntWritable> {
+    @Override
+    public PathFilter getIndexDirPathFilter(Configuration conf) throws IOException {
+      return LuceneIndexOutputFormat.newIndexDirFilter(conf);
+    }
 
-      @Override
-      public RecordReader<IntWritable, IntWritable>
-      createRecordReader(InputSplit split, TaskAttemptContext context)
-        throws IOException, InterruptedException {
-        return null;
-      }
-    };
+    @Override
+    public RecordReader<IntWritable, IntWritable>
+    createRecordReader(InputSplit split, TaskAttemptContext context)
+      throws IOException, InterruptedException {
+      return null;
+    }
+
+    @Override
+    public List<InputSplit> combineSplits(
+      PriorityQueue<LuceneIndexInputSplit> splits, long maxSize) {
+      return super.combineSplits(splits, maxSize);
+    }
+  }
+
+  private void findSplitsHelper(List<Path> inputPaths) throws IOException {
+    DummyLuceneInputFormat lif = new DummyLuceneInputFormat();
+
     Configuration conf = new Configuration();
 
     LuceneIndexInputFormat.setInputPaths(inputPaths, conf);
@@ -94,19 +103,8 @@ public class TestLuceneIndexInputFormat {
 
   @Test
   public void testGetSplits() throws Exception {
-    LuceneIndexInputFormat<IntWritable> lif = new LuceneIndexInputFormat<IntWritable>(){
-      @Override
-      public PathFilter getIndexDirPathFilter(Configuration conf) throws IOException {
-        return new LuceneIndexOutputFormat.IndexDirFilter(conf);
-      }
+    DummyLuceneInputFormat lif = new DummyLuceneInputFormat();
 
-      @Override
-      public RecordReader<IntWritable, IntWritable>
-      createRecordReader(InputSplit split, TaskAttemptContext context)
-        throws IOException, InterruptedException {
-        return null;
-      }
-    };
     Configuration conf = new Configuration();
 
     LuceneIndexInputFormat.setInputPaths(
@@ -156,6 +154,8 @@ public class TestLuceneIndexInputFormat {
 
   @Test
   public void testCombineSplits() throws Exception {
+    DummyLuceneInputFormat lif = new DummyLuceneInputFormat();
+
     PriorityQueue<LuceneIndexInputSplit> splits = new PriorityQueue<LuceneIndexInputSplit>();
     String[] paths = new String[] {
         "/index/1", "/index/2", "/index/3", "/index/4", "/index/5", "/index/6"};
@@ -165,7 +165,7 @@ public class TestLuceneIndexInputFormat {
       splits.add(new LuceneIndexInputSplit(Lists.newArrayList(new Path(paths[i])), sizes[i]));
     }
 
-    List<InputSplit> combined = LuceneIndexInputFormat.combineSplits(splits, 1000L);
+    List<InputSplit> combined = lif.combineSplits(splits, 1000L);
     assertEquals(3, combined.size());
 
     List<Path> dirs = ((LuceneIndexInputSplit) combined.get(0)).getIndexDirs();
@@ -190,10 +190,12 @@ public class TestLuceneIndexInputFormat {
 
   @Test
   public void testCombineSplitsOneSplit() throws Exception {
+    DummyLuceneInputFormat lif = new DummyLuceneInputFormat();
+
     PriorityQueue<LuceneIndexInputSplit> splits = new PriorityQueue<LuceneIndexInputSplit>();
     splits.add(new LuceneIndexInputSplit(Lists.newArrayList(new Path("/index/1")), 1500L));
 
-    List<InputSplit> combined = LuceneIndexInputFormat.combineSplits(splits, 1000L);
+    List<InputSplit> combined = lif.combineSplits(splits, 1000L);
     assertEquals(1, combined.size());
 
     List<Path> dirs = ((LuceneIndexInputSplit) combined.get(0)).getIndexDirs();
@@ -205,6 +207,8 @@ public class TestLuceneIndexInputFormat {
 
   @Test
   public void testCombineSplitsAllTooBig() throws Exception {
+    DummyLuceneInputFormat lif = new DummyLuceneInputFormat();
+
     PriorityQueue<LuceneIndexInputSplit> splits = new PriorityQueue<LuceneIndexInputSplit>();
     String[] paths = new String[]{"/index/1", "/index/2", "/index/3"};
     Long[] sizes = new Long[]{1500L, 1501L, 1502L};
@@ -212,7 +216,7 @@ public class TestLuceneIndexInputFormat {
       splits.add(new LuceneIndexInputSplit(Lists.newArrayList(new Path(paths[i])), sizes[i]));
     }
 
-    List<InputSplit> combined = LuceneIndexInputFormat.combineSplits(splits, 1000L);
+    List<InputSplit> combined = lif.combineSplits(splits, 1000L);
     assertEquals(3, combined.size());
 
     for (int i=0; i < paths.length; i++) {

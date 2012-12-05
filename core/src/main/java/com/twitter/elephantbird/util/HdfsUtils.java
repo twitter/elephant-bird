@@ -32,17 +32,16 @@ public final class HdfsUtils {
    *
    * @param path root path to begin walking, will be visited if
    *             it passes the filter and directory flag
+   * @param fs FileSystem for this path
    * @param filter filter to determine which paths to accept
-   * @param conf hadoop conf
    * @param visitor visitor to apply to each accepted path
    * @throws IOException
    */
   public static void walkPath(Path path,
+                              FileSystem fs,
                               PathFilter filter,
-                              Configuration conf,
                               PathVisitor visitor) throws IOException {
 
-    FileSystem fs = path.getFileSystem(conf);
     FileStatus fileStatus = fs.getFileStatus(path);
 
     if (filter.accept(path)) {
@@ -52,7 +51,7 @@ public final class HdfsUtils {
     if (fileStatus.isDir()) {
       FileStatus[] children = fs.listStatus(path);
       for (FileStatus childStatus : children) {
-        walkPath(childStatus.getPath(), filter, conf, visitor);
+        walkPath(childStatus.getPath(), fs, filter, visitor);
       }
     }
   }
@@ -61,17 +60,17 @@ public final class HdfsUtils {
    * Recursively walk a path, adding paths that are accepted by filter to accumulator
    *
    * @param path root path to begin walking, will be added to accumulator
+   * @param fs FileSystem for this path
    * @param filter filter to determine which paths to accept
-   * @param conf hadoop conf
    * @param accumulator all paths accepted will be added to accumulator
    * @throws IOException
    */
   public static void collectPaths(Path path,
+                                  FileSystem fs,
                                   PathFilter filter,
-                                  Configuration conf,
                                   final List<Path> accumulator) throws IOException {
 
-    walkPath(path, filter, conf, new PathVisitor() {
+    walkPath(path, fs, filter, new PathVisitor() {
       @Override
       public void visit(FileStatus fileStatus) {
         accumulator.add(fileStatus.getPath());
@@ -94,17 +93,33 @@ public final class HdfsUtils {
 
   /**
    * Calculates the total size of a directory
-   * and all of its contents (recursively)
+   * and all of its contents (recursively),
+   * excluding any paths size's that are not accepted by filter
    *
    * @param path path to recursively walk
-   * @param conf job config
+   * @param fs FileSystem for this path
+   * @param filter path filter for which paths size's to include in the total
    * @return size of the directory in bytes
    * @throws IOException
    */
-  public static long getDirectorySize(Path path, Configuration conf) throws IOException {
+  public static long getDirectorySize(Path path, FileSystem fs, PathFilter filter)
+      throws IOException {
     PathSizeVisitor visitor = new PathSizeVisitor();
-    walkPath(path, PathFilters.ACCEPT_ALL_PATHS_FILTER, conf, visitor);
+    walkPath(path, fs, filter, visitor);
     return visitor.getSize();
+  }
+
+  /**
+   * Calculates the total size of a directory
+   * and all of its contents (recursively)
+   *
+   * @param path path to recursively walk
+   * @param fs FileSystem for this path
+   * @return size of the directory in bytes
+   * @throws IOException
+   */
+  public static long getDirectorySize(Path path, FileSystem fs) throws IOException {
+    return getDirectorySize(path, fs, PathFilters.ACCEPT_ALL_PATHS_FILTER);
   }
 
   /**

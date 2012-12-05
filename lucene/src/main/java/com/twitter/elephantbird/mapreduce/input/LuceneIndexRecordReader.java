@@ -1,14 +1,11 @@
 package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.logging.Logger;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
 import org.apache.hadoop.conf.Configuration;
@@ -18,13 +15,11 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.input.LuceneIndexInputFormat.LuceneIndexInputSplit;
 
@@ -36,7 +31,7 @@ import com.twitter.elephantbird.mapreduce.input.LuceneIndexInputFormat.LuceneInd
  */
 public abstract class LuceneIndexRecordReader<T extends Writable>
     extends RecordReader<IntWritable, T> {
-  private static final Logger LOG = Logger.getLogger(LuceneIndexRecordReader.class.getName());
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LuceneIndexRecordReader.class);
 
   private IntWritable currentKey;
   private T currentValue;
@@ -74,7 +69,7 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
    * @throws IOException
    */
   protected IndexReader openIndex(Path path, Configuration conf) throws IOException {
-    return DirectoryReader.open(new HdfsDirectory(path, path.getFileSystem(conf)));
+    return DirectoryReader.open(new LuceneHdfsDirectory(path, path.getFileSystem(conf)));
   }
 
   /**

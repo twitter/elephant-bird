@@ -15,19 +15,22 @@ import java.util.Collection;
 
 /**
  * Implementation of a Lucene {@link Directory} for reading indexes directly off HDFS.
+ * Note: this implementation is READ ONLY, it cannot be used to write to HDFS
  *
  * @author Jimmy Lin
  */
-public class HdfsDirectory extends Directory {
+public class LuceneHdfsDirectory extends Directory {
   private final FileSystem fs;
   private final Path dir;
 
-  public HdfsDirectory(String name, FileSystem fs) {
-    this.fs = Preconditions.checkNotNull(fs);
+  public LuceneHdfsDirectory(String name, FileSystem fs) {
+    this.fs = Preconditions.checkNotNull(fs,
+        "FileSystem provided to LuceneHdfsDirectory cannot be null");
+    Preconditions.checkNotNull(name, "File name provided to LuceneHdfsDirectory cannot be null");
     dir = new Path(name);
   }
 
-  public HdfsDirectory(Path path, FileSystem fs) {
+  public LuceneHdfsDirectory(Path path, FileSystem fs) {
     this.fs = Preconditions.checkNotNull(fs);
     dir = path;
   }
