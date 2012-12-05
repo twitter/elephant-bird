@@ -3,6 +3,7 @@ package com.twitter.elephantbird.util;
 import java.io.IOException;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import org.apache.hadoop.conf.Configuration;
@@ -15,29 +16,7 @@ import org.apache.hadoop.fs.PathFilter;
  * HDFS utilities
  */
 public final class HdfsUtils {
-
-  /**
-   * This filter accepts all paths that are not 'hidden'
-   * where 'hidden' is defined as paths whose name begins with
-   * either a '.' or a '_'
-   */
-  public static final PathFilter EXCLUDE_HIDDEN_PATHS_FILTER = new PathFilter() {
-    @Override
-    public boolean accept(Path p) {
-      String name = p.getName();
-      return !(name.startsWith(".") || name.startsWith("_"));
-    }
-  };
-
-  /**
-   * This filter accepts all paths
-   */
-  public static final PathFilter ACCEPT_ALL_PATHS_FILTER = new PathFilter() {
-    @Override
-    public boolean accept(Path path) {
-      return true;
-    }
-  };
+  private HdfsUtils() { }
 
   /**
    * Used by {@link HdfsUtils#walkPath} to 'visit' or process a
@@ -55,30 +34,28 @@ public final class HdfsUtils {
    *             it passes the filter and directory flag
    * @param filter filter to determine which paths to accept
    * @param conf hadoop conf
-   * @param visitDirectories whether or not to visit directories
    * @param visitor visitor to apply to each accepted path
    * @throws IOException
    */
-  public static void walkPath(Path path, PathFilter filter, Configuration conf,
-      boolean visitDirectories, PathVisitor visitor) throws IOException {
+  public static void walkPath(Path path,
+                              PathFilter filter,
+                              Configuration conf,
+                              PathVisitor visitor) throws IOException {
 
     FileSystem fs = path.getFileSystem(conf);
     FileStatus fileStatus = fs.getFileStatus(path);
 
-    if (fileStatus.isDir()) {
-      if (visitDirectories && filter.accept(path)) {
-        visitor.visit(fileStatus);
-      }
-
-      FileStatus[] children = fs.listStatus(path);
-      for (FileStatus childStatus : children) {
-        walkPath(childStatus.getPath(), filter, conf, visitDirectories, visitor);
-      }
-    } else if (filter.accept(path)) {
+    if (filter.accept(path)) {
       visitor.visit(fileStatus);
     }
-  }
 
+    if (fileStatus.isDir()) {
+      FileStatus[] children = fs.listStatus(path);
+      for (FileStatus childStatus : children) {
+        walkPath(childStatus.getPath(), filter, conf, visitor);
+      }
+    }
+  }
 
   /**
    * Recursively walk a path, adding paths that are accepted by filter to accumulator
@@ -86,14 +63,15 @@ public final class HdfsUtils {
    * @param path root path to begin walking, will be added to accumulator
    * @param filter filter to determine which paths to accept
    * @param conf hadoop conf
-   * @param accumulateDirectories whether or not to accumulate directories
    * @param accumulator all paths accepted will be added to accumulator
    * @throws IOException
    */
-  public static void collectPaths(Path path, PathFilter filter, Configuration conf,
-      boolean accumulateDirectories, final List<Path> accumulator) throws IOException {
+  public static void collectPaths(Path path,
+                                  PathFilter filter,
+                                  Configuration conf,
+                                  final List<Path> accumulator) throws IOException {
 
-    walkPath(path, filter, conf, accumulateDirectories, new PathVisitor() {
+    walkPath(path, filter, conf, new PathVisitor() {
       @Override
       public void visit(FileStatus fileStatus) {
         accumulator.add(fileStatus.getPath());
@@ -116,6 +94,7 @@ public final class HdfsUtils {
 
   /**
    * Calculates the total size of a directory
+   * and all of its contents (recursively)
    *
    * @param path path to recursively walk
    * @param conf job config
@@ -124,7 +103,7 @@ public final class HdfsUtils {
    */
   public static long getDirectorySize(Path path, Configuration conf) throws IOException {
     PathSizeVisitor visitor = new PathSizeVisitor();
-    walkPath(path, ACCEPT_ALL_PATHS_FILTER, conf, true, visitor);
+    walkPath(path, PathFilters.ACCEPT_ALL_PATHS_FILTER, conf, visitor);
     return visitor.getSize();
   }
 

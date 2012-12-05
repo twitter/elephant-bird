@@ -84,7 +84,7 @@ public class HadoopUtils {
    * @param conf to write to
    * @throws IOException
    */
-  public static void writeObjectToConfig(String key, Object obj, Configuration conf) throws IOException {
+  public static void writeObjectToConfAsBase64(String key, Object obj, Configuration conf) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream(baos);
     oos.writeObject(obj);
@@ -94,26 +94,29 @@ public class HadoopUtils {
 
   /**
    * Reads an object (that was written using
-   * {@link #writeObjectToConfig(String, Object, Configuration)}) from a configuration
+   * {@link #writeObjectToConfAsBase64}) from a configuration
    *
    * @param key for the configuration
    * @param conf to read from
-   * @return the read object
+   * @return the read object, or null if key is not present in conf
    * @throws IOException
    */
   @SuppressWarnings("unchecked")
-  public static <T> T readObjectFromConfig(String key, Configuration conf) throws IOException {
+  public static <T> T readObjectFromConfAsBase64(String key, Configuration conf) throws IOException {
     String b64 = conf.get(key);
+    if (b64 == null) {
+      return null;
+    }
     byte[] bytes = Base64.decodeBase64(b64);
     ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
     ObjectInputStream ois = new ObjectInputStream(bais);
     try {
       return (T) ois.readObject();
     } catch (ClassNotFoundException e) {
-      LOG.error("Could not read object from config", e);
+      LOG.error("Could not read object from config with key " + key, e);
       throw new IOException(e);
     } catch (ClassCastException e) {
-      LOG.error("Couldn't cast object read from config", e);
+      LOG.error("Couldn't cast object read from config with key " + key, e);
       throw new IOException(e);
     }
   }

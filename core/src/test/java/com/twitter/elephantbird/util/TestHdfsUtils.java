@@ -53,7 +53,6 @@ public class TestHdfsUtils {
       new Path(SAMPLE_DIR_LOCATION + "sample_dir"),
       SKIP_A_PATH_FILTER,
       new Configuration(),
-      true,
       accumulator
     );
 
@@ -74,12 +73,13 @@ public class TestHdfsUtils {
   @Test
   public  void testCollectPathsWithoutDirs() throws Exception {
     List<Path> accumulator = Lists.newLinkedList();
-
+    Configuration conf = new Configuration();
     HdfsUtils.collectPaths(
       new Path(SAMPLE_DIR_LOCATION + "sample_dir"),
-      SKIP_A_PATH_FILTER,
-      new Configuration(),
-      false,
+      new PathFilters.CompositePathFilter(
+          PathFilters.newExcludeDirectoriesFilter(conf),
+          SKIP_A_PATH_FILTER),
+      conf,
       accumulator
     );
 
