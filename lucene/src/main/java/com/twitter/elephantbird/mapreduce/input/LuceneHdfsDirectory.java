@@ -11,7 +11,9 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Implementation of a Lucene {@link Directory} for reading indexes directly off HDFS.
@@ -20,6 +22,7 @@ import java.util.Collection;
  * @author Jimmy Lin
  */
 public class LuceneHdfsDirectory extends Directory {
+  private static final String[] EMPTY_STRING_LIST = new String[0];
   private final FileSystem fs;
   private final Path dir;
 
@@ -28,6 +31,11 @@ public class LuceneHdfsDirectory extends Directory {
         "FileSystem provided to LuceneHdfsDirectory cannot be null");
     Preconditions.checkNotNull(name, "File name provided to LuceneHdfsDirectory cannot be null");
     dir = new Path(name);
+    try {
+      Preconditions.checkArgument(fs.exists(dir), "Directory: " + dir + " does not exist!");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public LuceneHdfsDirectory(Path path, FileSystem fs) {
@@ -59,6 +67,17 @@ public class LuceneHdfsDirectory extends Directory {
   @Override
   public String[] listAll() throws IOException {
     FileStatus[] statuses = fs.listStatus(dir);
+
+    // some versions of hadoop return null instead of an empty list
+    // or throwing an exception for non-existent directories
+    if (statuses == null) {
+      if (fs.exists(dir)) {
+        return EMPTY_STRING_LIST;
+      } else {
+        throw new IllegalArgumentException("Directory: " + dir + " does not exist!");
+      }
+    }
+
     String[] files = new String[statuses.length];
 
     for (int i = 0; i < statuses.length; i++) {
