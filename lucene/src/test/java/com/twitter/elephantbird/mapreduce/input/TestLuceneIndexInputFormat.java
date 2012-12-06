@@ -87,15 +87,15 @@ public class TestLuceneIndexInputFormat {
     PriorityQueue<LuceneIndexInputSplit> splits = lif.findSplits(conf);
     LuceneIndexInputSplit split;
     split = splits.poll();
-    assertEquals(106, split.getLength());
+    assertEquals(4, split.getLength());
     assertTrue(split.getIndexDirs().get(0).toString().endsWith("sample_indexes/index-1"));
 
     split = splits.poll();
-    assertEquals(108, split.getLength());
+    assertEquals(6, split.getLength());
     assertTrue(split.getIndexDirs().get(0).toString().endsWith("sample_indexes/more-indexes/index-3"));
 
     split = splits.poll();
-    assertEquals(122, split.getLength());
+    assertEquals(20, split.getLength());
     assertTrue(split.getIndexDirs().get(0).toString().endsWith("sample_indexes/index-2"));
 
     assertTrue(splits.isEmpty());
@@ -110,7 +110,7 @@ public class TestLuceneIndexInputFormat {
     LuceneIndexInputFormat.setInputPaths(
       ImmutableList.of(new Path("src/test/resources/com/twitter/elephantbird"
       + "/mapreduce/input/sample_indexes/")), conf);
-    LuceneIndexInputFormat.setMaxCombineSplitSizeBytes(300L, conf);
+    LuceneIndexInputFormat.setMaxCombineSplitSizeBytes(15L, conf);
     JobContext jobContext = createStrictMock(JobContext.class);
     expect(jobContext.getConfiguration()).andStubReturn(conf);
     replay(jobContext);

@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -92,34 +93,47 @@ public final class HdfsUtils {
   }
 
   /**
-   * Calculates the total size of a directory
-   * and all of its contents (recursively),
-   * excluding any paths size's that are not accepted by filter
+   * Calculates the total size of all the contents of a directory that are accepted
+   * by filter. All subdirectories will be searched recursively and paths in subdirectories
+   * that are accepted by filter will also be counted.
+   *
+   * Does not include the size of directories themselves
+   * (which are 0 in HDFS but may not be 0 on local file systems)
+   *
+   * To get the size of a directory without filtering, use
+   * {@link #getDirectorySize(Path, FileSystem)} which is much more efficient.
    *
    * @param path path to recursively walk
    * @param fs FileSystem for this path
    * @param filter path filter for which paths size's to include in the total
+   *               NOTE: you do *not* need to filter out directories, this will be done for you
    * @return size of the directory in bytes
    * @throws IOException
    */
   public static long getDirectorySize(Path path, FileSystem fs, PathFilter filter)
       throws IOException {
     PathSizeVisitor visitor = new PathSizeVisitor();
-    walkPath(path, fs, filter, visitor);
+    PathFilter composite = new PathFilters.CompositePathFilter(
+      PathFilters.newExcludeDirectoriesFilter(fs.getConf()),
+      filter);
+    walkPath(path, fs, composite, visitor);
     return visitor.getSize();
   }
 
   /**
-   * Calculates the total size of a directory
-   * and all of its contents (recursively)
+   * Calculates the total size of all the contents of a directory,
+   * including the contents of all of its subdirectories.
+   * Does not include the size of directories themselves
+   * (which are 0 in HDFS but may not be 0 on local file systems)
    *
    * @param path path to recursively walk
    * @param fs FileSystem for this path
-   * @return size of the directory in bytes
+   * @return size of the directory's contents in bytes
    * @throws IOException
    */
   public static long getDirectorySize(Path path, FileSystem fs) throws IOException {
-    return getDirectorySize(path, fs, PathFilters.ACCEPT_ALL_PATHS_FILTER);
+    ContentSummary cs = fs.getContentSummary(path);
+    return cs.getLength();
   }
 
   /**

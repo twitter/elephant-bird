@@ -97,7 +97,23 @@ public class TestHdfsUtils {
   public void testGetDirectorySize() throws Exception {
     Path p = new Path(SAMPLE_DIR_LOCATION + "sample_dir");
     long size = HdfsUtils.getDirectorySize(p, p.getFileSystem(new Configuration()));
-    assertEquals(460, size);
+    assertEquals(18, size);
+  }
+
+  @Test
+  public void testGetDirectorySizeWithFilter() throws Exception {
+    Path p = new Path(SAMPLE_DIR_LOCATION + "sample_dir");
+    long size = HdfsUtils.getDirectorySize(
+        p,
+        p.getFileSystem(new Configuration()),
+        PathFilters.ACCEPT_ALL_PATHS_FILTER);
+    assertEquals(18, size);
+
+    size = HdfsUtils.getDirectorySize(
+      p,
+      p.getFileSystem(new Configuration()),
+      SKIP_A_PATH_FILTER);
+    assertEquals(16, size);
   }
 
   @Test
