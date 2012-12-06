@@ -153,11 +153,13 @@ public final class HdfsUtils {
       Path path = new Path(pathStr);
       FileSystem fs = path.getFileSystem(conf);
       FileStatus[] statuses = fs.globStatus(path);
-      for (FileStatus status : statuses) {
-        paths.add(status.getPath());
+      // some versions of hadoop return null for non-existent paths
+      if (statuses != null) {
+        for (FileStatus status : statuses) {
+          paths.add(status.getPath());
+        }
       }
     }
-
     return paths;
   }
 }
