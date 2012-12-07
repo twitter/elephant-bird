@@ -2,6 +2,7 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 
 import com.google.common.io.Files;
 
@@ -16,7 +17,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -56,20 +56,16 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
   protected abstract Document buildDocument(K key, V value) throws IOException;
 
   /**
-   * Override this method if you intend to use an {@link Analyzer} other than the default
-   * {@link WhitespaceAnalyzer} during index creation.
-   *
-   * NOTE: Even if you don't plan on using an {@link Analyzer} at all (meaning you will build your
-   * {@link Document}s using methods that don't invoke analysis, an {@link Analyzer} still has to
-   * be supplied to {@link IndexWriter}
-   * TODO: consider using an analyzer that always throws exceptions to ensure
-   * TODO: it's not used by mistake
+   * Override this method if you intend to use an {@link Analyzer}
+   * during index creation. If you do not override this method, {@link NeverTokenizeAnalyzer} will
+   * be used which will throw an exception if you create a {@link Document} using a method that
+   * invokes tokenization.
    *
    * @param conf the job's configuration
    * @return an {@link Analyzer} suitable for use by an {@link IndexWriter}
    */
   protected Analyzer newAnalyzer(Configuration conf) {
-    return new WhitespaceAnalyzer(Version.LUCENE_40);
+    return new NeverTokenizeAnalyzer();
   }
 
   @Override
@@ -77,6 +73,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
     FileOutputCommitter committer = (FileOutputCommitter) this.getOutputCommitter(job);
 
     File tmpDirFile = Files.createTempDir();
+
     // TODO: Can we use NIOFS? Is there good reason to? Kyle warned against it
     FSDirectory tmpDirLucene = new SimpleFSDirectory(tmpDirFile, NoLockFactory.getNoLockFactory());
 
@@ -84,10 +81,11 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
     IndexWriterConfig idxConfig = new IndexWriterConfig(Version.LUCENE_40,
       newAnalyzer(job.getConfiguration()));
 
-    // TODO: Find out what these actually do and if they're the right choices
     LogByteSizeMergePolicy mergePolicy = new LogByteSizeMergePolicy();
     mergePolicy.setUseCompoundFile(false);
     idxConfig.setMergePolicy(mergePolicy);
+
+    // TODO: Do we get anything out of the concurrent merge scheduler?
     idxConfig.setMergeScheduler(new SerialMergeScheduler());
 
     IndexWriter writer = new IndexWriter(tmpDirLucene, idxConfig);
@@ -177,6 +175,20 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
    */
   public static void setOutputPath(Job job, Path path) {
     FileOutputFormat.setOutputPath(job, path);
+  }
+
+  /**
+   * An analyzer that always throws {@link UnsupportedOperationException}
+   * when {@link #createComponents(String, java.io.Reader)} is called
+   *<p>
+   * Useful if you don't intend to use an {@link Analyzer} for tokenization
+   * but are required to provide one to an {@link org.apache.lucene.index.IndexWriter}
+   */
+  public static class NeverTokenizeAnalyzer extends Analyzer {
+    @Override
+    protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   /**

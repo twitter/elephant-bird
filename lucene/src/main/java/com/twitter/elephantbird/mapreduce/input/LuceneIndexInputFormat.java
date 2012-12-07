@@ -22,6 +22,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 
+import com.twitter.elephantbird.mapreduce.output.LuceneIndexOutputFormat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.HdfsUtils;
 
@@ -36,9 +37,12 @@ import com.twitter.elephantbird.util.HdfsUtils;
  * <p>
  * Subclasses must provide:
  * <ul>
-*   <li> a {@link PathFilter} for identifying HDFS directories that contain lucene indexes</li>
  *  <li>a {@link LuceneIndexRecordReader} which describes how to convert a String into a
  *      Query and how to convert a Document into a value of type T</li>
+ * </ul>
+ * Subclasses may provide:
+ * <ul>
+ *   <li> a {@link PathFilter} for identifying HDFS directories that contain lucene indexes</li>
  * </ul>
  *
  * @param <T> - the type that your lucene Documents will be converted to
@@ -68,16 +72,21 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   private long maxCombineSplitSizeBytes;
 
   /**
-   * Subclasses must provide a {@link PathFilter} for identifying HDFS
+   * Subclasses may provide a {@link PathFilter} for identifying HDFS
    * directories that contain lucene indexes. When directories are being
    * searched recursively for index directories, this path filter will be used
    * to determine if a directory is a lucene index.
+   * <p>
+   * The default is to treat any directory whose name begins with "-index" as a lucene index,
+   * which matches what {@link LuceneIndexOutputFormat} generates.
    *
    * @param conf job conf
    * @return a path filter that accepts directories with lucene indexes in them
    * @throws IOException
    */
-  public abstract PathFilter getIndexDirPathFilter(Configuration conf) throws IOException;
+  public PathFilter getIndexDirPathFilter(Configuration conf) throws IOException {
+    return LuceneIndexOutputFormat.newIndexDirFilter(conf);
+  }
 
   @VisibleForTesting
   void loadConfig(Configuration conf) throws IOException {
