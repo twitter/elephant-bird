@@ -41,6 +41,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.twitter.elephantbird.lucene.HdfsMergeTool;
 import com.twitter.elephantbird.mapreduce.input.LuceneIndexCollectAllRecordReader;
 import com.twitter.elephantbird.mapreduce.input.LuceneIndexInputFormat;
 import com.twitter.elephantbird.mapreduce.output.LuceneIndexOutputFormat;
@@ -189,6 +190,7 @@ public class LuceneIndexingIntegrationTest {
 
   @Test
   public void testIndexing() throws Exception {
+    List<Path> indexes = Lists.newLinkedList();
     for (Path input : INPUT_PATHS) {
       Job job = new Job();
 
@@ -206,11 +208,32 @@ public class LuceneIndexingIntegrationTest {
       Path output = new Path(
           new File(tempDir.getRoot(), input.getName()).getAbsolutePath());
 
+      indexes.add(output);
+
       IndexOutputFormat.setOutputPath(job, output);
 
       assertTrue("Indexing of " + input + " failed!", job.waitForCompletion(true));
     }
 
+    doSearch(indexes,
+             new Path(new File(tempDir.getRoot(), "search_results").getAbsolutePath()),
+             "Failed searching un-merged indexes");
+
+    File mergeIndex = new File(tempDir.getRoot(), "index-merged");
+    String[] args = new String[indexes.size() + 1];
+    args[0] = mergeIndex.getAbsolutePath();
+    int i = 1;
+    for (Path indexPath : indexes) {
+      args[i++] = indexPath.toString() + "/index-0";
+    }
+    HdfsMergeTool.main(args);
+
+    doSearch(Lists.newArrayList(new Path(mergeIndex.getAbsolutePath())),
+             new Path(new File(tempDir.getRoot(), "merge_search_results").getAbsolutePath()),
+             "Failed searching merged index");
+  }
+
+  private void doSearch(List<Path> inputPaths, Path outputPath, String failureMessage) throws Exception {
     Job job = new Job();
 
     job.setInputFormatClass(IndexInputFormat.class);
@@ -222,17 +245,15 @@ public class LuceneIndexingIntegrationTest {
     job.setOutputKeyClass(IntWritable.class);
     job.setOutputValueClass(Text.class);
 
-    IndexInputFormat.setInputPaths(
-        Lists.newArrayList(new Path(tempDir.getRoot().getAbsolutePath())), job.getConfiguration());
+    IndexInputFormat.setInputPaths(inputPaths, job.getConfiguration());
 
     IndexInputFormat.setQueries(QUERIES, job.getConfiguration());
 
-    TextOutputFormat.setOutputPath(job,
-      new Path(new File(tempDir.getRoot(), "search_results").getAbsolutePath()));
+    TextOutputFormat.setOutputPath(job, outputPath);
 
-    assertTrue("Search job failed!", job.waitForCompletion(true));
+    assertTrue(failureMessage, job.waitForCompletion(true));
 
-    File resultsFile = new File(tempDir.getRoot(), "search_results/part-r-00000");
+    File resultsFile = new File(new File(outputPath.toString()), "part-r-00000");
 
     assertEquals(expectedResults, parseResultsFile(resultsFile));
   }

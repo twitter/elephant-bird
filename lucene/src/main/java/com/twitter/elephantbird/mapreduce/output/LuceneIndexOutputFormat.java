@@ -6,9 +6,9 @@ import java.io.Reader;
 
 import com.google.common.io.Files;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapreduce.Job;
@@ -68,19 +68,12 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
     return new NeverTokenizeAnalyzer();
   }
 
-  @Override
-  public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job) throws IOException {
-    FileOutputCommitter committer = (FileOutputCommitter) this.getOutputCommitter(job);
-
-    File tmpDirFile = Files.createTempDir();
-
+  public static IndexWriter createIndexWriter(File location, Analyzer analyzer) throws IOException {
     // TODO: Can we use NIOFS? Is there good reason to? Kyle warned against it
-    FSDirectory tmpDirLucene = new SimpleFSDirectory(tmpDirFile, NoLockFactory.getNoLockFactory());
+    FSDirectory tmpDirLucene = new SimpleFSDirectory(location, NoLockFactory.getNoLockFactory());
 
     // TODO: Is there a non-analyzer constructor for this?
-    IndexWriterConfig idxConfig = new IndexWriterConfig(Version.LUCENE_40,
-      newAnalyzer(job.getConfiguration()));
-
+    IndexWriterConfig idxConfig = new IndexWriterConfig(Version.LUCENE_40, analyzer);
     LogByteSizeMergePolicy mergePolicy = new LogByteSizeMergePolicy();
     mergePolicy.setUseCompoundFile(false);
     idxConfig.setMergePolicy(mergePolicy);
@@ -89,6 +82,14 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
     idxConfig.setMergeScheduler(new SerialMergeScheduler());
 
     IndexWriter writer = new IndexWriter(tmpDirLucene, idxConfig);
+    return writer;
+  }
+
+  @Override
+  public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job) throws IOException {
+    FileOutputCommitter committer = (FileOutputCommitter) this.getOutputCommitter(job);
+    File tmpDirFile = Files.createTempDir();
+    IndexWriter writer = createIndexWriter(tmpDirFile, newAnalyzer(job.getConfiguration()));
     return new IndexRecordWriter(writer, committer, tmpDirFile);
   }
 
@@ -134,28 +135,20 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
         heartBeat.start();
 
         Path work = committer.getWorkPath();
-        Path out = new Path(work, "index-"
+        Path output = new Path(work, "index-"
             + String.valueOf(context.getTaskAttemptID().getTaskID().getId()));
 
         writer.forceMerge(1);
         writer.close();
 
-        FileSystem fs = out.getFileSystem(context.getConfiguration());
-        File[] files = tmpDirFile.listFiles();
-        if (files != null) {
-          for (File file : files) {
-            LOG.info("Copying " + file.getName());
-            fs.copyFromLocalFile(
-              true,
-              true,
-              new Path(file.getAbsolutePath()),
-              new Path(out, file.getName()));
-          }
+        FileSystem fs = FileSystem.get(context.getConfiguration());
+        LOG.info("Copying index to HDFS...");
+
+        if (!FileUtil.copy(tmpDirFile, fs, output, true, context.getConfiguration())) {
+          throw new IOException("Failed to copy local index to HDFS!");
         }
 
-        LOG.info("Deleting tmpdir");
-        FileUtils.deleteDirectory(tmpDirFile);
-        LOG.info("Index written to: " + out);
+        LOG.info("Index written to: " + output);
       } catch (IOException e) {
         LOG.error("Error committing index", e);
         throw e;

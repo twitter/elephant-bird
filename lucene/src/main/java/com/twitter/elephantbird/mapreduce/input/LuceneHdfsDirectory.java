@@ -1,6 +1,10 @@
 package com.twitter.elephantbird.mapreduce.input;
 
+import java.io.IOException;
+import java.util.Collection;
+
 import com.google.common.base.Preconditions;
+
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -9,11 +13,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Implementation of a Lucene {@link Directory} for reading indexes directly off HDFS.

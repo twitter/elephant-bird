@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TotalHitCountCollector;
 
 /**

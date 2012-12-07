@@ -3,6 +3,7 @@ package com.twitter.elephantbird.util;
 import java.io.IOException;
 import java.util.List;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -18,6 +19,26 @@ import org.apache.hadoop.fs.PathFilter;
  */
 public final class HdfsUtils {
   private HdfsUtils() { }
+
+  /**
+   * Converts a path to a qualified string
+   */
+  public static class PathToQualifiedString implements Function<Path, String> {
+    private Configuration conf;
+
+    public PathToQualifiedString(Configuration conf) {
+      this.conf = Preconditions.checkNotNull(conf);
+    }
+
+    @Override
+    public String apply(Path path) {
+      try {
+        return path.getFileSystem(conf).makeQualified(path).toString();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
   /**
    * Used by {@link HdfsUtils#walkPath} to 'visit' or process a
