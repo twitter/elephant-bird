@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -96,7 +97,8 @@ public class HadoopUtils {
     ObjectOutputStream oos = new ObjectOutputStream(baos);
     oos.writeObject(obj);
     oos.close();
-    conf.set(key, Base64.encodeBase64String(baos.toByteArray()));
+
+    conf.set(key, new String(Base64.encodeBase64(baos.toByteArray()), Charsets.UTF_8));
   }
 
   /**
@@ -114,7 +116,7 @@ public class HadoopUtils {
     if (b64 == null) {
       return null;
     }
-    byte[] bytes = Base64.decodeBase64(b64);
+    byte[] bytes = Base64.decodeBase64(b64.getBytes(Charsets.UTF_8));
     ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
     ObjectInputStream ois = new ObjectInputStream(bais);
     try {

@@ -167,6 +167,12 @@
         <version>4.8.2</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.easymock</groupId>
+        <artifactId>easymock</artifactId>
+        <version>3.1</version>
+        <scope>test</scope>
+      </dependency>
 
       <!-- logging -->
       <dependency>
@@ -198,11 +204,6 @@
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
         <version>2.4</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>1.6</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
@@ -304,7 +305,17 @@
       <dependency>
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-queryparser</artifactId>
+        <scope>test</scope>
         <version>${apache.lucene.version}</version>
+      </dependency>
+
+      <!-- pig-lucene -->
+      <!-- jline is needed for PigServer which is used in integration tests -->
+      <dependency>
+        <groupId>jline</groupId>
+        <artifactId>jline</artifactId>
+        <version>0.9.94</version>
+        <scope>test</scope>
       </dependency>
 
       <!-- mahout -->
