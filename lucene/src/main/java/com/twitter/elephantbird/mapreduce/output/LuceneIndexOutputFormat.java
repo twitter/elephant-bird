@@ -67,18 +67,22 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
   protected Analyzer newAnalyzer(Configuration conf) {
     return new NeverTokenizeAnalyzer();
   }
-
   public static IndexWriter createIndexWriter(File location, Analyzer analyzer) throws IOException {
-    // TODO: Can we use NIOFS? Is there good reason to? Kyle warned against it
-    FSDirectory tmpDirLucene = new SimpleFSDirectory(location, NoLockFactory.getNoLockFactory());
+    return createIndexWriter(location, analyzer, LogByteSizeMergePolicy.DEFAULT_MERGE_FACTOR);
+  }
+  public static IndexWriter createIndexWriter(File location, Analyzer analyzer, int mergeFactor)
+      throws IOException {
 
-    // TODO: Is there a non-analyzer constructor for this?
+    // FSDirectory.open will select an appropriate local FS implementation based on the current OS
+    FSDirectory tmpDirLucene = FSDirectory.open(location, NoLockFactory.getNoLockFactory());
+
     IndexWriterConfig idxConfig = new IndexWriterConfig(Version.LUCENE_40, analyzer);
     LogByteSizeMergePolicy mergePolicy = new LogByteSizeMergePolicy();
+    mergePolicy.setMergeFactor(mergeFactor);
     mergePolicy.setUseCompoundFile(false);
+
     idxConfig.setMergePolicy(mergePolicy);
 
-    // TODO: Do we get anything out of the concurrent merge scheduler?
     idxConfig.setMergeScheduler(new SerialMergeScheduler());
 
     IndexWriter writer = new IndexWriter(tmpDirLucene, idxConfig);

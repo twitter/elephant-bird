@@ -316,9 +316,8 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
     }
 
     /**
-     * Because an index consists of multiple files there's not much to be gained from
+     * Because an index consists of multiple (multi-block) files there's not much to be gained from
      * finding nodes where there is locality
-     * TODO: is that a valid assumption? Should we return locality of the large files instead?
      * @return an empty String[]
      */
     @Override

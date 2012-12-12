@@ -16,7 +16,8 @@ import org.apache.lucene.store.IndexOutput;
 
 /**
  * Implementation of a Lucene {@link Directory} for reading indexes directly off HDFS.
- * Note: this implementation is READ ONLY, it cannot be used to write to HDFS
+ * Note: This implementation is READ ONLY, it cannot be used to write to HDFS.
+ *       All non read only methods throw {@link UnsupportedOperationException}
  *
  * @author Jimmy Lin
  */
@@ -45,12 +46,6 @@ public class LuceneHdfsDirectory extends Directory {
   @Override
   public void close() throws IOException {
     fs.close();
-  }
-
-  @Override
-  public void deleteFile(String name) throws IOException {
-    Path path = new Path(dir, name);
-    fs.delete(path, false);
   }
 
   @Override
@@ -89,15 +84,6 @@ public class LuceneHdfsDirectory extends Directory {
   public IndexInput openInput(String name, IOContext context) throws IOException {
     return new HDFSIndexInput(new Path(dir, name).toString());
   }
-
-  @Override
-  public IndexOutput createOutput(String name, IOContext context) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  // TODO do we need to do anything here?
-  @Override
-  public void sync(Collection<String> strings) throws IOException { }
 
   private class HDFSIndexInput extends IndexInput {
     private Path path;
@@ -150,7 +136,6 @@ public class LuceneHdfsDirectory extends Directory {
       in.seek(pos);
     }
 
-    // TODO find out if this is necessary anymore
     @Override
     public IndexInput clone() {
       try {
@@ -161,5 +146,22 @@ public class LuceneHdfsDirectory extends Directory {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  // This is a read only implementation, so the following methods are not supported
+
+  @Override
+  public void deleteFile(String name) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public IndexOutput createOutput(String name, IOContext context) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void sync(Collection<String> strings) throws IOException {
+    throw new UnsupportedOperationException();
   }
 }

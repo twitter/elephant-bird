@@ -36,16 +36,20 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
 
   private static final String OUTPUT_KEY = HdfsMergeTool.class.getName() + ".output";
   private static final String INDEXES_KEY = HdfsMergeTool.class.getName() + ".indexes";
+  private static final String MAX_MERGE_FACTOR_KEY = HdfsMergeTool.class.getName()
+      + ".maxMergeFactor";
   private static final String USAGE_MESSAGE = "HdfsMergeTool usage: <output location> "
-    + "<index dir path glob> "
-    + "<optional second index dir path glob>\n"
-    + "example: /my/dir/index-merged /my/indexes/index-* /my/other/indexes/index-7";
+      + "<max merge factor> "
+      + "<index dir path glob> "
+      + "<optional second index dir path glob>\n"
+      + "example: /my/dir/index-merged /my/indexes/index-* /my/other/indexes/index-7";
 
   @Override
   protected void setup(String[] args, Configuration conf) throws IOException {
-    Preconditions.checkArgument(args.length >=2, USAGE_MESSAGE);
+    Preconditions.checkArgument(args.length >=3, USAGE_MESSAGE);
     conf.set(OUTPUT_KEY, args[0]);
-    List<Path> indexes = HdfsUtils.expandGlobs(Arrays.asList(args).subList(1, args.length), conf);
+    conf.setInt(MAX_MERGE_FACTOR_KEY, Integer.valueOf(args[1]));
+    List<Path> indexes = HdfsUtils.expandGlobs(Arrays.asList(args).subList(2, args.length), conf);
     HadoopUtils.writeStringListToConfAsJson(
         INDEXES_KEY,
         Lists.transform(indexes, new HdfsUtils.PathToQualifiedString(conf)),
@@ -59,9 +63,13 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
     Path output = new Path(context.getConfiguration().get(OUTPUT_KEY));
 
     File tmpDirFile = Files.createTempDir();
+    int maxMergeFactor = context.getConfiguration().getInt(MAX_MERGE_FACTOR_KEY, -1);
+    Preconditions.checkArgument(maxMergeFactor > 0);
 
-    IndexWriter writer = LuceneIndexOutputFormat.createIndexWriter(tmpDirFile,
-        new LuceneIndexOutputFormat.NeverTokenizeAnalyzer());
+    IndexWriter writer = LuceneIndexOutputFormat.createIndexWriter(
+        tmpDirFile,
+        new LuceneIndexOutputFormat.NeverTokenizeAnalyzer(),
+        maxMergeFactor);
 
     Directory[] dirs = new Directory[indexes.size()];
     int dir = 0;

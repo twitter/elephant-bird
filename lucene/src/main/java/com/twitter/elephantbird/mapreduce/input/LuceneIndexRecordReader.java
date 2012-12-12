@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -43,6 +44,7 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
   private ListIterator<Query> currentQueryIter;
 
   private ListIterator<Path> currentIndexPathIter;
+  private IndexReader currentIndexReader;
   private int numIndexes;
 
   private IndexSearcher indexSearcher;
@@ -141,17 +143,32 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
 
     // no more currentValues nor queries in this index, move to the next index
     if (currentIndexPathIter.hasNext()) {
-      // TODO: does the old one need to be closed?
+      closeIndexReader(currentIndexReader);
+
       Path next = currentIndexPathIter.next();
       LOG.info("Searching index: " + next);
-      IndexReader indexReader = openIndex(next, conf);
-      indexSearcher = createSearcher(indexReader);
+      currentIndexReader = openIndex(next, conf);
+      indexSearcher = createSearcher(currentIndexReader);
       currentQueryIter = queries.listIterator();
       return nextKeyValue();
     }
 
     // all done
     return false;
+  }
+
+  /**
+   * Because {@link IndexReader#close()} is final, it is impossible to properly mock an IndexReader
+   * in unit tests. Wrapping the call to close in this method allows us to override this method
+   * during tests.
+   *
+   * NOTE: There's no good reason to override this method (unless you're creating mock IndexReaders)
+   *
+   * @param reader to close
+   * @throws IOException
+   */
+  protected void closeIndexReader(IndexReader reader) throws IOException {
+    Closeables.close(currentIndexReader, false);
   }
 
   @Override

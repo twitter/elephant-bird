@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.mapreduce.input;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -128,6 +129,11 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
     @Override
     protected IntWritable docToValue(Document doc) {
       return new IntWritable(Integer.valueOf(docsAndValues.get(doc)));
+    }
+
+    @Override
+    protected void closeIndexReader(IndexReader reader) throws IOException {
+
     }
   }
 

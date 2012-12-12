@@ -220,9 +220,10 @@ public class LuceneIndexingIntegrationTest {
              "Failed searching un-merged indexes");
 
     File mergeIndex = new File(tempDir.getRoot(), "index-merged");
-    String[] args = new String[indexes.size() + 1];
+    String[] args = new String[indexes.size() + 2];
     args[0] = mergeIndex.getAbsolutePath();
-    int i = 1;
+    args[1] = "100";
+    int i = 2;
     for (Path indexPath : indexes) {
       args[i++] = indexPath.toString() + "/index-0";
     }
