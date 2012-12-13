@@ -25,7 +25,6 @@
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-lucene</artifactId>
       <type>test-jar</type>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.lucene</groupId>
