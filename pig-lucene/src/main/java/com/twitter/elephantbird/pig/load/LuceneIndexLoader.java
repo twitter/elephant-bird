@@ -57,8 +57,8 @@ public abstract class LuceneIndexLoader<T extends Writable> extends LoadFunc {
     + "LuceneIndexLoader('--file', 'path/to/local/file')";
 
   private LuceneIndexRecordReader<T> reader;
-  private List<String> queries = null;
-  private File queryFile = null;
+  protected List<String> queries = null;
+  protected File queryFile = null;
 
   /**
    * Convert a value from the InputFormat to a tuple
@@ -77,36 +77,27 @@ public abstract class LuceneIndexLoader<T extends Writable> extends LoadFunc {
   protected abstract LuceneIndexInputFormat<T> getLuceneIndexInputFormat() throws IOException;
 
   public LuceneIndexLoader(String[] args) {
-    parseArgs(args, USAGE_HELP);
-  }
-
-  protected void parseArgs(String[] args, String usage) {
-    Preconditions.checkNotNull(args, usage);
-    Preconditions.checkArgument(args.length >= 2, usage);
-    Preconditions.checkNotNull(args[0], usage);
+    Preconditions.checkNotNull(args, USAGE_HELP);
+    Preconditions.checkArgument(args.length >= 2, USAGE_HELP);
+    Preconditions.checkNotNull(args[0], USAGE_HELP);
 
     if (args[0].equals("--queries")) {
       queries = Lists.newArrayList(Arrays.copyOfRange(args, 1, args.length));
     } else if (args[0].equals("--file")) {
-      Preconditions.checkArgument(args.length == 2, usage);
+      Preconditions.checkArgument(args.length == 2, USAGE_HELP);
       queryFile = new File(args[1]);
       Preconditions.checkArgument(queryFile.exists(),
         "Query file: " + queryFile + " does not exist!");
     } else {
-      throw new IllegalArgumentException(usage);
+      throw new IllegalArgumentException(USAGE_HELP);
     }
   }
 
-  public LuceneIndexLoader(List<String> queries) {
-    Preconditions.checkArgument(queries.size() > 0);
-    this.queries = queries;
-  }
-
-  public LuceneIndexLoader(File queryFile) {
-    this.queryFile = Preconditions.checkNotNull(queryFile);
-    Preconditions.checkArgument(queryFile.exists(),
-      "Query file: " + queryFile + " does not exist!");
-  }
+  /**
+   * Subclasses may use this constructor, but they will have to set queries or queryFile
+   * themselves. Failure to do so will cause an IllegalArgumentException in setLocation
+   */
+  protected LuceneIndexLoader() { }
 
   /**
    * THIS INVOLVES AN UNCHECKED CAST
@@ -123,6 +114,9 @@ public abstract class LuceneIndexLoader<T extends Writable> extends LoadFunc {
 
   @Override
   public void setLocation(String location, Job job) throws IOException {
+    Preconditions.checkArgument(queries != null || queryFile != null,
+        "Either queires or queryFile must be set in the constructor!");
+
     Configuration conf = job.getConfiguration();
     // prevent pig from trying to combine splits, let LuceneIndexInputFormat do that
     conf.setBoolean("pig.noSplitCombination", true);
