@@ -1,5 +1,11 @@
 # Elephant Bird #
 
+### Version 3.0.6 ###
+
+ISSUE 276. Lucene support in MR and Pig (Alex Levenson)
+
+ISSUE 275. Make PigToThrift.toThriftValue public (Bill Graham)
+
 ### Version 3.0.5 ###
 
 ISSUE 274. Correct 3.0.4 version number in changes log (Travis Crawford)
