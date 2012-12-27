@@ -12,26 +12,25 @@ import java.util.Random;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
-import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.hadoop.compression.lzo.LzoCodec;
 import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.io.RawBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import com.twitter.elephantbird.thrift.test.TestName;
 import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
 import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
 
 /**
  * 1. Test to ensure that empty records in B64Line and Block formats are
@@ -52,20 +51,13 @@ public class TestErrorsInInput {
   public static void setUp() throws Exception {
 
     conf = new Configuration();
-
-    if (!LzoCodec.isNativeLzoLoaded(conf)) {
-      return;
-    }
-
+    Assume.assumeTrue(UnitTestUtil.isNativeLzoLoaded(conf));
     pigServer = UnitTestUtil.makePigServer();
   }
 
   @Test
   public void TestMultiFormatLoaderWithEmptyRecords() throws Exception {
-    if (pigServer == null) {
-      //setUp didn't run because of missing lzo native libraries
-      return;
-    }
+    Assume.assumeTrue(pigServer != null);
 
     // initalize
     String testDir = System.getProperty("test.build.data") + "/TestEmptyRecords";
@@ -114,10 +106,7 @@ public class TestErrorsInInput {
   @Test
   public void TestErrorTolerance() throws Exception {
     // test configurable error tolerance in EB record reader.
-
-    if (pigServer == null) {
-      return;
-    }
+    Assume.assumeTrue(pigServer != null);
 
     // initialize
     String testDir = System.getProperty("test.build.data") + "/TestErrorTolerance";
