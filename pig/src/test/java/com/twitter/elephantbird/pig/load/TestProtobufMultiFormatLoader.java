@@ -11,10 +11,10 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.hadoop.compression.lzo.LzoCodec;
 import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneNumber;
@@ -44,11 +44,7 @@ public class TestProtobufMultiFormatLoader {
   public void setUp() throws Exception {
 
     Configuration conf = new Configuration();
-
-    if (!LzoCodec.isNativeLzoLoaded(conf)) {
-      // TODO: Consider using @RunWith / @SuiteClasses
-      return;
-    }
+    Assume.assumeTrue(UnitTestUtil.isNativeLzoLoaded(conf));
 
     pigServer = UnitTestUtil.makePigServer();
 
@@ -76,10 +72,8 @@ public class TestProtobufMultiFormatLoader {
 
   @Test
   public void testMultiFormatLoader() throws Exception {
-    if (pigServer == null) {
-      //setUp didn't run because of missing lzo native libraries
-      return;
-    }
+    //setUp might not have run because of missing lzo native libraries
+    Assume.assumeTrue(pigServer != null);
 
     pigServer.registerQuery(String.format(
         "A = load '%s' using %s('%s');\n",
