@@ -87,6 +87,10 @@ Loaders and storers are available for the input and output formats listed above.
 
 Elephant-Bird provides Hive support for reading thrift and protocol buffers. For more information, see [How to use Elephant Bird with Hive](https://github.com/kevinweil/elephant-bird/wiki/How-to-use-Elephant-Bird-with-Hive).
 
+### Lucene Integration
+
+Elephant-Bird provides hadoop Input/Output Formats and pig Load/Store Funcs for creating + searching lucene indexes. See [Elephant Bird Lucene](https://github.com/kevinweil/elephant-bird/wiki/Elephant-Bird-Lucene)
+
 ### Utilities
 * Counters in Pig
 * Protocol Buffer utilities

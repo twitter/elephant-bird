@@ -18,6 +18,7 @@ import org.apache.pig.PigServer;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
@@ -33,7 +34,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for {@link LzoRawBytesLoader} and {@link LzoRawBytesStorage}.
- * 
+ *
  * @author Andy Schlaikjer
  */
 public class TestLzoRawBytesStorage {
@@ -43,6 +44,8 @@ public class TestLzoRawBytesStorage {
   private PigServer pigServer;
   private File tempPath;
   private String tempFilename;
+  Configuration conf = new Configuration();
+
 
   public DataOutputStream getTempOutputStream() throws IOException {
     tempPath = Files.createTempDir();
@@ -50,7 +53,7 @@ public class TestLzoRawBytesStorage {
     File tempFile = File.createTempFile("test", ".dat", tempPath);
     tempFilename = tempFile.getAbsolutePath();
     Path path = new Path("file:///" + tempFilename);
-    Configuration conf = new Configuration();
+    conf = new Configuration();
     FileSystem fs = path.getFileSystem(conf);
     return fs.create(path);
   }
@@ -97,9 +100,7 @@ public class TestLzoRawBytesStorage {
   }
 
   private void runTest(Callable<?> test) throws Exception {
-    if (!GPLNativeCodeLoader.isNativeCodeLoaded()) {
-      return;
-    }
+    Assume.assumeTrue(UnitTestUtil.isNativeLzoLoaded(conf));
     try {
       setUp();
       test.call();
