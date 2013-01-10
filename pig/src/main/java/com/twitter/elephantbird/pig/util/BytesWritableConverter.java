@@ -21,7 +21,7 @@ public class BytesWritableConverter extends AbstractWritableConverter<BytesWrita
   @Override
   public ResourceFieldSchema getLoadSchema() throws IOException {
     ResourceFieldSchema schema = new ResourceFieldSchema();
-    schema.setType(DataType.INTEGER);
+    schema.setType(DataType.BYTEARRAY);
     return schema;
   }
 
