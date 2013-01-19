@@ -17,6 +17,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.NoLockFactory;
+import org.apache.lucene.store.SimpleFSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +68,9 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
     int maxMergeFactor = context.getConfiguration().getInt(MAX_MERGE_FACTOR_KEY, -1);
     Preconditions.checkArgument(maxMergeFactor > 0);
 
+    Directory directory = SimpleFSDirectory.open(tmpDirFile, NoLockFactory.getNoLockFactory());
     IndexWriter writer = LuceneIndexOutputFormat.createIndexWriter(
-        tmpDirFile,
+        directory,
         new LuceneIndexOutputFormat.NeverTokenizeAnalyzer(),
         maxMergeFactor);
 

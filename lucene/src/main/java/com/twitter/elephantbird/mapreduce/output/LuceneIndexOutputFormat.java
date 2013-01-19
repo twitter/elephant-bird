@@ -22,7 +22,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LogByteSizeMergePolicy;
 import org.apache.lucene.index.SerialMergeScheduler;
-import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NoLockFactory;
 import org.apache.lucene.store.SimpleFSDirectory;
 import org.apache.lucene.util.Version;
@@ -67,14 +67,26 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
   protected Analyzer newAnalyzer(Configuration conf) {
     return new NeverTokenizeAnalyzer();
   }
-  public static IndexWriter createIndexWriter(File location, Analyzer analyzer) throws IOException {
+
+  /**
+   * Override to use a different {@link Directory} implementation
+   *
+   * You may want to use {@link org.apache.lucene.store.FSDirectory#open}
+   * which is supposed to select an appropriate
+   * local FS implementation based on the current OS. However, we have seen cases
+   * where using this leads to an implementation that hits {@link java.lang.OutOfMemoryError}
+   * when building large indexes.
+   */
+  protected Directory getDirectoryImplementation(File location) throws IOException {
+    return SimpleFSDirectory.open(location, NoLockFactory.getNoLockFactory());
+  }
+
+  public static IndexWriter createIndexWriter(Directory location, Analyzer analyzer) throws IOException {
     return createIndexWriter(location, analyzer, LogByteSizeMergePolicy.DEFAULT_MERGE_FACTOR);
   }
-  public static IndexWriter createIndexWriter(File location, Analyzer analyzer, int mergeFactor)
-      throws IOException {
 
-    // FSDirectory.open will select an appropriate local FS implementation based on the current OS
-    FSDirectory tmpDirLucene = FSDirectory.open(location, NoLockFactory.getNoLockFactory());
+  public static IndexWriter createIndexWriter(Directory location, Analyzer analyzer, int mergeFactor)
+      throws IOException {
 
     IndexWriterConfig idxConfig = new IndexWriterConfig(Version.LUCENE_40, analyzer);
     LogByteSizeMergePolicy mergePolicy = new LogByteSizeMergePolicy();
@@ -85,7 +97,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
 
     idxConfig.setMergeScheduler(new SerialMergeScheduler());
 
-    IndexWriter writer = new IndexWriter(tmpDirLucene, idxConfig);
+    IndexWriter writer = new IndexWriter(location, idxConfig);
     return writer;
   }
 
@@ -93,7 +105,8 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job) throws IOException {
     FileOutputCommitter committer = (FileOutputCommitter) this.getOutputCommitter(job);
     File tmpDirFile = Files.createTempDir();
-    IndexWriter writer = createIndexWriter(tmpDirFile, newAnalyzer(job.getConfiguration()));
+    Directory directory = getDirectoryImplementation(tmpDirFile);
+    IndexWriter writer = createIndexWriter(directory, newAnalyzer(job.getConfiguration()));
     return new IndexRecordWriter(writer, committer, tmpDirFile);
   }
 
