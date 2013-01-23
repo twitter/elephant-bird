@@ -68,7 +68,7 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
     int maxMergeFactor = context.getConfiguration().getInt(MAX_MERGE_FACTOR_KEY, -1);
     Preconditions.checkArgument(maxMergeFactor > 0);
 
-    Directory directory = SimpleFSDirectory.open(tmpDirFile, NoLockFactory.getNoLockFactory());
+    Directory directory = new SimpleFSDirectory(tmpDirFile, NoLockFactory.getNoLockFactory());
     IndexWriter writer = LuceneIndexOutputFormat.createIndexWriter(
         directory,
         new LuceneIndexOutputFormat.NeverTokenizeAnalyzer(),
