@@ -57,19 +57,29 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   public static final String INPUT_PATHS_KEY = LuceneIndexInputFormat.class.getCanonicalName()
     + ".inputpaths";
 
-  public static final String MAX_COMBINE_SPLIT_SIZE_KEY =
-    LuceneIndexInputFormat.class.getCanonicalName() + ".maxcombinesplitsize";
+  public static final String MAX_NUM_INDEXES_PER_MAPPER_KEY =
+    LuceneIndexInputFormat.class.getCanonicalName() + ".max_num_indexes_per_mapper";
+
+  // Empirically it seems that 200 is a reasonable number of small
+  // indexes for one mapper to process in a few minutes, and thousands of
+  // of small indexes can take one mapper more than 30 minutes to process
+  // due to overhead for each index.
+  private static final long DEFAULT_MAX_NUM_INDEXES_PER_MAPPER = 200;
+
+  public static final String MAX_COMBINED_INDEX_SIZE_PER_MAPPER_KEY =
+    LuceneIndexInputFormat.class.getCanonicalName() + ".max_combined_index_size_per_mapper";
 
   // default to 10GB
   // back of the envelope reasoning:
   // Assume 1 mapper should process 1 GB, and each index will return 1/10th its size in records
-  private static final long DEFAULT_MAX_COMBINE_SPLIT_SIZE_BYTES = 10*1024*1024*1024L;
+  private static final long DEFAULT_MAX_COMBINED_INDEX_SIZE_PER_MAPPER = 10*1024*1024*1024L;
 
   private static final String[] EMPTY_NODE_ARRAY = new String[0];
 
   private Path[] inputPaths = null;
   private PathFilter indexDirPathFilter = null;
-  private long maxCombineSplitSizeBytes;
+  private long maxCombinedIndexSizePerMapper;
+  private long maxNumIndexesPerMapper;
 
   /**
    * Subclasses may provide a {@link PathFilter} for identifying HDFS
@@ -95,16 +105,20 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
     indexDirPathFilter = Preconditions.checkNotNull(getIndexDirPathFilter(conf),
       "You must provide a non-null PathFilter");
 
-    maxCombineSplitSizeBytes = Preconditions.checkNotNull(getMaxCombineSplitSizeBytes(conf),
-      "max combine split size cannot be null");
+    maxCombinedIndexSizePerMapper = Preconditions.checkNotNull(
+        getMaxCombinedIndexSizePerMapper(conf),
+        MAX_COMBINED_INDEX_SIZE_PER_MAPPER_KEY + " cannot be null");
+
+    maxNumIndexesPerMapper = Preconditions.checkNotNull(getMaxNumIndexesPerMapper(conf),
+        MAX_NUM_INDEXES_PER_MAPPER_KEY + " cannot be null");
   }
 
   /**
    * Creates splits with multiple indexes per split
-   * (if they are smaller than maxCombineSplitSizeBytes).
-   * It is possible for a split to be larger than maxCombineSplitSizeBytes,
+   * (if they are smaller than maxCombinedIndexSizePerMapper).
+   * It is possible for a split to be larger than maxCombinedIndexSizePerMapper,
    * if it consists of a single index that is
-   * larger than maxCombineSplitSizeBytes.
+   * larger than maxCombinedIndexSizePerMapper.
    * <p>
    * All inputPaths will be searched for indexes recursively
    * <p>
@@ -112,7 +126,7 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
    * <ol>
    *   <li>Sort all indexes by size</li>
    *   <li>Begin packing indexes into splits until adding the next split would cause the split to
-   *       exceed maxCombineSplitSizeBytes</li>
+   *       exceed maxCombinedIndexSizePerMapper</li>
    *   <li>Begin packing subsequent indexes into the next split, and so on</li>
    * </ol>
    */
@@ -126,7 +140,9 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
     PriorityQueue<LuceneIndexInputSplit> splits = findSplits(job.getConfiguration());
 
     // combine the splits based on maxCombineSplitSize
-    List<InputSplit> combinedSplits = combineSplits(splits, maxCombineSplitSizeBytes);
+    List<InputSplit> combinedSplits = combineSplits(splits,
+        maxCombinedIndexSizePerMapper,
+        maxNumIndexesPerMapper);
 
     return combinedSplits;
   }
@@ -157,17 +173,22 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   }
 
   protected List<InputSplit> combineSplits(PriorityQueue<LuceneIndexInputSplit> splits,
-                                           long maxSize) {
+                                           long maxCombinedIndexSizePerMapper,
+                                           long maxNumIndexesPerMapper) {
+
     // now take the one-split-per-index splits and combine them into multi-index-per-split splits
     List<InputSplit> combinedSplits = Lists.newLinkedList();
     LuceneIndexInputSplit currentSplit = splits.poll();
     while (currentSplit != null) {
-      while (currentSplit.getLength() < maxSize) {
+      while (currentSplit.getLength() < maxCombinedIndexSizePerMapper) {
         LuceneIndexInputSplit nextSplit = splits.peek();
         if (nextSplit == null) {
           break;
         }
-        if (currentSplit.getLength() + nextSplit.getLength() > maxSize) {
+        if (currentSplit.getLength() + nextSplit.getLength() > maxCombinedIndexSizePerMapper) {
+          break;
+        }
+        if (currentSplit.getIndexDirs().size() >= maxNumIndexesPerMapper) {
           break;
         }
         currentSplit.combine(nextSplit);
@@ -257,15 +278,16 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   }
 
   /**
-   * Set the max size of a combined split. Splits can be larger than size if they contain
-   * a single index which is larger than size, but if they contain multiple indexes they will
-   * always be less than or equal to size
+   * Set the max combined size of indexes to be processed by one mapper.
    *
-   * @param size max size for combined splits in bytes
+   * If an index is larger than size than it will be put in its own split, but all splits
+   * containing multiple indexes will have a combined size <= size.
+   *
+   * @param size the max combined size of indexes to be processed by one mapper in bytes
    * @param conf job conf
    */
-  public static void setMaxCombineSplitSizeBytes(long size, Configuration conf) {
-    conf.setLong(MAX_COMBINE_SPLIT_SIZE_KEY, size);
+  public static void setMaxCombinedIndexSizePerMapperBytes(long size, Configuration conf) {
+    conf.setLong(MAX_COMBINED_INDEX_SIZE_PER_MAPPER_KEY, size);
   }
 
   /**
@@ -273,8 +295,36 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
    * @param conf job conf
    * @return the max size of a combined split in bytes
    */
-  public static long getMaxCombineSplitSizeBytes(Configuration conf) {
-    return conf.getLong(MAX_COMBINE_SPLIT_SIZE_KEY, DEFAULT_MAX_COMBINE_SPLIT_SIZE_BYTES);
+  public static long getMaxCombinedIndexSizePerMapper(Configuration conf) {
+    return conf.getLong(MAX_COMBINED_INDEX_SIZE_PER_MAPPER_KEY,
+      DEFAULT_MAX_COMBINED_INDEX_SIZE_PER_MAPPER);
+  }
+
+  /**
+   * Set the max number of indexes to process for a single mapper.
+   *
+   * If a combined split still has room for more indexes (as determined by
+   * {@link #getMaxCombinedIndexSizePerMapper}) then more indexes will be added to it
+   * UNLESS that would cause the split to have more than num indexes combined into it.
+   *
+   * This helps preventing one mapper from getting thousands of small indexes which can make it
+   * significantly slower than the others.
+   *
+   * @param num max number of splits per combined split
+   * @param conf job conf
+   */
+  public static void setMaxNumIndexesPerMapper(long num, Configuration conf) {
+    conf.setLong(MAX_NUM_INDEXES_PER_MAPPER_KEY, num);
+  }
+
+  /**
+   * Get the max number of indexes per mapper
+   *
+   * @param conf job conf
+   * @return the max number of indexes per mapper
+   */
+  public static long getMaxNumIndexesPerMapper(Configuration conf) {
+    return conf.getLong(MAX_NUM_INDEXES_PER_MAPPER_KEY, DEFAULT_MAX_NUM_INDEXES_PER_MAPPER);
   }
 
   /**

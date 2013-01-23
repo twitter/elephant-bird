@@ -78,7 +78,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
    * when building large indexes.
    */
   protected Directory getDirectoryImplementation(File location) throws IOException {
-    return SimpleFSDirectory.open(location, NoLockFactory.getNoLockFactory());
+    return new SimpleFSDirectory(location, NoLockFactory.getNoLockFactory());
   }
 
   public static IndexWriter createIndexWriter(Directory location, Analyzer analyzer) throws IOException {
@@ -88,6 +88,11 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
   public static IndexWriter createIndexWriter(Directory location, Analyzer analyzer, int mergeFactor)
       throws IOException {
 
+    LOG.info("Creating IndexWriter with:\nDirectory: "
+        + location
+        + "\nAnalyzer: "
+        + analyzer
+        + "\nMerge Factor: " + mergeFactor);
     IndexWriterConfig idxConfig = new IndexWriterConfig(Version.LUCENE_40, analyzer);
     LogByteSizeMergePolicy mergePolicy = new LogByteSizeMergePolicy();
     mergePolicy.setMergeFactor(mergeFactor);
