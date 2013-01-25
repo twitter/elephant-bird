@@ -104,7 +104,7 @@ public class TestLuceneIndexInputFormat {
     LuceneIndexInputFormat.setInputPaths(
       ImmutableList.of(new Path("src/test/resources/com/twitter/elephantbird"
       + "/mapreduce/input/sample_indexes/")), conf);
-    LuceneIndexInputFormat.setMaxCombinedIndexSizePerMapperBytes(15L, conf);
+    LuceneIndexInputFormat.setMaxCombinedIndexSizePerSplitBytes(15L, conf);
     JobContext jobContext = createStrictMock(JobContext.class);
     expect(jobContext.getConfiguration()).andStubReturn(conf);
     replay(jobContext);
