@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,6 +40,8 @@ import com.twitter.elephantbird.util.TypeRef;
 public class ThriftToPig<M extends TBase<?, ?>> {
 
   public static final Logger LOG = LoggerFactory.getLogger(ThriftToPig.class);
+
+  private static final String USE_ENUM_ID_CONF_KEY = "elephantbird.pig.thrift.enumid";
 
   // static because it is used in toSchema and toPigTuple which are static
   private static Boolean useEnumId = false;
@@ -88,7 +91,8 @@ public class ThriftToPig<M extends TBase<?, ?>> {
    */
   public static void setConversionProperties(Configuration conf) {
     if (conf != null) {
-      useEnumId = conf.getBoolean("elephantbird.pig.enumid", false);
+      useEnumId = conf.getBoolean(USE_ENUM_ID_CONF_KEY, false);
+      LOG.info("useEnumId is set to " + useEnumId);
     }
   }
 

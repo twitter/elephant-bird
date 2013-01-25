@@ -57,7 +57,16 @@ public class ThriftPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
   }
 
   @Override
+  public void setLocation(String location, Job job) throws IOException {
+    super.setLocation(location, job);
+    if (job != null) {
+      ThriftToPig.setConversionProperties(job.getConfiguration());
+    }
+  }
+
+  @Override
   public ResourceSchema getSchema(String filename, Job job) throws IOException {
+    // getSchema usually should only be called after setLocation, but it is not always enforced.
     if (job != null) {
       ThriftToPig.setConversionProperties(job.getConfiguration());
     }
