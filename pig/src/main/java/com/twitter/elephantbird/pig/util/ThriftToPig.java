@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
@@ -39,6 +40,8 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
   public static final Logger LOG = LoggerFactory.getLogger(ThriftToPig.class);
 
+  // static because it is used in toSchema and toPigTuple which are static
+  private static Boolean useEnumId = false;
   private static TupleFactory tupleFactory  = TupleFactory.getInstance();
 
   private TStructDescriptor structDesc;
@@ -77,6 +80,16 @@ public class ThriftToPig<M extends TBase<?, ?>> {
    */
   public Tuple getLazyTuple(M thriftObj) {
     return new LazyTuple(structDesc, thriftObj);
+  }
+
+  /**
+   * Set the flags that can be used by the conversion.
+   * @param conf usually the Hadoop job conf
+   */
+  public static void setConversionProperties(Configuration conf) {
+    if (conf != null) {
+      useEnumId = conf.getBoolean("elephantbird.pig.enumid", false);
+    }
   }
 
   @SuppressWarnings("rawtypes")
@@ -123,7 +136,11 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     case TType.LIST:
       return toPigBag(field.getListElemField(), (Collection<Object>)value, lazy);
     case TType.ENUM:
-      return value.toString();
+      if (useEnumId) {
+        return field.getEnumValueOf(value.toString()).getValue();
+      } else {
+        return value.toString();
+      }
     default:
       // standard types : I32, I64, DOUBLE, etc.
       return value;
@@ -236,7 +253,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
     return toSchema(structDesc);
   }
 
-  public static Schema toSchema(TStructDescriptor tDesc ) {
+  public static Schema toSchema(TStructDescriptor tDesc) {
     Schema schema = new Schema();
 
     try {
@@ -310,7 +327,11 @@ public class ThriftToPig<M extends TBase<?, ?>> {
       case TType.I32:
         return DataType.INTEGER;
       case TType.ENUM:
-        return DataType.CHARARRAY;
+        if (useEnumId) {
+          return DataType.INTEGER;
+        } else {
+          return DataType.CHARARRAY;
+        }
       case TType.I64:
         return DataType.LONG;
       case TType.DOUBLE:

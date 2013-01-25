@@ -58,6 +58,9 @@ public class ThriftPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
 
   @Override
   public ResourceSchema getSchema(String filename, Job job) throws IOException {
+    if (job != null) {
+      ThriftToPig.setConversionProperties(job.getConfiguration());
+    }
     return new ResourceSchema(ThriftToPig.toSchema(typeRef.getRawClass()));
   }
 
