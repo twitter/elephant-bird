@@ -8,11 +8,14 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.twitter.elephantbird.pig.piggybank.ThriftBytesToTuple;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.pig.LoadPushDown.RequiredField;
 import org.apache.pig.LoadPushDown.RequiredFieldList;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataByteArray;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
@@ -312,5 +315,25 @@ public class TestThriftToPig {
     schema = ThriftToPig.toSchema(TestMap.class);
     Assert.assertEquals("{name: chararray,names: map[chararray]}", schema.toString());
     Assert.assertNull(schema.getField(1).schema.getField(0).alias);
+  }
+
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @Test
+  public void testSetConversionProperties() throws ExecException {
+    PhoneNumber pn = new PhoneNumber();
+    pn.setNumber("1234");
+    pn.setType(PhoneType.HOME);
+
+    ThriftToPig ttp = ThriftToPig.newInstance(PhoneNumber.class);
+    Tuple tuple = ttp.getPigTuple(pn);
+    assertEquals(DataType.CHARARRAY, tuple.getType(1));
+    assertEquals(PhoneType.HOME.toString(), tuple.get(1));
+
+    Configuration conf = new Configuration();
+    conf.setBoolean(ThriftToPig.USE_ENUM_ID_CONF_KEY, true);
+    ThriftToPig.setConversionProperties(conf);
+    tuple = ttp.getPigTuple(pn);
+    assertEquals(DataType.INTEGER, tuple.getType(1));
+    assertEquals(PhoneType.HOME.getValue(), tuple.get(1));
   }
 }

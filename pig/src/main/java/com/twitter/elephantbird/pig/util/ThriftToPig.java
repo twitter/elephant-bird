@@ -40,7 +40,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
 
   public static final Logger LOG = LoggerFactory.getLogger(ThriftToPig.class);
 
-  private static final String USE_ENUM_ID_CONF_KEY = "elephantbird.pig.thrift.enumid";
+  static final String USE_ENUM_ID_CONF_KEY = "elephantbird.pig.thrift.enumid";
 
   // static because it is used in toSchema and toPigTuple which are static
   private static Boolean useEnumId = false;
