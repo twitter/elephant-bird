@@ -91,7 +91,7 @@ public class ThriftToPig<M extends TBase<?, ?>> {
   public static void setConversionProperties(Configuration conf) {
     if (conf != null) {
       useEnumId = conf.getBoolean(USE_ENUM_ID_CONF_KEY, false);
-      LOG.info("useEnumId is set to " + useEnumId);
+      LOG.debug("useEnumId is set to " + useEnumId);
     }
   }
 
