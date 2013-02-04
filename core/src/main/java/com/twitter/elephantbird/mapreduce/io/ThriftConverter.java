@@ -53,7 +53,9 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
       M message = typeRef.safeNewInstance();
       deserializer.deserialize(message, messageBuffer);
       return message;
-    } catch (TException e) {
+    } catch (Throwable e) {
+      // normally a TException. but some corrupt records can cause
+      // other runtime exceptions (e.g. IndexOutOfBoundsException).
       logWarning("failed to deserialize", e);
       return null;
     }
