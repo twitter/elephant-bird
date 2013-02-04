@@ -56,6 +56,10 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
     } catch (TException e) {
       logWarning("failed to deserialize", e);
       return null;
+    } catch (Throwable e) {
+      // Arbitrary bytes can cause a runtime exception in Thrift
+      logWarning("failed to deserialize", e);
+      return null;
     }
   }
 
