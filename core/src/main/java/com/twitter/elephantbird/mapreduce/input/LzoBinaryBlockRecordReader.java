@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.HadoopUtils;
@@ -118,7 +119,10 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
         if (!reader_.readNext(value_)) {
           return false; // EOF
         }
+      } catch (InvalidProtocolBufferException e) {
+        decodeException = e;
       } catch (IOException e) {
+        // Re-throw IOExceptions that are not due to protobuf decode errors
         throw e;
       } catch (Throwable e) {
         decodeException = e;
