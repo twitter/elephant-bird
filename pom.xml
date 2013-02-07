@@ -9,7 +9,7 @@
 
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
-  <version>3.0.6-SNAPSHOT</version>
+  <version>3.0.7-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Elephant Bird</name>
@@ -80,6 +80,7 @@
     <apache.pig.version>0.9.2</apache.pig.version>
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
+    <apache.lucene.version>4.0.0</apache.lucene.version>
   </properties>
 
   <repositories>
@@ -112,6 +113,23 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-hive</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-lucene</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-lucene</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-pig-lucene</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -149,6 +167,12 @@
         <version>4.8.2</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.easymock</groupId>
+        <artifactId>easymock</artifactId>
+        <version>3.1</version>
+        <scope>test</scope>
+      </dependency>
 
       <!-- logging -->
       <dependency>
@@ -174,6 +198,11 @@
       <dependency>
         <groupId>commons-lang</groupId>
         <artifactId>commons-lang</artifactId>
+        <version>2.4</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
         <version>2.4</version>
       </dependency>
       <dependency>
@@ -260,6 +289,32 @@
         <groupId>javax.jdo</groupId>
         <artifactId>jdo2-api</artifactId>
         <version>2.3-eb</version>
+      </dependency>
+
+      <!-- lucene -->
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-core</artifactId>
+        <version>${apache.lucene.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-analyzers-common</artifactId>
+        <version>${apache.lucene.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-queryparser</artifactId>
+        <version>${apache.lucene.version}</version>
+      </dependency>
+
+      <!-- pig-lucene -->
+      <!-- jline is needed for PigServer which is used in integration tests -->
+      <dependency>
+        <groupId>jline</groupId>
+        <artifactId>jline</artifactId>
+        <version>0.9.94</version>
+        <scope>test</scope>
       </dependency>
 
       <!-- mahout -->
@@ -491,6 +546,8 @@
     <module>mahout</module>
     <module>pig</module>
     <module>rcfile</module>
+    <module>lucene</module>
+    <module>pig-lucene</module>
     <module>examples</module>
   </modules>
 

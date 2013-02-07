@@ -11,11 +11,11 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.hadoop.compression.lzo.LzoCodec;
 import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.elephantbird.mapreduce.io.ThriftBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
@@ -46,10 +46,7 @@ public class TestThriftMultiFormatLoader {
 
     Configuration conf = new Configuration();
 
-    if (!LzoCodec.isNativeLzoLoaded(conf)){
-      // TODO: Consider using @RunWith / @SuiteClasses
-      return;
-    }
+    Assume.assumeTrue(UnitTestUtil.isNativeLzoLoaded(conf));
 
     pigServer = UnitTestUtil.makePigServer();
 
@@ -77,10 +74,8 @@ public class TestThriftMultiFormatLoader {
 
   @Test
   public void testMultiFormatLoader() throws Exception {
-    if (pigServer == null) {
-      //setUp didn't run because of missing lzo native libraries
-      return;
-    }
+    //setUp might not have run because of missing lzo native libraries
+    Assume.assumeTrue(pigServer != null);
 
     pigServer.registerQuery(String.format(
         "A = load '%s' using %s('%s');\n",
@@ -122,6 +117,7 @@ public class TestThriftMultiFormatLoader {
               ImmutableMap.of(TestPhoneType.HOME,
                               "408-555-5555" + "ex" + index));
   }
+
   private String personToString(TestPerson person) {
     return thriftToPig.getPigTuple(person).toString();
   }

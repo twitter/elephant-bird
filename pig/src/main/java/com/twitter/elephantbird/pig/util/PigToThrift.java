@@ -104,38 +104,47 @@ public class PigToThrift<T extends TBase<?, ?>> {
     return tObj;
   }
 
+  /**
+   * For a given Pig value, return a Thrift object of the same type as the Thrift field passed. The
+   * thrift field is expected to be compatible with the value passed. If it is not, a warning will
+   * be logged and a null value will be returned.
+   *
+   * @param thriftField the Thrift field used to determine the type of the response object
+   * @param pigValue the value to convert to Thrift
+   * @return a Thrift object
+   */
   @SuppressWarnings("unchecked")
-  private static Object toThriftValue(Field field, Object value) {
+  public static Object toThriftValue(Field thriftField, Object pigValue) {
     try {
-      switch (field.getType()) {
+      switch (thriftField.getType()) {
       case TType.BOOL:
-        return Boolean.valueOf(((Integer)value) != 0);
+        return Boolean.valueOf(((Integer)pigValue) != 0);
       case TType.BYTE :
-        return ((Integer)value).byteValue();
+        return ((Integer)pigValue).byteValue();
       case TType.I16 :
-        return Short.valueOf(((Integer)value).shortValue());
+        return Short.valueOf(((Integer)pigValue).shortValue());
       case TType.STRING:
-        return toStringType(value);
+        return toStringType(pigValue);
       case TType.STRUCT:
-        return toThrift(field.gettStructDescriptor(), (Tuple)value);
+        return toThrift(thriftField.gettStructDescriptor(), (Tuple)pigValue);
       case TType.MAP:
-        return toThriftMap(field, (Map<String, Object>)value);
+        return toThriftMap(thriftField, (Map<String, Object>)pigValue);
       case TType.SET:
-        return toThriftSet(field.getSetElemField(), (DataBag) value);
+        return toThriftSet(thriftField.getSetElemField(), (DataBag) pigValue);
       case TType.LIST:
-        return toThriftList(field.getListElemField(), (DataBag)value);
+        return toThriftList(thriftField.getListElemField(), (DataBag)pigValue);
       case TType.ENUM:
-        return toThriftEnum(field, (String) value);
+        return toThriftEnum(thriftField, (String) pigValue);
       default:
         // standard types : I32, I64, DOUBLE, etc.
-        return value;
+        return pigValue;
       }
     } catch (Exception e) {
       // mostly a schema mismatch.
       LOG.warn(String.format(
           "Failed to set field '%s' of type '%s' with value '%s' of type '%s'",
-          field.getName(), ThriftUtils.getFieldValueType(field).getName(),
-          value, value.getClass().getName()), e);
+          thriftField.getName(), ThriftUtils.getFieldValueType(thriftField).getName(),
+          pigValue, pigValue.getClass().getName()), e);
     }
     return null;
   }
