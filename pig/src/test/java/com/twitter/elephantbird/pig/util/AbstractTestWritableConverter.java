@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -23,7 +22,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.pig.ExecType;
+import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.apache.pig.PigServer;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
@@ -142,7 +141,7 @@ public abstract class AbstractTestWritableConverter<W extends Writable, C extend
         new FileSplit(new Path(tempFilename), 0, new File(tempFilename).length(),
             new String[] { "localhost" });
     final TaskAttemptContext context =
-        new TaskAttemptContext(job.getConfiguration(), new TaskAttemptID());
+        new TaskAttemptContextImpl(job.getConfiguration(), new TaskAttemptID());
     reader.initialize(fileSplit, context);
     final InputSplit[] wrappedSplits = new InputSplit[] { fileSplit };
     final int inputIndex = 0;

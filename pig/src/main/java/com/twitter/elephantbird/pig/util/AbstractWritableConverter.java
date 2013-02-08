@@ -123,6 +123,8 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
         return toWritable((DataByteArray) value);
       case DataType.CHARARRAY:
         return toWritable((String) value);
+      case DataType.BOOLEAN:
+        return toWritable((Boolean) value);
       case DataType.INTEGER:
         return toWritable((Integer) value);
       case DataType.LONG:
