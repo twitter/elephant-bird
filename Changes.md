@@ -1,5 +1,99 @@
 # Elephant Bird #
 
+### Version 3.0.7 ###
+
+ISSUE 286. catch protobuf errors during block decoding (Aaron Siegel)
+
+ISSUE 285. Handle runtime exceptions in ThritConverter (Raghu Angadi)
+
+ISSUE 283. Add LocationAsTuple pig loader (Dmitriy Ryaboy)
+
+ISSUE 282. Bugfixes and minor improvements for elephant-bird-lucene (Alex Levenson)
+
+ISSUE 281. Add BytesWritableConverter (Andy Schlaikjer)
+
+ISSUE 280. Add lucene docs to readme (Alex Levenson)
+
+### Version 3.0.6 ###
+
+ISSUE 276. Lucene support in MR and Pig (Alex Levenson)
+
+ISSUE 275. Make PigToThrift.toThriftValue public (Bill Graham)
+
+### Version 3.0.5 ###
+
+ISSUE 274. Correct 3.0.4 version number in changes log (Travis Crawford)
+
+ISSUE 271. Update protobuf deserializer to present enums as strings (Feng Peng)
+
+ISSUE 270. Add LzoByteArrayScheme (Sam Ritchie)
+
+ISSUE 269. Adds Travis CI build link to readme (Andy Schlaikjer)
+
+ISSUE 268. Adds travis-ci configuration (Andy Schlaikjer)
+
+ISSUE 266. Improves RawSequenceFileRecordReader javadoc (Andy Schlaikjer)
+
+### Version 3.0.4 ###
+
+*** The issues starred below have introduced breaking API changes. Please make sure your java code and pig scripts are updated to use changed APIs correctly.
+
+ISSUE 257. Adds LzoRawBytesStorage to mirror LzoRawBytesLoader (Andy Schlaikjer)
+
+ISSUE 256. *** Refactors SequenceFile{Loader, Storage}. SequenceFileStorage no longer extends SequenceFileLoader. (Andy Schlaikjer)
+
+### Version 3.0.3 ###
+
+ISSUE 245. Stop using DefaultDataBags, use NonSpillable ones instead (Dmitriy Ryaboy)
+
+ISSUE 244. Fixing mvn package build error because of log4j (Eli Finkelshteyn)
+
+ISSUE 243. Fix how SequenceFileLoader initializes FileSystem (Raghu Angadi)
+
+ISSUE 242. Handle null values during Protobuf to tuple conversion (Raghu Angadi)
+
+ISSUE 241. Default values during RCFile protobuf columns to tuple conversion (Raghu Angadi)
+
+ISSUE 239. Set read limit while deserializing Thrift objects (Raghu Angadi)
+
+ISSUE 238. Updates logging deps, normalizing on slf4j (Andy Schlaikjer)
+
+ISSUE 237. Avoid repeating some of dependencies in sub modules (Raghu Angadi)
+
+ISSUE 226. Improve handling of pig to thrift enum value conversion failure (Andy Schlaikjer)
+
+### Version 3.0.2 ###
+
+ISSUE 235. Update build so LZO tests work correctly (Travis Crawford)
+
+ISSUE 234. Hive protobuf deserializer (Raghu Angadi)
+
+ISSUE 233. Redo classloader checks (Raghu Angadi)
+
+ISSUE 230. Add DeprecatedRawMultiInputFormat (Travis Crawford)
+
+ISSUE 231. Removes m2e filtering of build-helper-maven-plugin (Andy Schlaikjer)
+
+ISSUE 232. merge two versions of TestThriftToPig (Raghu Angadi)
+
+ISSUE 229. Lzo raw input format (Raghu Angadi)
+
+ISSUE 227. More class visibility fixes (Raghu Angadi)
+
+ISSUE 225. fix subclass check in MultiInputFormat (Raghu Angadi)
+
+ISSUE 224. change log for 3.0.1 (Raghu Angadi)
+
+### Version 3.0.1 ###
+
+ISSUE 223. handle null keys in Thrift maps (Raghu Angadi)
+
+ISSUE 222. use correct classloader for user supplied classes (Raghu Angadi)
+
+### Version 3.0.0 ###
+
+ISSUE 201. mavenize and split into multiple modules (Johan Oskarsson, Andy Schlaikjer)
+
 ### Version 2.2.3 ###
 
 ISSUE 205. Set map value field alias to null (Andy Schlaikjer)
@@ -284,7 +378,7 @@ NO TICKET. Protobuf Pig storage : do not reuse builder object.
 
 ISSUE 28. Equals is now consistent with CompareTo for ProtobufWritables (rangadi)
 
-ISSUE 30.  Handle Boolean and Bytes in ProtobufStorage, and add generators. (rangadi) 
+ISSUE 30.  Handle Boolean and Bytes in ProtobufStorage, and add generators. (rangadi)
 
 ISSUE 30.  Handle Thrift binary and double types in ThriftToPig schema (rangadi)
 
