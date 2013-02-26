@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.thrift;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -304,6 +305,10 @@ public class TStructDescriptor {
 
     public TEnum getEnumValueOf(int id) {
       return enumIdMap.get(id);
+    }
+
+    public Collection<TEnum> getEnumValues() {
+      return enumMap.values();
     }
 
     public String getName() {
