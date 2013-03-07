@@ -123,7 +123,7 @@ public class TestPigToProtobuf {
       String phoneType) {
     TupleFactory tf = TupleFactory.getInstance();
     return tf.newTupleNoCopy(Lists.<Object> newArrayList(name, id, email,
-        new NonSpillableDataBag(Lists.newArrayList(tf.newTupleNoCopy(Lists.<Object> newArrayList(
+        new NonSpillableDataBag(Lists.<Tuple> newArrayList(tf.newTupleNoCopy(Lists.<Object> newArrayList(
             phoneNumber, phoneType))))));
   }
 

@@ -3,14 +3,15 @@ package com.twitter.elephantbird.pig.util;
 import java.io.IOException;
 import java.util.Map;
 
-import com.google.common.base.Preconditions;
-
 import org.apache.hadoop.io.Writable;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.joda.time.DateTime;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Base class providing default implementations for WritableConverter methods.
@@ -123,6 +124,10 @@ public abstract class AbstractWritableConverter<W extends Writable> extends Writ
         return toWritable((DataByteArray) value);
       case DataType.CHARARRAY:
         return toWritable((String) value);
+      case DataType.BOOLEAN:
+        return toWritable((Boolean) value);
+      case DataType.DATETIME:
+        return toWritable((DateTime) value);
       case DataType.INTEGER:
         return toWritable((Integer) value);
       case DataType.LONG:

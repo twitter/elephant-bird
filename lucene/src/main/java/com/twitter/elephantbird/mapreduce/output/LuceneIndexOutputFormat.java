@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 
-import com.google.common.io.Files;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -29,6 +27,7 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.io.Files;
 import com.twitter.elephantbird.util.PathFilters;
 import com.twitter.elephantbird.util.TaskHeartbeatThread;
 
@@ -188,7 +187,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
    * @param job the job
    * @param path where to write the index
    */
-  public static void setOutputPath(Job job, Path path) {
+  public static void setOutputPath(Job job, Path path) throws IOException {
     FileOutputFormat.setOutputPath(job, path);
   }
 

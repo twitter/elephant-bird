@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.BitSet;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.pig.backend.executionengine.ExecException;
@@ -68,11 +69,6 @@ public abstract class AbstractLazyTuple implements Tuple {
   }
 
   @Override
-  public boolean isNull() {
-    return realTuple.isNull();
-  }
-
-  @Override
   public boolean isNull(int idx) throws ExecException {
     get(idx);
     return realTuple.isNull(idx);
@@ -93,13 +89,14 @@ public abstract class AbstractLazyTuple implements Tuple {
   }
 
   @Override
-  public void setNull(boolean isNull) {
-    realTuple.setNull(isNull);
+  public int size() {
+    return realTuple.size();
   }
 
   @Override
-  public int size() {
-    return realTuple.size();
+  public Iterator<Object> iterator() {
+    convertAll();
+    return realTuple.iterator();
   }
 
   @Override
