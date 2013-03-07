@@ -33,7 +33,7 @@ Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.
 
 ## Version compatibility
 
-1. Protocol Buffers 2.3 (not compatible with 2.4+)
+1. Protocol Buffers 2.3.0, 2.4.1
 2. Pig 0.8, 0.9 (not compatible with 0.7 and below)
 4. Hive 0.7 (with HIVE-1616)
 5. Thrift 0.5.0, 0.6.0, 0.7.0
