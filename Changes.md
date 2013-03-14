@@ -1,5 +1,19 @@
 # Elephant Bird #
 
+### Version 3.0.7 ###
+
+ISSUE 286. catch protobuf errors during block decoding (Aaron Siegel)
+
+ISSUE 285. Handle runtime exceptions in ThritConverter (Raghu Angadi)
+
+ISSUE 283. Add LocationAsTuple pig loader (Dmitriy Ryaboy)
+
+ISSUE 282. Bugfixes and minor improvements for elephant-bird-lucene (Alex Levenson)
+
+ISSUE 281. Add BytesWritableConverter (Andy Schlaikjer)
+
+ISSUE 280. Add lucene docs to readme (Alex Levenson)
+
 ### Version 3.0.6 ###
 
 ISSUE 276. Lucene support in MR and Pig (Alex Levenson)

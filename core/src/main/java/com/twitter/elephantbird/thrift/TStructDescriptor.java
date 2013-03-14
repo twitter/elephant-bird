@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.thrift;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -120,6 +121,7 @@ public class TStructDescriptor {
     int idx = 0;
     for (Entry<? extends TFieldIdEnum, FieldMetaData> e : fieldMap.entrySet()) {
       arr[idx++] = new Field(e.getKey(),
+                             e.getValue(),
                              e.getKey().getFieldName(),
                              tClass,
                              e.getValue().valueMetaData);
@@ -146,6 +148,7 @@ public class TStructDescriptor {
   public static class Field {
 
     private final TFieldIdEnum fieldIdEnum;
+    private final FieldMetaData fieldMetaData;
     private final short fieldId;
     private final String fieldName;
     private final FieldValueMetaData field;
@@ -162,10 +165,11 @@ public class TStructDescriptor {
 
 
     @SuppressWarnings("unchecked") // for casting 'structClass' below
-    private Field(TFieldIdEnum fieldIdEnum, String fieldName, Class<?> enclosingClass,
+    private Field(TFieldIdEnum fieldIdEnum, FieldMetaData fieldMetaData, String fieldName, Class<?> enclosingClass,
                   FieldValueMetaData field) {
       // enclosingClass is only to check a TType.STRING is actually a buffer.
       this.fieldIdEnum = fieldIdEnum;
+      this.fieldMetaData = fieldMetaData;
       this.fieldId = fieldIdEnum == null ? 1 : fieldIdEnum.getThriftFieldId();
       this.fieldName = fieldName;
       this.field = field;
@@ -174,16 +178,16 @@ public class TStructDescriptor {
       boolean simpleField = field.getClass() == FieldValueMetaData.class;
 
       if (!simpleField && field instanceof ListMetaData) {
-        listElemField = new Field(null, fieldName + "_list_elem", null,
+        listElemField = new Field(null, null, fieldName + "_list_elem", null,
                                   ((ListMetaData)field).elemMetaData);
       } else {
         listElemField = null;
       }
 
       if (!simpleField && field instanceof MapMetaData) {
-        mapKeyField = new Field(null, fieldName + "_map_key", null,
+        mapKeyField = new Field(null, null, fieldName + "_map_key", null,
                                 ((MapMetaData)field).keyMetaData);
-        mapValueField = new Field(null, fieldName + "_map_value", null,
+        mapValueField = new Field(null, null, fieldName + "_map_value", null,
                             ((MapMetaData)field).valueMetaData);
 
       } else {
@@ -192,7 +196,7 @@ public class TStructDescriptor {
       }
 
       if (!simpleField && field instanceof SetMetaData) {
-        setElemField = new Field(null, fieldName + "_set_elem", null,
+        setElemField = new Field(null, null, fieldName + "_set_elem", null,
                                 ((SetMetaData)field).elemMetaData);
       } else {
         setElemField = null;
@@ -303,12 +307,20 @@ public class TStructDescriptor {
       return enumIdMap.get(id);
     }
 
+    public Collection<TEnum> getEnumValues() {
+      return enumMap.values();
+    }
+
     public String getName() {
       return fieldName;
     }
 
     public short getId() {
      return fieldId;
+    }
+
+    public FieldMetaData getFieldMetaData() {
+      return fieldMetaData;
     }
   }
 }
