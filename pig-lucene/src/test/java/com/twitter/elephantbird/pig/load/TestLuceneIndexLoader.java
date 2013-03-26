@@ -90,15 +90,6 @@ public class TestLuceneIndexLoader {
 
     }
 
-    try {
-      String fakeFile = new File(tempDir.getRoot(), "nonexistant").getAbsolutePath();
-      new Loader(new String[]{"--file", fakeFile});
-      fail("This should throw an IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      assertTrue(e.getMessage()
-        .endsWith("/nonexistant does not exist!"));
-    }
-
     // valid constructor usages
     new Loader(new String[]{"--queries", "query1"});
     new Loader(new String[]{"--queries", "query1", "query2", "query3"});
@@ -129,8 +120,20 @@ public class TestLuceneIndexLoader {
   }
 
   @Test
+  public void testSetLocationFileMissing() throws Exception {
+    String fakeFile = new File(tempDir.getRoot(), "nonexistant").getAbsolutePath();
+    try {
+      doTestSetLocation(new Loader(new String[]{"--file", fakeFile}));
+      fail("This should throw an IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      assertTrue(e.getMessage().endsWith("/nonexistant does not exist!"));
+    }
+  }
+
+  @Test
   public void testSetLocationFile() throws Exception {
     doTestSetLocation(new Loader(new String[]{"--file",
       "src/test/resources/com/twitter/elephantbird/pig/load/queryfile.txt"}));
   }
+
 }
