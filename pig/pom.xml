@@ -29,6 +29,15 @@
       <groupId>org.apache.pig</groupId>
       <artifactId>pig</artifactId>
     </dependency>
+    <!-- include provided, non-transitive hadoop dependencies -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.hadoop.gplcompression</groupId>
+      <artifactId>hadoop-lzo</artifactId>
+    </dependency>
     <!-- log4j required for tests -->
     <dependency>
       <groupId>log4j</groupId>
