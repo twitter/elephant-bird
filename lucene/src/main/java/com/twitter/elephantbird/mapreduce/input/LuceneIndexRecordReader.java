@@ -50,6 +50,8 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
   private IndexSearcher indexSearcher;
   private Configuration conf;
 
+  protected TaskAttemptContext context;
+
   /**
    * Convert a query from its serialized (string) form to a {@link Query}
    * This can be done using a QueryParser if your serialized form is a lucene query string,
@@ -101,6 +103,7 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
       InterruptedException {
 
     conf = context.getConfiguration();
+    this.context = context;
 
     // convert query strings in the job conf to lucene Query objects
     List<String> serializedQueries = LuceneIndexInputFormat.getQueries(conf);
