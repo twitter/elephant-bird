@@ -86,8 +86,6 @@ public abstract class LuceneIndexLoader<T extends Writable> extends LoadFunc {
     } else if (args[0].equals("--file")) {
       Preconditions.checkArgument(args.length == 2, USAGE_HELP);
       queryFile = new File(args[1]);
-      Preconditions.checkArgument(queryFile.exists(),
-        "Query file: " + queryFile + " does not exist!");
     } else {
       throw new IllegalArgumentException(USAGE_HELP);
     }
@@ -126,7 +124,7 @@ public abstract class LuceneIndexLoader<T extends Writable> extends LoadFunc {
       if (queries != null) {
         LuceneIndexInputFormat.setQueries(queries, conf);
       } else {
-        LuceneIndexInputFormat.setQueries(loadQueriesFromFile(), conf);
+        LuceneIndexInputFormat.setQueries(loadQueriesFromFile(conf), conf);
       }
     }
 
@@ -137,7 +135,9 @@ public abstract class LuceneIndexLoader<T extends Writable> extends LoadFunc {
     LuceneIndexInputFormat.setInputPaths(expandedPaths, conf);
   }
 
-  private List<String> loadQueriesFromFile() throws IOException {
+  protected List<String> loadQueriesFromFile(Configuration conf) throws IOException {
+    Preconditions.checkArgument(queryFile.exists(),
+      "Query file: " + queryFile + " does not exist!");
     List<String> lines = Files.readLines(queryFile, Charsets.UTF_8);
     List<String> strippedLines = Lists.newArrayListWithCapacity(lines.size());
     for (String line : lines) {
