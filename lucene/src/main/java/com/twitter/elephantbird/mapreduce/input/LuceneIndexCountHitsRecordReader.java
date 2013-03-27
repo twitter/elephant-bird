@@ -1,7 +1,7 @@
 package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Iterator;
 
 import com.google.common.collect.ImmutableList;
 
@@ -19,9 +19,9 @@ public abstract class LuceneIndexCountHitsRecordReader
     extends LuceneIndexRecordReader<IntWritable> {
 
   @Override
-  protected List<IntWritable> search(IndexSearcher searcher, Query query) throws IOException {
+  protected Iterator<IntWritable> search(IndexSearcher searcher, Query query) throws IOException {
     TotalHitCountCollector collector = new TotalHitCountCollector();
     searcher.search(query, collector);
-    return ImmutableList.of(new IntWritable(collector.getTotalHits()));
+    return ImmutableList.of(new IntWritable(collector.getTotalHits())).iterator();
   }
 }
