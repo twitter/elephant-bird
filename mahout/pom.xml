@@ -42,5 +42,14 @@
       <groupId>org.apache.mahout</groupId>
       <artifactId>mahout-math</artifactId>
     </dependency>
+    <!-- include provided, non-transitive hadoop dependencies -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.hadoop.gplcompression</groupId>
+      <artifactId>hadoop-lzo</artifactId>
+    </dependency>
   </dependencies>
 </project>
