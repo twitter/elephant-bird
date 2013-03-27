@@ -149,6 +149,8 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
     Configuration conf = new Configuration();
     TaskAttemptContext context = createStrictMock(TaskAttemptContext.class);
     expect(context.getConfiguration()).andStubReturn(conf);
+    context.progress();
+    expectLastCall().atLeastOnce();
     replay(context);
 
     LuceneIndexInputFormat.setQueries(queryStrings, conf);
@@ -169,6 +171,7 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
 
     for (int index = 0; index < indexPaths.size(); index++) {
       IndexReader reader = createStrictMock(IndexReader.class);
+      expect(reader.maxDoc()).andStubReturn(4);
       replay(reader);
       expect(rr.openIndex(indexPaths.get(index), conf)).andReturn(reader);
 
@@ -178,6 +181,7 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
       for (int query = 0; query < queries.length; query++) {
         final ArrayList<Integer> ids = indexesQueriesDocIds.get(index).get(query);
         final Capture<Collector> collectorCapture = new Capture<Collector>();
+        expect(searcher.getIndexReader()).andReturn(reader);
         searcher.search(eq(queries[query]), capture(collectorCapture));
 
         expectLastCall().andAnswer(new IAnswer<Void>() {
@@ -189,6 +193,8 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
             return null;
           }
         });
+
+
 
         for (int docId : ids) {
           expect(searcher.doc(docId)).andReturn(docs[docId]);
