@@ -37,8 +37,6 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
   private IntWritable currentKey;
   private T currentValue;
   private Iterator<T> currentValueIter;
-  private float currentValueIterSize;
-  private float currentValueIterPosition;
 
   private List<Query> queries;
   private ListIterator<Query> currentQueryIter;
@@ -87,16 +85,16 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
   }
 
   /**
-   * Search the index and return a list of values extracted from the index
-   * Although the return value is a {@link java.util.List}, it can be a lazy list because
-   * it will only be iterated over once.
+   * Search the index and return an Iterator of values extracted from the index.
+   * This should probably be a lazy iterator if there will be many returned values.
    *
    * @param searcher the index searcher to query
    * @param query the query to run
-   * @return a list of values to be emitted as records (one by one) by this record reader
+   * @return an iterator of values to be emitted as records (one by one) by this record reader
    * @throws IOException
    */
-  protected abstract List<T> search(final IndexSearcher searcher, Query query) throws IOException;
+  protected abstract Iterator<T> search(final IndexSearcher searcher, Query query)
+      throws IOException;
 
   @Override
   public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException,
@@ -129,7 +127,6 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
     // first exhaust currentValues
     if (currentValueIter.hasNext()) {
       currentValue = currentValueIter.next();
-      currentValueIterPosition++;
       return true;
     }
 
@@ -137,17 +134,14 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
     // and try again
     if (currentQueryIter.hasNext()) {
       currentKey = new IntWritable(currentQueryIter.nextIndex());
-      List<T> values = search(indexSearcher, currentQueryIter.next());
-      currentValueIterSize = values.size();
-      currentValueIterPosition = 0f;
-      currentValueIter = values.iterator();
+      Iterator<T> values = search(indexSearcher, currentQueryIter.next());
+      currentValueIter = values;
       return nextKeyValue();
     }
 
     // no more currentValues nor queries in this index, move to the next index
     if (currentIndexPathIter.hasNext()) {
       closeIndexReader(currentIndexReader);
-
       Path next = currentIndexPathIter.next();
       LOG.info("Searching index: " + next);
       currentIndexReader = openIndex(next, conf);
@@ -191,8 +185,7 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
 
   /**
    * This is sort of an approximation of progress.
-   * It splits the progress equally among all indexes, then among all queries for that index,
-   * then among all return values from the {@link #search} method.
+   * It splits the progress equally among all indexes, then among all queries for that index.
    * So it won't move linearly, since we don't know how many hits there will be per query
    */
   @Override
@@ -207,13 +200,9 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
     if (queries.size() > 0) {
       queriesProgress = (float) currentQueryIter.previousIndex() / (float) queries.size();
     }
+
     queriesProgress *= 1.0f / numIndexes;
 
-    float currentQueryProgress = currentValueIterSize == 0 ? 1f
-                                 : currentValueIterPosition / currentValueIterSize;
-
-    return indexProgress
-           + queriesProgress
-           + (currentQueryProgress * (1.0f / ((float) numIndexes * (float) queries.size())));
+    return indexProgress + queriesProgress;
   }
 }
