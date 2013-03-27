@@ -21,6 +21,11 @@
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-lucene</artifactId>
     </dependency>
+    <!-- include provided, non-transitive hadoop dependencies -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-lucene</artifactId>
