@@ -6,6 +6,7 @@ import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.util.Protobufs;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.Deserializer;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
@@ -38,7 +39,7 @@ public class ProtobufDeserializer implements Deserializer {
   public void initialize(Configuration job, Properties tbl) throws SerDeException {
     try {
       String protoClassName = tbl
-          .getProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_CLASS);
+          .getProperty(serdeConstants.SERIALIZATION_CLASS);
 
       Class<? extends Message> protobufClass = job.getClassByName(protoClassName)
           .asSubclass(Message.class);

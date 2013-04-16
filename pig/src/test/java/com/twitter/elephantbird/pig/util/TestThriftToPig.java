@@ -25,6 +25,7 @@ import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import thrift.test.HolyMoley;
@@ -139,6 +140,13 @@ public class TestThriftToPig {
     default:
       return null;
     }
+  }
+
+  @Before
+  public void before() {
+    Configuration conf = new Configuration();
+    conf.setBoolean(ThriftToPig.USE_ENUM_ID_CONF_KEY, false);
+    ThriftToPig.setConversionProperties(conf);
   }
 
   @Test

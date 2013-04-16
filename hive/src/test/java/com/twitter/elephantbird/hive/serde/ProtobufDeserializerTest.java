@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
@@ -50,7 +51,7 @@ public class ProtobufDeserializerTest {
     deserializer = new ProtobufDeserializer();
 
     Properties properties = new Properties();
-    properties.setProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_CLASS,
+    properties.setProperty(serdeConstants.SERIALIZATION_CLASS,
         AddressBook.class.getName());
     deserializer.initialize(new Configuration(), properties);
     protobufOI = (ProtobufStructObjectInspector) deserializer.getObjectInspector();

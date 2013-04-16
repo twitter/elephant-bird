@@ -79,7 +79,7 @@
     <apache.hadoop.version>2.0.0-cdh4.2.0</apache.hadoop.version>
     <apache.hadoop-mr1.version>2.0.0-mr1-cdh4.2.0</apache.hadoop-mr1.version>
     <apache.pig.version>0.10.0-cdh4.2.0</apache.pig.version>
-    <apache.hive.version>0.8.0</apache.hive.version>
+    <apache.hive.version>0.10.0-cdh4.2.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
   </properties>
