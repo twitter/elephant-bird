@@ -11,6 +11,7 @@ import org.apache.pig.LoadCaster;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
+import org.joda.time.DateTime;
 
 /**
  * Base LoadCaster implementation which simplifies conversion specification from Writable type to
@@ -30,7 +31,7 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   public WritableLoadCaster() {
   }
 
-  /**
+/**
    * Deserializes raw bytes into a Writable instance, returning that instance. This implementation
    * relies on derived classes to initialize {@link #writable} before this method is called.
    *
@@ -51,6 +52,16 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   @Override
   public String bytesToCharArray(byte[] bytes) throws IOException {
     return toCharArray(writable = readFields(bytes, writable));
+  }
+
+  @Override
+  public Boolean bytesToBoolean(byte[] bytes) throws IOException {
+    return toBoolean(writable = readFields(bytes, writable));
+  }
+
+  @Override
+  public DateTime bytesToDateTime(byte[] bytes) throws IOException {
+    return toDateTime(writable = readFields(bytes, writable));
   }
 
   @Override
@@ -93,6 +104,14 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   }
 
   protected String toCharArray(W writable) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+  
+  protected Boolean toBoolean(W writable) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+  
+  protected DateTime toDateTime(W writable) throws IOException {
     throw new UnsupportedOperationException();
   }
 

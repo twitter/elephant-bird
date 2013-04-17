@@ -6,7 +6,7 @@ import com.twitter.elephantbird.util.TypeRef;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.plan.PartitionDesc;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
@@ -63,12 +63,12 @@ public class HiveMultiInputFormat
     }
 
     if (properties != null) {
-      thriftClassName = properties.getProperty(Constants.SERIALIZATION_CLASS);
+      thriftClassName = properties.getProperty(serdeConstants.SERIALIZATION_CLASS);
     }
 
     if (thriftClassName == null) {
       throw new RuntimeException(
-          "Required property " + Constants.SERIALIZATION_CLASS + " is null.");
+          "Required property " + serdeConstants.SERIALIZATION_CLASS + " is null.");
     }
 
     try {

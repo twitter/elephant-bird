@@ -7,19 +7,20 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
+import org.apache.hadoop.mapreduce.counters.GenericCounter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 /**
  * Various Hadoop specific utilities.
@@ -48,7 +49,7 @@ public class HadoopUtils {
     }
     String name = group + ":" + counter;
     LOG.warn("Using a dummy counter for " + name + " because it does not already exist.");
-    return new Counter(name, name) {};
+    return new GenericCounter(name, name) {};
   }
 
   /**

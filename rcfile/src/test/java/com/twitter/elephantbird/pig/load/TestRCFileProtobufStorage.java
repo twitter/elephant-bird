@@ -5,17 +5,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.pig.ExecType;
+import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
@@ -25,14 +25,15 @@ import org.junit.Test;
 
 import com.google.protobuf.Message;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
-import com.twitter.data.proto.tutorial.AddressBookProtos.PersonWithoutEmail;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneNumber;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneType;
+import com.twitter.data.proto.tutorial.AddressBookProtos.PersonWithoutEmail;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.RCFileProtobufOutputFormat;
 import com.twitter.elephantbird.pig.piggybank.ProtobufBytesToTuple;
 import com.twitter.elephantbird.pig.store.RCFileProtobufPigStorage;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
+import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
 
@@ -78,7 +79,7 @@ public class TestRCFileProtobufStorage {
     pigServer = UnitTestUtil.makePigServer();
 
     pigServer.getPigContext().getProperties().setProperty(
-        "mapred.output.compress", "true"); //default codec
+        MRJobConfig.MAP_OUTPUT_COMPRESS, "true"); //default codec
 
     inputDir.mkdirs();
 
@@ -188,12 +189,12 @@ public class TestRCFileProtobufStorage {
     });
 
     Configuration conf = new Configuration();
-    conf.setBoolean("mapred.output.compress", true);
+    conf.setBoolean(MRJobConfig.MAP_OUTPUT_COMPRESS, true);
     // for some reason GzipCodec results in loader failure on Mac OS X
-    conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.BZip2Codec");
+    conf.set(MRJobConfig.MAP_OUTPUT_COMPRESS_CODEC, "org.apache.hadoop.io.compress.BZip2Codec");
 
     return outputFormat.getRecordWriter(
-        new TaskAttemptContext(conf, new TaskAttemptID()));
+        new TaskAttemptContextImpl(conf, new TaskAttemptID()));
   }
 
   // return a Person object

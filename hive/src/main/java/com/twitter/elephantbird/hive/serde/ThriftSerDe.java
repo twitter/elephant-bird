@@ -2,7 +2,7 @@ package com.twitter.elephantbird.hive.serde;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
@@ -21,9 +21,9 @@ public class ThriftSerDe implements SerDe {
 
   @Override
   public void initialize(Configuration conf, Properties properties) throws SerDeException {
-    String thriftClassName = properties.getProperty(Constants.SERIALIZATION_CLASS, null);
+    String thriftClassName = properties.getProperty(serdeConstants.SERIALIZATION_CLASS, null);
     if (thriftClassName == null) {
-      throw new SerDeException("Required property " + Constants.SERIALIZATION_CLASS + " is null.");
+      throw new SerDeException("Required property " + serdeConstants.SERIALIZATION_CLASS + " is null.");
     }
 
     Class thriftClass;
