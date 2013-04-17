@@ -11,6 +11,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.SequenceFile.Metadata;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -71,8 +72,8 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
     // override compression codec if set.
     String codecOverride = conf.get(COMPRESSION_CODEC_CONF);
     if (codecOverride != null) {
-      conf.setBoolean("mapred.output.compress", true);
-      conf.set("mapred.output.compression.codec", codecOverride);
+      conf.setBoolean(MRJobConfig.MAP_OUTPUT_COMPRESS, true);
+      conf.set(MRJobConfig.MAP_OUTPUT_COMPRESS_CODEC, codecOverride);
     }
 
     CompressionCodec codec = null;

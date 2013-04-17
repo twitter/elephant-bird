@@ -188,6 +188,11 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
             throws UnsupportedOperationException {
           throw new UnsupportedOperationException();
         }
+        
+        @Override
+        public float getProgress() {
+          return ioCtx != null ? ioCtx.getProgress() : 0;
+        }
 
         public Counter getCounter(String group, String name) {
           return ioCtx != null ?
