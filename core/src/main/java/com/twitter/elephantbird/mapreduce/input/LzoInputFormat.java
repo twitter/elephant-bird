@@ -67,7 +67,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
   //MAPREDUCE-1501
   /**
    * Add lzo file(s). If recursive is set, traverses the directories.
-   * @param result
+   * @param results
    *          The List to store all files.
    * @param fs
    *          The FileSystem.

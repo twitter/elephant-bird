@@ -188,7 +188,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
    * @param job the job
    * @param path where to write the index
    */
-  public static void setOutputPath(Job job, Path path) {
+  public static void setOutputPath(Job job, Path path) throws IOException {
     FileOutputFormat.setOutputPath(job, path);
   }
 

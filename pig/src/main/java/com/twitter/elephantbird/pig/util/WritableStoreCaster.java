@@ -47,6 +47,11 @@ public abstract class WritableStoreCaster<W extends Writable> extends WritableLo
   }
 
   @Override
+  public byte[] toBytes(Boolean value) throws IOException {
+    return write(toWritable(value));
+  }
+
+  @Override
   public byte[] toBytes(Integer value) throws IOException {
     return write(toWritable(value));
   }
@@ -86,6 +91,10 @@ public abstract class WritableStoreCaster<W extends Writable> extends WritableLo
   }
 
   protected W toWritable(String value) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  protected W toWritable(Boolean value) throws IOException {
     throw new UnsupportedOperationException();
   }
 
