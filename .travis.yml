@@ -4,22 +4,14 @@ jdk:
   - openjdk7
 
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq protobuf-compiler
-  - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev
-  - wget -nv http://archive.apache.org/dist/thrift/0.7.0/thrift-0.7.0.tar.gz
-  - tar zxf thrift-0.7.0.tar.gz
-  - cd thrift-0.7.0
-  - chmod +x ./configure
-  - ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-erlang
-  - sudo make install
-  - cd ..
   - sudo apt-get -qq install lzop liblzo2-dev
   - git clone git://github.com/twitter/hadoop-lzo.git
   - cd hadoop-lzo
   - ant compile-native
   - mv build/native/Linux-* ../hadoop-lzo-native
   - cd ..
+  - ls -l $PWD/hadoop-lzo-native
+  - false
 
 script: mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Densure.lzo.tests=true
 
