@@ -21,16 +21,18 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 import com.hadoop.compression.lzo.LzopCodec;
+
 import com.twitter.elephantbird.mapreduce.input.LzoRecordReader;
 import com.twitter.elephantbird.mapreduce.io.RawBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
+import com.twitter.elephantbird.pig.util.PigTestUtil;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
 import com.twitter.elephantbird.thrift.test.TestName;
 import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
 import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.Protobufs;
+import com.twitter.elephantbird.util.CoreTestUtil;
 
 /**
  * 1. Test to ensure that empty records in B64Line and Block formats are
@@ -51,8 +53,8 @@ public class TestErrorsInInput {
   public static void setUp() throws Exception {
 
     conf = new Configuration();
-    Assume.assumeTrue(UnitTestUtil.isNativeLzoLoaded(conf));
-    pigServer = UnitTestUtil.makePigServer();
+    Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
+    pigServer = PigTestUtil.makePigServer();
   }
 
   @Test
