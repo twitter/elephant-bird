@@ -21,5 +21,5 @@ before_install:
   - mv build/native/Linux-* ../hadoop-lzo-native
   - cd ..
 
-script: mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Densure.lzo.tests=true
+script: mvn test -Dtest.library.path=$PWD/../hadoop-lzo-native/lib -Densure.lzo.tests=true
 
