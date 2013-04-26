@@ -135,6 +135,7 @@ public class TestLzoTextInputFormat extends TestCase {
     Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
 
     FileSystem localFs = FileSystem.getLocal(conf);
+    localFs.setConf(conf);
     localFs.delete(outputDir_, true);
     localFs.mkdirs(outputDir_);
 
