@@ -14,8 +14,8 @@ before_install:
   - ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-erlang
   - sudo make install
   - cd ..
-  - sudo apt-get -qq install lzop liblzo2-dev
-  - git clone git://github.com/twitter/hadoop-lzo.git
+  - sudo apt-get -qq install lzop liblzo2-dev # libzo2-dev for compiling hadoop-lzo
+  - git clone git://github.com/twitter/hadoop-lzo.git # for native libgplcompression
   - cd hadoop-lzo
   - ant compile-native
   - mv build/native/Linux-* ../hadoop-lzo-native
@@ -24,4 +24,5 @@ before_install:
 script: mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Densure.lzo.tests=true
 
 after_script:
-  - cat core/target/surefire-reports/com.twitter.elephantbird.mapreduce.input.TestLzoTextInputFormat*
+  - ls core/target/surefire-reports/*TestLzoTextInputFormat*
+  - cat core/target/surefire-reports/*TestLzoTextInputFormat*

@@ -135,7 +135,6 @@ public class TestLzoTextInputFormat extends TestCase {
     Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
 
     FileSystem localFs = FileSystem.getLocal(conf);
-    localFs.setConf(conf);
     localFs.delete(outputDir_, true);
     localFs.mkdirs(outputDir_);
 
@@ -153,6 +152,7 @@ public class TestLzoTextInputFormat extends TestCase {
     if (testWithIndex) {
       Path lzoFile = new Path(outputDir_, lzoFileName_);
       LzoIndex.createIndex(localFs, lzoFile);
+      LOG.info("XXX Codec conf: " + localFs.getConf().get("io.compression.codecs"));
     }
 
     LzoTextInputFormat inputFormat = new LzoTextInputFormat();
