@@ -7,10 +7,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import com.hadoop.compression.lzo.GPLNativeCodeLoader;
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzopCodec;
-import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
+
+import com.twitter.elephantbird.util.CoreTestUtil;
 
 import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
@@ -29,6 +29,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.junit.Assume;
 import org.junit.Test;
 
 /**
@@ -126,15 +127,12 @@ public class TestLzoTextInputFormat extends TestCase {
   private void runTest(boolean testWithIndex, int charsToOutput) throws IOException,
       NoSuchAlgorithmException, InterruptedException {
 
-    if (!GPLNativeCodeLoader.isNativeCodeLoaded()) {
-      LOG.warn("Cannot run this test without the native lzo libraries");
-      return;
-    }
-
     Configuration conf = new Configuration();
     conf.setLong("fs.local.block.size", charsToOutput / 2);
     // reducing block size to force a split of the tiny file
     conf.set("io.compression.codecs", LzopCodec.class.getName());
+
+    Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
 
     FileSystem localFs = FileSystem.getLocal(conf);
     localFs.delete(outputDir_, true);
