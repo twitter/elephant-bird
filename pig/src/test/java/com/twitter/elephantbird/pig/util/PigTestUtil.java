@@ -3,16 +3,11 @@ package com.twitter.elephantbird.pig.util;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.backend.executionengine.ExecException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Common test utilities
  */
 public class PigTestUtil {
-
-  private static final Logger LOG = LoggerFactory.getLogger(PigTestUtil.class);
-
 
   /**
    * Creates a new PigServer in local mode.
