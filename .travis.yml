@@ -14,4 +14,11 @@ before_install:
   - ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-erlang
   - sudo make install
   - cd ..
+  - sudo apt-get -qq install lzop liblzo2-dev # libzo2-dev for compiling hadoop-lzo
+  - git clone git://github.com/twitter/hadoop-lzo.git # for native libgplcompression
+  - cd hadoop-lzo
+  - ant compile-native
+  - mv build/native/Linux-* ../hadoop-lzo-native
+  - cd ..
 
+script: mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true

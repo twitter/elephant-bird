@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.pig.load;
 
+import com.twitter.elephantbird.pig.util.PigTestUtil;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.json.simple.parser.JSONParser;
@@ -7,8 +8,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -50,7 +49,7 @@ public class TestJsonLoader {
     writer.write("{\"score\": 30}\n");
     writer.close();
 
-    PigServer pigServer = UnitTestUtil.makePigServer();
+    PigServer pigServer = PigTestUtil.makePigServer();
     logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
         + "' using com.twitter.elephantbird.pig.load.JsonLoader() as (json: map[]);");
     logAndRegisterQuery(pigServer, "a = foreach data generate (int) json#'score' as score;");
@@ -90,7 +89,7 @@ public class TestJsonLoader {
     writer.close();
 
     // extract hashtags from it
-    PigServer pigServer = UnitTestUtil.makePigServer();
+    PigServer pigServer = PigTestUtil.makePigServer();
     // enable nested load
     pigServer.getPigContext().getProperties().setProperty(JsonLoader.NESTED_LOAD_KEY, "true");
     logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
@@ -133,7 +132,7 @@ public class TestJsonLoader {
     writer.close();
 
     // extract hashtags from it
-    PigServer pigServer = UnitTestUtil.makePigServer();
+    PigServer pigServer = PigTestUtil.makePigServer();
     logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
         + "' using com.twitter.elephantbird.pig.load.JsonLoader() as (json: map[]);");
     logAndRegisterQuery(pigServer, "a = foreach data generate json#'a' as h;");

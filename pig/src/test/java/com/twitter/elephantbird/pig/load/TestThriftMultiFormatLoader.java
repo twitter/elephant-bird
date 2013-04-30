@@ -21,10 +21,11 @@ import com.twitter.elephantbird.mapreduce.io.ThriftBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoBinaryB64LineRecordWriter;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
+import com.twitter.elephantbird.pig.util.PigTestUtil;
 import com.twitter.elephantbird.thrift.test.TestName;
 import com.twitter.elephantbird.thrift.test.TestPerson;
 import com.twitter.elephantbird.thrift.test.TestPhoneType;
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
+import com.twitter.elephantbird.util.CoreTestUtil;
 
 /**
  * Test {@link MultiFormatLoader} using a Thrift struct.
@@ -46,9 +47,9 @@ public class TestThriftMultiFormatLoader {
 
     Configuration conf = new Configuration();
 
-    Assume.assumeTrue(UnitTestUtil.isNativeLzoLoaded(conf));
+    Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
 
-    pigServer = UnitTestUtil.makePigServer();
+    pigServer = PigTestUtil.makePigServer();
 
     inputDir.mkdirs();
 
