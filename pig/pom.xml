@@ -22,10 +22,6 @@
       <artifactId>slf4j-simple</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.pig</groupId>
       <artifactId>pig</artifactId>
     </dependency>

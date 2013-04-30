@@ -81,6 +81,7 @@
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
+    <protobuf.version>2.4.1</protobuf.version>
   </properties>
 
   <repositories>
@@ -210,17 +211,12 @@
         <artifactId>guava</artifactId>
         <version>11.0.1</version>
       </dependency>
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr</artifactId>
-        <version>3.4</version>
-      </dependency>
 
       <!-- serialization -->
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>2.4.1</version>
+        <version>${protobuf.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.thrift</groupId>
