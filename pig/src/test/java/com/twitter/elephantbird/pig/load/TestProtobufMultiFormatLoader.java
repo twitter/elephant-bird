@@ -22,8 +22,9 @@ import com.twitter.data.proto.tutorial.AddressBookProtos.Person.PhoneType;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.mapreduce.output.LzoBinaryB64LineRecordWriter;
+import com.twitter.elephantbird.pig.util.PigTestUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
+import com.twitter.elephantbird.util.CoreTestUtil;
 
 /**
  * Test {@link MultiFormatLoader} using a Protobuf.
@@ -44,9 +45,9 @@ public class TestProtobufMultiFormatLoader {
   public void setUp() throws Exception {
 
     Configuration conf = new Configuration();
-    Assume.assumeTrue(UnitTestUtil.isNativeLzoLoaded(conf));
+    Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
 
-    pigServer = UnitTestUtil.makePigServer();
+    pigServer = PigTestUtil.makePigServer();
 
     inputDir.mkdirs();
 
