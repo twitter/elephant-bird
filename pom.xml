@@ -76,12 +76,14 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <slf4j.version>1.6.4</slf4j.version>
-    <apache.hadoop.version>0.20.2</apache.hadoop.version>
+    <apache.hadoop1.version>0.20.2</apache.hadoop1.version> <!-- for hadoop1 profile -->
+    <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version> <!-- for hadoop2 profile -->
     <apache.pig.version>0.9.2</apache.pig.version>
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
     <protobuf.version>2.4.1</protobuf.version>
+    <hadoop-lzo.version>0.4.16</hadoop-lzo.version>
   </properties>
 
   <repositories>
@@ -232,27 +234,13 @@
       <!-- hadoop -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-common</artifactId>
-        <version>${apache.hadoop.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-core</artifactId>
-        <version>${apache.hadoop.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-mapred</artifactId>
-        <version>${apache.hadoop.version}</version>
-        <scope>provided</scope>
+        <version>${specific.hadoop.version}</version>
       </dependency>
       <dependency>
         <groupId>com.hadoop.gplcompression</groupId>
         <artifactId>hadoop-lzo</artifactId>
-        <version>0.4.16</version>
-        <scope>provided</scope>
+        <version>${hadoop-lzo.version}</version>
       </dependency>
 
       <!-- cascading -->
@@ -267,7 +255,11 @@
         <groupId>org.apache.pig</groupId>
         <artifactId>pig</artifactId>
         <version>${apache.pig.version}</version>
-        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr</artifactId>
+        <version>3.4</version>
       </dependency>
 
       <!-- hive -->
@@ -275,25 +267,21 @@
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-serde</artifactId>
         <version>${apache.hive.version}</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-exec</artifactId>
         <version>${apache.hive.version}</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hcatalog</groupId>
         <artifactId>hcatalog</artifactId>
         <version>0.4.0-T1</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>javax.jdo</groupId>
         <artifactId>jdo2-api</artifactId>
         <version>2.3-eb</version>
-        <scope>provided</scope>
       </dependency>
 
       <!-- lucene -->
@@ -341,6 +329,24 @@
 
     </dependencies>
   </dependencyManagement>
+
+  <profiles>
+    <profile>
+      <id>hadoop1</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <specific.hadoop.version>${apache.hadoop1.version}</specific.hadoop.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>hadoop2</id>
+      <properties>
+        <specific.hadoop.version>${apache.hadoop2.version}</specific.hadoop.version>
+      </properties>
+    </profile>
+  </profiles>
 
   <build>
     <defaultGoal>package</defaultGoal>
