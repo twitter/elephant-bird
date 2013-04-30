@@ -19,12 +19,12 @@ public class CoreTestUtil {
   }
 
   /**
-   * @return true if "ensure.lzo.tests" system property is set or if native
+   * @return true if "require.lzo.tests" system property is set or if native
    * lzo libraries are loaded.
    */
   static public boolean okToRunLzoTests(Configuration conf) throws IOException {
 
-    if (Boolean.parseBoolean(System.getProperty("ensure.lzo.tests"))) {
+    if (Boolean.parseBoolean(System.getProperty("require.lzo.tests"))) {
       return true;
     }
     try {
