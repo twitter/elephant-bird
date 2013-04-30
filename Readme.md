@@ -12,6 +12,8 @@ Apache licensed.
 
 ## Quickstart
 
+1. Ensure you are running on a Fedora based system
+1. Install the correct versions of the dependencies (see below)
 1. Get the code: `git clone git://github.com/kevinweil/elephant-bird.git`
 1. Build the jar: `mvn package`
 1. Explore what's available: `mvn javadoc:javadoc`
