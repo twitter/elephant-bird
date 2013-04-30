@@ -234,21 +234,25 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-common</artifactId>
         <version>${apache.hadoop.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-core</artifactId>
         <version>${apache.hadoop.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-mapred</artifactId>
         <version>${apache.hadoop.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.hadoop.gplcompression</groupId>
         <artifactId>hadoop-lzo</artifactId>
         <version>0.4.16</version>
+        <scope>provided</scope>
       </dependency>
 
       <!-- cascading -->
@@ -263,6 +267,7 @@
         <groupId>org.apache.pig</groupId>
         <artifactId>pig</artifactId>
         <version>${apache.pig.version}</version>
+        <scope>provided</scope>
       </dependency>
 
       <!-- hive -->
@@ -270,21 +275,25 @@
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-serde</artifactId>
         <version>${apache.hive.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-exec</artifactId>
         <version>${apache.hive.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hcatalog</groupId>
         <artifactId>hcatalog</artifactId>
         <version>0.4.0-T1</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>javax.jdo</groupId>
         <artifactId>jdo2-api</artifactId>
         <version>2.3-eb</version>
+        <scope>provided</scope>
       </dependency>
 
       <!-- lucene -->
