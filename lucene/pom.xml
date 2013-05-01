@@ -38,6 +38,11 @@
       <artifactId>lucene-queryparser</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- include provided, non-transitive hadoop dependencies -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.easymock</groupId>
       <artifactId>easymock</artifactId>
