@@ -76,7 +76,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <slf4j.version>1.6.4</slf4j.version>
-    <apache.hadoop1.version>0.20.2</apache.hadoop1.version> <!-- for hadoop1 profile -->
+    <apache.hadoop1.version>1.0.1</apache.hadoop1.version> <!-- for hadoop1 profile -->
     <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version> <!-- for hadoop2 profile -->
     <apache.pig.version>0.9.2</apache.pig.version>
     <apache.hive.version>0.8.0</apache.hive.version>
@@ -171,6 +171,12 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>ant</groupId>
+        <artifactId>ant</artifactId>
+        <version>1.6.5</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.easymock</groupId>
         <artifactId>easymock</artifactId>
         <version>3.1</version>
@@ -234,7 +240,7 @@
       <!-- hadoop -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-core</artifactId>
+        <artifactId>hadoop-client</artifactId>
         <version>${specific.hadoop.version}</version>
       </dependency>
       <dependency>
@@ -267,16 +273,34 @@
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-serde</artifactId>
         <version>${apache.hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-exec</artifactId>
         <version>${apache.hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hcatalog</groupId>
         <artifactId>hcatalog</artifactId>
         <version>0.4.0-T1</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>javax.jdo</groupId>
@@ -337,13 +361,17 @@
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <specific.hadoop.version>${apache.hadoop1.version}</specific.hadoop.version>
+        <specific.hadoop.version>
+          ${apache.hadoop1.version}
+        </specific.hadoop.version>
       </properties>
     </profile>
     <profile>
       <id>hadoop2</id>
       <properties>
-        <specific.hadoop.version>${apache.hadoop2.version}</specific.hadoop.version>
+        <specific.hadoop.version>
+          ${apache.hadoop2.version}
+        </specific.hadoop.version>
       </properties>
     </profile>
   </profiles>
