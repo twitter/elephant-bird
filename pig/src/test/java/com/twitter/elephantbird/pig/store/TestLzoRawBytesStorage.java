@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 import com.google.common.io.Files;
-import com.hadoop.compression.lzo.GPLNativeCodeLoader;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -25,7 +24,8 @@ import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.load.LzoRawBytesLoader;
 import com.twitter.elephantbird.pig.test.thrift.Name;
 import com.twitter.elephantbird.pig.test.thrift.Person;
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
+import com.twitter.elephantbird.pig.util.PigTestUtil;
+import com.twitter.elephantbird.util.CoreTestUtil;
 import com.twitter.elephantbird.util.ThriftUtils;
 
 import static org.junit.Assert.assertEquals;
@@ -68,7 +68,7 @@ public class TestLzoRawBytesStorage {
     }
 
     // create local Pig server
-    pigServer = UnitTestUtil.makePigServer();
+    pigServer = PigTestUtil.makePigServer();
     pigServer.setBatchOn();
     pigServer.registerQuery(String.format(
         "A = LOAD 'file:%s' AS (name: (first: chararray, last: chararray)" +
@@ -100,7 +100,7 @@ public class TestLzoRawBytesStorage {
   }
 
   private void runTest(Callable<?> test) throws Exception {
-    Assume.assumeTrue(UnitTestUtil.isNativeLzoLoaded(conf));
+    Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
     try {
       setUp();
       test.call();

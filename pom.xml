@@ -457,6 +457,9 @@
             <systemPropertyVariables>
               <test.build.data>${basedir}/target/surefire/data</test.build.data>
             </systemPropertyVariables>
+            <environmentVariables> <!-- for OSX 10.7+ -->
+                <DYLD_LIBRARY_PATH>${test.library.path}</DYLD_LIBRARY_PATH>
+            </environmentVariables>
             <argLine>-Djava.library.path=${test.library.path}</argLine>
           </configuration>
         </plugin>

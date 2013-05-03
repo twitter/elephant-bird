@@ -41,8 +41,8 @@ import com.twitter.elephantbird.pig.util.GenericWritableConverter;
 import com.twitter.elephantbird.pig.util.IntWritableConverter;
 import com.twitter.elephantbird.pig.util.LoadFuncTupleIterator;
 import com.twitter.elephantbird.pig.util.NullWritableConverter;
+import com.twitter.elephantbird.pig.util.PigTestUtil;
 import com.twitter.elephantbird.pig.util.TextConverter;
-import com.twitter.elephantbird.pig.util.UnitTestUtil;
 
 /**
  * Tests for {@link SequenceFileStorage} and related utilities.
@@ -70,7 +70,7 @@ public class TestSequenceFileStorage {
   @Before
   public void setUp() throws Exception {
     // create local Pig server
-    pigServer = UnitTestUtil.makePigServer();
+    pigServer = PigTestUtil.makePigServer();
 
     // create temp SequenceFile
     File tempFile = File.createTempFile("test", ".txt");
