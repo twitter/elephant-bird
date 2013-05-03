@@ -54,6 +54,7 @@ public class LzoUtils {
     LzopCodec codec = new LzopCodec();
     codec.setConf(conf);
 
+    final Configuration config = conf;
     final Path file = path;
     final FileSystem fs = file.getFileSystem(conf);
     FSDataOutputStream fileOut = fs.create(file, false);
@@ -86,13 +87,47 @@ public class LzoUtils {
           // rename or remove the index file based on file size.
 
           Path tmpPath = file.suffix(LzoIndex.LZO_TMP_INDEX_SUFFIX);
-          FileStatus stat = fs.getFileStatus(file);
+          FileStatus stat = getFileStatus(config);
           if (stat.getLen() <= stat.getBlockSize()) {
             fs.delete(tmpPath, false);
           } else {
             fs.rename(tmpPath, file.suffix(LzoIndex.LZO_INDEX_SUFFIX));
           }
         }
+      }
+      
+      /**
+       * Get the status of a file with retries in case of errors.  This is useful
+       * for the S3 file system, where eventual consistency can cause files to not appear
+       * for a few seconds, which would otherwise cause the task to fail, and then future
+       * tasks to fail when the file already exists. 
+       * @param conf
+       * @return
+     * @throws IOException 
+       */
+      private FileStatus getFileStatus(Configuration conf) throws IOException {
+          int numRetriesRemaining = 
+                  conf.getInt("elephantbird.lzo.output.index.retries", 20);
+          int retrySleepMs = 
+                  conf.getInt("elephantbird.lzo.output.index.retries.sleep", 1000);
+          do {
+              try {
+                  return fs.getFileStatus(file);
+              } catch (IOException e) {
+                  if (numRetriesRemaining <= 0) {
+                      throw e;
+                  } else {
+                      LOG.warn("Exception trying to get status of file " + file + "-  Retrying.", e);
+                      numRetriesRemaining -= 1;
+                  }
+                  
+                  try {
+                    Thread.sleep(retrySleepMs);
+                } catch (InterruptedException e1) {
+                    throw new IOException(e1);
+                }
+              }
+          } while (true);
       }
     };
   }
