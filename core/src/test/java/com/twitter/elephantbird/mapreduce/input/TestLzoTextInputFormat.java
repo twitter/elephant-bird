@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.junit.Assume;
@@ -146,7 +147,7 @@ public class TestLzoTextInputFormat extends TestCase {
 
     TaskAttemptContext attemptContext =
         ContextUtil.newTaskAttemptContext(ContextUtil.getConfiguration(job),
-            new TaskAttemptID()); // XXX Verify
+            new TaskAttemptID(TaskID.forName("task_201305011733_0001_r_000001"), 2));
 
     // create some input data
     byte[] expectedMd5 = createTestInput(outputDir_, localFs, attemptContext, charsToOutput);
@@ -227,7 +228,7 @@ public class TestLzoTextInputFormat extends TestCase {
         rw.close(attemptContext);
         OutputCommitter committer = output.getOutputCommitter(attemptContext);
         committer.commitTask(attemptContext);
-        committer.cleanupJob(attemptContext);
+        committer.commitJob(attemptContext);
       }
     }
 
