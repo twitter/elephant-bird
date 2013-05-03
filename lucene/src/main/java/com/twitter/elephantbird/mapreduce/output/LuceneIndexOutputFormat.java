@@ -6,6 +6,7 @@ import java.io.Reader;
 
 import com.google.common.io.Files;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -111,7 +112,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
     FileOutputCommitter committer = (FileOutputCommitter) this.getOutputCommitter(job);
     File tmpDirFile = Files.createTempDir();
     Directory directory = getDirectoryImplementation(tmpDirFile);
-    IndexWriter writer = createIndexWriter(directory, newAnalyzer(job.getConfiguration()));
+    IndexWriter writer = createIndexWriter(directory, newAnalyzer(ContextUtil.getConfiguration(job)));
     return new IndexRecordWriter(writer, committer, tmpDirFile);
   }
 
@@ -163,10 +164,10 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
         writer.forceMerge(1);
         writer.close();
 
-        FileSystem fs = FileSystem.get(context.getConfiguration());
+        FileSystem fs = FileSystem.get(ContextUtil.getConfiguration(context));
         LOG.info("Copying index to HDFS...");
 
-        if (!FileUtil.copy(tmpDirFile, fs, output, true, context.getConfiguration())) {
+        if (!FileUtil.copy(tmpDirFile, fs, output, true, ContextUtil.getConfiguration(context))) {
           throw new IOException("Failed to copy local index to HDFS!");
         }
 
@@ -180,16 +181,6 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
         heartBeat.stop();
       }
     }
-  }
-
-  /**
-   * Set where the index should be written to
-   *
-   * @param job the job
-   * @param path where to write the index
-   */
-  public static void setOutputPath(Job job, Path path) {
-    FileOutputFormat.setOutputPath(job, path);
   }
 
   /**

@@ -48,7 +48,7 @@ public class HadoopUtils {
     }
     String name = group + ":" + counter;
     LOG.warn("Using a dummy counter for " + name + " because it does not already exist.");
-    return new Counter(name, name) {};
+    return ContextUtil.newGenericCounter(name, name, 0);
   }
 
   /**

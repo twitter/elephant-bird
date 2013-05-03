@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import com.twitter.elephantbird.pig.util.UnitTestUtil;
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
@@ -16,7 +17,6 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
@@ -190,7 +190,7 @@ public class TestRCFileThriftStorage {
     conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.BZip2Codec");
 
     return outputFormat.getRecordWriter(
-        new TaskAttemptContext(conf, new TaskAttemptID()));
+        ContextUtil.newTaskAttemptContext(conf, new TaskAttemptID()));
   }
 
   private String personToString(TestPersonExtended person) {

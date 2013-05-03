@@ -364,9 +364,6 @@
   <profiles>
     <profile>
       <id>hadoop1</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <properties>
         <specific.hadoop.version>
           ${apache.hadoop1.version}
@@ -375,6 +372,9 @@
     </profile>
     <profile>
       <id>hadoop2</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
         <specific.hadoop.version>
           ${apache.hadoop2.version}

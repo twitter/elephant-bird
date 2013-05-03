@@ -10,8 +10,8 @@ import java.util.Random;
 import com.hadoop.compression.lzo.GPLNativeCodeLoader;
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzopCodec;
-import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -145,8 +145,9 @@ public class TestLzoTextInputFormat extends TestCase {
     TextOutputFormat.setOutputCompressorClass(job, LzopCodec.class);
     TextOutputFormat.setOutputPath(job, outputDir_);
 
-    TaskAttemptContext attemptContext = new TaskAttemptContext(job.getConfiguration(),
-        new TaskAttemptID("123", 0, false, 1, 2));
+    TaskAttemptContext attemptContext =
+        ContextUtil.newTaskAttemptContext(ContextUtil.getConfiguration(job),
+            new TaskAttemptID()); // XXX Verify
 
     // create some input data
     byte[] expectedMd5 = createTestInput(outputDir_, localFs, attemptContext, charsToOutput);

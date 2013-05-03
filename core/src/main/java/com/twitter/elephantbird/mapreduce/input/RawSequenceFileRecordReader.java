@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.google.common.base.Preconditions;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
@@ -48,7 +49,7 @@ public class RawSequenceFileRecordReader extends RecordReader<DataInputBuffer, D
       InterruptedException {
     Preconditions.checkNotNull(inputSplit, "InputSplit is null");
     Preconditions.checkNotNull(context, "TaskAttemptContext is null");
-    Configuration conf = context.getConfiguration();
+    Configuration conf = ContextUtil.getConfiguration(context);
     FileSplit fileSplit = (FileSplit) inputSplit;
     Path path = fileSplit.getPath();
     // inhibit class loading during SequenceFile.Reader initialization

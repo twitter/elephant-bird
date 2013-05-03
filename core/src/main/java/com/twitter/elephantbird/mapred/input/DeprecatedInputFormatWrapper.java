@@ -5,6 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapred.Counters;
@@ -14,11 +15,9 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
@@ -98,7 +97,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     try {
       List<org.apache.hadoop.mapreduce.InputSplit> splits =
-        realInputFormat.getSplits(new JobContext(job, null));
+        realInputFormat.getSplits(ContextUtil.newJobContext(job, null));
 
       if (splits == null) {
         return null;
@@ -167,6 +166,11 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       wrappedReporter.progress();
     }
 
+    //XXX @Override
+    public float getProgress() {
+      return 0; // XXX
+    }
+
     @Override
     public void setStatus(String s) {
       wrappedReporter.setStatus(s);
@@ -212,6 +216,8 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       // create a TaskInputOutputContext
       @SuppressWarnings("unchecked")
       TaskAttemptContext taskContext =
+          ContextUtil.newTaskAttemptContext(oldJobConf, taskAttemptID);
+      /* XXX will need to create a TaskInputOutputContext
         new TaskInputOutputContext(oldJobConf, taskAttemptID,
             null, null, new ReporterWrapper(reporter)) {
 
@@ -225,6 +231,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
                 throw new RuntimeException("not implemented");
               }
       };
+      */
 
       try {
         realReader = newInputFormat.createRecordReader(split, taskContext);

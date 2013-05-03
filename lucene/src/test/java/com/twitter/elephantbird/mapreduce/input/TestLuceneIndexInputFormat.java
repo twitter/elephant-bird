@@ -15,6 +15,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
@@ -106,7 +107,7 @@ public class TestLuceneIndexInputFormat {
       + "/mapreduce/input/sample_indexes/")), conf);
     LuceneIndexInputFormat.setMaxCombinedIndexSizePerSplitBytes(15L, conf);
     JobContext jobContext = createStrictMock(JobContext.class);
-    expect(jobContext.getConfiguration()).andStubReturn(conf);
+    expect(ContextUtil.getConfiguration(jobContext)).andStubReturn(conf);
     replay(jobContext);
     List<InputSplit> splits = lif.getSplits(jobContext);
     LuceneIndexInputSplit split = (LuceneIndexInputSplit) splits.get(0);

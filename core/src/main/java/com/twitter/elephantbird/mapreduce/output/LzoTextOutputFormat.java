@@ -2,6 +2,7 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -17,7 +18,7 @@ public class LzoTextOutputFormat<K, V> extends TextOutputFormat<K, V>  {
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
 
-    Configuration conf = job.getConfiguration();
+    Configuration conf = ContextUtil.getConfiguration(job);
     Path path = getDefaultWorkFile(job, LzopCodec.DEFAULT_LZO_EXTENSION);
 
     return new LineRecordWriter<K, V>(

@@ -2,11 +2,11 @@ package com.twitter.elephantbird.mapred.output;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -72,7 +72,7 @@ public class DeprecatedOutputFormatWrapper<K, V>
   public void checkOutputSpecs(FileSystem ignored, JobConf job) throws IOException {
     initOutputFormat(job);
     try {
-      realOutputFormat.checkOutputSpecs(new JobContext(job, null));
+      realOutputFormat.checkOutputSpecs(ContextUtil.newJobContext(job, null));
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
@@ -96,7 +96,11 @@ public class DeprecatedOutputFormatWrapper<K, V>
                         throws IOException {
       try {
         // create a TaskInputOutputContext
-        taskContext = new TaskInputOutputContext(
+        taskContext =
+            ContextUtil.newTaskAttemptContext(jobConf,
+                TaskAttemptID.forName(jobConf.get("mapred.task.id")));
+        /* XXX
+            new TaskInputOutputContext(
                             jobConf,
                             TaskAttemptID.forName(jobConf.get("mapred.task.id")),
                             null, null, (StatusReporter) progress) {
@@ -109,7 +113,7 @@ public class DeprecatedOutputFormatWrapper<K, V>
           public boolean nextKeyValue() throws IOException, InterruptedException {
             throw new RuntimeException("not implemented");
           }
-        };
+        }; */
 
         realWriter = realOutputFormat.getRecordWriter(taskContext);
       } catch (InterruptedException e) {
