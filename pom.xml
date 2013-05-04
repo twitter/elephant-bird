@@ -78,7 +78,7 @@
     <slf4j.version>1.6.4</slf4j.version>
     <apache.hadoop1.version>1.0.1</apache.hadoop1.version> <!-- for hadoop1 profile -->
     <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version> <!-- for hadoop2 profile -->
-    <apache.pig.version>0.9.2</apache.pig.version>
+    <apache.pig.version>0.11.1</apache.pig.version>
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
@@ -263,12 +263,19 @@
         <groupId>org.apache.pig</groupId>
         <artifactId>pig</artifactId>
         <version>${apache.pig.version}</version>
+        <classifier>${apache.pig.classifier}</classifier>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.antlr</groupId>
         <artifactId>antlr</artifactId>
         <version>3.4</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>joda-time</groupId>
+        <artifactId>joda-time</artifactId>
+        <version>1.6</version>
         <scope>provided</scope>
       </dependency>
 
@@ -313,6 +320,7 @@
         <groupId>javax.jdo</groupId>
         <artifactId>jdo2-api</artifactId>
         <version>2.3-eb</version>
+        <scope>provided</scope>
       </dependency>
 
       <!-- lucene -->
@@ -368,6 +376,7 @@
         <specific.hadoop.version>
           ${apache.hadoop1.version}
         </specific.hadoop.version>
+        <apache.pig.classifier></apache.pig.classifier>
       </properties>
     </profile>
     <profile>
@@ -379,6 +388,7 @@
         <specific.hadoop.version>
           ${apache.hadoop2.version}
         </specific.hadoop.version>
+        <apache.pig.classifier>h2</apache.pig.classifier>
       </properties>
     </profile>
   </profiles>

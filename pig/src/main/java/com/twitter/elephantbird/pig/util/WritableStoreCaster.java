@@ -11,6 +11,7 @@ import org.apache.pig.LoadStoreCaster;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
+import org.joda.time.DateTime;
 
 /**
  * Base LoadStoreCaster implementation which simplifies specification of conversion from Pig types
@@ -47,6 +48,11 @@ public abstract class WritableStoreCaster<W extends Writable> extends WritableLo
   }
 
   @Override
+  public byte[] toBytes(Boolean value) throws IOException {
+    return write(toWritable(value));
+  }
+
+  @Override
   public byte[] toBytes(Integer value) throws IOException {
     return write(toWritable(value));
   }
@@ -77,6 +83,11 @@ public abstract class WritableStoreCaster<W extends Writable> extends WritableLo
   }
 
   @Override
+  public byte[] toBytes(DateTime value) throws IOException {
+    return write(toWritable(value));
+  }
+
+  @Override
   public byte[] toBytes(DataBag value) throws IOException {
     return write(toWritable(value));
   }
@@ -86,6 +97,10 @@ public abstract class WritableStoreCaster<W extends Writable> extends WritableLo
   }
 
   protected W toWritable(String value) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  protected W toWritable(Boolean value) throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -114,6 +129,10 @@ public abstract class WritableStoreCaster<W extends Writable> extends WritableLo
   }
 
   protected W toWritable(DataBag value) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  protected W toWritable(DateTime value) throws IOException {
     throw new UnsupportedOperationException();
   }
 }
