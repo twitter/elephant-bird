@@ -245,6 +245,12 @@
         <scope>provided</scope>
       </dependency>
       <dependency>
+        <groupId>commons-httpclient</groupId>
+        <artifactId>commons-httpclient</artifactId>
+        <version>3.0.1</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>com.hadoop.gplcompression</groupId>
         <artifactId>hadoop-lzo</artifactId>
         <version>${hadoop-lzo.version}</version>
@@ -465,7 +471,10 @@
           <configuration>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
             <systemPropertyVariables>
-              <test.build.data>${basedir}/target/surefire/data</test.build.data>
+              <test.build.data>${basedir}/target/tests/data</test.build.data>
+              <log4j.configuration> <!-- required when log4j is included (pig tests) -->
+                file:${basedir}/../pig/src/test/resources/test-log4j.properties
+              </log4j.configuration>
             </systemPropertyVariables>
             <environmentVariables> <!-- for OSX 10.7+ -->
                 <DYLD_LIBRARY_PATH>${test.library.path}</DYLD_LIBRARY_PATH>

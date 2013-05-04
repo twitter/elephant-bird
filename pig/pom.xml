@@ -84,16 +84,11 @@
         </executions>
       </plugin>
 
-      <!-- increase memory and set log4j.configuration for pig -->
+      <!-- increase memory -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <argLine>-Xmx1024m</argLine>
-          <systemPropertyVariables>
-            <log4j.configuration>
-              file:${basedir}/src/test/resources/test-log4j.properties
-            </log4j.configuration>
-          </systemPropertyVariables>
         </configuration>
       </plugin>
 
