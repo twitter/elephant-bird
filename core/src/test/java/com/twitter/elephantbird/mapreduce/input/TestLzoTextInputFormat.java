@@ -12,7 +12,6 @@ import com.hadoop.compression.lzo.LzopCodec;
 
 import com.twitter.elephantbird.util.ContextUtil;
 import com.twitter.elephantbird.util.CoreTestUtil;
-import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -33,11 +32,14 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.junit.Assume;
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+
+
 /**
  * Test the LzoTextInputFormat, make sure it splits the file properly and
  * returns the right data.
  */
-public class TestLzoTextInputFormat extends TestCase {
+public class TestLzoTextInputFormat {
   private static final Log LOG = LogFactory.getLog(TestLzoTextInputFormat.class);
 
   private MessageDigest md5_;
@@ -48,9 +50,7 @@ public class TestLzoTextInputFormat extends TestCase {
   private static final int OUTPUT_BIG = 10485760;
   private static final int OUTPUT_SMALL = 50000;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  public void setUp() throws Exception {
     md5_ = MessageDigest.getInstance("MD5");
     Path testBuildData = new Path(System.getProperty("test.build.data", "data"));
     outputDir_ = new Path(testBuildData, "outputDir");
