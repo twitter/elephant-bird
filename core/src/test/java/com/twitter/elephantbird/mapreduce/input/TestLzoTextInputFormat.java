@@ -30,10 +30,10 @@ import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-
 
 /**
  * Test the LzoTextInputFormat, make sure it splits the file properly and
@@ -50,6 +50,7 @@ public class TestLzoTextInputFormat {
   private static final int OUTPUT_BIG = 10485760;
   private static final int OUTPUT_SMALL = 50000;
 
+  @Before
   public void setUp() throws Exception {
     md5_ = MessageDigest.getInstance("MD5");
     Path testBuildData = new Path(System.getProperty("test.build.data", "data"));

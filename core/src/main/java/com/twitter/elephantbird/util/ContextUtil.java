@@ -38,6 +38,7 @@ import org.apache.hadoop.mapreduce.ReduceContext;
 import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 
 /**
  * This is based on ContextFactory.java from hadoop-2.0.x sources.
@@ -64,6 +65,7 @@ public class ContextUtil {
   private static final Field WRAPPED_CONTEXT_FIELD;
 
   private static final Method GET_CONFIGURATION_METHOD;
+  private static final Method GET_COUNTER_METHOD;
 
   static {
     boolean v21 = true;
@@ -166,6 +168,9 @@ public class ContextUtil {
       OUTER_MAP_FIELD.setAccessible(true);
       GET_CONFIGURATION_METHOD = Class.forName(PACKAGE+".JobContext")
                                     .getMethod("getConfiguration");
+      GET_COUNTER_METHOD = taskIOContextCls.getMethod("getCounter",
+                                                      String.class,
+                                                      String.class);
     } catch (SecurityException e) {
       throw new IllegalArgumentException("Can't run constructor ", e);
     } catch (NoSuchMethodException e) {
@@ -251,6 +256,22 @@ public class ContextUtil {
       throw new IllegalArgumentException("Can't invoke method", e);
     }
   }
+
+  /**
+   * Invoke getCounter() TaskInputOutputContext. Works with both
+   * Hadoop 1 and 2.
+   */
+  public static Counter getCounter(TaskInputOutputContext context,
+                                   String groupName, String counterName) {
+    try {
+      return (Counter) GET_COUNTER_METHOD.invoke(context, groupName, counterName);
+    } catch (IllegalAccessException e) {
+      throw new IllegalArgumentException("Can't invoke method", e);
+    } catch (InvocationTargetException e) {
+      throw new IllegalArgumentException("Can't invoke method", e);
+    }
+  }
+
 
   /**
    * Clone a {@link JobContext} or {@link TaskAttemptContext} with a

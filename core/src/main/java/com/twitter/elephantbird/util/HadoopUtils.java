@@ -41,7 +41,8 @@ public class HadoopUtils {
    */
   public static Counter getCounter(JobContext ctx, String group, String counter) {
     if (ctx instanceof TaskInputOutputContext<?, ?, ?, ?>) {
-      Counter c = ((TaskInputOutputContext<?, ?, ?, ?>)ctx).getCounter(group, counter);
+      Counter c = ContextUtil.getCounter((TaskInputOutputContext<?, ?, ?, ?>)ctx,
+                                         group, counter);
       if (c != null) {
         return c;
       }
