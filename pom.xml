@@ -284,6 +284,12 @@
         <version>1.6</version>
         <scope>provided</scope>
       </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>1.8.8</version>
+        <scope>provided</scope>
+      </dependency>
 
       <!-- hive -->
       <dependency>
