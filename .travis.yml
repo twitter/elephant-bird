@@ -21,4 +21,8 @@ before_install:
   - mv build/native/Linux-* ../hadoop-lzo-native
   - cd ..
 
-script: mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true
+script:
+  # run test with hadoop2 profile (default) and then with hadoop1
+  - mvn clean test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true
+  - mvn clean test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop1
+  # (TODO) run tests with one hadoop after building with different hadoop
