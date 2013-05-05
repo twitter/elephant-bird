@@ -92,7 +92,7 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>-Xmx1024m</argLine>
+          <argLine>-Djava.library.path=${test.library.path} -Xmx1024m</argLine>
         </configuration>
       </plugin>
 
