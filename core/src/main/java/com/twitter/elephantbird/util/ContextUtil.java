@@ -143,6 +143,9 @@ public class ContextUtil {
         WRAPPED_CONTEXT_FIELD =
           innerMapContextCls.getDeclaredField("mapContext");
         WRAPPED_CONTEXT_FIELD.setAccessible(true);
+        GET_COUNTER_METHOD = Class.forName(PACKAGE+".TaskAttemptContext")
+            .getMethod("getCounter", String.class, String.class);
+
       } else {
         MAP_CONTEXT_CONSTRUCTOR =
           innerMapContextCls.getConstructor(mapCls,
@@ -155,6 +158,8 @@ public class ContextUtil {
                                             InputSplit.class);
         MAP_CONTEXT_IMPL_CONSTRUCTOR = null;
         WRAPPED_CONTEXT_FIELD = null;
+        GET_COUNTER_METHOD = Class.forName(PACKAGE+".TaskInputOutputContext")
+            .getMethod("getCounter", String.class, String.class);
       }
       MAP_CONTEXT_CONSTRUCTOR.setAccessible(true);
       // XXX REPORTER_FIELD = taskContextCls.getDeclaredField("reporter");
@@ -168,9 +173,6 @@ public class ContextUtil {
       OUTER_MAP_FIELD.setAccessible(true);
       GET_CONFIGURATION_METHOD = Class.forName(PACKAGE+".JobContext")
                                     .getMethod("getConfiguration");
-      GET_COUNTER_METHOD = taskIOContextCls.getMethod("getCounter",
-                                                      String.class,
-                                                      String.class);
     } catch (SecurityException e) {
       throw new IllegalArgumentException("Can't run constructor ", e);
     } catch (NoSuchMethodException e) {
