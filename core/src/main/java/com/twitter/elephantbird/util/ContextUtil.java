@@ -40,7 +40,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 
-/**
+/*
  * This is based on ContextFactory.java from hadoop-2.0.x sources.
  */
 
@@ -58,7 +58,6 @@ public class ContextUtil {
   private static final Constructor<?> MAP_CONTEXT_IMPL_CONSTRUCTOR;
   private static final Constructor<?> GENERIC_COUNTER_CONSTRUCTOR;
 
-  private static final Field REPORTER_FIELD;
   private static final Field READER_FIELD;
   private static final Field WRITER_FIELD;
   private static final Field OUTER_MAP_FIELD;
@@ -162,9 +161,6 @@ public class ContextUtil {
             .getMethod("getCounter", String.class, String.class);
       }
       MAP_CONTEXT_CONSTRUCTOR.setAccessible(true);
-      // XXX REPORTER_FIELD = taskContextCls.getDeclaredField("reporter");
-      // REPORTER_FIELD.setAccessible(true);
-      REPORTER_FIELD = null; //XXX
       READER_FIELD = mapContextCls.getDeclaredField("reader");
       READER_FIELD.setAccessible(true);
       WRITER_FIELD = taskIOContextCls.getDeclaredField("output");
@@ -187,9 +183,6 @@ public class ContextUtil {
   /**
    * Creates JobContext from a JobConf and jobId using the correct constructor
    * for based on Hadoop version. <code>jobId</code> could be null.
-   * @param conf
-   * @param jobId
-   * @return
    */
   public static JobContext newJobContext(Configuration conf, JobID jobId) {
     try {
@@ -207,9 +200,6 @@ public class ContextUtil {
   /**
    * Creates TaskAttempContext from a JobConf and jobId using the correct
    * constructor for based on Hadoop version.
-   * @param conf
-   * @param taskAttemptId
-   * @return
    */
   public static TaskAttemptContext newTaskAttemptContext(
                             Configuration conf, TaskAttemptID taskAttemptId) {
@@ -226,9 +216,6 @@ public class ContextUtil {
   }
 
   /**
-   * @param name
-   * @param displayName
-   * @param value
    * @return with Hadoop 2 : <code>new GenericCounter(args)</code>,<br>
    *         with Hadoop 1 : <code>new Counter(args)</code>
    */
@@ -271,108 +258,6 @@ public class ContextUtil {
       throw new IllegalArgumentException("Can't invoke method", e);
     } catch (InvocationTargetException e) {
       throw new IllegalArgumentException("Can't invoke method", e);
-    }
-  }
-
-
-  /**
-   * Clone a {@link JobContext} or {@link TaskAttemptContext} with a
-   * new configuration.
-   * @param original the original context
-   * @param conf the new configuration
-   * @return a new context object
-   * @throws InterruptedException
-   * @throws IOException
-   */
-  @SuppressWarnings("unchecked")
-  public static JobContext cloneContext(JobContext original,
-                                        Configuration conf
-                                        ) throws IOException,
-                                                 InterruptedException {
-    try {
-      if (original instanceof MapContext<?,?,?,?>) {
-        return cloneMapContext((Mapper.Context) original, conf, null, null);
-      } else if (original instanceof ReduceContext<?,?,?,?>) {
-        throw new IllegalArgumentException("can't clone ReduceContext");
-      } else if (original instanceof TaskAttemptContext) {
-        TaskAttemptContext spec = (TaskAttemptContext) original;
-        return (JobContext)
-          TASK_CONTEXT_CONSTRUCTOR.newInstance(conf, spec.getTaskAttemptID());
-      } else {
-        return (JobContext)
-        JOB_CONTEXT_CONSTRUCTOR.newInstance(conf, original.getJobID());
-      }
-    } catch (InstantiationException e) {
-      throw new IllegalArgumentException("Can't clone object", e);
-    } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Can't clone object", e);
-    } catch (InvocationTargetException e) {
-      throw new IllegalArgumentException("Can't clone object", e);
-    }
-  }
-
-  /**
-   * Copy a custom WrappedMapper.Context, optionally replacing
-   * the input and output.
-   * @param <K1> input key type
-   * @param <V1> input value type
-   * @param <K2> output key type
-   * @param <V2> output value type
-   * @param context the context to clone
-   * @param conf a new configuration
-   * @param reader Reader to read from. Null means to clone from context.
-   * @param writer Writer to write to. Null means to clone from context.
-   * @return a new context. it will not be the same class as the original.
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  @SuppressWarnings("unchecked")
-  public static <K1,V1,K2,V2> Mapper<K1,V1,K2,V2>.Context
-       cloneMapContext(MapContext<K1,V1,K2,V2> context,
-                       Configuration conf,
-                       RecordReader<K1,V1> reader,
-                       RecordWriter<K2,V2> writer
-                      ) throws IOException, InterruptedException {
-    try {
-      // get the outer object pointer
-      Object outer = OUTER_MAP_FIELD.get(context);
-      // if it is a wrapped 21 context, unwrap it
-      if ("org.apache.hadoop.mapreduce.lib.map.WrappedMapper$Context".equals
-            (context.getClass().getName())) {
-        context = (MapContext<K1,V1,K2,V2>) WRAPPED_CONTEXT_FIELD.get(context);
-      }
-      // if the reader or writer aren't given, use the same ones
-      if (reader == null) {
-        reader = (RecordReader<K1,V1>) READER_FIELD.get(context);
-      }
-      if (writer == null) {
-        writer = (RecordWriter<K2,V2>) WRITER_FIELD.get(context);
-      }
-      if (useV21) {
-        Object basis =
-          MAP_CONTEXT_IMPL_CONSTRUCTOR.newInstance(conf,
-                                                   context.getTaskAttemptID(),
-                                                   reader, writer,
-                                                   context.getOutputCommitter(),
-                                                   REPORTER_FIELD.get(context),
-                                                   context.getInputSplit());
-        return (Mapper.Context)
-          MAP_CONTEXT_CONSTRUCTOR.newInstance(outer, basis);
-      } else {
-        return (Mapper.Context)
-          MAP_CONTEXT_CONSTRUCTOR.newInstance(outer,
-                                              conf, context.getTaskAttemptID(),
-                                              reader, writer,
-                                              context.getOutputCommitter(),
-                                              REPORTER_FIELD.get(context),
-                                              context.getInputSplit());
-      }
-    } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Can't access field", e);
-    } catch (InstantiationException e) {
-      throw new IllegalArgumentException("Can't create object", e);
-    } catch (InvocationTargetException e) {
-      throw new IllegalArgumentException("Can't invoke constructor", e);
     }
   }
 }
