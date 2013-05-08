@@ -153,6 +153,7 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
     context.progress();
     expectLastCall().atLeastOnce();
     replay(context);
+    // TODO: fix this test in hadoop mixed mode
 
     LuceneIndexInputFormat.setQueries(queryStrings, conf);
 

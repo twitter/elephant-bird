@@ -166,9 +166,9 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       wrappedReporter.progress();
     }
 
-    //XXX @Override
+    // @Override
     public float getProgress() {
-      return 0; // XXX
+      throw new UnsupportedOperationException();
     }
 
     @Override

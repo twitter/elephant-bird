@@ -64,7 +64,9 @@ public class ContextUtil {
   private static final Field WRAPPED_CONTEXT_FIELD;
 
   private static final Method GET_CONFIGURATION_METHOD;
+  private static final Method SET_STATUS_METHOD;
   private static final Method GET_COUNTER_METHOD;
+  private static final Method INCREMENT_COUNTER_METHOD;
 
   static {
     boolean v21 = true;
@@ -169,6 +171,11 @@ public class ContextUtil {
       OUTER_MAP_FIELD.setAccessible(true);
       GET_CONFIGURATION_METHOD = Class.forName(PACKAGE+".JobContext")
                                     .getMethod("getConfiguration");
+      SET_STATUS_METHOD = Class.forName(PACKAGE+".TaskAttemptContext")
+                                    .getMethod("setStatus", String.class);
+
+      INCREMENT_COUNTER_METHOD = Class.forName(PACKAGE+".Counter")
+                                    .getMethod("increment", Long.TYPE);
     } catch (SecurityException e) {
       throw new IllegalArgumentException("Can't run constructor ", e);
     } catch (NoSuchMethodException e) {
@@ -233,31 +240,50 @@ public class ContextUtil {
   }
 
   /**
-   * Invoke getConfiguration() method on JobContext. Works with both
-   * Hadoop 1 and 2.
+   * Invokes a method and rethrows any exception as runtime excetpions.
    */
-  public static Configuration getConfiguration(JobContext context) {
+  private static Object invoke(Method method, Object obj, Object... args) {
     try {
-      return (Configuration) GET_CONFIGURATION_METHOD.invoke(context);
+      return method.invoke(obj, args);
     } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Can't invoke method", e);
+      throw new IllegalArgumentException("Can't invoke method " + method.getName(), e);
     } catch (InvocationTargetException e) {
-      throw new IllegalArgumentException("Can't invoke method", e);
+      throw new IllegalArgumentException("Can't invoke method " + method.getName(), e);
     }
   }
 
   /**
-   * Invoke getCounter() TaskInputOutputContext. Works with both
+   * Invoke getConfiguration() on JobContext. Works with both
+   * Hadoop 1 and 2.
+   */
+  public static Configuration getConfiguration(JobContext context) {
+    return (Configuration) invoke(GET_CONFIGURATION_METHOD, context);
+  }
+
+  /**
+   * Invoke setStatus() on TaskAttemptContext. Works with both
+   * Hadoop 1 and 2.
+   */
+  public static void setStatus(TaskAttemptContext context, String status) {
+    invoke(SET_STATUS_METHOD, context, status);
+  }
+
+  /**
+   * Invoke getCounter() on TaskInputOutputContext. Works with both
    * Hadoop 1 and 2.
    */
   public static Counter getCounter(TaskInputOutputContext context,
                                    String groupName, String counterName) {
-    try {
-      return (Counter) GET_COUNTER_METHOD.invoke(context, groupName, counterName);
-    } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Can't invoke method", e);
-    } catch (InvocationTargetException e) {
-      throw new IllegalArgumentException("Can't invoke method", e);
-    }
+    return (Counter) invoke(GET_COUNTER_METHOD, context, groupName, counterName);
+  }
+
+  /**
+   * Increment the counter. Works with both Hadoop 1 and 2
+   */
+  public static void incrementCounter(Counter counter, long increment) {
+    // incrementing a count might be called often. Might be affected by
+    // cost of invoke(). might be good candidate to handle in a shim.
+    // (TODO Raghu) figure out how achieve such a build with maven
+    invoke(INCREMENT_COUNTER_METHOD, counter, increment);
   }
 }

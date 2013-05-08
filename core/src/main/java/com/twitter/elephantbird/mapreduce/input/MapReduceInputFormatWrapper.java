@@ -169,25 +169,25 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
 
         public void progress() { context.progress(); }
 
-        //XXX @Override
+        // @Override
         public float getProgress() {
-          return 0; // XXX
+          return (ioCtx != null) ? ioCtx.getProgress() : 0;
         }
 
         public void setStatus(String status) {
           if (ioCtx != null)
-            ioCtx.setStatus(status);
+            ContextUtil.setStatus(ioCtx, status);
         }
 
         public void incrCounter(String group, String counter, long amount) {
           if (ioCtx != null)
-            ioCtx.getCounter(group, counter).increment(amount);
+            ContextUtil.incrementCounter(ioCtx.getCounter(group, counter), amount);
         }
 
         @SuppressWarnings("unchecked")
         public void incrCounter(Enum<?> key, long amount) {
           if (ioCtx != null)
-            ioCtx.getCounter(key).increment(amount);
+            ContextUtil.incrementCounter(ioCtx.getCounter(key), amount);
         }
 
         public org.apache.hadoop.mapred.InputSplit getInputSplit()
@@ -197,7 +197,7 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
 
         public Counter getCounter(String group, String name) {
           return ioCtx != null ?
-            (Counter)ioCtx.getCounter(group, name) : null;
+            (Counter)ContextUtil.getCounter(ioCtx, group, name) : null;
         }
 
         @SuppressWarnings("unchecked")
