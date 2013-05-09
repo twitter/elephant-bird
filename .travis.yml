@@ -22,7 +22,11 @@ before_install:
   - cd ..
 
 script:
-  # run test with hadoop2 profile and then with hadoop1
+  - echo ============ Build and test with hadoop2 profile =====================
   - mvn clean test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop2
+  - echo ============ Build with hadoop2 and test with hadoop1 ================
+  - mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop1
+  - echo ============ Build and test with hadoop1 profile =====================
   - mvn clean test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop1
-  # (TODO) run tests with one hadoop after building with different hadoop
+  - echo ============ Build with hadoop2 and test with hadoop1 ================
+  - mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop2
