@@ -7,6 +7,7 @@ import java.util.Iterator;
 import com.google.common.collect.AbstractIterator;
 
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.util.Progressable;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.Collector;
@@ -78,7 +79,7 @@ public abstract class LuceneIndexCollectAllRecordReader<T extends Writable>
 
       @Override
       protected T computeNext() {
-        context.progress();
+        ((Progressable)context).progress(); // casting to avoid Hadoop 2 incompatibility
         if (doc < 0) {
           return endOfData();
         }

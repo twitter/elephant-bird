@@ -67,6 +67,7 @@ public class ContextUtil {
   private static final Method SET_STATUS_METHOD;
   private static final Method GET_COUNTER_METHOD;
   private static final Method INCREMENT_COUNTER_METHOD;
+  private static final Method GET_TASK_ATTEMPT_ID;
 
   static {
     boolean v21 = true;
@@ -173,7 +174,8 @@ public class ContextUtil {
                                     .getMethod("getConfiguration");
       SET_STATUS_METHOD = Class.forName(PACKAGE+".TaskAttemptContext")
                                     .getMethod("setStatus", String.class);
-
+      GET_TASK_ATTEMPT_ID = Class.forName(PACKAGE+".TaskAttemptContext")
+                                    .getMethod("getTaskAttemptID");
       INCREMENT_COUNTER_METHOD = Class.forName(PACKAGE+".Counter")
                                     .getMethod("increment", Long.TYPE);
     } catch (SecurityException e) {
@@ -266,6 +268,14 @@ public class ContextUtil {
    */
   public static void setStatus(TaskAttemptContext context, String status) {
     invoke(SET_STATUS_METHOD, context, status);
+  }
+
+  /**
+   * returns TaskAttemptContext.getTaskAttemptID(). Works with both
+   * Hadoop 1 and 2.
+   */
+  public static TaskAttemptID getTaskAttemptID(TaskAttemptContext taskContext) {
+    return (TaskAttemptID) invoke(GET_TASK_ATTEMPT_ID, taskContext);
   }
 
   /**

@@ -12,6 +12,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.util.Progressable;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Collector;
@@ -150,7 +151,7 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
     Configuration conf = new Configuration();
     TaskAttemptContext context = createStrictMock(TaskAttemptContext.class);
     expect(ContextUtil.getConfiguration(context)).andStubReturn(conf);
-    context.progress();
+    ((Progressable)context).progress(); // casting to avoid Hadoop 2 incompatibility
     expectLastCall().atLeastOnce();
     replay(context);
     // TODO: fix this test in hadoop mixed mode

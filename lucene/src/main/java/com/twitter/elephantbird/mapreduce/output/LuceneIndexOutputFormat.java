@@ -159,7 +159,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
 
         Path work = committer.getWorkPath();
         Path output = new Path(work, "index-"
-            + String.valueOf(context.getTaskAttemptID().getTaskID().getId()));
+            + String.valueOf(ContextUtil.getTaskAttemptID(context).getTaskID().getId()));
 
         writer.forceMerge(1);
         writer.close();
