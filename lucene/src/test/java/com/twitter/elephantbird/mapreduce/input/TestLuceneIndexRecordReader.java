@@ -154,7 +154,6 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
     ((Progressable)context).progress(); // casting to avoid Hadoop 2 incompatibility
     expectLastCall().atLeastOnce();
     replay(context);
-    // TODO: fix this test in hadoop mixed mode
 
     LuceneIndexInputFormat.setQueries(queryStrings, conf);
 
