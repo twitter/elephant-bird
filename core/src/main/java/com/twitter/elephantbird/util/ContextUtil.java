@@ -18,7 +18,6 @@
 
 package com.twitter.elephantbird.util;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -30,11 +29,9 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.MapContext;
-import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.ReduceContext;
 import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
@@ -55,13 +52,10 @@ public class ContextUtil {
   private static final Constructor<?> JOB_CONTEXT_CONSTRUCTOR;
   private static final Constructor<?> TASK_CONTEXT_CONSTRUCTOR;
   private static final Constructor<?> MAP_CONTEXT_CONSTRUCTOR;
-  private static final Constructor<?> MAP_CONTEXT_IMPL_CONSTRUCTOR;
   private static final Constructor<?> GENERIC_COUNTER_CONSTRUCTOR;
 
   private static final Field READER_FIELD;
   private static final Field WRITER_FIELD;
-  private static final Field OUTER_MAP_FIELD;
-  private static final Field WRAPPED_CONTEXT_FIELD;
 
   private static final Method GET_CONFIGURATION_METHOD;
   private static final Method SET_STATUS_METHOD;
@@ -81,9 +75,7 @@ public class ContextUtil {
     Class<?> jobContextCls;
     Class<?> taskContextCls;
     Class<?> taskIOContextCls;
-    Class<?> mapCls;
     Class<?> mapContextCls;
-    Class<?> innerMapContextCls;
     Class<?> genericCounterCls;
     try {
       if (v21) {
@@ -94,9 +86,6 @@ public class ContextUtil {
         taskIOContextCls =
           Class.forName(PACKAGE+".task.TaskInputOutputContextImpl");
         mapContextCls = Class.forName(PACKAGE + ".task.MapContextImpl");
-        mapCls = Class.forName(PACKAGE + ".lib.map.WrappedMapper");
-        innerMapContextCls =
-          Class.forName(PACKAGE+".lib.map.WrappedMapper$Context");
         genericCounterCls = Class.forName(PACKAGE+".counters.GenericCounter");
       } else {
         jobContextCls =
@@ -106,9 +95,6 @@ public class ContextUtil {
         taskIOContextCls =
           Class.forName(PACKAGE+".TaskInputOutputContext");
         mapContextCls = Class.forName(PACKAGE + ".MapContext");
-        mapCls = Class.forName(PACKAGE + ".Mapper");
-        innerMapContextCls =
-          Class.forName(PACKAGE+".Mapper$Context");
         genericCounterCls =
             Class.forName("org.apache.hadoop.mapred.Counters$Counter");
       }
@@ -131,9 +117,6 @@ public class ContextUtil {
 
       if (useV21) {
         MAP_CONTEXT_CONSTRUCTOR =
-          innerMapContextCls.getConstructor(mapCls,
-                                            MapContext.class);
-        MAP_CONTEXT_IMPL_CONSTRUCTOR =
           mapContextCls.getDeclaredConstructor(Configuration.class,
                                                TaskAttemptID.class,
                                                RecordReader.class,
@@ -141,25 +124,17 @@ public class ContextUtil {
                                                OutputCommitter.class,
                                                StatusReporter.class,
                                                InputSplit.class);
-        MAP_CONTEXT_IMPL_CONSTRUCTOR.setAccessible(true);
-        WRAPPED_CONTEXT_FIELD =
-          innerMapContextCls.getDeclaredField("mapContext");
-        WRAPPED_CONTEXT_FIELD.setAccessible(true);
         GET_COUNTER_METHOD = Class.forName(PACKAGE+".TaskAttemptContext")
             .getMethod("getCounter", String.class, String.class);
-
       } else {
         MAP_CONTEXT_CONSTRUCTOR =
-          innerMapContextCls.getConstructor(mapCls,
-                                            Configuration.class,
+               mapContextCls.getConstructor(Configuration.class,
                                             TaskAttemptID.class,
                                             RecordReader.class,
                                             RecordWriter.class,
                                             OutputCommitter.class,
                                             StatusReporter.class,
                                             InputSplit.class);
-        MAP_CONTEXT_IMPL_CONSTRUCTOR = null;
-        WRAPPED_CONTEXT_FIELD = null;
         GET_COUNTER_METHOD = Class.forName(PACKAGE+".TaskInputOutputContext")
             .getMethod("getCounter", String.class, String.class);
       }
@@ -168,8 +143,6 @@ public class ContextUtil {
       READER_FIELD.setAccessible(true);
       WRITER_FIELD = taskIOContextCls.getDeclaredField("output");
       WRITER_FIELD.setAccessible(true);
-      OUTER_MAP_FIELD = innerMapContextCls.getDeclaredField("this$0");
-      OUTER_MAP_FIELD.setAccessible(true);
       GET_CONFIGURATION_METHOD = Class.forName(PACKAGE+".JobContext")
                                     .getMethod("getConfiguration");
       SET_STATUS_METHOD = Class.forName(PACKAGE+".TaskAttemptContext")
@@ -189,21 +162,25 @@ public class ContextUtil {
     }
   }
 
+
+  private static Object newInstance(Constructor<?> constructor, Object...args) {
+    try {
+      return constructor.newInstance(args);
+    } catch (InstantiationException e) {
+      throw new IllegalArgumentException("Can't instantiate " + constructor, e);
+    } catch (IllegalAccessException e) {
+      throw new IllegalArgumentException("Can't instantiate " + constructor, e);
+    } catch (InvocationTargetException e) {
+      throw new IllegalArgumentException("Can't instantiate " + constructor, e);
+    }
+  }
+
   /**
    * Creates JobContext from a JobConf and jobId using the correct constructor
    * for based on Hadoop version. <code>jobId</code> could be null.
    */
   public static JobContext newJobContext(Configuration conf, JobID jobId) {
-    try {
-      return (JobContext)
-          JOB_CONTEXT_CONSTRUCTOR.newInstance(conf, jobId);
-    } catch (InstantiationException e) {
-      throw new IllegalArgumentException("Can't instantiate JobContext", e);
-    } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Can't instantiate JobContext", e);
-    } catch (InvocationTargetException e) {
-      throw new IllegalArgumentException("Can't instantiate JobContext", e);
-    }
+    return (JobContext) newInstance(JOB_CONTEXT_CONSTRUCTOR, conf, jobId);
   }
 
   /**
@@ -212,17 +189,25 @@ public class ContextUtil {
    */
   public static TaskAttemptContext newTaskAttemptContext(
                             Configuration conf, TaskAttemptID taskAttemptId) {
-    try {
-      return (TaskAttemptContext)
-          TASK_CONTEXT_CONSTRUCTOR.newInstance(conf, taskAttemptId);
-    } catch (InstantiationException e) {
-      throw new IllegalArgumentException("Can't instantiate TaskAttemptContext", e);
-    } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Can't instantiate TaskAttemptContext", e);
-    } catch (InvocationTargetException e) {
-      throw new IllegalArgumentException("Can't instantiate TaskAttemptContext", e);
-    }
+    return (TaskAttemptContext)
+        newInstance(TASK_CONTEXT_CONSTRUCTOR, conf, taskAttemptId);
   }
+
+  /**
+   * Instantiates MapContext under Hadoop 1 and MapContextImpl under Hadoop 2.
+   */
+  public static MapContext newMapContext(Configuration conf,
+                                         TaskAttemptID taskAttemptID,
+                                         RecordReader recordReader,
+                                         RecordWriter recordWriter,
+                                         OutputCommitter outputCommitter,
+                                         StatusReporter statusReporter,
+                                         InputSplit inputSplit) {
+    return (MapContext) newInstance(MAP_CONTEXT_CONSTRUCTOR,
+        conf, taskAttemptID, recordReader, recordWriter, outputCommitter,
+        statusReporter, inputSplit);
+  }
+
 
   /**
    * @return with Hadoop 2 : <code>new GenericCounter(args)</code>,<br>

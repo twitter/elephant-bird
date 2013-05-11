@@ -213,26 +213,10 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
         taskAttemptID = new TaskAttemptID();
       }
 
-      // create a TaskInputOutputContext
-      @SuppressWarnings("unchecked")
-      TaskAttemptContext taskContext =
-          ContextUtil.newTaskAttemptContext(oldJobConf, taskAttemptID);
-      /* XXX will need to create a TaskInputOutputContext
-        new TaskInputOutputContext(oldJobConf, taskAttemptID,
-            null, null, new ReporterWrapper(reporter)) {
-
-              public Object getCurrentKey() throws IOException, InterruptedException {
-                throw new RuntimeException("not implemented");
-              }
-              public Object getCurrentValue() throws IOException, InterruptedException {
-                throw new RuntimeException("not implemented");
-              }
-              public boolean nextKeyValue() throws IOException, InterruptedException {
-                throw new RuntimeException("not implemented");
-              }
-      };
-      */
-
+      // create a MapContext to pass reporter to record reader (for counters)
+      TaskAttemptContext taskContext = ContextUtil
+          .newMapContext(oldJobConf, taskAttemptID, null, null, null,
+              new ReporterWrapper(reporter), null);
       try {
         realReader = newInputFormat.createRecordReader(split, taskContext);
         realReader.initialize(split, taskContext);

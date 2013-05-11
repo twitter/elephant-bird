@@ -95,25 +95,10 @@ public class DeprecatedOutputFormatWrapper<K, V>
                         JobConf jobConf, String name, Progressable progress)
                         throws IOException {
       try {
-        // create a TaskInputOutputContext
-        taskContext =
-            ContextUtil.newTaskAttemptContext(jobConf,
-                TaskAttemptID.forName(jobConf.get("mapred.task.id")));
-        /* XXX
-            new TaskInputOutputContext(
-                            jobConf,
-                            TaskAttemptID.forName(jobConf.get("mapred.task.id")),
-                            null, null, (StatusReporter) progress) {
-          public Object getCurrentKey() throws IOException, InterruptedException {
-            throw new RuntimeException("not implemented");
-          }
-          public Object getCurrentValue() throws IOException, InterruptedException {
-            throw new RuntimeException("not implemented");
-          }
-          public boolean nextKeyValue() throws IOException, InterruptedException {
-            throw new RuntimeException("not implemented");
-          }
-        }; */
+        // create a MapContext to provide access to the reporter (for counters)
+        taskContext = ContextUtil.newMapContext(
+            jobConf, TaskAttemptID.forName(jobConf.get("mapred.task.id")),
+            null, null, null, (StatusReporter) progress, null);
 
         realWriter = realOutputFormat.getRecordWriter(taskContext);
       } catch (InterruptedException e) {
