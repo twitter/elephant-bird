@@ -33,7 +33,7 @@ Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.
 
 ## Version compatibility
 
-1. Hadoop 20.2.x, 1.x, 2.x
+1. Hadoop 20.2x, 1.x, 2.x
 1. Pig 0.8+
 1. Protocol Buffers 2.4.1 (default), 2.3.0 (with `-Dprotobuf.version=2.3.0` for mvn)
 1. Hive 0.7 (with HIVE-1616)
@@ -69,6 +69,10 @@ Hadoop provides two API implementations: the the old-style `org.apache.hadoop.ma
 
 For more information, see [DeprecatedInputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/core/src/java/com/twitter/elephantbird/mapred/input/DeprecatedInputFormatWrapper.java) and [DeprecatedOutputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/core/src/java/com/twitter/elephantbird/mapred/output/DeprecatedOutputFormatWrapper.java)
 
+
+### Hadoop 2.x Support
+
+Elephant-bird published packages are tested with both Hadoop 1.x and 2.x.
 
 ### Hadoop Writables
 * Elephant-Bird provides protocol buffer and thrift writables for directly working with these formats in map-reduce jobs.
