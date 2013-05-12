@@ -28,7 +28,10 @@ public class TestRCFilePigStorage {
   private final File rcfileDir = new File(testDir, "rcfile_in");
   private final int numRecords = 5;
 
-  private final String schema = "name : chararray, age: int, phone:(number: chararray, type: chararray)";
+  private final String schema = "name : chararray, "
+                              + "age: int, "
+                              + "phone:(number: chararray, type: chararray),"
+                              + "occupation: chararray";
 
   @Before
   public void setUp() throws Exception {
@@ -110,6 +113,8 @@ public class TestRCFilePigStorage {
     StorageUtil.putField(out, tf.newTuple(Lists.newArrayList(
                                             "415-555-" + (1234 + index),
                                             "HOME")));
+    StorageUtil.putField(out, "\t");
+    StorageUtil.putField(out, "engineer " + index);
     out.write('\n');
   }
 

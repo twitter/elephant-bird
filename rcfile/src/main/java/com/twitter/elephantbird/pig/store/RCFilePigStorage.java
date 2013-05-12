@@ -158,7 +158,7 @@ public class RCFilePigStorage extends PigStorage {
       Tuple tuple = tupleFactory.newTuple(tupleSize);
       int tupleIdx = 0;
 
-      for (int i=0; i<inputSize; i++) {
+      for (int i=0; i<inputSize && tupleIdx<tupleSize; i++) {
         if (!isProjected || i == requiredColumns[tupleIdx]) {
           // set if all the fields are required or the field is projected
           BytesRefWritable ref = byteRefs.get(i);
