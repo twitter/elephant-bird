@@ -41,15 +41,15 @@ public class HadoopUtils {
    */
   public static Counter getCounter(JobContext ctx, String group, String counter) {
     if (ctx instanceof TaskInputOutputContext<?, ?, ?, ?>) {
-      Counter c = ContextUtil.getCounter((TaskInputOutputContext<?, ?, ?, ?>)ctx,
-                                         group, counter);
+      Counter c = HadoopCompat.getCounter((TaskInputOutputContext<?, ?, ?, ?>) ctx,
+          group, counter);
       if (c != null) {
         return c;
       }
     }
     String name = group + ":" + counter;
     LOG.warn("Using a dummy counter for " + name + " because it does not already exist.");
-    return ContextUtil.newGenericCounter(name, name, 0);
+    return HadoopCompat.newGenericCounter(name, name, 0);
   }
 
   /**

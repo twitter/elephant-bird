@@ -5,7 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapred.Counters;
@@ -97,7 +97,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     try {
       List<org.apache.hadoop.mapreduce.InputSplit> splits =
-        realInputFormat.getSplits(ContextUtil.newJobContext(job, null));
+        realInputFormat.getSplits(HadoopCompat.newJobContext(job, null));
 
       if (splits == null) {
         return null;
@@ -214,7 +214,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       }
 
       // create a MapContext to pass reporter to record reader (for counters)
-      TaskAttemptContext taskContext = ContextUtil
+      TaskAttemptContext taskContext = HadoopCompat
           .newMapContext(oldJobConf, taskAttemptID, null, null, null,
               new ReporterWrapper(reporter), null);
       try {

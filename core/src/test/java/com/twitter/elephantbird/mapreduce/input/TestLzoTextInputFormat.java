@@ -10,7 +10,7 @@ import java.util.Random;
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzopCodec;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.CoreTestUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -147,7 +147,7 @@ public class TestLzoTextInputFormat {
     TextOutputFormat.setOutputPath(job, outputDir_);
 
     TaskAttemptContext attemptContext =
-        ContextUtil.newTaskAttemptContext(ContextUtil.getConfiguration(job),
+        HadoopCompat.newTaskAttemptContext(HadoopCompat.getConfiguration(job),
             new TaskAttemptID(TaskID.forName("task_201305011733_0001_r_000001"), 2));
 
     // create some input data

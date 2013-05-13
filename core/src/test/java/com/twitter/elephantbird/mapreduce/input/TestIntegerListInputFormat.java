@@ -5,7 +5,7 @@ import static junit.framework.Assert.assertEquals;
 import java.io.IOException;
 import java.util.List;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -20,7 +20,7 @@ public class TestIntegerListInputFormat {
   @Before
   public void setup() {
     input_ = new IntegerListInputFormat();
-    jc_ = ContextUtil.newJobContext(new Configuration(), new JobID());
+    jc_ = HadoopCompat.newJobContext(new Configuration(), new JobID());
   }
 
   @Test

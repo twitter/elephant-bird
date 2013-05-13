@@ -2,7 +2,7 @@ package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -221,7 +221,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
   @SuppressWarnings("unchecked")
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-    Configuration conf = ContextUtil.getConfiguration(job);
+    Configuration conf = HadoopCompat.getConfiguration(job);
     ensureUDFContext(conf);
     verifyWritableClass(config.keyClass, true, config.keyConverter);
     verifyWritableClass(config.valueClass, false, config.valueConverter);
@@ -268,7 +268,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
    */
   private void setCompression(Path path, Job job) {
     CompressionCodecFactory codecFactory =
-        new CompressionCodecFactory(ContextUtil.getConfiguration(job));
+        new CompressionCodecFactory(HadoopCompat.getConfiguration(job));
     CompressionCodec codec = codecFactory.getCodec(path);
     if (codec != null) {
       FileOutputFormat.setCompressOutput(job, true);

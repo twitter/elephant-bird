@@ -3,10 +3,8 @@ package com.twitter.elephantbird.examples;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
-import com.twitter.elephantbird.examples.proto.Examples;
-import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -66,10 +64,10 @@ public class ThriftMRExample {
 
     job.setInputFormatClass(TextInputFormat.class);
     if (conf.get("thrift.test.format", "B64Line").equals("Block")) {
-      LzoThriftBlockOutputFormat.setClassConf(Age.class, ContextUtil.getConfiguration(job));
+      LzoThriftBlockOutputFormat.setClassConf(Age.class, HadoopCompat.getConfiguration(job));
       job.setOutputFormatClass(LzoThriftBlockOutputFormat.class);
     } else { // assume B64Line
-      LzoThriftB64LineOutputFormat.setClassConf(Age.class, ContextUtil.getConfiguration(job));
+      LzoThriftB64LineOutputFormat.setClassConf(Age.class, HadoopCompat.getConfiguration(job));
       job.setOutputFormatClass(LzoThriftB64LineOutputFormat.class);
     }
 

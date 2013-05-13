@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
@@ -104,7 +104,7 @@ public class RCFilePigStorage extends PigStorage {
     String obj = getUDFProperties().getProperty("requiredFieldList");
     if (obj == null) {
       // front end or there is no projection set
-      ColumnProjectionUtils.setFullyReadColumns(ContextUtil.getConfiguration(job));
+      ColumnProjectionUtils.setFullyReadColumns(HadoopCompat.getConfiguration(job));
       return ;
     }
 
@@ -119,7 +119,7 @@ public class RCFilePigStorage extends PigStorage {
       ids.add(rf.getIndex());
     }
 
-    ColumnProjectionUtils.setReadColumnIDs(ContextUtil.getConfiguration(job), ids);
+    ColumnProjectionUtils.setReadColumnIDs(HadoopCompat.getConfiguration(job), ids);
   }
 
   @Override
@@ -139,7 +139,7 @@ public class RCFilePigStorage extends PigStorage {
     }
 
     if (numColumns > 0) {
-      RCFileOutputFormat.setColumnNumber(ContextUtil.getConfiguration(job), numColumns);
+      RCFileOutputFormat.setColumnNumber(HadoopCompat.getConfiguration(job), numColumns);
     }
   }
 

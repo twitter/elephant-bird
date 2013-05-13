@@ -3,7 +3,7 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -68,7 +68,7 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     start_ = split.getStart();
     end_ = start_ + split.getLength();
     final Path file = split.getPath();
-    Configuration job = ContextUtil.getConfiguration(context);
+    Configuration job = HadoopCompat.getConfiguration(context);
 
     errorTracker = new InputErrorTracker(job);
 

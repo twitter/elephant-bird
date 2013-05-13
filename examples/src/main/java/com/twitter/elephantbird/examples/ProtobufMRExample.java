@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -68,10 +68,10 @@ public class ProtobufMRExample {
 
     job.setInputFormatClass(TextInputFormat.class);
     if (conf.get("proto.test.format", "B64Line").equals("Block")) {
-      LzoProtobufBlockOutputFormat.setClassConf(Age.class, ContextUtil.getConfiguration(job));
+      LzoProtobufBlockOutputFormat.setClassConf(Age.class, HadoopCompat.getConfiguration(job));
       job.setOutputFormatClass(LzoProtobufBlockOutputFormat.class);
     } else { // assume B64Line
-      LzoProtobufB64LineOutputFormat.setClassConf(Age.class, ContextUtil.getConfiguration(job));
+      LzoProtobufB64LineOutputFormat.setClassConf(Age.class, HadoopCompat.getConfiguration(job));
       job.setOutputFormatClass(LzoProtobufB64LineOutputFormat.class);
     }
 

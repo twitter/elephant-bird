@@ -2,7 +2,7 @@ package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.io.compress.BZip2Codec;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.pig.builtin.PigStorage;
@@ -29,8 +29,8 @@ public class Bz2PigStorage extends PigStorage {
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-    ContextUtil.getConfiguration(job).set("output.compression.enabled", "true");
-    ContextUtil.getConfiguration(job).set("output.compression.codec", BZip2Codec.class.getName());
+    HadoopCompat.getConfiguration(job).set("output.compression.enabled", "true");
+    HadoopCompat.getConfiguration(job).set("output.compression.codec", BZip2Codec.class.getName());
     super.setStoreLocation(location, job);
   }
 

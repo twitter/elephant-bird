@@ -13,7 +13,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
@@ -247,7 +247,7 @@ public class LuceneIndexingIntegrationTest {
     job.setOutputKeyClass(IntWritable.class);
     job.setOutputValueClass(Text.class);
 
-    IndexInputFormat.setInputPaths(inputPaths, ContextUtil.getConfiguration(job));
+    IndexInputFormat.setInputPaths(inputPaths, HadoopCompat.getConfiguration(job));
 
     IndexInputFormat.setQueries(QUERIES, job.getConfiguration());
 

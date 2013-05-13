@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
@@ -59,7 +59,7 @@ public class RCFileThriftInputFormat extends RCFileBaseInputFormat {
   createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
                                     throws IOException, InterruptedException {
     if (typeRef == null) {
-      typeRef = ThriftUtils.getTypeRef(ContextUtil.getConfiguration(taskAttempt),
+      typeRef = ThriftUtils.getTypeRef(HadoopCompat.getConfiguration(taskAttempt),
                                        RCFileThriftInputFormat.class);
     }
     return new ThriftReader(createUnwrappedRecordReader(split, taskAttempt));
@@ -109,7 +109,7 @@ public class RCFileThriftInputFormat extends RCFileBaseInputFormat {
           , fsplit.getStart()
           , fsplit.getStart() + fsplit.getLength()));
 
-      Configuration conf = ContextUtil.getConfiguration(ctx);
+      Configuration conf = HadoopCompat.getConfiguration(ctx);
       ColumnarMetadata storedInfo = RCFileUtil.readMetadata(conf, file);
 
       // list of field numbers

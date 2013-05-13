@@ -9,7 +9,7 @@ import java.util.ListIterator;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -101,7 +101,7 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
   public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException,
       InterruptedException {
 
-    conf = ContextUtil.getConfiguration(context);
+    conf = HadoopCompat.getConfiguration(context);
     this.context = context;
 
     // convert query strings in the job conf to lucene Query objects

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
@@ -227,11 +227,11 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
     getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
 
     if (typeRef == null) {
-      typeRef = ThriftUtils.getTypeRef(ContextUtil.getConfiguration(job), RCFileProtobufOutputFormat.class);
+      typeRef = ThriftUtils.getTypeRef(HadoopCompat.getConfiguration(job), RCFileProtobufOutputFormat.class);
       init();
     }
 
-    RCFileOutputFormat.setColumnNumber(ContextUtil.getConfiguration(job), numColumns);
+    RCFileOutputFormat.setColumnNumber(HadoopCompat.getConfiguration(job), numColumns);
     return new ProtobufWriter(job);
   }
 }

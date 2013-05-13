@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -90,7 +90,7 @@ public abstract class LzoBaseLoadFunc extends LoadFunc implements LoadMetadata, 
   @Override
   public void setLocation(String location, Job job) throws IOException {
     FileInputFormat.setInputPaths(job, location);
-    this.jobConf = ContextUtil.getConfiguration(job);
+    this.jobConf = HadoopCompat.getConfiguration(job);
 
     String projectedFields = getUDFProperties().getProperty(projectionKey);
     if (projectedFields != null) {

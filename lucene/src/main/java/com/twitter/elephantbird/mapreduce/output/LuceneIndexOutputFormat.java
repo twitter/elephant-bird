@@ -6,13 +6,12 @@ import java.io.Reader;
 
 import com.google.common.io.Files;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
@@ -112,7 +111,7 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
     FileOutputCommitter committer = (FileOutputCommitter) this.getOutputCommitter(job);
     File tmpDirFile = Files.createTempDir();
     Directory directory = getDirectoryImplementation(tmpDirFile);
-    IndexWriter writer = createIndexWriter(directory, newAnalyzer(ContextUtil.getConfiguration(job)));
+    IndexWriter writer = createIndexWriter(directory, newAnalyzer(HadoopCompat.getConfiguration(job)));
     return new IndexRecordWriter(writer, committer, tmpDirFile);
   }
 
@@ -159,15 +158,15 @@ public abstract class LuceneIndexOutputFormat<K, V> extends FileOutputFormat<K, 
 
         Path work = committer.getWorkPath();
         Path output = new Path(work, "index-"
-            + String.valueOf(ContextUtil.getTaskAttemptID(context).getTaskID().getId()));
+            + String.valueOf(HadoopCompat.getTaskAttemptID(context).getTaskID().getId()));
 
         writer.forceMerge(1);
         writer.close();
 
-        FileSystem fs = FileSystem.get(ContextUtil.getConfiguration(context));
+        FileSystem fs = FileSystem.get(HadoopCompat.getConfiguration(context));
         LOG.info("Copying index to HDFS...");
 
-        if (!FileUtil.copy(tmpDirFile, fs, output, true, ContextUtil.getConfiguration(context))) {
+        if (!FileUtil.copy(tmpDirFile, fs, output, true, HadoopCompat.getConfiguration(context))) {
           throw new IOException("Failed to copy local index to HDFS!");
         }
 

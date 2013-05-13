@@ -3,7 +3,7 @@ package com.twitter.elephantbird.pig.util;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.pig.impl.util.Pair;
@@ -28,11 +28,11 @@ public class PigCounterHelper {
     if (reporter != null) { // common case
       Counter counter = reporter.getCounter(group, counterName);
       if (counter != null) {
-        ContextUtil.incrementCounter(counter, incr);
+        HadoopCompat.incrementCounter(counter, incr);
 
         if (counterStringMap_.size() > 0) {
           for (Map.Entry<Pair<String, String>, Long> entry : counterStringMap_.entrySet()) {
-            ContextUtil.incrementCounter(
+            HadoopCompat.incrementCounter(
                 reporter.getCounter(entry.getKey().first, entry.getKey().second),
                 entry.getValue());
           }
@@ -55,10 +55,10 @@ public class PigCounterHelper {
   public void incrCounter(Enum<?> key, long incr) {
     PigStatusReporter reporter = PigStatusReporter.getInstance();
     if (reporter != null && reporter.getCounter(key) != null) {
-      ContextUtil.incrementCounter(reporter.getCounter(key), incr);
+      HadoopCompat.incrementCounter(reporter.getCounter(key), incr);
       if (counterEnumMap_.size() > 0) {
         for (Map.Entry<Enum<?>, Long> entry : counterEnumMap_.entrySet()) {
-          ContextUtil.incrementCounter(
+          HadoopCompat.incrementCounter(
               reporter.getCounter(entry.getKey()), entry.getValue());
         }
         counterEnumMap_.clear();

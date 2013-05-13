@@ -7,7 +7,7 @@ import java.util.Arrays;
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.Codecs;
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -112,10 +112,10 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
       if (newSize == 0) {
         return false;
       }
-      ContextUtil.incrementCounter(linesReadCounter, 1);
+      HadoopCompat.incrementCounter(linesReadCounter, 1);
       pos_ = getLzoFilePos();
       if (line_.getLength() == 0 || line_.charAt(0) == '\n') {
-        ContextUtil.incrementCounter(emptyLinesCounter, 1);
+        HadoopCompat.incrementCounter(emptyLinesCounter, 1);
         continue;
       }
 
@@ -132,12 +132,12 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
       }
 
       if (protoValue == null) {
-        ContextUtil.incrementCounter(recordErrorsCounter, 1);
+        HadoopCompat.incrementCounter(recordErrorsCounter, 1);
         errorTracker.incErrors(decodeException);
         continue;
       }
 
-      ContextUtil.incrementCounter(recordsReadCounter, 1);
+      HadoopCompat.incrementCounter(recordsReadCounter, 1);
       value_.set(protoValue);
       return true;
     }
