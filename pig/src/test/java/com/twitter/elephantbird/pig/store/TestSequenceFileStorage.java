@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -186,14 +186,14 @@ public class TestSequenceFileStorage {
         new FileSplit(new Path(tempFilename), 0, new File(tempFilename).length(),
             new String[] { "localhost" });
     TaskAttemptContext context =
-        ContextUtil.newTaskAttemptContext(ContextUtil.getConfiguration(job), new TaskAttemptID());
+        HadoopCompat.newTaskAttemptContext(HadoopCompat.getConfiguration(job), new TaskAttemptID());
     reader.initialize(fileSplit, context);
     InputSplit[] wrappedSplits = new InputSplit[] { fileSplit };
     int inputIndex = 0;
     List<OperatorKey> targetOps = Arrays.asList(new OperatorKey("54321", 0));
     int splitIndex = 0;
     PigSplit split = new PigSplit(wrappedSplits, inputIndex, targetOps, splitIndex);
-    split.setConf(ContextUtil.getConfiguration(job));
+    split.setConf(HadoopCompat.getConfiguration(job));
     storage.prepareToRead(reader, split);
 
     // read tuples and validate

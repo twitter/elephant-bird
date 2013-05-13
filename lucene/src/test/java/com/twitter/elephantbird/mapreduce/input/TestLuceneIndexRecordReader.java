@@ -7,7 +7,7 @@ import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -150,7 +150,7 @@ public class TestLuceneIndexRecordReader extends EasyMockSupport {
 
     Configuration conf = new Configuration();
     TaskAttemptContext context = createStrictMock(TaskAttemptContext.class);
-    expect(ContextUtil.getConfiguration(context)).andStubReturn(conf);
+    expect(HadoopCompat.getConfiguration(context)).andStubReturn(conf);
     ((Progressable)context).progress(); // casting to avoid Hadoop 2 incompatibility
     expectLastCall().atLeastOnce();
     replay(context);

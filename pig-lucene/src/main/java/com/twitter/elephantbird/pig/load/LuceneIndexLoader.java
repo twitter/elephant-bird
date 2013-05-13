@@ -10,7 +10,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
@@ -116,7 +116,7 @@ public abstract class LuceneIndexLoader<T extends Writable> extends LoadFunc {
     Preconditions.checkArgument(queries != null || queryFile != null,
         "Either queires or queryFile must be set in the constructor!");
 
-    Configuration conf = ContextUtil.getConfiguration(job);
+    Configuration conf = HadoopCompat.getConfiguration(job);
     // prevent pig from trying to combine splits, let LuceneIndexInputFormat do that
     conf.setBoolean("pig.noSplitCombination", true);
 

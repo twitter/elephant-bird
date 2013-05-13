@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import com.twitter.elephantbird.pig.util.PigTestUtil;
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.CoreTestUtil;
 
 import org.apache.commons.codec.binary.Base64;
@@ -192,7 +192,7 @@ public class TestRCFileProtobufStorage {
     // conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.BZip2Codec");
 
     return outputFormat.getRecordWriter(
-        ContextUtil.newTaskAttemptContext(conf, new TaskAttemptID()));
+        HadoopCompat.newTaskAttemptContext(conf, new TaskAttemptID()));
   }
 
   // return a Person object

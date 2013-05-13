@@ -9,7 +9,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -61,7 +61,7 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
 
   @Override
   public void execute(Mapper.Context context) throws IOException {
-    Configuration conf =  ContextUtil.getConfiguration(context);
+    Configuration conf =  HadoopCompat.getConfiguration(context);
 
     List<String> indexes = HadoopUtils.readStringListFromConfAsJson(INDEXES_KEY, conf);
     Path output = new Path(conf.get(OUTPUT_KEY));

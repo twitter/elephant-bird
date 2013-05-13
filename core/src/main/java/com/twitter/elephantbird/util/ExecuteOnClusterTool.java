@@ -77,7 +77,7 @@ public abstract class ExecuteOnClusterTool extends Configured implements Tool {
       ExecuteOnClusterTool tool;
       try {
         tool = (ExecuteOnClusterTool) Class.forName(
-            ContextUtil.getConfiguration(context).get(IMPL_KEY)).newInstance();
+            HadoopCompat.getConfiguration(context).get(IMPL_KEY)).newInstance();
       } catch (InstantiationException e) {
         throw new IOException(e);
       } catch (IllegalAccessException e) {

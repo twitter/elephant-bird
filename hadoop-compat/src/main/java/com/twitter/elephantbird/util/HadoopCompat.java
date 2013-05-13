@@ -43,9 +43,9 @@ import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 
 /**
  * Utility methods to allow applications to deal with inconsistencies between
- * MapReduce Context Objects API between hadoop-0.20 and later versions.
+ * MapReduce Context Objects API between Hadoop 1.x and 2.x.
  */
-public class ContextUtil {
+public class HadoopCompat {
 
   private static final boolean useV21;
 
@@ -162,6 +162,12 @@ public class ContextUtil {
     }
   }
 
+  /**
+   * True if runtime Hadoop version is 2.x, false otherwise.
+   */
+  public static boolean isVersion2x() {
+    return useV21;
+  }
 
   private static Object newInstance(Constructor<?> constructor, Object...args) {
     try {
@@ -207,7 +213,6 @@ public class ContextUtil {
         conf, taskAttemptID, recordReader, recordWriter, outputCommitter,
         statusReporter, inputSplit);
   }
-
 
   /**
    * @return with Hadoop 2 : <code>new GenericCounter(args)</code>,<br>

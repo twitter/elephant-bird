@@ -11,7 +11,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -135,10 +135,10 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   public List<InputSplit> getSplits(JobContext job) throws IOException, InterruptedException {
 
     // load settings from job conf
-    loadConfig(ContextUtil.getConfiguration(job));
+    loadConfig(HadoopCompat.getConfiguration(job));
 
     // find all the index dirs and create a split for each
-    PriorityQueue<LuceneIndexInputSplit> splits = findSplits(ContextUtil.getConfiguration(job));
+    PriorityQueue<LuceneIndexInputSplit> splits = findSplits(HadoopCompat.getConfiguration(job));
 
     // combine the splits based on maxCombineSplitSize
     List<InputSplit> combinedSplits = combineSplits(splits, maxCombinedIndexSizePerSplit,

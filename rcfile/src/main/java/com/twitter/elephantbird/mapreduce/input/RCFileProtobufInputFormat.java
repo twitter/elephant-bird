@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
@@ -59,7 +59,7 @@ public class RCFileProtobufInputFormat extends RCFileBaseInputFormat {
   createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
           throws IOException, InterruptedException {
     if (typeRef == null) {
-      typeRef = Protobufs.getTypeRef(ContextUtil.getConfiguration(taskAttempt),
+      typeRef = Protobufs.getTypeRef(HadoopCompat.getConfiguration(taskAttempt),
                                      RCFileProtobufInputFormat.class);
     }
     return new ProtobufReader(createUnwrappedRecordReader(split, taskAttempt));
@@ -105,7 +105,7 @@ public class RCFileProtobufInputFormat extends RCFileBaseInputFormat {
       final List<FieldDescriptor> msgFields = msgDesc.getFields();
 
       // set up conf to read all the columns
-      Configuration conf = new Configuration(ContextUtil.getConfiguration(ctx));
+      Configuration conf = new Configuration(HadoopCompat.getConfiguration(ctx));
       ColumnProjectionUtils.setFullyReadColumns(conf);
 
       FileSplit fsplit = (FileSplit)split;
