@@ -3,7 +3,7 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ public abstract class LzoOutputFormat<K, V> extends FileOutputFormat<K, V> {
                   throws IOException, InterruptedException {
 
     return LzoUtils.getIndexedLzoOutputStream(
-                      ContextUtil.getConfiguration(job),
+                      HadoopCompat.getConfiguration(job),
                       getDefaultWorkFile(job, LzopCodec.DEFAULT_LZO_EXTENSION));
   }
 }

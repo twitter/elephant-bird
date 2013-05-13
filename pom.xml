@@ -115,6 +115,11 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-hadoop-compat</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-hive</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -646,6 +651,7 @@
   <modules>
     <module>cascading2</module>
     <module>core</module>
+    <module>hadoop-compat</module>
     <module>hive</module>
     <module>mahout</module>
     <module>pig</module>

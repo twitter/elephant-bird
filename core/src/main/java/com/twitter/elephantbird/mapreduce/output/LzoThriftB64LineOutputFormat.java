@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -44,7 +44,7 @@ public class LzoThriftB64LineOutputFormat<M extends TBase<?, ?>>
   public RecordWriter<M, ThriftWritable<M>> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
     if (typeRef_ == null) {
-      typeRef_ = ThriftUtils.getTypeRef(ContextUtil.getConfiguration(job), LzoThriftB64LineOutputFormat.class);
+      typeRef_ = ThriftUtils.getTypeRef(HadoopCompat.getConfiguration(job), LzoThriftB64LineOutputFormat.class);
     }
     return new LzoBinaryB64LineRecordWriter<M, ThriftWritable<M>>(new ThriftConverter<M>(typeRef_), getOutputStream(job));
   }

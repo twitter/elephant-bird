@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -20,7 +20,7 @@ public class TestLocationAsTuple {
   public void testSimpleLoad() throws IOException {
     Configuration conf = new Configuration();
     Job job = EasyMock.createMock(Job.class);
-    EasyMock.expect(ContextUtil.getConfiguration(job)).andStubReturn(conf);
+    EasyMock.expect(HadoopCompat.getConfiguration(job)).andStubReturn(conf);
     EasyMock.replay(job);
     LoadFunc loader = new LocationAsTuple();
     loader.setUDFContextSignature("foo");
@@ -40,7 +40,7 @@ public class TestLocationAsTuple {
   public void testTokenizedLoad() throws IOException {
     Configuration conf = new Configuration();
     Job job = EasyMock.createMock(Job.class);
-    EasyMock.expect(ContextUtil.getConfiguration(job)).andStubReturn(conf);
+    EasyMock.expect(HadoopCompat.getConfiguration(job)).andStubReturn(conf);
     EasyMock.replay(job);
     LoadFunc loader = new LocationAsTuple(",");
     loader.setUDFContextSignature("foo");

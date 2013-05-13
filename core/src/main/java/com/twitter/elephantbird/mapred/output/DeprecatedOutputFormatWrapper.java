@@ -2,7 +2,7 @@ package com.twitter.elephantbird.mapred.output;
 
 import java.io.IOException;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordWriter;
@@ -11,7 +11,6 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.ReflectionUtils;
 
@@ -72,7 +71,7 @@ public class DeprecatedOutputFormatWrapper<K, V>
   public void checkOutputSpecs(FileSystem ignored, JobConf job) throws IOException {
     initOutputFormat(job);
     try {
-      realOutputFormat.checkOutputSpecs(ContextUtil.newJobContext(job, null));
+      realOutputFormat.checkOutputSpecs(HadoopCompat.newJobContext(job, null));
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
@@ -96,7 +95,7 @@ public class DeprecatedOutputFormatWrapper<K, V>
                         throws IOException {
       try {
         // create a MapContext to provide access to the reporter (for counters)
-        taskContext = ContextUtil.newMapContext(
+        taskContext = HadoopCompat.newMapContext(
             jobConf, TaskAttemptID.forName(jobConf.get("mapred.task.id")),
             null, null, null, (StatusReporter) progress, null);
 

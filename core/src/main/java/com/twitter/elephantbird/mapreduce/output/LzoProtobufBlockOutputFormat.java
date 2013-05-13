@@ -2,7 +2,7 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.IOException;
 
-import com.twitter.elephantbird.util.ContextUtil;
+import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -53,7 +53,7 @@ public class LzoProtobufBlockOutputFormat<M extends Message> extends LzoOutputFo
   public RecordWriter<M, ProtobufWritable<M>> getRecordWriter(TaskAttemptContext job)
   throws IOException, InterruptedException {
     if (typeRef_ == null) { // i.e. if not set by a subclass
-      typeRef_ = Protobufs.getTypeRef(ContextUtil.getConfiguration(job), LzoProtobufBlockOutputFormat.class);
+      typeRef_ = Protobufs.getTypeRef(HadoopCompat.getConfiguration(job), LzoProtobufBlockOutputFormat.class);
     }
 
     return new LzoBinaryBlockRecordWriter<M, ProtobufWritable<M>>(
