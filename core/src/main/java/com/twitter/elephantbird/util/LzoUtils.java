@@ -6,7 +6,6 @@ import java.io.OutputStream;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -77,8 +76,23 @@ public class LzoUtils {
         codec.createOutputStream(fileOut) );
 
     return new DataOutputStream(out) {
-      // override close() to handle renaming index file.
+        
+      private long bytesWritten = 0;
+      
+      @Override
+      public void write(int b) throws IOException {
+        super.write(b);
+        bytesWritten += 1;
+      }
 
+      @Override
+      public void write(byte b[], int off, int len) throws IOException {
+        super.write(b, off, len);
+        bytesWritten += len;
+      }
+
+      // override close() to handle renaming index file.
+      @Override
       public void close() throws IOException {
         super.close();
 
@@ -86,8 +100,7 @@ public class LzoUtils {
           // rename or remove the index file based on file size.
 
           Path tmpPath = file.suffix(LzoIndex.LZO_TMP_INDEX_SUFFIX);
-          FileStatus stat = fs.getFileStatus(file);
-          if (stat.getLen() <= stat.getBlockSize()) {
+          if (bytesWritten <= fs.getDefaultBlockSize()) {
             fs.delete(tmpPath, false);
           } else {
             fs.rename(tmpPath, file.suffix(LzoIndex.LZO_INDEX_SUFFIX));
