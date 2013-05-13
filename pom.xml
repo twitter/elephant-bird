@@ -9,7 +9,7 @@
 
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
-  <version>3.0.10-SNAPSHOT</version>
+  <version>4.0</version>
   <packaging>pom</packaging>
 
   <name>Elephant Bird</name>
@@ -70,7 +70,7 @@
     <connection>scm:git:https://github.com/kevinweil/elephant-bird.git</connection>
     <developerConnection>scm:git:git@github.com:kevinweil/elephant-bird.git</developerConnection>
     <url>https://github.com/kevinweil/elephant-bird</url>
-    <tag>HEAD</tag>
+    <tag>elephant-bird-4.0</tag>
   </scm>
 
   <properties>
@@ -402,7 +402,7 @@
         <specific.hadoop.version>
           ${apache.hadoop1.version}
         </specific.hadoop.version>
-        <apache.pig.classifier></apache.pig.classifier>
+        <apache.pig.classifier />
       </properties>
     </profile>
     <profile>
