@@ -45,7 +45,7 @@ import org.apache.hadoop.mapreduce.TaskInputOutputContext;
  * Utility methods to allow applications to deal with inconsistencies between
  * MapReduce Context Objects API between hadoop-0.20 and later versions.
  */
-public class ContextUtil {
+public class HadoopCompat {
 
   private static final boolean useV21;
 
