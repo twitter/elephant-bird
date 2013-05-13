@@ -2,6 +2,7 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -47,7 +48,7 @@ public class LzoProtobufB64LineOutputFormat<M extends Message> extends LzoOutput
   public RecordWriter<M, ProtobufWritable<M>> getRecordWriter(TaskAttemptContext job)
   throws IOException, InterruptedException {
     if (typeRef_ == null) {
-      typeRef_ = Protobufs.getTypeRef(job.getConfiguration(), LzoProtobufB64LineOutputFormat.class);
+      typeRef_ = Protobufs.getTypeRef(ContextUtil.getConfiguration(job), LzoProtobufB64LineOutputFormat.class);
     }
     return new LzoBinaryB64LineRecordWriter<M, ProtobufWritable<M>>(ProtobufConverter.newInstance(typeRef_), getOutputStream(job));
   }

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.util.ContextUtil;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -136,11 +137,11 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
       key_.set(pos_);
       pos_ = getLzoFilePos();
       if (value_.get() != null) {
-        recordsReadCounter.increment(1);
+        ContextUtil.incrementCounter(recordsReadCounter, 1);
         return true;
       }
       errorTracker.incErrors(decodeException);
-      recordErrorsCounter.increment(1);
+      ContextUtil.incrementCounter(recordErrorsCounter, 1);
       // continue
     }
   }

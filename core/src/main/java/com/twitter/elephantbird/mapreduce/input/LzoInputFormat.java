@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -52,11 +54,11 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     // The list of files is no different.
     List<FileStatus> files = super.listStatus(job);
     List<FileStatus> results = Lists.newArrayList();
-    boolean recursive = job.getConfiguration().getBoolean("mapred.input.dir.recursive", false);
+    boolean recursive = ContextUtil.getConfiguration(job).getBoolean("mapred.input.dir.recursive", false);
     Iterator<FileStatus> it = files.iterator();
     while (it.hasNext()) {
       FileStatus fileStatus = it.next();
-      FileSystem fs = fileStatus.getPath().getFileSystem(job.getConfiguration());
+      FileSystem fs = fileStatus.getPath().getFileSystem(ContextUtil.getConfiguration(job));
       addInputPath(results, fs, fileStatus, recursive);
     }
 
@@ -99,7 +101,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
      * blocks and this.getSplits() adjusts the positions.
      */
     try {
-      FileSystem fs = filename.getFileSystem( context.getConfiguration() );
+      FileSystem fs = filename.getFileSystem(ContextUtil.getConfiguration(context) );
       return fs.exists( filename.suffix( LzoIndex.LZO_INDEX_SUFFIX ) );
     } catch (IOException e) { // not expected
       throw new RuntimeException(e);
@@ -125,7 +127,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       if ( file.equals(prevFile) ) {
         index = prevIndex;
       } else {
-        index = LzoIndex.readIndex(file.getFileSystem(job.getConfiguration()), file);
+        index = LzoIndex.readIndex(file.getFileSystem(ContextUtil.getConfiguration(job)), file);
         prevFile = file;
         prevIndex = index;
       }
@@ -146,7 +148,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       long end = start + fileSplit.getLength();
 
       long lzoStart = index.alignSliceStartToIndex(start, end);
-      long lzoEnd = index.alignSliceEndToIndex(end, file.getFileSystem(job.getConfiguration()).getFileStatus(file).getLen());
+      long lzoEnd = index.alignSliceEndToIndex(end, file.getFileSystem(ContextUtil.getConfiguration(job)).getFileStatus(file).getLen());
 
       if (lzoStart != LzoIndex.NOT_FOUND  && lzoEnd != LzoIndex.NOT_FOUND) {
         result.add(new FileSplit(file, lzoStart, lzoEnd - lzoStart, fileSplit.getLocations()));

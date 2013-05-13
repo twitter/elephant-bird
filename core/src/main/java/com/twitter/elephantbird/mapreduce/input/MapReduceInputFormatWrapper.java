@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
@@ -57,7 +58,7 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
    */
   public static void setInputFormat(Class<?> realInputFormatClass, Job job) {
     job.setInputFormatClass(MapReduceInputFormatWrapper.class);
-    HadoopUtils.setClassConf(job.getConfiguration(), CLASS_CONF_KEY, realInputFormatClass);
+    HadoopUtils.setClassConf(ContextUtil.getConfiguration(job), CLASS_CONF_KEY, realInputFormatClass);
   }
 
   @SuppressWarnings("unchecked")
@@ -82,7 +83,7 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
                                                TaskAttemptContext context)
                                                throws IOException, InterruptedException {
 
-    initInputFormat(context.getConfiguration());
+    initInputFormat(ContextUtil.getConfiguration(context));
     return new RecordReaderWrapper<K, V>(realInputFormat);
   }
 
@@ -90,7 +91,7 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
   public List<InputSplit> getSplits(JobContext context)
                                     throws IOException, InterruptedException {
 
-    JobConf jobConf = (JobConf)context.getConfiguration();
+    JobConf jobConf = (JobConf)ContextUtil.getConfiguration(context);
 
     initInputFormat(jobConf);
 
@@ -168,20 +169,25 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
 
         public void progress() { context.progress(); }
 
+        // @Override
+        public float getProgress() {
+          return (ioCtx != null) ? ioCtx.getProgress() : 0;
+        }
+
         public void setStatus(String status) {
           if (ioCtx != null)
-            ioCtx.setStatus(status);
+            ContextUtil.setStatus(ioCtx, status);
         }
 
         public void incrCounter(String group, String counter, long amount) {
           if (ioCtx != null)
-            ioCtx.getCounter(group, counter).increment(amount);
+            ContextUtil.incrementCounter(ioCtx.getCounter(group, counter), amount);
         }
 
         @SuppressWarnings("unchecked")
         public void incrCounter(Enum<?> key, long amount) {
           if (ioCtx != null)
-            ioCtx.getCounter(key).increment(amount);
+            ContextUtil.incrementCounter(ioCtx.getCounter(key), amount);
         }
 
         public org.apache.hadoop.mapred.InputSplit getInputSplit()
@@ -191,7 +197,7 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
 
         public Counter getCounter(String group, String name) {
           return ioCtx != null ?
-            (Counter)ioCtx.getCounter(group, name) : null;
+            (Counter)ContextUtil.getCounter(ioCtx, group, name) : null;
         }
 
         @SuppressWarnings("unchecked")
@@ -203,7 +209,7 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
 
       realReader = realInputFormat.getRecordReader(
                       oldSplit,
-                      (JobConf)context.getConfiguration(),
+                      (JobConf)ContextUtil.getConfiguration(context),
                       reporter);
 
       keyObj = realReader.createKey();

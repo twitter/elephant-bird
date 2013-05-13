@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
@@ -62,7 +63,7 @@ public class MultiInputFormat<M>
    */
   public static void setInputFormatClass(Class<?> clazz, Job job) {
     job.setInputFormatClass(MultiInputFormat.class);
-    setClassConf(clazz, job.getConfiguration());
+    setClassConf(clazz, ContextUtil.getConfiguration(job));
   }
 
   /**
@@ -78,7 +79,7 @@ public class MultiInputFormat<M>
   public RecordReader<LongWritable, BinaryWritable<M>>
   createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
                      throws IOException, InterruptedException {
-    Configuration conf = taskAttempt.getConfiguration();
+    Configuration conf = ContextUtil.getConfiguration(taskAttempt);
     if (typeRef == null) {
       setTypeRef(conf);
     }

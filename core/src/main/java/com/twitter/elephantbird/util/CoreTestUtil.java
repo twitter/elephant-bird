@@ -15,7 +15,7 @@ public class CoreTestUtil {
   private static final Logger LOG = LoggerFactory.getLogger(CoreTestUtil.class);
 
   static public String getTestDataDir(Class<?> testClass) {
-    return System.getProperty("test.build.data") + "/" + testClass.getName();
+    return System.getProperty("test.build.data") + "/" + testClass.getSimpleName();
   }
 
   /**

@@ -3,6 +3,7 @@ package com.twitter.elephantbird.pig.load;
 import java.io.IOException;
 
 import com.twitter.elephantbird.mapreduce.input.RCFileProtobufTupleInputFormat;
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -59,7 +60,7 @@ public class RCFileProtobufPigLoader extends ProtobufPigLoader<Message> {
   @Override
   public void setLocation(String location, Job job) throws IOException {
     super.setLocation(location, job);
-    RCFileUtil.setRequiredFieldConf(job.getConfiguration(),
+    RCFileUtil.setRequiredFieldConf(ContextUtil.getConfiguration(job),
                                     requiredFieldList);
   }
 

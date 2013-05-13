@@ -9,6 +9,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -60,12 +61,13 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
 
   @Override
   public void execute(Mapper.Context context) throws IOException {
-    List<String> indexes = HadoopUtils.readStringListFromConfAsJson(INDEXES_KEY,
-        context.getConfiguration());
-    Path output = new Path(context.getConfiguration().get(OUTPUT_KEY));
+    Configuration conf =  ContextUtil.getConfiguration(context);
+
+    List<String> indexes = HadoopUtils.readStringListFromConfAsJson(INDEXES_KEY, conf);
+    Path output = new Path(conf.get(OUTPUT_KEY));
 
     File tmpDirFile = Files.createTempDir();
-    int maxMergeFactor = context.getConfiguration().getInt(MAX_MERGE_FACTOR_KEY, -1);
+    int maxMergeFactor = conf.getInt(MAX_MERGE_FACTOR_KEY, -1);
     Preconditions.checkArgument(maxMergeFactor > 0);
 
     Directory directory = new SimpleFSDirectory(tmpDirFile, NoLockFactory.getNoLockFactory());
@@ -77,7 +79,7 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
     Directory[] dirs = new Directory[indexes.size()];
     int dir = 0;
     for (String index : indexes) {
-      dirs[dir++] =  new LuceneHdfsDirectory(index, FileSystem.get(context.getConfiguration()));
+      dirs[dir++] =  new LuceneHdfsDirectory(index, FileSystem.get(conf));
     }
 
     LOG.info("Adding indexes: " + indexes);
@@ -90,9 +92,9 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
     writer.close();
 
 
-    FileSystem fs = FileSystem.get(context.getConfiguration());
+    FileSystem fs = FileSystem.get(conf);
     LOG.info("Copying index to HDFS...");
-    if (!FileUtil.copy(tmpDirFile, fs, output, true, context.getConfiguration())) {
+    if (!FileUtil.copy(tmpDirFile, fs, output, true, conf)) {
       throw new IOException("Failed to copy local index to HDFS!");
     }
 

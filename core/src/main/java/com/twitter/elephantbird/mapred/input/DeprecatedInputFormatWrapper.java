@@ -5,6 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapred.Counters;
@@ -14,11 +15,9 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
@@ -98,7 +97,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     try {
       List<org.apache.hadoop.mapreduce.InputSplit> splits =
-        realInputFormat.getSplits(new JobContext(job, null));
+        realInputFormat.getSplits(ContextUtil.newJobContext(job, null));
 
       if (splits == null) {
         return null;
@@ -167,6 +166,11 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       wrappedReporter.progress();
     }
 
+    // @Override
+    public float getProgress() {
+      throw new UnsupportedOperationException();
+    }
+
     @Override
     public void setStatus(String s) {
       wrappedReporter.setStatus(s);
@@ -209,23 +213,10 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
         taskAttemptID = new TaskAttemptID();
       }
 
-      // create a TaskInputOutputContext
-      @SuppressWarnings("unchecked")
-      TaskAttemptContext taskContext =
-        new TaskInputOutputContext(oldJobConf, taskAttemptID,
-            null, null, new ReporterWrapper(reporter)) {
-
-              public Object getCurrentKey() throws IOException, InterruptedException {
-                throw new RuntimeException("not implemented");
-              }
-              public Object getCurrentValue() throws IOException, InterruptedException {
-                throw new RuntimeException("not implemented");
-              }
-              public boolean nextKeyValue() throws IOException, InterruptedException {
-                throw new RuntimeException("not implemented");
-              }
-      };
-
+      // create a MapContext to pass reporter to record reader (for counters)
+      TaskAttemptContext taskContext = ContextUtil
+          .newMapContext(oldJobConf, taskAttemptID, null, null, null,
+              new ReporterWrapper(reporter), null);
       try {
         realReader = newInputFormat.createRecordReader(split, taskContext);
         realReader.initialize(split, taskContext);

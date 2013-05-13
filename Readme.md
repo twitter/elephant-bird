@@ -33,19 +33,18 @@ Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.
 
 ## Version compatibility
 
-1. Protocol Buffers 2.3.0, 2.4.1
-2. Pig 0.8, 0.9 (not compatible with 0.7 and below)
-4. Hive 0.7 (with HIVE-1616)
-5. Thrift 0.5.0, 0.6.0, 0.7.0
-6. Mahout 0.6
-7. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
+1. Hadoop 20.2x, 1.x, 2.x
+1. Pig 0.8+
+1. Protocol Buffers 2.4.1 (default), 2.3.0 (with `-Dprotobuf.version=2.3.0` for mvn)
+1. Hive 0.7 (with HIVE-1616)
+1. Thrift 0.5.0, 0.6.0, 0.7.0
+1. Mahout 0.6
+1. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
 
-## Protocol Buffer and Thrift compiler dependencies
+### Runtime Dependencies
 
-Elephant Bird requires Protocol Buffer compiler version 2.3 at build time, as generated
-classes are used internally. Thrift compiler is required to generate classes used in tests.
-As these are native-code tools they must be installed on the build
-machine (java library dependencies are pulled from maven repositories during the build).
+Elephant-Bird defines majority of its depenendencies in maven [provided scope](http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Scope).
+As a result these dependencies are not trasitively Elephant-Bird modules. Please see [wiki page](wiki/Build-and-Runtime-Dependencies) for more information.
 
 ## Contents
 
@@ -70,6 +69,10 @@ Hadoop provides two API implementations: the the old-style `org.apache.hadoop.ma
 
 For more information, see [DeprecatedInputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/core/src/java/com/twitter/elephantbird/mapred/input/DeprecatedInputFormatWrapper.java) and [DeprecatedOutputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/core/src/java/com/twitter/elephantbird/mapred/output/DeprecatedOutputFormatWrapper.java)
 
+
+### Hadoop 2.x Support
+
+Elephant-bird published packages are tested with both Hadoop 1.x and 2.x.
 
 ### Hadoop Writables
 * Elephant-Bird provides protocol buffer and thrift writables for directly working with these formats in map-reduce jobs.
@@ -98,6 +101,13 @@ Elephant-Bird provides hadoop Input/Output Formats and pig Load/Store Funcs for 
 * Conversions from Protocol Buffers and Thrift messages to Pig tuples
 * Conversions from Thrift to Protocol Buffer's `DynamicMessage`
 * Reading and writing block-based Protocol Buffer format (see `ProtobufBlockWriter`)
+
+### Protocol Buffer and Thrift compiler dependencies
+
+Elephant Bird requires Protocol Buffer compiler at build time, as generated
+classes are used internally. Thrift compiler is required to generate classes used in tests.
+As these are native-code tools they must be installed on the build
+machine (java library dependencies are pulled from maven repositories during the build).
 
 ## Working with Thrift and Protocol Buffers in Hadoop
 

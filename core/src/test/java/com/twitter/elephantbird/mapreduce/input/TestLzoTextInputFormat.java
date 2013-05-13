@@ -10,9 +10,8 @@ import java.util.Random;
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzopCodec;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import com.twitter.elephantbird.util.CoreTestUtil;
-
-import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -27,16 +26,20 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Test the LzoTextInputFormat, make sure it splits the file properly and
  * returns the right data.
  */
-public class TestLzoTextInputFormat extends TestCase {
+public class TestLzoTextInputFormat {
   private static final Log LOG = LogFactory.getLog(TestLzoTextInputFormat.class);
 
   private MessageDigest md5_;
@@ -47,9 +50,8 @@ public class TestLzoTextInputFormat extends TestCase {
   private static final int OUTPUT_BIG = 10485760;
   private static final int OUTPUT_SMALL = 50000;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @Before
+  public void setUp() throws Exception {
     md5_ = MessageDigest.getInstance("MD5");
     Path testBuildData = new Path(System.getProperty("test.build.data", "data"));
     outputDir_ = new Path(testBuildData, "outputDir");
@@ -144,8 +146,9 @@ public class TestLzoTextInputFormat extends TestCase {
     TextOutputFormat.setOutputCompressorClass(job, LzopCodec.class);
     TextOutputFormat.setOutputPath(job, outputDir_);
 
-    TaskAttemptContext attemptContext = new TaskAttemptContext(job.getConfiguration(),
-        new TaskAttemptID("123", 0, false, 1, 2));
+    TaskAttemptContext attemptContext =
+        ContextUtil.newTaskAttemptContext(ContextUtil.getConfiguration(job),
+            new TaskAttemptID(TaskID.forName("task_201305011733_0001_r_000001"), 2));
 
     // create some input data
     byte[] expectedMd5 = createTestInput(outputDir_, localFs, attemptContext, charsToOutput);
@@ -226,7 +229,7 @@ public class TestLzoTextInputFormat extends TestCase {
         rw.close(attemptContext);
         OutputCommitter committer = output.getOutputCommitter(attemptContext);
         committer.commitTask(attemptContext);
-        committer.cleanupJob(attemptContext);
+        committer.commitJob(attemptContext);
       }
     }
 

@@ -2,6 +2,7 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.io.RCFile;
@@ -66,7 +67,7 @@ public class RCFileOutputFormat extends FileOutputFormat<NullWritable, Writable>
   protected RCFile.Writer createRCFileWriter(TaskAttemptContext job,
                                              Text columnMetadata)
                                              throws IOException {
-    Configuration conf = job.getConfiguration();
+    Configuration conf = ContextUtil.getConfiguration(job);
 
     // override compression codec if set.
     String codecOverride = conf.get(COMPRESSION_CODEC_CONF);
