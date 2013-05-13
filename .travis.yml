@@ -21,4 +21,12 @@ before_install:
   - mv build/native/Linux-* ../hadoop-lzo-native
   - cd ..
 
-script: mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true
+script:
+  - echo ============ Build and test with hadoop2 profile =====================
+  - mvn clean test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop2
+  - echo ============ Build with hadoop2 and test with hadoop1 ================
+  - mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop1
+  - echo ============ Build and test with hadoop1 profile =====================
+  - mvn clean test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop1
+  - echo ============ Build with hadoop2 and test with hadoop1 ================
+  - mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop2

@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.store;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -220,15 +221,16 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
   @SuppressWarnings("unchecked")
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-    ensureUDFContext(job.getConfiguration());
+    Configuration conf = ContextUtil.getConfiguration(job);
+    ensureUDFContext(conf);
     verifyWritableClass(config.keyClass, true, config.keyConverter);
     verifyWritableClass(config.valueClass, false, config.valueConverter);
     job.setOutputKeyClass(config.keyClass);
     job.setOutputValueClass(config.valueClass);
     super.setStoreLocation(location, job);
-    if ("true".equals(job.getConfiguration().get("output.compression.enabled"))) {
+    if ("true".equals(conf.get("output.compression.enabled"))) {
       FileOutputFormat.setCompressOutput(job, true);
-      String codec = job.getConfiguration().get("output.compression.codec");
+      String codec = conf.get("output.compression.codec");
       FileOutputFormat.setOutputCompressorClass(job,
           PigContext.resolveClassName(codec).asSubclass(CompressionCodec.class));
     } else {
@@ -265,7 +267,8 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
    * @param job
    */
   private void setCompression(Path path, Job job) {
-    CompressionCodecFactory codecFactory = new CompressionCodecFactory(job.getConfiguration());
+    CompressionCodecFactory codecFactory =
+        new CompressionCodecFactory(ContextUtil.getConfiguration(job));
     CompressionCodec codec = codecFactory.getCodec(path);
     if (codec != null) {
       FileOutputFormat.setCompressOutput(job, true);

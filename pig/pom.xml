@@ -18,18 +18,28 @@
       <artifactId>elephant-bird-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+      <classifier>${apache.pig.classifier}</classifier>
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.pig</groupId>
-      <artifactId>pig</artifactId>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
     </dependency>
-    <!-- log4j required for tests -->
+    <dependency>
+     <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+    </dependency>
+
+    <!-- log4j required for tests-->
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
@@ -76,6 +86,14 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- increase memory -->
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Djava.library.path=${test.library.path} -Xmx1024m</argLine>
+        </configuration>
       </plugin>
 
       <!-- need this for the mahout tests -->

@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import com.google.common.collect.Lists;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -100,7 +101,7 @@ public class TestLuceneIndexLoader {
   private void doTestSetLocation(Loader loader) throws Exception {
     Job job = createStrictMock(Job.class);
     Configuration conf = new Configuration();
-    expect(job.getConfiguration()).andStubReturn(conf);
+    expect(ContextUtil.getConfiguration(job)).andStubReturn(conf);
     replay(job);
 
     loader.setLocation(tempDir.getRoot()

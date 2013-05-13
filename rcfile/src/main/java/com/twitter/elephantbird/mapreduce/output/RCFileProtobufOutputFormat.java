@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.IOException;
 import java.util.List;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
@@ -135,11 +136,11 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
     getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
 
     if (typeRef == null) {
-      typeRef = Protobufs.getTypeRef(job.getConfiguration(), RCFileProtobufOutputFormat.class);
+      typeRef = Protobufs.getTypeRef(ContextUtil.getConfiguration(job), RCFileProtobufOutputFormat.class);
       init();
     }
 
-    RCFileOutputFormat.setColumnNumber(job.getConfiguration(), numColumns);
+    RCFileOutputFormat.setColumnNumber(ContextUtil.getConfiguration(job), numColumns);
     return new ProtobufWriter(job);
   }
 

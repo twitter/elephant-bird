@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import com.twitter.elephantbird.pig.util.PigTestUtil;
+import com.twitter.elephantbird.util.ContextUtil;
 import com.twitter.elephantbird.util.CoreTestUtil;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
@@ -185,12 +187,13 @@ public class TestRCFileThriftStorage {
     });
 
     Configuration conf = new Configuration();
-    conf.setBoolean("mapred.output.compress", true);
-    // for some reason GzipCodec results in loader failure on Mac OS X
-    conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.BZip2Codec");
+    // TODO: figure out why Gzip or BZip2 compression fails on OSX
+    //conf.setBoolean("mapred.output.compress", true);
+    //conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.BZip2Codec");
+
 
     return outputFormat.getRecordWriter(
-        new TaskAttemptContext(conf, new TaskAttemptID()));
+        ContextUtil.newTaskAttemptContext(conf, new TaskAttemptID()));
   }
 
   private String personToString(TestPersonExtended person) {

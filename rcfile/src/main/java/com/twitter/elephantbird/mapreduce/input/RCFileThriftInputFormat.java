@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
@@ -58,7 +59,8 @@ public class RCFileThriftInputFormat extends RCFileBaseInputFormat {
   createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
                                     throws IOException, InterruptedException {
     if (typeRef == null) {
-      typeRef = ThriftUtils.getTypeRef(taskAttempt.getConfiguration(), RCFileThriftInputFormat.class);
+      typeRef = ThriftUtils.getTypeRef(ContextUtil.getConfiguration(taskAttempt),
+                                       RCFileThriftInputFormat.class);
     }
     return new ThriftReader(createUnwrappedRecordReader(split, taskAttempt));
   }
@@ -107,8 +109,8 @@ public class RCFileThriftInputFormat extends RCFileBaseInputFormat {
           , fsplit.getStart()
           , fsplit.getStart() + fsplit.getLength()));
 
-      ColumnarMetadata storedInfo = RCFileUtil.readMetadata(ctx.getConfiguration(),
-                                                           file);
+      Configuration conf = ContextUtil.getConfiguration(ctx);
+      ColumnarMetadata storedInfo = RCFileUtil.readMetadata(conf, file);
 
       // list of field numbers
       List<Integer> tFieldIds = Lists.transform(tFields,
@@ -118,9 +120,7 @@ public class RCFileThriftInputFormat extends RCFileBaseInputFormat {
                                        }
                                     });
 
-      columnsBeingRead = RCFileUtil.findColumnsToRead(ctx.getConfiguration(),
-                                                      tFieldIds,
-                                                      storedInfo);
+      columnsBeingRead = RCFileUtil.findColumnsToRead(conf, tFieldIds, storedInfo);
 
       for(int idx : columnsBeingRead) {
         int fid = storedInfo.getFieldId(idx);
@@ -131,7 +131,7 @@ public class RCFileThriftInputFormat extends RCFileBaseInputFormat {
         }
       }
 
-      ColumnProjectionUtils.setReadColumnIDs(ctx.getConfiguration(), columnsBeingRead);
+      ColumnProjectionUtils.setReadColumnIDs(conf, columnsBeingRead);
 
       // finally!
       super.initialize(split, ctx);

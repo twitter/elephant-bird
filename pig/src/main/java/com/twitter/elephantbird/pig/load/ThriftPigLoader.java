@@ -2,6 +2,7 @@ package com.twitter.elephantbird.pig.load;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
@@ -60,7 +61,7 @@ public class ThriftPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
   public void setLocation(String location, Job job) throws IOException {
     super.setLocation(location, job);
     if (job != null) {
-      ThriftToPig.setConversionProperties(job.getConfiguration());
+      ThriftToPig.setConversionProperties(ContextUtil.getConfiguration(job));
     }
   }
 
@@ -68,7 +69,7 @@ public class ThriftPigLoader<M extends TBase<?, ?>> extends LzoBaseLoadFunc {
   public ResourceSchema getSchema(String filename, Job job) throws IOException {
     // getSchema usually should only be called after setLocation, but it is not always enforced.
     if (job != null) {
-      ThriftToPig.setConversionProperties(job.getConfiguration());
+      ThriftToPig.setConversionProperties(ContextUtil.getConfiguration(job));
     }
     return new ResourceSchema(ThriftToPig.toSchema(typeRef.getRawClass()));
   }

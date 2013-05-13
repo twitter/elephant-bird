@@ -27,10 +27,15 @@ public class TestPigToThrift {
   private static Tuple personTuple(String name, int id, String email, String phoneNumber,
       String phoneType) {
     TupleFactory tf = TupleFactory.getInstance();
-    return tf.newTupleNoCopy(Lists.<Object> newArrayList(
-        tf.newTupleNoCopy(Lists.<Object> newArrayList(name, null)), id, email,
-        new NonSpillableDataBag(Lists.newArrayList(tf.newTupleNoCopy(Lists.<Object> newArrayList(
-            phoneNumber, phoneType))))));
+    return tf.newTupleNoCopy(
+        Lists.<Object>newArrayList(
+            tf.newTupleNoCopy(Lists.<Object>newArrayList(name, null)),
+            id,
+            email,
+            new NonSpillableDataBag(
+                Lists.<Tuple>newArrayList(
+                    tf.newTupleNoCopy(
+                        Lists.<Object>newArrayList(phoneNumber, phoneType))))));
   }
 
   @Test

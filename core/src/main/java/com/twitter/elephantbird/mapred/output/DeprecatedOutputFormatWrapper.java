@@ -2,11 +2,11 @@ package com.twitter.elephantbird.mapred.output;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.util.ContextUtil;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -72,7 +72,7 @@ public class DeprecatedOutputFormatWrapper<K, V>
   public void checkOutputSpecs(FileSystem ignored, JobConf job) throws IOException {
     initOutputFormat(job);
     try {
-      realOutputFormat.checkOutputSpecs(new JobContext(job, null));
+      realOutputFormat.checkOutputSpecs(ContextUtil.newJobContext(job, null));
     } catch (InterruptedException e) {
       throw new IOException(e);
     }
@@ -95,21 +95,10 @@ public class DeprecatedOutputFormatWrapper<K, V>
                         JobConf jobConf, String name, Progressable progress)
                         throws IOException {
       try {
-        // create a TaskInputOutputContext
-        taskContext = new TaskInputOutputContext(
-                            jobConf,
-                            TaskAttemptID.forName(jobConf.get("mapred.task.id")),
-                            null, null, (StatusReporter) progress) {
-          public Object getCurrentKey() throws IOException, InterruptedException {
-            throw new RuntimeException("not implemented");
-          }
-          public Object getCurrentValue() throws IOException, InterruptedException {
-            throw new RuntimeException("not implemented");
-          }
-          public boolean nextKeyValue() throws IOException, InterruptedException {
-            throw new RuntimeException("not implemented");
-          }
-        };
+        // create a MapContext to provide access to the reporter (for counters)
+        taskContext = ContextUtil.newMapContext(
+            jobConf, TaskAttemptID.forName(jobConf.get("mapred.task.id")),
+            null, null, null, (StatusReporter) progress, null);
 
         realWriter = realOutputFormat.getRecordWriter(taskContext);
       } catch (InterruptedException e) {
