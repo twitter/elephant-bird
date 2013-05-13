@@ -1,5 +1,37 @@
 # Elephant Bird #
 
+### Version 4.0 ###
+
+ISSUE 314. hadoop-compat module (Raghu Angadi)
+
+ISSUE 313. IndexOutOfBounds Exception in RCFilePigStorage (Raghu Angadi)
+
+ISSUE 308. Major update to dependencies. Most are in 'provided' scope. (Raghu Angadi)
+
+ISSUE 308. Support Hadoop 1.x and 2.x (Raghu Angadi)
+
+ISSUE 305. Lzo unit tests in Travis CI (Raghu Angadi)
+
+### Version 3.0.9 ###
+
+ISSUE 300. Better implementation of LuceneIndexCollectAllRecordReader (Alex Levenson)
+
+ISSUE 297. Lucene: Fix query file constructor bug (Alex Levenson)
+
+ISSUE 217. Add TypedProtobufWritable (Ximo Guanter)
+
+### Version 3.0.8 ###
+
+ISSUE 295. Lower required maven version to 3.0.0 (Travis Crawford)
+
+ISSUE 293. Require maven 3.x (David Wu)
+
+ISSUE 292. Working Travis CI (David Wu)
+
+ISSUE 289. Thrift: Make list of enum values available (Julien Le Dem)
+
+ISSUE 288. Thrift: Make requirementType in FieldMetaData available (Julien Le Dem)
+
 ### Version 3.0.7 ###
 
 ISSUE 286. catch protobuf errors during block decoding (Aaron Siegel)
