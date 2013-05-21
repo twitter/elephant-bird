@@ -34,6 +34,7 @@ public class LzoGenericProtobufBlockRecordReader extends LzoRecordReader<LongWri
 
   @Override
   public synchronized void close() throws IOException {
+    super.close();
     if (reader_ != null) {
       reader_.close();
     }

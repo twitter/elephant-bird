@@ -55,6 +55,7 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
 
   @Override
   public synchronized void close() throws IOException {
+    super.close();
     if (reader_ != null) {
       reader_.close();
     }
