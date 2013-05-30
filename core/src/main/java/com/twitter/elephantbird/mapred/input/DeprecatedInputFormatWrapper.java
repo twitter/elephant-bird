@@ -25,332 +25,346 @@ import com.twitter.elephantbird.util.HadoopUtils;
 
 /**
  * The wrapper enables an {@link InputFormat} written for new
- * <code>mapreduce</code> interface to be used unmodified in contexts where
- * a {@link org.apache.hadoop.mapred.InputFormat} with old <code>mapred</code>
+ * <code>mapreduce</code> interface to be used unmodified in contexts where a
+ * {@link org.apache.hadoop.mapred.InputFormat} with old <code>mapred</code>
  * interface is required. </p>
- *
- * Current restrictions on InputFormat: <ul>
- *    <li> the record reader should reuse key and value objects
+ * 
+ * Current restrictions on InputFormat:
+ * <ul>
+ * <li>the record reader should reuse key and value objects
  * </ul>
- *
- * While this restriction is satisfied by most input formats,
- * it could be removed with a configuration option.
+ * 
+ * While this restriction is satisfied by most input formats, it could be
+ * removed with a configuration option.
  * <p>
- *
- * Usage: <pre>
- *    // set InputFormat class using a mapreduce InputFormat
- *    DeprecatedInputFormatWrapper.setInputFormat(org.apache.hadoop.mapreduce.lib.input.TextInputFormat.class, jobConf);
- *    jobConf.setOutputFormat(org.apache.hadoop.mapred.TextOutputFormat.class);
- *    // ...
+ * 
+ * Usage:
+ * 
+ * <pre>
+ * // set InputFormat class using a mapreduce InputFormat
+ * DeprecatedInputFormatWrapper.setInputFormat(org.apache.hadoop.mapreduce.lib.input.TextInputFormat.class, jobConf);
+ * jobConf.setOutputFormat(org.apache.hadoop.mapred.TextOutputFormat.class);
+ * // ...
  * </pre>
- *
+ * 
  * @see DeprecatedOutputFormatWrapper
- *
+ * 
  * @author Raghu Angadi
- *
+ * 
  */
 @SuppressWarnings("deprecation")
 public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputFormat<K, V> {
 
-  private static final String CLASS_CONF_KEY = "elephantbird.class.for.DeprecatedInputFormatWrapper";
+	private static final String CLASS_CONF_KEY = "elephantbird.class.for.DeprecatedInputFormatWrapper";
+	private static final String VALUE_COPY_CONF_KEY = "elephantbird.class.for.ValueCopyClass";
 
-  protected InputFormat<K, V> realInputFormat;
+	protected InputFormat<K, V> realInputFormat;
+	protected DeprecatedInputFormatValueCopier<V> valueCopier = null;
 
-  /**
-   * Sets jobs input format to {@link DeprecatedInputFormatWrapper} and stores
-   * supplied real {@link InputFormat} class name in job configuration.
-   * This configuration is read on the remote tasks to instantiate actual
-   * InputFormat correctly.
-   */
-  public static void setInputFormat(Class<?> realInputFormatClass, JobConf jobConf) {
-    jobConf.setInputFormat(DeprecatedInputFormatWrapper.class);
-    HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
-  }
+	/**
+	 * Sets jobs input format to {@link DeprecatedInputFormatWrapper} and stores
+	 * supplied real {@link InputFormat} class name in job configuration. This
+	 * configuration is read on the remote tasks to instantiate actual
+	 * InputFormat correctly.
+	 */
+	public static void setInputFormat(Class<?> realInputFormatClass, JobConf jobConf) {
+		jobConf.setInputFormat(DeprecatedInputFormatWrapper.class);
+		HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
+	}
 
-  @SuppressWarnings("unchecked")
-  private void initInputFormat(JobConf conf) {
-    if (realInputFormat == null) {
-      realInputFormat = ReflectionUtils.newInstance(
-                          conf.getClass(CLASS_CONF_KEY, null, InputFormat.class),
-                          conf);
-    }
-  }
+	public static void setInputFormat(Class<?> realInputFormatClass, JobConf jobConf,
+			Class<? extends DeprecatedInputFormatValueCopier<?>> valueCopyClass) {
+		jobConf.setInputFormat(DeprecatedInputFormatWrapper.class);
+		HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
+		HadoopUtils.setClassConf(jobConf, VALUE_COPY_CONF_KEY, valueCopyClass);
+	}
 
-  public DeprecatedInputFormatWrapper() {
-    // real inputFormat is initialized based on conf.
-  }
+	@SuppressWarnings("unchecked")
+	private void initInputFormat(JobConf conf) {
+		if (realInputFormat == null) {
+			realInputFormat = ReflectionUtils.newInstance(conf.getClass(CLASS_CONF_KEY, null, InputFormat.class), conf);
+			if (conf.get(VALUE_COPY_CONF_KEY) != null) {
+				Class<? extends DeprecatedInputFormatValueCopier> copierClass = conf.getClass(VALUE_COPY_CONF_KEY,
+						null, DeprecatedInputFormatValueCopier.class);
+				if (null != copierClass) {
+					valueCopier = ReflectionUtils.newInstance(copierClass, conf);
+				}
 
-  public DeprecatedInputFormatWrapper(InputFormat<K, V> realInputFormat) {
-    this.realInputFormat = realInputFormat;
-  }
+			}
+		}
+	}
 
-  @Override
-  public RecordReader<K, V> getRecordReader(InputSplit split, JobConf job,
-                  Reporter reporter) throws IOException {
-    initInputFormat(job);
-    return new RecordReaderWrapper<K, V>(realInputFormat, split, job, reporter);
-  }
+	public DeprecatedInputFormatWrapper() {
+		// real inputFormat is initialized based on conf.
+	}
 
-  @Override
-  public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
-    initInputFormat(job);
+	public DeprecatedInputFormatWrapper(InputFormat<K, V> realInputFormat) {
+		this.realInputFormat = realInputFormat;
+	}
 
-    try {
-      List<org.apache.hadoop.mapreduce.InputSplit> splits =
-        realInputFormat.getSplits(HadoopCompat.newJobContext(job, null));
+	@Override
+	public RecordReader<K, V> getRecordReader(InputSplit split, JobConf job, Reporter reporter) throws IOException {
+		initInputFormat(job);
+		return new RecordReaderWrapper<K, V>(realInputFormat, split, job, reporter, valueCopier);
+	}
 
-      if (splits == null) {
-        return null;
-      }
+	@Override
+	public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
+		initInputFormat(job);
 
-      InputSplit[] resultSplits = new InputSplit[splits.size()];
-      int i = 0;
-      for (org.apache.hadoop.mapreduce.InputSplit split : splits) {
-        if (split.getClass() == org.apache.hadoop.mapreduce.lib.input.FileSplit.class) {
-          org.apache.hadoop.mapreduce.lib.input.FileSplit mapreduceFileSplit =
-              ((org.apache.hadoop.mapreduce.lib.input.FileSplit)split);
-          resultSplits[i++] = new FileSplit(
-              mapreduceFileSplit.getPath(),
-              mapreduceFileSplit.getStart(),
-              mapreduceFileSplit.getLength(),
-              mapreduceFileSplit.getLocations());
-        } else {
-          resultSplits[i++] = new InputSplitWrapper(split);
-        }
-      }
+		try {
+			List<org.apache.hadoop.mapreduce.InputSplit> splits = realInputFormat.getSplits(HadoopCompat.newJobContext(
+					job, null));
 
-      return resultSplits;
+			if (splits == null) {
+				return null;
+			}
 
-    } catch (InterruptedException e) {
-      throw new IOException(e);
-    }
-  }
+			InputSplit[] resultSplits = new InputSplit[splits.size()];
+			int i = 0;
+			for (org.apache.hadoop.mapreduce.InputSplit split : splits) {
+				if (split.getClass() == org.apache.hadoop.mapreduce.lib.input.FileSplit.class) {
+					org.apache.hadoop.mapreduce.lib.input.FileSplit mapreduceFileSplit = ((org.apache.hadoop.mapreduce.lib.input.FileSplit) split);
+					resultSplits[i++] = new FileSplit(mapreduceFileSplit.getPath(), mapreduceFileSplit.getStart(),
+							mapreduceFileSplit.getLength(), mapreduceFileSplit.getLocations());
+				} else {
+					resultSplits[i++] = new InputSplitWrapper(split);
+				}
+			}
 
-  /**
-   * A reporter that works with both mapred and mapreduce APIs.
-   */
-  private static class ReporterWrapper extends StatusReporter implements Reporter {
-    private Reporter wrappedReporter;
+			return resultSplits;
 
-    public ReporterWrapper(Reporter reporter) {
-      wrappedReporter = reporter;
-    }
+		} catch (InterruptedException e) {
+			throw new IOException(e);
+		}
+	}
 
-    @Override
-    public Counters.Counter getCounter(Enum<?> anEnum) {
-      return wrappedReporter.getCounter(anEnum);
-    }
+	/**
+	 * A reporter that works with both mapred and mapreduce APIs.
+	 */
+	private static class ReporterWrapper extends StatusReporter implements Reporter {
+		private Reporter wrappedReporter;
 
-    @Override
-    public Counters.Counter getCounter(String s, String s1) {
-      return wrappedReporter.getCounter(s, s1);
-    }
+		public ReporterWrapper(Reporter reporter) {
+			wrappedReporter = reporter;
+		}
 
-    @Override
-    public void incrCounter(Enum<?> anEnum, long l) {
-      wrappedReporter.incrCounter(anEnum, l);
-    }
+		@Override
+		public Counters.Counter getCounter(Enum<?> anEnum) {
+			return wrappedReporter.getCounter(anEnum);
+		}
 
-    @Override
-    public void incrCounter(String s, String s1, long l) {
-      wrappedReporter.incrCounter(s, s1, l);
-    }
+		@Override
+		public Counters.Counter getCounter(String s, String s1) {
+			return wrappedReporter.getCounter(s, s1);
+		}
 
-    @Override
-    public InputSplit getInputSplit() throws UnsupportedOperationException {
-      return wrappedReporter.getInputSplit();
-    }
+		@Override
+		public void incrCounter(Enum<?> anEnum, long l) {
+			wrappedReporter.incrCounter(anEnum, l);
+		}
 
-    @Override
-    public void progress() {
-      wrappedReporter.progress();
-    }
+		@Override
+		public void incrCounter(String s, String s1, long l) {
+			wrappedReporter.incrCounter(s, s1, l);
+		}
 
-    // @Override
-    public float getProgress() {
-      throw new UnsupportedOperationException();
-    }
+		@Override
+		public InputSplit getInputSplit() throws UnsupportedOperationException {
+			return wrappedReporter.getInputSplit();
+		}
 
-    @Override
-    public void setStatus(String s) {
-      wrappedReporter.setStatus(s);
-    }
-  }
+		@Override
+		public void progress() {
+			wrappedReporter.progress();
+		}
 
-  private static class RecordReaderWrapper<K, V> implements RecordReader<K, V> {
+		// @Override
+		public float getProgress() {
+			throw new UnsupportedOperationException();
+		}
 
-    private org.apache.hadoop.mapreduce.RecordReader<K, V> realReader;
-    private long splitLen; // for getPos()
+		@Override
+		public void setStatus(String s) {
+			wrappedReporter.setStatus(s);
+		}
+	}
 
-    // expect readReader return same Key & Value objects (common case)
-    // this avoids extra serialization & deserialazion of these objects
-    private K keyObj = null;
-    private V valueObj = null;
+	private static class RecordReaderWrapper<K, V> implements RecordReader<K, V> {
 
-    private boolean firstRecord = false;
-    private boolean eof = false;
+		private org.apache.hadoop.mapreduce.RecordReader<K, V> realReader;
+		private long splitLen; // for getPos()
 
-    public RecordReaderWrapper(InputFormat<K, V> newInputFormat,
-                               InputSplit oldSplit,
-                               JobConf oldJobConf,
-                               Reporter reporter) throws IOException {
+		// expect readReader return same Key & Value objects (common case)
+		// this avoids extra serialization & deserialazion of these objects
+		private K keyObj = null;
+		private V valueObj = null;
 
-      splitLen = oldSplit.getLength();
+		private boolean firstRecord = false;
+		private boolean eof = false;
 
-      org.apache.hadoop.mapreduce.InputSplit split;
-      if (oldSplit.getClass() == FileSplit.class) {
-        split = new org.apache.hadoop.mapreduce.lib.input.FileSplit(
-            ((FileSplit)oldSplit).getPath(),
-            ((FileSplit)oldSplit).getStart(),
-            ((FileSplit)oldSplit).getLength(),
-            oldSplit.getLocations());
-      } else {
-        split = ((InputSplitWrapper)oldSplit).realSplit;
-      }
+		private DeprecatedInputFormatValueCopier<V> valueCopier = null;
 
-      TaskAttemptID taskAttemptID = TaskAttemptID.forName(oldJobConf.get("mapred.task.id"));
-      if (taskAttemptID == null) {
-        taskAttemptID = new TaskAttemptID();
-      }
+		public RecordReaderWrapper(InputFormat<K, V> newInputFormat, InputSplit oldSplit, JobConf oldJobConf,
+				Reporter reporter, DeprecatedInputFormatValueCopier<V> valueCopier) throws IOException {
 
-      // create a MapContext to pass reporter to record reader (for counters)
-      TaskAttemptContext taskContext = HadoopCompat
-          .newMapContext(oldJobConf, taskAttemptID, null, null, null,
-              new ReporterWrapper(reporter), null);
-      try {
-        realReader = newInputFormat.createRecordReader(split, taskContext);
-        realReader.initialize(split, taskContext);
+			this.valueCopier = valueCopier;
+			splitLen = oldSplit.getLength();
 
-        // read once to gain access to key and value objects
-        if (realReader.nextKeyValue()) {
-          firstRecord = true;
-          keyObj = realReader.getCurrentKey();
-          valueObj = realReader.getCurrentValue();
-        } else {
-          eof = true;
-        }
-      } catch (InterruptedException e) {
-        throw new IOException(e);
-      }
-    }
+			org.apache.hadoop.mapreduce.InputSplit split;
+			if (oldSplit.getClass() == FileSplit.class) {
+				split = new org.apache.hadoop.mapreduce.lib.input.FileSplit(((FileSplit) oldSplit).getPath(),
+						((FileSplit) oldSplit).getStart(), ((FileSplit) oldSplit).getLength(), oldSplit.getLocations());
+			} else {
+				split = ((InputSplitWrapper) oldSplit).realSplit;
+			}
 
-    @Override
-    public void close() throws IOException {
-      realReader.close();
-    }
+			TaskAttemptID taskAttemptID = TaskAttemptID.forName(oldJobConf.get("mapred.task.id"));
+			if (taskAttemptID == null) {
+				taskAttemptID = new TaskAttemptID();
+			}
 
-    @Override
-    public K createKey() {
-      return keyObj;
-    }
+			// create a MapContext to pass reporter to record reader (for
+			// counters)
+			TaskAttemptContext taskContext = HadoopCompat.newMapContext(oldJobConf, taskAttemptID, null, null, null,
+					new ReporterWrapper(reporter), null);
+			try {
+				realReader = newInputFormat.createRecordReader(split, taskContext);
+				realReader.initialize(split, taskContext);
 
-    @Override
-    public V createValue() {
-      return valueObj;
-    }
+				// read once to gain access to key and value objects
+				if (realReader.nextKeyValue()) {
+					firstRecord = true;
+					keyObj = realReader.getCurrentKey();
+					valueObj = realReader.getCurrentValue();
+				} else {
+					eof = true;
+				}
+			} catch (InterruptedException e) {
+				throw new IOException(e);
+			}
+		}
 
-    @Override
-    public long getPos() throws IOException {
-      return (long) (splitLen * getProgress());
-    }
+		@Override
+		public void close() throws IOException {
+			realReader.close();
+		}
 
-    @Override
-    public float getProgress() throws IOException {
-      try {
-        return realReader.getProgress();
-      } catch (InterruptedException e) {
-        throw new IOException(e);
-      }
-    }
+		@Override
+		public K createKey() {
+			return keyObj;
+		}
 
-    @Override
-    public boolean next(K key, V value) throws IOException {
-      if (eof) {
-        return false;
-      }
+		@Override
+		public V createValue() {
+			return valueObj;
+		}
 
-      if (firstRecord) { // key & value are already read.
-        firstRecord = false;
-        return true;
-      }
+		@Override
+		public long getPos() throws IOException {
+			return (long) (splitLen * getProgress());
+		}
 
-      try {
-        if (realReader.nextKeyValue()) {
+		@Override
+		public float getProgress() throws IOException {
+			try {
+				return realReader.getProgress();
+			} catch (InterruptedException e) {
+				throw new IOException(e);
+			}
+		}
 
-          if (key != realReader.getCurrentKey() ||
-              value != realReader.getCurrentValue()) {
+		@Override
+		public boolean next(K key, V value) throws IOException {
+			if (eof) {
+				return false;
+			}
 
-            throw new IOException("DeprecatedInputFormatWrapper can not "
-                + "support RecordReaders that don't return same key & value "
-                + "objects. current reader class : " + realReader.getClass());
+			if (firstRecord) { // key & value are already read.
+				firstRecord = false;
+				return true;
+			}
 
-            // other alternative is to copy key and value objects, unfortunately
-            // we need to pay that cost even for reader that reuse the object.
-            // good compromise is to let this be set by config. we can add that
-            // when required.
-          }
+			try {
+				if (realReader.nextKeyValue()) {
 
-          return true;
-        }
-      } catch (InterruptedException e) {
-        throw new IOException(e);
-      }
+					if (key != realReader.getCurrentKey()) {
 
-      eof = true; // strictly not required, just for consistency
-      return false;
-    }
-  }
+						throw new IOException("DeprecatedInputFormatWrapper can not "
+								+ "support RecordReaders that don't return same key & value "
+								+ "objects. current reader class : " + realReader.getClass());
+					}
 
-  private static class InputSplitWrapper implements InputSplit {
+					if (value != realReader.getCurrentValue()) {
+						if (null != valueCopier)
+							valueCopier.copyValue(value, realReader.getCurrentValue());
+						else {
+							throw new IOException("DeprecatedInputFormatWrapper - value is different "
+									+ "and no value copier provided. "
+									+ "current reader class : " + realReader.getClass());
+						}
+					}
+					return true;
+				}
+			} catch (InterruptedException e) {
+				throw new IOException(e);
+			}
 
-    org.apache.hadoop.mapreduce.InputSplit realSplit;
+			eof = true; // strictly not required, just for consistency
+			return false;
+		}
+	}
 
+	private static class InputSplitWrapper implements InputSplit {
 
-    @SuppressWarnings("unused") // MapReduce instantiates this.
-    public InputSplitWrapper() {}
+		org.apache.hadoop.mapreduce.InputSplit realSplit;
 
-    public InputSplitWrapper(org.apache.hadoop.mapreduce.InputSplit realSplit) {
-      this.realSplit = realSplit;
-    }
+		@SuppressWarnings("unused")
+		// MapReduce instantiates this.
+		public InputSplitWrapper() {
+		}
 
-    @Override
-    public long getLength() throws IOException {
-      try {
-        return realSplit.getLength();
-      } catch (InterruptedException e) {
-        throw new IOException(e);
-      }
-    }
+		public InputSplitWrapper(org.apache.hadoop.mapreduce.InputSplit realSplit) {
+			this.realSplit = realSplit;
+		}
 
-    @Override
-    public String[] getLocations() throws IOException {
-      try {
-        return realSplit.getLocations();
-      } catch (InterruptedException e) {
-        throw new IOException(e);
-      }
-    }
+		@Override
+		public long getLength() throws IOException {
+			try {
+				return realSplit.getLength();
+			} catch (InterruptedException e) {
+				throw new IOException(e);
+			}
+		}
 
-    @Override
-    public void readFields(DataInput in) throws IOException {
-      String className = WritableUtils.readString(in);
-      Class<?> splitClass;
+		@Override
+		public String[] getLocations() throws IOException {
+			try {
+				return realSplit.getLocations();
+			} catch (InterruptedException e) {
+				throw new IOException(e);
+			}
+		}
 
-      try {
-        splitClass = Class.forName(className);
-      } catch (ClassNotFoundException e) {
-        throw new IOException(e);
-      }
+		@Override
+		public void readFields(DataInput in) throws IOException {
+			String className = WritableUtils.readString(in);
+			Class<?> splitClass;
 
-      realSplit = (org.apache.hadoop.mapreduce.InputSplit)
-                  ReflectionUtils.newInstance(splitClass, null);
-      ((Writable)realSplit).readFields(in);
-    }
+			try {
+				splitClass = Class.forName(className);
+			} catch (ClassNotFoundException e) {
+				throw new IOException(e);
+			}
 
-    @Override
-    public void write(DataOutput out) throws IOException {
-      WritableUtils.writeString(out, realSplit.getClass().getName());
-      ((Writable)realSplit).write(out);
-    }
-  }
+			realSplit = (org.apache.hadoop.mapreduce.InputSplit) ReflectionUtils.newInstance(splitClass, null);
+			((Writable) realSplit).readFields(in);
+		}
+
+		@Override
+		public void write(DataOutput out) throws IOException {
+			WritableUtils.writeString(out, realSplit.getClass().getName());
+			((Writable) realSplit).write(out);
+		}
+	}
 }
