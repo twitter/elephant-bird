@@ -204,15 +204,15 @@ public class TestThriftToPig {
         tupleString.equals("(bob,jenkins)-{MOBILE=650-555-5555, WORK=415-555-5555, HOME=408-555-5555}") ||
         tupleString.equals("(bob,jenkins)-{MOBILE=650-555-5555, HOME=408-555-5555, WORK=415-555-5555}"));
 
-    // Test Uniton:
+    // Test Union:
     TestUnion unionInt = new TestUnion();
     unionInt.setI32Type(10);
-    assertEquals(",10,,", toTuple(type, unionInt).toDelimitedString(","));
+    assertEquals(",10,,,", toTuple(type, unionInt).toDelimitedString(","));
 
     TestUnion unionStr = new TestUnion();
     unionStr.setI32Type(-1); // is overridden below.
     unionStr.setStringType("abcd");
-    assertEquals("abcd,,,", toTuple(type, unionStr).toDelimitedString(","));
+    assertEquals("abcd,,,,", toTuple(type, unionStr).toDelimitedString(","));
   }
 
   //test a list of a struct
@@ -259,7 +259,7 @@ public class TestThriftToPig {
 
   @Test
   public void testUnionSchema() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUnion", "stringType:chararray,i32:int,bufferType:bytearray,structType:tuple(first_name:chararray,last_name:chararray)");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUnion", "stringType:chararray,i32:int,bufferType:bytearray,structType:tuple(first_name:chararray,last_name:chararray),boolType: int");
   }
 
   @Test
@@ -289,7 +289,18 @@ public class TestThriftToPig {
 
   @Test
   public void mapInSetTest() throws FrontendException {
-      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestMapInSet","name:chararray,names:bag{t:tuple(names_tuple:map[chararray])}");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestMapInSet","name:chararray,names:bag{t:tuple(names_tuple:map[chararray])}");
+  }
+
+  @Test
+  public void binaryInListMap() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestBinaryInListMap",
+        "count:int,binaryBlobs:bag{t:tuple(binaryBlobs_tuple:map[bytearray])}");
+  }
+
+  @Test
+  public void exceptionInMapTest() throws FrontendException {
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestExceptionInMap","name:chararray,names:map[(descreption: chararray)]");
   }
 
   public void nestedInListTestHelper(String s, String expSchema) throws FrontendException {

@@ -107,5 +107,20 @@ union TestUnion {
   1: string stringType,
   2: i32    i32Type,
   3: binary bufferType,
-  4: TestName structType
+  4: TestName structType,
+  5: bool boolType
+}
+
+struct TestBinaryInListMap {
+  1: i32 count,
+  2: list<map<string, binary>> binaryBlobs
+}
+
+exception TestException {
+  1: string description
+}
+
+struct TestExceptionInMap {
+  1: string name,
+  2: map<string, TestException> exceptionMap
 }
