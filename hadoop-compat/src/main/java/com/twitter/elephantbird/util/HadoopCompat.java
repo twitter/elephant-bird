@@ -124,8 +124,15 @@ public class HadoopCompat {
                                                OutputCommitter.class,
                                                StatusReporter.class,
                                                InputSplit.class);
-        GET_COUNTER_METHOD = Class.forName(PACKAGE+".TaskAttemptContext")
-            .getMethod("getCounter", String.class, String.class);
+       Method get_counter;
+				try {
+					get_counter = Class.forName(PACKAGE + ".TaskAttemptContext").getMethod("getCounter", String.class,
+							String.class);
+				} catch (Exception e) {
+					get_counter = Class.forName(PACKAGE + ".TaskInputOutputContext").getMethod("getCounter",
+							String.class, String.class);
+				}
+				GET_COUNTER_METHOD = get_counter;
       } else {
         MAP_CONTEXT_CONSTRUCTOR =
                mapContextCls.getConstructor(Configuration.class,

@@ -53,8 +53,10 @@ import com.twitter.elephantbird.util.HadoopUtils;
 public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputFormat<K, V> {
 
   private static final String CLASS_CONF_KEY = "elephantbird.class.for.DeprecatedInputFormatWrapper";
+	private static final String VALUE_COPY_CONF_KEY = "elephantbird.class.for.ValueCopyClass";
 
   protected InputFormat<K, V> realInputFormat;
+	protected DeprecatedInputFormatValueCopier<V> valueCopier = null;
 
   /**
    * Sets jobs input format to {@link DeprecatedInputFormatWrapper} and stores
@@ -67,13 +69,26 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
     HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
   }
 
+	public static void setInputFormat(Class<?> realInputFormatClass, JobConf jobConf,
+			Class<? extends DeprecatedInputFormatValueCopier<?>> valueCopyClass) {
+		jobConf.setInputFormat(DeprecatedInputFormatWrapper.class);
+		HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
+		HadoopUtils.setClassConf(jobConf, VALUE_COPY_CONF_KEY, valueCopyClass);
+	}
+
   @SuppressWarnings("unchecked")
   private void initInputFormat(JobConf conf) {
     if (realInputFormat == null) {
-      realInputFormat = ReflectionUtils.newInstance(
-                          conf.getClass(CLASS_CONF_KEY, null, InputFormat.class),
-                          conf);
+			realInputFormat = ReflectionUtils.newInstance(conf.getClass(CLASS_CONF_KEY, null, InputFormat.class), conf);
+			if (conf.get(VALUE_COPY_CONF_KEY) != null) {
+				Class<? extends DeprecatedInputFormatValueCopier> copierClass = conf.getClass(VALUE_COPY_CONF_KEY,
+						null, DeprecatedInputFormatValueCopier.class);
+				if (null != copierClass) {
+					valueCopier = ReflectionUtils.newInstance(copierClass, conf);
     }
+
+			}
+		}
   }
 
   public DeprecatedInputFormatWrapper() {
@@ -88,7 +103,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
   public RecordReader<K, V> getRecordReader(InputSplit split, JobConf job,
                   Reporter reporter) throws IOException {
     initInputFormat(job);
-    return new RecordReaderWrapper<K, V>(realInputFormat, split, job, reporter);
+		return new RecordReaderWrapper<K, V>(realInputFormat, split, job, reporter, valueCopier);
   }
 
   @Override
@@ -190,11 +205,12 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
     private boolean firstRecord = false;
     private boolean eof = false;
 
-    public RecordReaderWrapper(InputFormat<K, V> newInputFormat,
-                               InputSplit oldSplit,
-                               JobConf oldJobConf,
-                               Reporter reporter) throws IOException {
+		private DeprecatedInputFormatValueCopier<V> valueCopier = null;
 
+		public RecordReaderWrapper(InputFormat<K, V> newInputFormat, InputSplit oldSplit, JobConf oldJobConf,
+				Reporter reporter, DeprecatedInputFormatValueCopier<V> valueCopier) throws IOException {
+
+			this.valueCopier = valueCopier;
       splitLen = oldSplit.getLength();
 
       org.apache.hadoop.mapreduce.InputSplit split;
@@ -277,19 +293,22 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       try {
         if (realReader.nextKeyValue()) {
 
-          if (key != realReader.getCurrentKey() ||
-              value != realReader.getCurrentValue()) {
+					if (key != realReader.getCurrentKey()) {
 
             throw new IOException("DeprecatedInputFormatWrapper can not "
                 + "support RecordReaders that don't return same key & value "
                 + "objects. current reader class : " + realReader.getClass());
+					}
 
-            // other alternative is to copy key and value objects, unfortunately
-            // we need to pay that cost even for reader that reuse the object.
-            // good compromise is to let this be set by config. we can add that
-            // when required.
+					if (value != realReader.getCurrentValue()) {
+						if (null != valueCopier)
+							valueCopier.copyValue(value, realReader.getCurrentValue());
+						else {
+							throw new IOException("DeprecatedInputFormatWrapper - value is different "
+									+ "and no value copier provided. "
+									+ "current reader class : " + realReader.getClass());
           }
-
+					}
           return true;
         }
       } catch (InterruptedException e) {
