@@ -21,6 +21,7 @@ public class LzoLineRecordReader extends LzoRecordReader<LongWritable, Text> {
 
   @Override
   public synchronized void close() throws IOException {
+    super.close();
     if (in_ != null) {
       in_.close();
     }

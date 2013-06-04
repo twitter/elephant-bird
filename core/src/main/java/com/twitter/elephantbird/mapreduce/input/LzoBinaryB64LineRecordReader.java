@@ -53,6 +53,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
 
   @Override
   public synchronized void close() throws IOException {
+    super.close();
     if (lineReader_ != null) {
       lineReader_.close();
     }
