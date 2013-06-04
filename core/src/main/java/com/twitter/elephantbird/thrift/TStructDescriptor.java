@@ -1,5 +1,7 @@
 package com.twitter.elephantbird.thrift;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
@@ -40,7 +42,7 @@ import com.twitter.elephantbird.util.ThriftUtils;
  */
 public class TStructDescriptor {
 
-  private static Map<Class<?>, TStructDescriptor> structMap = Maps.newHashMap();
+  private static final Map<Class<?>, TStructDescriptor> structMap = Maps.newHashMap();
 
   private List<Field> fields;
   private Class<? extends TBase<?, ?>> tClass;
@@ -120,10 +122,11 @@ public class TStructDescriptor {
 
     int idx = 0;
     for (Entry<? extends TFieldIdEnum, FieldMetaData> e : fieldMap.entrySet()) {
+      String fieldName = e.getKey().getFieldName();
       arr[idx++] = new Field(e.getKey(),
                              e.getValue(),
-                             e.getKey().getFieldName(),
-                             tClass,
+                             fieldName,
+                             ThriftUtils.getFieldType(tClass, fieldName),
                              e.getValue().valueMetaData);
     }
     // make it immutable since users have access.
@@ -161,13 +164,12 @@ public class TStructDescriptor {
     private final Map<String, TEnum> enumMap; // enums
     private final Map<Integer, TEnum> enumIdMap; // enums
     private final TStructDescriptor tStructDescriptor; // Structs
-    private final boolean isBuffer_;  // strings
+    private final boolean isBuffer;  // strings
 
 
-    @SuppressWarnings("unchecked") // for casting 'structClass' below
-    private Field(TFieldIdEnum fieldIdEnum, FieldMetaData fieldMetaData, String fieldName, Class<?> enclosingClass,
-                  FieldValueMetaData field) {
-      // enclosingClass is only to check a TType.STRING is actually a buffer.
+    @SuppressWarnings("unchecked")
+    private Field(TFieldIdEnum fieldIdEnum, FieldMetaData fieldMetaData, String fieldName,
+                  Type genericType, FieldValueMetaData field) {
       this.fieldIdEnum = fieldIdEnum;
       this.fieldMetaData = fieldMetaData;
       this.fieldId = fieldIdEnum == null ? 1 : fieldIdEnum.getThriftFieldId();
@@ -177,26 +179,34 @@ public class TStructDescriptor {
       // common case, avoids type checks below.
       boolean simpleField = field.getClass() == FieldValueMetaData.class;
 
+      Type firstTypeArg = null;
+      Type secondTypeArg = null;
+
+      if (genericType instanceof ParameterizedType) {
+        Type[] typeArgs = ((ParameterizedType) genericType).getActualTypeArguments();
+        firstTypeArg = typeArgs.length > 0 ? typeArgs[0] : null;
+        secondTypeArg = typeArgs.length > 1 ? typeArgs[1] : null;
+      }
+
       if (!simpleField && field instanceof ListMetaData) {
-        listElemField = new Field(null, null, fieldName + "_list_elem", null,
+        listElemField = new Field(null, null, fieldName + "_list_elem", firstTypeArg,
                                   ((ListMetaData)field).elemMetaData);
       } else {
         listElemField = null;
       }
 
       if (!simpleField && field instanceof MapMetaData) {
-        mapKeyField = new Field(null, null, fieldName + "_map_key", null,
+        mapKeyField = new Field(null, null, fieldName + "_map_key", firstTypeArg,
                                 ((MapMetaData)field).keyMetaData);
-        mapValueField = new Field(null, null, fieldName + "_map_value", null,
+        mapValueField = new Field(null, null, fieldName + "_map_value", secondTypeArg,
                             ((MapMetaData)field).valueMetaData);
-
       } else {
         mapKeyField = null;
         mapValueField = null;
       }
 
       if (!simpleField && field instanceof SetMetaData) {
-        setElemField = new Field(null, null, fieldName + "_set_elem", null,
+        setElemField = new Field(null, null, fieldName + "_set_elem", firstTypeArg,
                                 ((SetMetaData)field).elemMetaData);
       } else {
         setElemField = null;
@@ -216,23 +226,15 @@ public class TStructDescriptor {
       }
 
       if (field.isStruct()) {
-        tStructDescriptor =
-          getInstance((Class<? extends TBase<?, ?>>)
-                      ((StructMetaData)field).structClass);
-
+        tStructDescriptor = getInstance((Class<? extends TBase<?, ?>>) genericType);
       } else {
         tStructDescriptor = null;
       }
 
-      if (field.type == TType.STRING && enclosingClass != null) {
-        // only Thrift 0.6 and above have explicit isBuffer() method.
-        // until then a partial work around that works only if
-        // the field is not inside a container.
-        isBuffer_ =
-          ThriftUtils.getFieldType(enclosingClass, fieldName) != String.class;
-      } else {
-        isBuffer_= false;
-      }
+      // only Thrift 0.6 and above have explicit isBuffer() method.
+      // just check the type instead
+      isBuffer = field.type == TType.STRING
+               && !genericType.equals(String.class);
     }
 
     public short getFieldId() {
@@ -256,7 +258,7 @@ public class TStructDescriptor {
     }
 
     public boolean isBuffer() {
-      return isBuffer_;
+      return isBuffer;
     }
 
     public boolean isList() {

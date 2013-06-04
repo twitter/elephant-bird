@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.util;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +20,7 @@ import org.apache.thrift.protocol.TType;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
 
 public class ThriftUtils {
@@ -119,18 +121,32 @@ public class ThriftUtils {
     }
   }
 
-  public static Class<?> getFieldType(Class<?> containingClass, String fieldName) {
-    try {
-      // checking the return type of get method works for union as well.
-      String getMethodName = "get"
-                             + fieldName.substring(0, 1).toUpperCase()
-                             + fieldName.substring(1);
-      Method method = containingClass.getDeclaredMethod(getMethodName);
-      return method.getReturnType();
-    } catch (NoSuchMethodException e) {
-      throw new RuntimeException("while trying to find type for " + fieldName +
-                                 " in " + containingClass, e);
+  /**
+   * Returns gereric type for a field in a Thrift class. The type is the return
+   * type for the accessor method for the field (e.g. <code>isFieldName()</code>
+   * for a boolean type or <code>getFieldName</code> for other types). The return
+   * type works for both structs and unions. Reflecting directly based on
+   * fields does not work for unions.
+   *
+   * @return generic {@link Type} of the thrift field.
+   */
+  public static Type getFieldType(Class<?> containingClass, String fieldName) {
+
+    String suffix = // uppercase first letter
+        fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+
+    // look for getFieldName() or isFieldName()
+
+    for(String prefix : new String[]{"get", "is"}) {
+      try {
+        Method method = containingClass.getDeclaredMethod(prefix + suffix);
+        return method.getGenericReturnType();
+      } catch (NoSuchMethodException e) {
+      }
     }
+
+    throw new RuntimeException("could not find type for " + fieldName +
+                                 " in " + containingClass);
   }
 
   /**
