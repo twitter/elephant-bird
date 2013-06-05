@@ -37,6 +37,7 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
 
   @Override
   public synchronized void close() throws IOException {
+    super.close();
     if (in_ != null) {
       in_.close();
     }

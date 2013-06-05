@@ -33,6 +33,7 @@ public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritab
 
   @Override
   public synchronized void close() throws IOException {
+    super.close();
     if (in_ != null) {
       in_.close();
     }

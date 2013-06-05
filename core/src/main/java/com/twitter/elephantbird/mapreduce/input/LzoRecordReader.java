@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.mapreduce.input;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -24,7 +25,8 @@ import org.slf4j.LoggerFactory;
  * A small fraction of bad records are tolerated. When deserialization
  * of a record results in an exception or a null object, an a warning
  * is logged. If the rate of errors crosses a threshold
- * (default is 0.0001 or 0.01%) a RuntimeException is thrown.
+ * (default is 0.0001 or 0.01%) a RuntimeException is thrown. <br>
+ * By default, the threshold is checked at the <i>end</i> of reading.
  * The threshold can be set with configuration variable
  * <code>elephantbird.mapred.input.bad.record.threshold</code>.
  * A value of 0 disables error handling. <p>
@@ -35,6 +37,9 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
   public static final String BAD_RECORD_THRESHOLD_CONF_KEY = "elephantbird.mapred.input.bad.record.threshold";
   /* Error out only after threshold rate is reached and we have see this many errors */
   public static final String BAD_RECORD_MIN_COUNT_CONF_KEY = "elephantbird.mapred.input.bad.record.min";
+  public static final String BAD_RECORD_CHECK_AT_CLOSE = // long name is ok, not usually explicitly set.
+      "elephantbird.mapred.input.bad.record.check.only.in.close";
+
   protected long start_;
   protected long pos_;
   protected long end_;
@@ -98,6 +103,13 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
     pos_ = start_;
   }
 
+  @Override
+  public void close() throws IOException {
+    if (errorTracker != null) {
+      errorTracker.close();
+    }
+  }
+
   protected abstract void createInputReader(InputStream input, Configuration conf) throws IOException;
   protected abstract void skipToNextSyncPoint(boolean atFirstRecord) throws IOException;
 
@@ -109,17 +121,20 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
    * input, but catch programmer errors (incorrect format, or incorrect
    * deserializers etc).
    */
-  static class InputErrorTracker {
+  static class InputErrorTracker implements Closeable {
     long numRecords;
     long numErrors;
 
-    double errorThreshold; // max fraction of errors allowed
-    long minErrors; // throw error only after this many errors
+    final double errorThreshold; // max fraction of errors allowed
+    final long minErrors; // throw error only after this many errors
+
+    final boolean checkOnlyInClose;
 
     InputErrorTracker(Configuration conf) {
       //default threshold : 0.01%
       errorThreshold = conf.getFloat(BAD_RECORD_THRESHOLD_CONF_KEY, 0.0001f);
       minErrors = conf.getLong(BAD_RECORD_MIN_COUNT_CONF_KEY, 2);
+      checkOnlyInClose = conf.getBoolean(BAD_RECORD_CHECK_AT_CLOSE, true);
       numRecords = 0;
       numErrors = 0;
     }
@@ -128,18 +143,32 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
       numRecords++;
     }
 
+    @Override
+    public void close() throws IOException {
+      // should throw RTE or an IOE?
+      // some applications might ignore IOE from close().
+      try {
+        if (numErrors > 0) {
+          checkErrorThreshold(null);
+        }
+      } catch (RuntimeException e) {
+        throw new IOException(e);
+      }
+    }
+
     void incErrors(Throwable cause) {
       numErrors++;
       if (numErrors > numRecords) {
         // incorrect use of this class
         throw new RuntimeException("Forgot to invoke incRecords()?");
       }
-
-      if (cause == null) {
-        cause = new Exception("Unknown error");
+      if (!checkOnlyInClose) {
+        checkErrorThreshold(cause);
       }
+    }
 
-      if (errorThreshold <= 0) { // no errors are tolerated
+    private void checkErrorThreshold(Throwable cause) {
+      if (numErrors > 0 && errorThreshold <= 0) { // no errors are tolerated
         throw new RuntimeException("error while reading input records", cause);
       }
 
