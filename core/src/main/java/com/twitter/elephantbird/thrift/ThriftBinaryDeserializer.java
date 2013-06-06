@@ -15,7 +15,7 @@ import org.apache.thrift.transport.TMemoryInputTransport;
  * corrupt records in two ways: <ul>
  *
  * <li> sets read-limit for TBinaryProtocol before each deserialization.
- * Reduces to reduce OutOfMemoryError exceptions.
+ * Reduces OutOfMemoryError exceptions.
  *
  * <li> Avoids excessive cpu consumed while skipping some corrupt records.
  * </ul>
@@ -44,8 +44,13 @@ public class ThriftBinaryDeserializer extends TDeserializer {
         case TType.SET:
         case TType.LIST:
           break;
+
+        // list other known types, but not expected
+        case TType.STOP:
+        case TType.VOID:
+        case TType.ENUM: // would be I32 on the wire
         default:
-          throw new TException("Unexpected type in a container");
+          throw new TException("Unexpected type " + type + " in a container");
       }
     }
 
