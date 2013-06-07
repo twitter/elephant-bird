@@ -4,52 +4,91 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.protocol.TList;
+import org.apache.thrift.protocol.TMap;
+import org.apache.thrift.protocol.TSet;
+import org.apache.thrift.protocol.TType;
+import org.apache.thrift.transport.TMemoryInputTransport;
 
 /**
- * extends TDeserializer in order to set read-limit for
- * underlying TBinaryProtocol before each deserialization. <p>
+ * Extends TDeserializer. This implementation improves handling of
+ * corrupt records in two ways: <ul>
  *
- * This improves handling of deserialization errors.
- * Otherwise, when the input is corrupt it can result in OutOfMemoryError
- * or other exceptions rather than a TException.
+ * <li> sets read-limit for TBinaryProtocol before each deserialization.
+ * Reduces OutOfMemoryError exceptions.
+ *
+ * <li> Avoids excessive cpu consumed while skipping some corrupt records.
+ * </ul>
  */
 public class ThriftBinaryDeserializer extends TDeserializer {
 
-  private final TBinaryProtocol protocol;
+  // use protocol and transport directly instead of using ones in TDeserializer
+  private final TMemoryInputTransport trans = new TMemoryInputTransport();
+  private final TBinaryProtocol protocol = new TBinaryProtocol(trans) {
+    // overwrite a few methods so that some malformed messages don't end up
+    // taking prohibitively large amounts of cpu in side TProtcolUtil.skip()
 
-  /**
-   * @see ThriftBinaryDeserializer
-   */
-  public ThriftBinaryDeserializer() {
-    this(new Factory()); //second constructor to access the Factory object
-  }
+    private void checkElemType(byte type) throws TException {
+      // only valid types for an element in a container (List, Map, Set)
+      // are the ones that are considered in TProtocolUtil.skip()
+      switch (type) {
+        case TType.BOOL:
+        case TType.BYTE:
+        case TType.I16:
+        case TType.I32:
+        case TType.I64:
+        case TType.DOUBLE:
+        case TType.STRING:
+        case TType.STRUCT:
+        case TType.MAP:
+        case TType.SET:
+        case TType.LIST:
+          break;
 
-  private ThriftBinaryDeserializer(Factory factory) {
-    super(factory);
-    protocol = factory.protocol;
-  }
-
-  /** stores protocol returned by super.getProtocol() */
-  private static class Factory extends TBinaryProtocol.Factory {
-    TBinaryProtocol protocol = null;
+        // list other known types, but not expected
+        case TType.STOP:
+        case TType.VOID:
+        case TType.ENUM: // would be I32 on the wire
+        default:
+          throw new TException("Unexpected type " + type + " in a container");
+      }
+    }
 
     @Override
-    public TProtocol getProtocol(TTransport trans) {
-      protocol = (TBinaryProtocol) super.getProtocol(trans);
-      return protocol;
+    public TMap readMapBegin() throws TException {
+      TMap map = super.readMapBegin();
+      checkElemType(map.keyType);
+      checkElemType(map.valueType);
+      return map;
     }
-  }
+
+    @Override
+    public TList readListBegin() throws TException {
+      TList list = super.readListBegin();
+      checkElemType(list.elemType);
+      return list;
+    }
+
+    @Override
+    public TSet readSetBegin() throws TException {
+      TSet set = super.readSetBegin();
+      checkElemType(set.elemType);
+      return set;
+    }
+  };
 
   @Override
   public void deserialize(TBase base, byte[] bytes) throws TException {
-    // set upper bound on bytes available so that protocol does not try
-    // to allocate and read large amounts of data in case of corrupt input
-    protocol.setReadLength(bytes.length);
-    super.deserialize(base, bytes);
+    deserialize(base, bytes, 0, bytes.length);
   }
 
-  // TODO: should add deserialize(TBase, bytes, offset, length).
-  // it could avoid a copy in many cases.
+  /**
+   * Same as {@link #deserialize(TBase, byte[])}, but much more buffer copy friendly.
+   */
+  public void deserialize(TBase base, byte[] bytes, int offset, int len) throws TException {
+    protocol.reset();
+    protocol.setReadLength(len); // reduces OutOfMemoryError exceptions
+    trans.reset(bytes, offset, len);
+    base.read(protocol);
+  }
 }
