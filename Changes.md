@@ -1,5 +1,15 @@
 # Elephant Bird #
 
+### Version 4.1 ###
+
+ISSUE 322. Re-implement ThriftBinaryDeserializer (Raghu Angadi)
+
+ISSUE 321. Use reflection to handle Thrift structs better (Raghu Angadi)
+
+ISSUE 320. Changes for using with cascading and MR1 in CDH4 (Rotem Hermon)
+
+ISSUE 317. Enforce error threshold at the end of reading a split (Raghu Angadi)
+
 ### Version 4.0 ###
 
 ISSUE 314. hadoop-compat module (Raghu Angadi)
