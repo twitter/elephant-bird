@@ -22,7 +22,14 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
     super(trans);
   }
 
-  private void checkElemType(byte type) throws TException {
+  /**
+   * Ensures that an element type in a for container (List, Set, Map) is
+   * a valid container.
+   *
+   * @param type
+   * @throws TException if the type is not one of the expected type.
+   */
+  public static void checkContainerElemType(byte type) throws TException {
     // only valid types for an element in a container (List, Map, Set)
     // are the ones that are considered in TProtocolUtil.skip()
     switch (type) {
@@ -51,22 +58,22 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TMap readMapBegin() throws TException {
     TMap map = super.readMapBegin();
-    checkElemType(map.keyType);
-    checkElemType(map.valueType);
+    checkContainerElemType(map.keyType);
+    checkContainerElemType(map.valueType);
     return map;
   }
 
   @Override
   public TList readListBegin() throws TException {
     TList list = super.readListBegin();
-    checkElemType(list.elemType);
+    checkContainerElemType(list.elemType);
     return list;
   }
 
   @Override
   public TSet readSetBegin() throws TException {
     TSet set = super.readSetBegin();
-    checkElemType(set.elemType);
+    checkContainerElemType(set.elemType);
     return set;
   }
 
