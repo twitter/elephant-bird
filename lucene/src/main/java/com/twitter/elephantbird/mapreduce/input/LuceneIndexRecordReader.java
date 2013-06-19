@@ -135,7 +135,9 @@ public abstract class LuceneIndexRecordReader<T extends Writable>
     // and try again
     if (currentQueryIter.hasNext()) {
       currentKey = new IntWritable(currentQueryIter.nextIndex());
-      Iterator<T> values = search(indexSearcher, currentQueryIter.next());
+      Query nextQuery = currentQueryIter.next();
+      LOG.info("Running query " + nextQuery);
+      Iterator<T> values = search(indexSearcher, nextQuery);
       currentValueIter = values;
       return nextKeyValue();
     }

@@ -214,7 +214,7 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
   public static void setQueries(List<String> queries, Configuration conf) throws IOException {
     Preconditions.checkNotNull(queries);
     Preconditions.checkArgument(!queries.isEmpty());
-    HadoopUtils.writeStringListToConfAsJson(QUERIES_KEY, queries, conf);
+    HadoopUtils.writeStringListToConfAsBase64(QUERIES_KEY, queries, conf);
   }
 
   /**
@@ -227,7 +227,7 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
    */
   @SuppressWarnings("unchecked")
   public static List<String> getQueries(Configuration conf) throws IOException {
-    return Preconditions.checkNotNull(HadoopUtils.readStringListFromConfAsJson(QUERIES_KEY, conf),
+    return Preconditions.checkNotNull(HadoopUtils.readStringListFromConfAsBase64(QUERIES_KEY, conf),
       "You must call LuceneIndexInputFormat.setQueries()");
   }
 
