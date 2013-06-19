@@ -5,10 +5,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
 import org.apache.commons.codec.binary.Base64;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 public class HadoopUtils {
   private static final Logger LOG = LoggerFactory.getLogger(HadoopUtils.class);
+  private static final Splitter COMMA_SPLITTER = Splitter.on(',');
 
   private HadoopUtils() { }
 
@@ -159,5 +162,52 @@ public class HadoopUtils {
       return null;
     }
     return Lists.<String>newArrayList(((JSONArray) JSONValue.parse(json)));
+  }
+
+  /**
+   * Writes a list of strings into a configuration by base64 encoding them and separating
+   * them with commas
+   *
+   * @param key for the configuration
+   * @param list to write
+   * @param conf to write to
+   */
+  public static void writeStringListToConfAsBase64(String key, List<String> list, Configuration
+    conf) {
+    Preconditions.checkNotNull(list);
+    Iterator<String> iter = list.iterator();
+    StringBuilder sb = new StringBuilder();
+    while(iter.hasNext()) {
+      byte[] bytes = Base64.encodeBase64(iter.next().getBytes(Charsets.UTF_8), false);
+      sb.append(new String(bytes, Charsets.UTF_8));
+      if (iter.hasNext()) {
+        sb.append(',');
+      }
+    }
+    conf.set(key, sb.toString());
+  }
+
+  /**
+   * Reads a list of strings stored as comma separated base64
+   *
+   * @param key for the configuration
+   * @param conf to read from
+   * @return the read list of strings, or null if key is not present in conf
+   */
+  @SuppressWarnings("unchecked")
+  public static List<String> readStringListFromConfAsBase64(String key, Configuration conf) {
+    String b64List = conf.get(key);
+    if (b64List == null) {
+      return null;
+    }
+
+    List<String> strings = Lists.newArrayList();
+
+    for (String b64 : COMMA_SPLITTER.split(b64List)) {
+      byte[] bytes = Base64.decodeBase64(b64.getBytes(Charsets.UTF_8));
+      strings.add(new String(bytes, Charsets.UTF_8));
+    }
+
+    return strings;
   }
 }
