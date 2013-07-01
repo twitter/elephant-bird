@@ -53,17 +53,16 @@ public class HdfsMergeTool extends ExecuteOnClusterTool {
     conf.set(OUTPUT_KEY, args[0]);
     conf.setInt(MAX_MERGE_FACTOR_KEY, Integer.valueOf(args[1]));
     List<Path> indexes = HdfsUtils.expandGlobs(Arrays.asList(args).subList(2, args.length), conf);
-    HadoopUtils.writeStringListToConfAsJson(
-        INDEXES_KEY,
-        Lists.transform(indexes, new HdfsUtils.PathToQualifiedString(conf)),
-        conf);
+    HadoopUtils.writeStringListToConfAsBase64(INDEXES_KEY,
+      Lists.transform(indexes, new HdfsUtils.PathToQualifiedString(conf)),
+      conf);
   }
 
   @Override
   public void execute(Mapper.Context context) throws IOException {
     Configuration conf =  HadoopCompat.getConfiguration(context);
 
-    List<String> indexes = HadoopUtils.readStringListFromConfAsJson(INDEXES_KEY, conf);
+    List<String> indexes = HadoopUtils.readStringListFromConfAsBase64(INDEXES_KEY, conf);
     Path output = new Path(conf.get(OUTPUT_KEY));
 
     File tmpDirFile = Files.createTempDir();
