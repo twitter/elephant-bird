@@ -9,6 +9,8 @@ import com.twitter.elephantbird.util.TypeRef;
 
 public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
 
+  private TypeRef<M> typeRef;
+
   public ProtobufWritable() {
     super(null, null);
   }
@@ -19,6 +21,7 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
 
   public ProtobufWritable(M message, TypeRef<M> typeRef) {
     super(message, new ProtobufConverter<M>(typeRef));
+    this.typeRef = typeRef;
   }
 
   /**
@@ -31,5 +34,12 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
   @Override
   protected BinaryConverter<M> getConverterFor(Class<M> clazz) {
     return ProtobufConverter.newInstance(clazz);
+  }
+
+  /**
+   * Returns the TypeRef for the Protobuf class.
+   */
+  public TypeRef<M> getTypeRef() {
+	return typeRef;
   }
 }
