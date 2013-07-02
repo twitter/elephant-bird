@@ -40,6 +40,6 @@ public class ProtobufWritable<M extends Message> extends BinaryWritable<M> {
    * Returns the TypeRef for the Protobuf class.
    */
   public TypeRef<M> getTypeRef() {
-	return typeRef;
+    return typeRef;
   }
 }
