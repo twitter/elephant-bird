@@ -51,7 +51,7 @@ import com.twitter.elephantbird.pig.util.PigUtil;
  * is assumed:
  *
  * <pre>
- * (cardinality: int, entries: {entry: (index: int, value: double)})
+ * (cardinality: int, entries: {t: (index: int, value: double)})
  * </pre>
  *
  * If options {@code -sparse} and {@code -cardinality} are both specified, the following schema is
