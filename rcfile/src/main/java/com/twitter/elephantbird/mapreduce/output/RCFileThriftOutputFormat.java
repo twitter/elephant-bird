@@ -90,7 +90,7 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
     return metadata.build();
   }
 
-  private class ProtobufWriter extends RCFileOutputFormat.Writer {
+  private class ThriftWriter extends RCFileOutputFormat.Writer {
 
     private ByteStream.Output byteStream = new ByteStream.Output();
     private TBinaryProtocol tProto = new TBinaryProtocol(
@@ -101,7 +101,7 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
     private TMemoryInputTransport mTransport;
     private TBinaryProtocol skipProto;
 
-    ProtobufWriter(TaskAttemptContext job) throws IOException {
+    ThriftWriter(TaskAttemptContext job) throws IOException {
       super(RCFileThriftOutputFormat.this, job, Protobufs.toText(makeColumnarMetadata()));
     }
 
@@ -232,6 +232,6 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
     }
 
     RCFileOutputFormat.setColumnNumber(HadoopCompat.getConfiguration(job), numColumns);
-    return new ProtobufWriter(job);
+    return new ThriftWriter(job);
   }
 }
