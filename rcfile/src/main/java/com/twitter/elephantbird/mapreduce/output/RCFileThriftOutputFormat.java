@@ -227,7 +227,7 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
     getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
 
     if (typeRef == null) {
-      typeRef = ThriftUtils.getTypeRef(HadoopCompat.getConfiguration(job), RCFileProtobufOutputFormat.class);
+      typeRef = ThriftUtils.getTypeRef(HadoopCompat.getConfiguration(job), RCFileThriftOutputFormat.class);
       init();
     }
 
