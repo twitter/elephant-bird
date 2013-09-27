@@ -11,6 +11,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
+import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +51,83 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class PigToThrift<T extends TBase<?, ?>> {
   public static final Logger LOG = LoggerFactory.getLogger(PigToThrift.class);
+  private static final Function<String, Boolean> TO_BOOLEAN_FUNCTION =
+      new Function<String, Boolean>() {
+        @Override
+        @Nullable
+        public Boolean apply(@Nullable String input) {
+          if (input == null) {
+            return null;
+          }
+          return Boolean.parseBoolean(input);
+        }
+      };
+  private static final Function<String, Byte> TO_BYTE_FUNCTION =
+      new Function<String, Byte>() {
+        @Override
+        @Nullable
+        public Byte apply(@Nullable String input) {
+          if (input == null) {
+            return null;
+          }
+          return Byte.parseByte(input);
+        }
+      };
+  private static final Function<String, ByteBuffer> TO_BYTES_FUNCTION =
+      new Function<String, ByteBuffer>() {
+        @Override
+        @Nullable
+        public ByteBuffer apply(@Nullable String input) {
+          if (input == null) {
+            return null;
+          }
+          return ByteBuffer.wrap(input.getBytes(Charsets.UTF_8));
+        }
+      };
+  private static final Function<String, Short> TO_SHORT_FUNCTION =
+      new Function<String, Short>() {
+        @Override
+        @Nullable
+        public Short apply(@Nullable String input) {
+          if (input == null) {
+            return null;
+          }
+          return Short.parseShort(input);
+        }
+      };
+  private static final Function<String, Integer> TO_INTEGER_FUNCTION =
+      new Function<String, Integer>() {
+        @Override
+        @Nullable
+        public Integer apply(@Nullable String input) {
+          if (input == null) {
+            return null;
+          }
+          return Integer.parseInt(input);
+        }
+      };
+  private static final Function<String, Long> TO_LONG_FUNCTION =
+      new Function<String, Long>() {
+        @Override
+        @Nullable
+        public Long apply(@Nullable String input) {
+          if (input == null) {
+            return null;
+          }
+          return Long.parseLong(input);
+        }
+      };
+  private static final Function<String, Double> TO_DOUBLE_FUNCTION =
+      new Function<String, Double>() {
+        @Override
+        @Nullable
+        public Double apply(@Nullable String input) {
+          if (input == null) {
+            return null;
+          }
+          return Double.parseDouble(input);
+        }
+      };
 
   private TStructDescriptor structDesc;
 
@@ -149,6 +232,33 @@ public class PigToThrift<T extends TBase<?, ?>> {
     return null;
   }
 
+  private static Function<String, ? extends Object> getKeyConverter(final Field thriftField) {
+    switch (thriftField.getType()) {
+      // WARNING: can't differentiate field type binary from string due to thrift limitation with
+      // versions < 0.6.0
+      case TType.STRING: return Functions.identity();
+      case TType.BOOL: return TO_BOOLEAN_FUNCTION;
+      case TType.BYTE: return TO_BYTE_FUNCTION;
+      case TType.I16: return TO_SHORT_FUNCTION;
+      case TType.I32: return TO_INTEGER_FUNCTION;
+      case TType.I64: return TO_LONG_FUNCTION;
+      case TType.DOUBLE: return TO_DOUBLE_FUNCTION;
+      case TType.ENUM: return new Function<String, TEnum>() {
+        @Override
+        public TEnum apply(@Nullable String input) {
+          if (input == null) {
+            return null;
+          }
+          return toThriftEnum(thriftField, input);
+        }
+      };
+    }
+    // LIST, MAP, SET, STOP, STRUCT, VOID types are unsupported
+    throw new RuntimeException(String.format(
+        "Conversion from string map key to type '%s' is unsupported",
+        ThriftUtils.getFieldValueType(thriftField).getName()));
+  }
+
   /* TType.STRING could be either a DataByteArray or a String */
   private static Object toStringType(Object value) {
     if (value instanceof String) {
@@ -164,13 +274,10 @@ public class PigToThrift<T extends TBase<?, ?>> {
   private static Map<Object, Object> toThriftMap(Field field, Map<String, Object> map) {
     Field keyField   = field.getMapKeyField();
     Field valueField = field.getMapValueField();
-    if (keyField.getType() != TType.STRING
-        && keyField.getType() != TType.ENUM) {
-      throw new IllegalArgumentException("TStructs's map key should be a STRING or an ENUM");
-    }
+    Function<String, ? extends Object> keyConverter = getKeyConverter(keyField);
     HashMap<Object, Object> out = new HashMap<Object, Object>(map.size());
     for(Entry<String, Object> e : map.entrySet()) {
-      out.put(toThriftValue(keyField,   e.getKey()),
+      out.put(keyConverter.apply(e.getKey()),
               toThriftValue(valueField, e.getValue()));
     }
     return out;
