@@ -44,7 +44,7 @@ public class TestPigToThrift {
   private static Tuple personTuple(String name, int id, String email, String phoneNumber,
       String phoneType) {
     return tuple(tuple(name, null), id, email,
-        new NonSpillableDataBag(Lists.newArrayList(tuple(phoneNumber, phoneType))));
+        new NonSpillableDataBag(Lists.<Tuple>newArrayList(tuple(phoneNumber, phoneType))));
   }
 
   @Test
