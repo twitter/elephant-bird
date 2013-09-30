@@ -17,10 +17,10 @@ before_install:
   - sudo apt-get -qq install lzop liblzo2-dev # libzo2-dev for compiling hadoop-lzo
   - git clone git://github.com/twitter/hadoop-lzo.git # for native libgplcompression
   - cd hadoop-lzo
+  - git co release-0.4.17 #temporary, should switch to hadoop-lzo/master
   - mvn package -DskipTests
   - mv target/native/Linux-* ../hadoop-lzo-native
   - cd ..
-  - ls -l $PWD/hadoop-lzo-native
 
 script:
   - echo ============ Build and test with hadoop2 profile =====================
