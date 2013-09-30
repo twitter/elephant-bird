@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.base.Charsets;
+
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
@@ -168,8 +170,6 @@ public class PigToThrift<T extends TBase<?, ?>> {
       String s = e.getKey();
       Object key;
       switch (keyField.getType()) {
-        // WARNING: can't differentiate field type binary from string due to thrift limitation with
-        // versions < 0.6.0
         case TType.STRING: key = s; break;
         case TType.BOOL: key = Boolean.parseBoolean(s); break;
         case TType.BYTE: key = Byte.parseByte(s); break;
@@ -183,6 +183,9 @@ public class PigToThrift<T extends TBase<?, ?>> {
           throw new RuntimeException(String.format(
               "Conversion from string map key to type '%s' is unsupported",
               ThriftUtils.getFieldValueType(keyField).getName()));
+      }
+      if (keyField.isBuffer()) {
+        key = ByteBuffer.wrap(s.getBytes(Charsets.UTF_8));
       }
       out.put(key, toThriftValue(valueField, e.getValue()));
     }

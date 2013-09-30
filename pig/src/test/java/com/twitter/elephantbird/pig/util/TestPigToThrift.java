@@ -1,5 +1,8 @@
 package com.twitter.elephantbird.pig.util;
 
+import java.nio.ByteBuffer;
+
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -73,7 +76,7 @@ public class TestPigToThrift {
         .setDoubles(ImmutableMap.of(1D, 1))
         .setEnums(ImmutableMap.of(KeyEnum.A, 1))
         .setStrings(ImmutableMap.of("a", 1))
-        .setBinaries(null);
+        .setBinaries(ImmutableMap.of(ByteBuffer.wrap("1".getBytes(Charsets.UTF_8)), 1));
     MapKeyTest actual = PigToThrift.newInstance(MapKeyTest.class).getThriftObject(
         tuple(
             ImmutableMap.of("true", 1),
@@ -84,7 +87,7 @@ public class TestPigToThrift {
             ImmutableMap.of("1.0", 1),
             ImmutableMap.of(KeyEnum.A.name(), 1),
             ImmutableMap.of("a", 1),
-            null
+            ImmutableMap.of("1", 1)
         )
     );
     assertEquals(expected, actual);
@@ -100,26 +103,5 @@ public class TestPigToThrift {
     );
     assertNotNull(fail);
     assertNull(fail.getBytes());
-  }
-
-  @Test(expected = ClassCastException.class)
-  public void testMapKeyBinariesConversionFailure() throws TException {
-    MapKeyTest bad = PigToThrift.newInstance(MapKeyTest.class).getThriftObject(
-        tuple(
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            ImmutableMap.of("binary", 1) // user error we can't guard against with thrift < 0.6.0
-        )
-    );
-    assertNotNull(bad);
-    TMemoryBuffer buffer = new TMemoryBuffer(1024);
-    TProtocol protocol = new TBinaryProtocol(buffer);
-    bad.write(protocol);
   }
 }
