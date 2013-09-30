@@ -36,6 +36,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
   private final LongWritable key_ = new LongWritable();
   private final W value_;
   private TypeRef<M> typeRef_;
+  private int maxLineLen = Integer.MAX_VALUE;
 
   private final Base64 base64_ = Codecs.createStandardBase64();
   private final BinaryConverter<M> converter_;
@@ -44,6 +45,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
   private Counter emptyLinesCounter;
   private Counter recordsReadCounter;
   private Counter recordErrorsCounter;
+  private Counter truncatedLinesCounter;
 
   protected LzoBinaryB64LineRecordReader(TypeRef<M> typeRef, W protobufWritable, BinaryConverter<M> protoConverter) {
     typeRef_ = typeRef;
@@ -71,6 +73,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
 
   @Override
   protected void createInputReader(InputStream input, Configuration conf) throws IOException {
+    maxLineLen = conf.getInt(LzoLineRecordReader.MAX_LINE_LEN_CONF, Integer.MAX_VALUE);
     lineReader_ = new LineReader(input, conf);
   }
 
@@ -82,13 +85,14 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
     recordsReadCounter = HadoopUtils.getCounter(context, group, "Records Read");
     recordErrorsCounter = HadoopUtils.getCounter(context, group, "Errors");
     emptyLinesCounter = HadoopUtils.getCounter(context, group, "Empty Lines");
+    truncatedLinesCounter = HadoopUtils.getCounter(context, group, "Truncated Lines");
     super.initialize(genericSplit, context);
   }
 
   @Override
   protected void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
     if (!atFirstRecord) {
-      lineReader_.readLine(new Text());
+      lineReader_.readLine(new Text(), maxLineLen);
     }
   }
 
@@ -109,7 +113,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
     while (pos_ <= end_) {
       key_.set(pos_);
 
-      int newSize = lineReader_.readLine(line_);
+      int newSize = lineReader_.readLine(line_, maxLineLen);
       if (newSize == 0) {
         return false;
       }
@@ -118,6 +122,9 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
       if (line_.getLength() == 0 || line_.charAt(0) == '\n') {
         HadoopCompat.incrementCounter(emptyLinesCounter, 1);
         continue;
+      }
+      if (line_.getLength() >= maxLineLen) {
+        HadoopCompat.incrementCounter(truncatedLinesCounter, 1);
       }
 
       M protoValue = null;
