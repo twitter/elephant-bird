@@ -20,6 +20,7 @@ before_install:
   - mvn package -DskipTests
   - mv target/native/Linux-* ../hadoop-lzo-native
   - cd ..
+  - ls -l $PWD/hadoop-lzo-native
 
 script:
   - echo ============ Build and test with hadoop2 profile =====================
