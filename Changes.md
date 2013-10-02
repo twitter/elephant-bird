@@ -1,5 +1,17 @@
 # Elephant Bird #
 
+### Version 4.2 ###
+
+ISSUE 339. Updates PigToThrift to support more Pig map (String) key conversions (Andy Schlaikjer)
+
+ISSUE 335. RCFileThriftOutputFormat tries to use configuration for RCFileProtobufOutputFormat (johansen)
+
+ISSUE 329. option to limit size of input lines read into memory (Raghu Angadi)
+
+ISSUE 328. Add getTypeDef for querying the Protobuf class in a ProtobufWritable directly (Shixiong Zhu)
+
+ISSUE 325. Use base64 to encode strings that have unicode (Alex Levenson)
+
 ### Version 4.1 ###
 
 ISSUE 322. Re-implement ThriftBinaryDeserializer (Raghu Angadi)
