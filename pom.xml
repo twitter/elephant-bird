@@ -541,6 +541,7 @@
           <artifactId>maven-release-plugin</artifactId>
           <version>2.4.1</version>
           <configuration>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
             <!-- do not auto push release commits / tag -->
             <pushChanges>false</pushChanges>
             <!-- check out from local when releasing -->
