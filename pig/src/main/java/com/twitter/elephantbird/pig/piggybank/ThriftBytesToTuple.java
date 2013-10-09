@@ -4,14 +4,13 @@ import java.io.IOException;
 
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.DataByteArray;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.thrift.TBase;
-import org.apache.thrift.TException;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
-import com.twitter.elephantbird.pig.util.ThriftToPig;
-import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
@@ -53,6 +52,11 @@ public class ThriftBytesToTuple<M extends TBase<?,?>> extends EvalFunc<Tuple> {
 
   @Override
   public Schema outputSchema(Schema input) {
-    return ThriftToPig.toSchema(typeRef.getRawClass());
+    Schema outSchema = ThriftToPig.toSchema(typeRef.getRawClass());
+    try {
+      return new Schema(new Schema.FieldSchema(typeRef.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
+    } catch (FrontendException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
