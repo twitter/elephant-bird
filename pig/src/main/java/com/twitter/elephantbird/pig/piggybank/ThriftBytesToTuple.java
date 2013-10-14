@@ -52,11 +52,6 @@ public class ThriftBytesToTuple<M extends TBase<?,?>> extends EvalFunc<Tuple> {
 
   @Override
   public Schema outputSchema(Schema input) {
-    Schema outSchema = ThriftToPig.toSchema(typeRef.getRawClass());
-    try {
-      return new Schema(new Schema.FieldSchema(typeRef.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
-    } catch (FrontendException e) {
-      throw new RuntimeException(e);
-    }
+    return PigUtil.outputSchemaForThrift(typeRef);
   }
 }
