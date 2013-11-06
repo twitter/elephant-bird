@@ -97,21 +97,31 @@ public class PigUtil {
     return ThriftUtils.getTypeRef(getClass(thriftClassName));
   }
   
-  public static Schema outputSchemaForProtobuf(ProtobufToPig protoToPig_, TypeRef<? extends Message> typeRef_) {
-    Schema outSchema = protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass()));
+  public static Schema outputSchemaForProtobuf(ProtobufToPig protoToPig, TypeRef<? extends Message> typeRef) {
+    Schema outSchema;
     try {
-      return new Schema(new Schema.FieldSchema(typeRef_.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
+      outSchema = protoToPig.toSchema(Protobufs.getMessageDescriptor(typeRef.getRawClass()));
+      // wrap the schema if size > 1
+      if(outSchema.size() > 1) {
+        outSchema = new Schema(new Schema.FieldSchema(typeRef.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
+      }
     } catch (FrontendException e) {
       throw new RuntimeException(e);
     }
+    return outSchema;
   }
   
   public static Schema outputSchemaForThrift(TypeRef<? extends TBase<?,?>> typeRef) {
-    Schema outSchema = ThriftToPig.toSchema(typeRef.getRawClass());
+    Schema outSchema;
     try {
-      return new Schema(new Schema.FieldSchema(typeRef.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
+      outSchema = ThriftToPig.toSchema(typeRef.getRawClass());
+      // wrap the schema if size > 1
+      if(outSchema.size() > 1) {
+        outSchema = new Schema(new Schema.FieldSchema(typeRef.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
+      }
     } catch (FrontendException e) {
       throw new RuntimeException(e);
     }
+    return outSchema;
   }
 }
