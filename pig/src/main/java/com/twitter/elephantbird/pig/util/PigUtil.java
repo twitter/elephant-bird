@@ -2,7 +2,10 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 
+import org.apache.pig.data.DataType;
 import org.apache.pig.impl.PigContext;
+import org.apache.pig.impl.logicalLayer.FrontendException;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.thrift.TBase;
 
 import com.google.protobuf.Descriptors;
@@ -92,5 +95,33 @@ public class PigUtil {
   /** Returns TypeRef using Pig class loader. */
   public static<T extends TBase<?,?>> TypeRef<T> getThriftTypeRef(String thriftClassName) {
     return ThriftUtils.getTypeRef(getClass(thriftClassName));
+  }
+  
+  public static Schema outputSchemaForProtobuf(ProtobufToPig protoToPig, TypeRef<? extends Message> typeRef) {
+    Schema outSchema;
+    try {
+      outSchema = protoToPig.toSchema(Protobufs.getMessageDescriptor(typeRef.getRawClass()));
+      // wrap the schema if size > 1
+      if(outSchema.size() > 1) {
+        outSchema = new Schema(new Schema.FieldSchema(typeRef.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
+      }
+    } catch (FrontendException e) {
+      throw new RuntimeException(e);
+    }
+    return outSchema;
+  }
+  
+  public static Schema outputSchemaForThrift(TypeRef<? extends TBase<?,?>> typeRef) {
+    Schema outSchema;
+    try {
+      outSchema = ThriftToPig.toSchema(typeRef.getRawClass());
+      // wrap the schema if size > 1
+      if(outSchema.size() > 1) {
+        outSchema = new Schema(new Schema.FieldSchema(typeRef.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
+      }
+    } catch (FrontendException e) {
+      throw new RuntimeException(e);
+    }
+    return outSchema;
   }
 }

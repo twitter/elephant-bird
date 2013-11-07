@@ -4,18 +4,14 @@ import java.io.IOException;
 
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.DataByteArray;
-import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
+import com.twitter.elephantbird.pig.util.PigUtil;
 import com.twitter.elephantbird.pig.util.ProtobufToPig;
 import com.twitter.elephantbird.pig.util.ProtobufTuple;
-import com.twitter.elephantbird.pig.util.PigUtil;
-import com.twitter.elephantbird.pig.util.ThriftToPig;
-import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
 
 /**
@@ -67,11 +63,6 @@ public class ProtobufBytesToTuple<M extends Message> extends EvalFunc<Tuple> {
 
   @Override
   public Schema outputSchema(Schema input) {
-    Schema outSchema = protoToPig_.toSchema(Protobufs.getMessageDescriptor(typeRef_.getRawClass()));
-    try {
-      return new Schema(new Schema.FieldSchema(typeRef_.getRawClass().getSimpleName(), outSchema, DataType.TUPLE));
-    } catch (FrontendException e) {
-      throw new RuntimeException(e);
-    }
+    return PigUtil.outputSchemaForProtobuf(protoToPig_, typeRef_);
   }
 }
