@@ -1,5 +1,11 @@
 # Elephant Bird #
 
+### Version 4.3 ###
+
+ISSUE 348. Some refactor for outputSchema wrapping adding in ISSUE 347 (Aniket Mokashi)
+
+ISSUE 347. Pig 12 compatibility Wrap outputschema into a tuple to make UDFs (Aniket Mokashi)
+
 ### Version 4.2 ###
 
 ISSUE 339. Updates PigToThrift to support more Pig map (String) key conversions (Andy Schlaikjer)
