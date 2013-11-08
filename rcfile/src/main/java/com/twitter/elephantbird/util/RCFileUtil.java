@@ -163,6 +163,9 @@ public class RCFileUtil {
 
       conf.set(RCFileUtil.REQUIRED_FIELD_INDICES_CONF,
                Joiner.on(",").join(indices));
+
+    } else {
+        conf.set(RCFileUtil.REQUIRED_FIELD_INDICES_CONF, "");
     }
   }
 }
