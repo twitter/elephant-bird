@@ -153,19 +153,17 @@ public class RCFileUtil {
                                           RequiredFieldList requiredFieldList) {
 
     // set required fields conf for RCFile[Protobuf|Thrift] input format
-
+    String value = "";
+    
     if (requiredFieldList != null) {
-
       List<Integer> indices = Lists.newArrayList();
       for(RequiredField f : requiredFieldList.getFields()) {
         indices.add(f.getIndex());
       }
 
-      conf.set(RCFileUtil.REQUIRED_FIELD_INDICES_CONF,
-               Joiner.on(",").join(indices));
-
-    } else {
-        conf.set(RCFileUtil.REQUIRED_FIELD_INDICES_CONF, "");
+      value = Joiner.on(",").join(indices);
     }
+    
+    conf.set(RCFileUtil.REQUIRED_FIELD_INDICES_CONF, value);
   }
 }
