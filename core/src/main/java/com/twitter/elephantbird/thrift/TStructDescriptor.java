@@ -318,6 +318,7 @@ public class TStructDescriptor {
     if (jType == Long.TYPE    || jType == Long.class)      return TType.I64;
     if (jType == Double.TYPE  || jType == Double.class)    return TType.DOUBLE;
     if (jType == String.class)                             return TType.STRING;
+    if (jType == byte[].class)                             return TType.STRING; // buffer
     if (jType == Void.class)                               return TType.VOID;
 
     // non-generic simple classes
@@ -325,7 +326,6 @@ public class TStructDescriptor {
       Class<?> klass = (Class<?>) jType;
 
       if (TEnum.class.isAssignableFrom(klass))      return TType.ENUM;
-      if (klass.getComponentType() == Byte.TYPE)    return TType.STRING; // buffer (byte[])
       if (ByteBuffer.class.isAssignableFrom(klass)) return TType.STRING; // buffer (ByteBuffer)
       if (TBase.class.isAssignableFrom(klass))      return TType.STRUCT;
     }
@@ -339,6 +339,6 @@ public class TStructDescriptor {
       if (List.class.isAssignableFrom(klass))   return TType.LIST;
     }
 
-    throw new IllegalArgumentException("cannot convert java type '" + jType + "'  to thrift type ");
+    throw new IllegalArgumentException("cannot convert java type '" + jType + "'  to thrift type");
   }
 }
