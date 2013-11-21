@@ -281,7 +281,8 @@ public class TestThriftToPig {
 
   @Test
   public void structInMapTest() throws FrontendException {
-      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestStructInMap","name:chararray,names:map[(name: (first_name: chararray,last_name: chararray),phones: map[chararray])]");
+      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestStructInMap",
+          "name:chararray,names:map[(name: (first_name: chararray,last_name: chararray),phones: map[chararray])],name_to_id: map[int]");
   }
 
   @Test
