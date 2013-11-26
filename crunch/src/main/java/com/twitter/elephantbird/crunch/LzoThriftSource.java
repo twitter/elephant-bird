@@ -20,6 +20,30 @@ import java.util.List;
  */
 public class LzoThriftSource<T extends TBase<?, ?>> extends FileSourceImpl<T> implements ReadableSource<T> {
 
+  /**
+   * Factory method for creating a new {@code LzoThriftSource} from a given path and Thrift
+   * record class.
+   *
+   * @param path path to the data
+   * @param thriftClass the Thrift class to read
+   * @return a new {@code LzoThriftSource}
+   */
+  public static <S extends TBase<?, ?>> LzoThriftSource<S> at(Path path, Class<S> thriftClass) {
+    return new LzoThriftSource<S>(path, EBTypes.thrifts(thriftClass));
+  }
+
+  /**
+   * Factory method for creating a new {@code LzoThriftSource} from the given paths and Thrift
+   * record class.
+   *
+   * @param paths list of paths to data
+   * @param thriftClass the Thrift class to read
+   * @return a new {@code LzoThriftSource}
+   */
+  public static <S extends TBase<?, ?>> LzoThriftSource<S> at(List<Path> paths, Class<S> thriftClass) {
+    return new LzoThriftSource<S>(paths, EBTypes.thrifts(thriftClass));
+  }
+
   private static <T> FormatBundle<LzoThriftBlockInputFormat> getBundle(PType<T> ptype) {
     return FormatBundle.forInput(LzoThriftBlockInputFormat.class)
         .set("elephantbird.class.for.MultiInputFormat", ptype.getTypeClass().getName());

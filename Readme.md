@@ -40,6 +40,7 @@ Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.
 1. Thrift 0.5.0, 0.6.0, 0.7.0
 1. Mahout 0.6
 1. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
+1. Crunch 0.8.1+
 
 ### Runtime Dependencies
 
