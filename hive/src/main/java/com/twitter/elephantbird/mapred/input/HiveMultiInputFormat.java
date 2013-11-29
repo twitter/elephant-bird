@@ -30,7 +30,7 @@ import java.util.Properties;
  */
 @SuppressWarnings("deprecation")
 public class HiveMultiInputFormat
-    extends DeprecatedInputFormatWrapper<LongWritable, BinaryWritable> {
+    extends DeprecatedFileInputFormatWrapper<LongWritable, BinaryWritable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveMultiInputFormat.class);
 

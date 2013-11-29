@@ -8,7 +8,7 @@ import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
 /**
  * mapred version of {@link LzoTextInputFormat}.
  */
-public class DeprecatedLzoTextInputFormat extends DeprecatedInputFormatWrapper<LongWritable, Text> {
+public class DeprecatedLzoTextInputFormat extends DeprecatedFileInputFormatWrapper<LongWritable, Text> {
   public DeprecatedLzoTextInputFormat() {
     super(new LzoTextInputFormat());
   }
