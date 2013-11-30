@@ -7,6 +7,7 @@ import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.InputFormat;
 
 /**
  * A {@Link DeprecatedInputFormatWrapper} that looks like
@@ -58,5 +59,9 @@ public class DeprecatedFileInputFormatWrapper<K, V>
   @Override
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
     return wrapper.getSplits(job, numSplits);
+  }
+
+  public void setInputFormatInstance(InputFormat<K, V> inputFormat) {
+    wrapper.setInputFormatInstance(inputFormat);
   }
 }

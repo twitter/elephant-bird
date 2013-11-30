@@ -73,12 +73,13 @@ public class HiveMultiInputFormat
 
     try {
       Class thriftClass = job.getClassByName(thriftClassName);
-      realInputFormat = new MultiInputFormat(new TypeRef(thriftClass) {});
+      setInputFormatInstance( new MultiInputFormat(new TypeRef(thriftClass) {}));
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("Failed getting class for " + thriftClassName);
     }
   }
 
+  @Override
   public RecordReader<LongWritable, BinaryWritable> getRecordReader(InputSplit split, JobConf job,
       Reporter reporter) throws IOException {
     initialize((FileSplit) split, job);
