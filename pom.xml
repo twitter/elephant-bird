@@ -79,6 +79,8 @@
     <apache.hadoop1.version>1.1.2</apache.hadoop1.version> <!-- for hadoop1 profile -->
     <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version> <!-- for hadoop2 profile -->
     <apache.pig.version>0.11.1</apache.pig.version>
+    <apache.crunch.hadoop1.version>0.8.1</apache.crunch.hadoop1.version>
+    <apache.crunch.hadoop2.version>0.8.1-hadoop2</apache.crunch.hadoop2.version>
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
@@ -111,6 +113,11 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-crunch</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -269,6 +276,14 @@
         <scope>provided</scope>
       </dependency>
 
+      <!-- crunch -->
+      <dependency>
+        <groupId>org.apache.crunch</groupId>
+        <artifactId>crunch-core</artifactId>
+        <version>${apache.crunch.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
       <!-- pig -->
       <dependency>
         <groupId>org.apache.pig</groupId>
@@ -403,6 +418,9 @@
           ${apache.hadoop1.version}
         </specific.hadoop.version>
         <apache.pig.classifier />
+        <apache.crunch.version>
+          ${apache.crunch.hadoop1.version}
+        </apache.crunch.version>
       </properties>
     </profile>
     <profile>
@@ -412,6 +430,9 @@
           ${apache.hadoop2.version}
         </specific.hadoop.version>
         <apache.pig.classifier>h2</apache.pig.classifier>
+        <apache.crunch.version>
+          ${apache.crunch.hadoop2.version}
+        </apache.crunch.version>
       </properties>
     </profile>
   </profiles>
@@ -651,6 +672,7 @@
 
   <modules>
     <module>cascading2</module>
+    <module>crunch</module>
     <module>core</module>
     <module>hadoop-compat</module>
     <module>hive</module>
