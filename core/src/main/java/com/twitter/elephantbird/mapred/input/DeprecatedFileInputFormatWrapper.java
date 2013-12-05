@@ -22,7 +22,7 @@ public class DeprecatedFileInputFormatWrapper<K, V>
   protected DeprecatedInputFormatWrapper<K, V> wrapper;
 
   public DeprecatedFileInputFormatWrapper() {
-    // real wrapper is initialized based on conf.
+    wrapper = new DeprecatedInputFormatWrapper<K, V>();
   }
 
   public DeprecatedFileInputFormatWrapper(org.apache.hadoop.mapreduce.lib.input.FileInputFormat<K, V> realInputFormat) {
