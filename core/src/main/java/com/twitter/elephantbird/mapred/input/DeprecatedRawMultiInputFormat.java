@@ -5,7 +5,7 @@ import com.twitter.elephantbird.mapreduce.input.RawMultiInputFormat;
 /**
  * mapred version of {@link RawMultiInputFormat}
  */
-public class DeprecatedRawMultiInputFormat extends DeprecatedInputFormatWrapper {
+public class DeprecatedRawMultiInputFormat extends DeprecatedFileInputFormatWrapper {
 
   @SuppressWarnings("unchecked")
   public DeprecatedRawMultiInputFormat() {
