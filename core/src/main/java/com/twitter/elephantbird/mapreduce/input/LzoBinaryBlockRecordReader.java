@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.HadoopCompat;
@@ -26,11 +27,12 @@ import org.slf4j.LoggerFactory;
  * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
  * for more information on error handling.
  */
-public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends LzoRecordReader<LongWritable, W> {
+public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
+    extends LzoRecordReader<LongWritable, W> implements MapredInputFormatCompatible<LongWritable, W> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoBinaryBlockRecordReader.class);
 
-  private final LongWritable key_;
-  private final W value_;
+  private LongWritable key_;
+  private W value_;
   private final TypeRef<M> typeRef_;
   boolean updatePosition = false;
   /* make LzoBinaryBlockRecordReader return lzoblock offset the same way as
@@ -91,6 +93,12 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>> extends 
     // No need to skip to the sync point here; the block reader will do it for us.
     LOG.debug("LzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
     updatePosition = !atFirstRecord;
+  }
+
+  @Override
+  public void setKeyValue(LongWritable key, W value) {
+    key_ = key;
+    value_ = value;
   }
 
   /**

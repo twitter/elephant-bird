@@ -3,10 +3,13 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.util.LineReader;
+
 
 /**
  * Reads line from an lzo compressed text file. Treats keys as offset in file
@@ -16,7 +19,8 @@ import org.apache.hadoop.util.LineReader;
  * a line read into memory. Otherwise, some very long lines (100s of MB long)
  * could cause OOM errors and other timeouts.
  */
-public class LzoLineRecordReader extends LzoRecordReader<LongWritable, Text> {
+public class LzoLineRecordReader extends LzoRecordReader<LongWritable, Text> 
+    implements MapredInputFormatCompatible<LongWritable, Text> {
 
   /**
    * Sets maximum number of bytes to read into memory when the input line is very long.
@@ -26,8 +30,8 @@ public class LzoLineRecordReader extends LzoRecordReader<LongWritable, Text> {
 
   private LineReader in_;
 
-  private final LongWritable key_ = new LongWritable();
-  private final Text value_ = new Text();
+  private LongWritable key_ = new LongWritable();
+  private Text value_ = new Text();
   private int maxLineLen = Integer.MAX_VALUE;
 
   @Override
@@ -59,6 +63,12 @@ public class LzoLineRecordReader extends LzoRecordReader<LongWritable, Text> {
     if (!atFirstRecord) {
       in_.readLine(new Text(), maxLineLen);
     }
+  }
+
+  @Override
+  public void setKeyValue(LongWritable key, Text value) {
+    key_ = key;
+    value_ = value;
   }
 
   @Override

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.Message;
+import com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapreduce.io.ProtobufBlockReader;
 import com.twitter.elephantbird.util.TypeRef;
 
@@ -18,11 +19,12 @@ import com.twitter.elephantbird.util.TypeRef;
  * objects as values, returns <position, bytes> pairs.  The bytes can be deserialized
  * into objects by the user if desired.
  */
-public class LzoGenericProtobufBlockRecordReader extends LzoRecordReader<LongWritable, BytesWritable> {
+public class LzoGenericProtobufBlockRecordReader extends LzoRecordReader<LongWritable, BytesWritable>
+    implements MapredInputFormatCompatible<LongWritable, BytesWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoGenericProtobufBlockRecordReader.class);
 
-  private final LongWritable key_;
-  private final BytesWritable value_;
+  private LongWritable key_;
+  private BytesWritable value_;
 
   private ProtobufBlockReader<Message> reader_;
 
@@ -59,6 +61,12 @@ public class LzoGenericProtobufBlockRecordReader extends LzoRecordReader<LongWri
   protected void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
     // No need to skip to the sync point here; the block reader will do it for us.
     LOG.debug("LzoProtobufRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
+  }
+
+  @Override
+  public void setKeyValue(LongWritable key, BytesWritable value) {
+    key_ = key;
+    value_ = value;
   }
 
   @Override

@@ -20,6 +20,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.util.ReflectionUtils;
 
+import com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
 import com.twitter.elephantbird.util.HadoopUtils;
 
@@ -30,7 +31,8 @@ import com.twitter.elephantbird.util.HadoopUtils;
  * interface is required. </p>
  *
  * Current restrictions on InputFormat: <ul>
- *    <li> the record reader should reuse key and value objects
+ *    <li> the record reader should reuse key and value objects 
+ *    or implement {@link com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible} </li>
  * </ul>
  *
  * While this restriction is satisfied by most input formats,
@@ -290,14 +292,28 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
         return true;
       }
 
+      if (realReader instanceof MapredInputFormatCompatible) {
+        ((MapredInputFormatCompatible) realReader).setKeyValue(key, value);
+      }
+      
       try {
         if (realReader.nextKeyValue()) {
 
 					if (key != realReader.getCurrentKey()) {
 
-            throw new IOException("DeprecatedInputFormatWrapper can not "
-                + "support RecordReaders that don't return same key & value "
-                + "objects. current reader class : " + realReader.getClass());
+            if (realReader instanceof MapredInputFormatCompatible) {
+              throw new IOException("The RecordReader returned a key and value that do not match "
+                  + "the key and value sent to it. This means the RecordReader did not properly implement "
+                  + "com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible. " 
+                  + "Current reader class : " + realReader.getClass());
+          
+            } else {
+              throw new IOException("DeprecatedInputFormatWrapper only "
+                  + "supports RecordReaders that return the same key & value "
+                  + "objects or implement com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible. "
+                  + "Current reader class : " + realReader.getClass());
+            }
+
 					}
 
 					if (value != realReader.getCurrentValue()) {
@@ -306,7 +322,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 						else {
 							throw new IOException("DeprecatedInputFormatWrapper - value is different "
 									+ "and no value copier provided. "
-									+ "current reader class : " + realReader.getClass());
+									+ "Current reader class : " + realReader.getClass());
           }
 					}
           return true;
