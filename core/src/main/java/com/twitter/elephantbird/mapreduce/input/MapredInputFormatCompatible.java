@@ -4,7 +4,7 @@ package com.twitter.elephantbird.mapreduce.input;
 * A {@link org.apache.hadoop.mapred.RecordReader} should implement 
 * MapredInputFormatCompatible if it intends to be compatable 
 * with {@link org.apache.hadoop.mapred.input.DeprecatedInputFormatWrapper}
-* and {@link CombinedFileInputFormat} 
+* and {@link org.apache.hadoop.mapred.lib.CombinedFileInputFormat} 
 *
 * DeprecatedInputFormatWrapper enables you to use a mapreduce
 * {@link org.apache.hadoop.mapreduce.InputFormat} in contexts
