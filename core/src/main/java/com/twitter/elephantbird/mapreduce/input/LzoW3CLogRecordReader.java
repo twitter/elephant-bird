@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
 
+import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.util.W3CLogParser;
 
 import org.apache.hadoop.conf.Configuration;
@@ -22,15 +23,16 @@ import org.slf4j.LoggerFactory;
  * the getFieldDefinitionFile() method. <br>
  * Most commonly, you can simply call LzoW3CLogInputFormat.newInstance(myFilePath)
  */
-public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable, MapWritable> {
+public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable, MapWritable>
+    implements MapredInputFormatCompatible<LongWritable, MapWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoW3CLogRecordReader.class);
 
   private LineReader in_;
 
-  private final LongWritable key_ = new LongWritable();
-  protected final Text currentLine_ = new Text();
-  private final MapWritable value_ = new MapWritable();
+  private LongWritable key_ = new LongWritable();
+  private MapWritable value_ = new MapWritable();
   protected W3CLogParser w3cLogParser_ = null;
+  protected final Text currentLine_ = new Text();
 
   // Used to hold the number of unparseable records seen between successfull readings.
   private int badRecordsSkipped_ = 0;
@@ -73,6 +75,12 @@ public abstract class LzoW3CLogRecordReader extends LzoRecordReader<LongWritable
 
   public long getBadRecordsSkipped() {
     return badRecordsSkipped_;
+  }
+
+  @Override
+  public void setKeyValue(LongWritable key, MapWritable value) {
+    key_ = key;
+    value_ = value;
   }
 
   @Override
