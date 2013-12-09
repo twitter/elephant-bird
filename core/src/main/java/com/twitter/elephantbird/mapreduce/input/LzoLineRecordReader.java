@@ -3,7 +3,7 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible;
+import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;

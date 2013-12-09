@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
 
-import com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible;
+import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.util.W3CLogParser;
 
 import org.apache.hadoop.conf.Configuration;
