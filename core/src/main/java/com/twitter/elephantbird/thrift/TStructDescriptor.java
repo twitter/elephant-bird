@@ -2,7 +2,6 @@ package com.twitter.elephantbird.thrift;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,6 @@ import org.apache.thrift.meta_data.FieldValueMetaData;
 import org.apache.thrift.meta_data.ListMetaData;
 import org.apache.thrift.meta_data.MapMetaData;
 import org.apache.thrift.meta_data.SetMetaData;
-import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TType;
 
 import com.google.common.collect.ImmutableList;
@@ -221,8 +219,8 @@ public class TStructDescriptor {
         }
         enumIdMap = builder.build();
       } else {
-        enumMap = null;
-        enumIdMap = null;
+        enumMap = ImmutableMap.of();
+        enumIdMap = ImmutableMap.of();
       }
 
       if (field.isStruct()) {
