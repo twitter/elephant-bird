@@ -219,8 +219,8 @@ public class TStructDescriptor {
         }
         enumIdMap = builder.build();
       } else {
-        enumMap = ImmutableMap.of();
-        enumIdMap = ImmutableMap.of();
+        enumMap = null;
+        enumIdMap = null;
       }
 
       if (field.isStruct()) {
@@ -295,20 +295,50 @@ public class TStructDescriptor {
       return tStructDescriptor;
     }
 
+    /**
+     *
+     * @return true if the field is a known enum. Note that this can return false
+     * in two cases: if the field is not an enum at all, or if the field you are reading
+     * is an unknown enum -- the definition on the classpath is different
+     * from the definition that created the message being read.
+     */
     public boolean isEnum() {
       return enumMap != null;
     }
 
+    /**
+     * @param name string value of the enum
+     * @return the TEnum value of the named enum, or null
+     * if the field is not a known enum. A null can happen if
+     * the field is not an enum at all, or if the field you are reading
+     * is an unknown enum -- the definition on the classpath is different
+     * from the definition that created the message being read.
+     */
     public TEnum getEnumValueOf(String name) {
-      return enumMap.get(name);
+      return enumMap == null ? null : enumMap.get(name);
     }
 
+    /**
+     * @param id int value of the enum
+     * @return the TEnum value of the named enum, or null
+     * if the field is not a known enum. A null can happen if
+     * the field is not an enum at all, or if the field you are reading
+     * is an unknown enum -- the definition on the classpath is different
+     * from the definition that created the message being read.
+     */
     public TEnum getEnumValueOf(int id) {
-      return enumIdMap.get(id);
+      return enumIdMap == null ? null : enumIdMap.get(id);
     }
 
+    /**
+     * @return the possible values of the enum field, or null
+     * if the field is not a known enum. A null can happen if
+     * the field is not an enum at all, or if the field you are reading
+     * is an unknown enum -- the definition on the classpath is different
+     * from the definition that created the message being read.
+     */
     public Collection<TEnum> getEnumValues() {
-      return enumMap.values();
+      return enumMap == null ? null : enumMap.values();
     }
 
     public String getName() {
