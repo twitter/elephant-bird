@@ -122,7 +122,7 @@ public class ThriftUtils {
   }
 
   /**
-   * Returns gereric type for a field in a Thrift class. The type is the return
+   * Returns generic type for a field in a Thrift class. The type is the return
    * type for the accessor method for the field (e.g. <code>isFieldName()</code>
    * for a boolean type or <code>getFieldName</code> for other types). The return
    * type works for both structs and unions. Reflecting directly based on
@@ -165,7 +165,7 @@ public class ThriftUtils {
       case TType.DOUBLE:
         return Double.class;
       case TType.ENUM:
-        return ((EnumMetaData) field.getField()).enumClass;
+        return field.getEnumClass();
       case TType.I16:
         return Short.class;
       case TType.I32:
