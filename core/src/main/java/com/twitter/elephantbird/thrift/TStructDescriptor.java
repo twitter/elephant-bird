@@ -2,29 +2,26 @@ package com.twitter.elephantbird.thrift;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.thrift.TBase;
 import org.apache.thrift.TEnum;
 import org.apache.thrift.TException;
 import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.TUnion;
-import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.meta_data.FieldMetaData;
-import org.apache.thrift.meta_data.FieldValueMetaData;
-import org.apache.thrift.meta_data.ListMetaData;
-import org.apache.thrift.meta_data.MapMetaData;
-import org.apache.thrift.meta_data.SetMetaData;
+
 import org.apache.thrift.protocol.TType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.twitter.elephantbird.util.ThriftUtils;
-
 
 /**
  * Expanded metadata of a Thrift class. The main purpose is
@@ -124,8 +121,7 @@ public class TStructDescriptor {
       arr[idx++] = new Field(e.getKey(),
                              e.getValue(),
                              fieldName,
-                             ThriftUtils.getFieldType(tClass, fieldName),
-                             e.getValue().valueMetaData);
+                             ThriftUtils.getFieldType(tClass, fieldName));
     }
     // make it immutable since users have access.
     fields = ImmutableList.copyOf(arr);
@@ -152,30 +148,28 @@ public class TStructDescriptor {
     private final FieldMetaData fieldMetaData;
     private final short fieldId;
     private final String fieldName;
-    private final FieldValueMetaData field;
+    private final byte ttype;
 
     // following fields are set when they are relevant.
-    private final Field listElemField;    // lists
-    private final Field setElemField;     // sets
-    private final Field mapKeyField;      // maps
-    private final Field mapValueField;    // maps
-    private final Map<String, TEnum> enumMap; // enums
-    private final Map<Integer, TEnum> enumIdMap; // enums
-    private final TStructDescriptor tStructDescriptor; // Structs
-    private final boolean isBuffer;  // strings
-
+    // though these are not declared final, this class should be immutable.
+    private Field listElemField                 = null;   // lists
+    private Field setElemField                  = null;   // sets
+    private Field mapKeyField                   = null;   // maps
+    private Field mapValueField                 = null;   // maps
+    private Class<? extends TEnum> enumClass    = null;   // enums
+    private Map<String, TEnum> enumMap          = null;   // enums
+    private Map<Integer, TEnum> enumIdMap       = null;   // enums
+    private TStructDescriptor tStructDescriptor = null;   // Structs
+    private boolean isBuffer                    = false;  // strings
 
     @SuppressWarnings("unchecked")
     private Field(TFieldIdEnum fieldIdEnum, FieldMetaData fieldMetaData, String fieldName,
-                  Type genericType, FieldValueMetaData field) {
+                  Type genericType) {
       this.fieldIdEnum = fieldIdEnum;
       this.fieldMetaData = fieldMetaData;
       this.fieldId = fieldIdEnum == null ? 1 : fieldIdEnum.getThriftFieldId();
       this.fieldName = fieldName;
-      this.field = field;
-
-      // common case, avoids type checks below.
-      boolean simpleField = field.getClass() == FieldValueMetaData.class;
+      this.ttype = getTTypeFromJavaType(genericType);
 
       Type firstTypeArg = null;
       Type secondTypeArg = null;
@@ -186,53 +180,43 @@ public class TStructDescriptor {
         secondTypeArg = typeArgs.length > 1 ? typeArgs[1] : null;
       }
 
-      if (!simpleField && field instanceof ListMetaData) {
-        listElemField = new Field(null, null, fieldName + "_list_elem", firstTypeArg,
-                                  ((ListMetaData)field).elemMetaData);
-      } else {
-        listElemField = null;
+      switch (ttype) {
+
+        case TType.LIST:
+          listElemField = new Field(null, null, fieldName + "_list_elem", firstTypeArg);
+          break;
+
+        case TType.MAP:
+          mapKeyField = new Field(null, null, fieldName + "_map_key", firstTypeArg);
+          mapValueField = new Field(null, null, fieldName + "_map_value", secondTypeArg);
+          break;
+
+        case TType.SET:
+          setElemField = new Field(null, null, fieldName + "_set_elem", firstTypeArg);
+          break;
+
+        case TType.ENUM:
+          enumClass = (Class<? extends TEnum>)genericType;
+          enumMap = extractEnumMap(enumClass);
+
+          ImmutableMap.Builder<Integer, TEnum> builder = ImmutableMap.builder();
+          for(TEnum e : enumMap.values()) {
+            builder.put(e.getValue(), e);
+          }
+          enumIdMap = builder.build();
+          break;
+
+        case TType.STRUCT:
+          tStructDescriptor = getInstance((Class<? extends TBase<?, ?>>) genericType);
+          break;
+
+        case TType.STRING:
+          isBuffer = !genericType.equals(String.class);
+          break;
+
+        default:
+          // this is ok. TType.INT, TType.BYTE, etc.
       }
-
-      if (!simpleField && field instanceof MapMetaData) {
-        mapKeyField = new Field(null, null, fieldName + "_map_key", firstTypeArg,
-                                ((MapMetaData)field).keyMetaData);
-        mapValueField = new Field(null, null, fieldName + "_map_value", secondTypeArg,
-                            ((MapMetaData)field).valueMetaData);
-      } else {
-        mapKeyField = null;
-        mapValueField = null;
-      }
-
-      if (!simpleField && field instanceof SetMetaData) {
-        setElemField = new Field(null, null, fieldName + "_set_elem", firstTypeArg,
-                                ((SetMetaData)field).elemMetaData);
-      } else {
-        setElemField = null;
-      }
-
-      if (!simpleField && field instanceof EnumMetaData) {
-        enumMap = extractEnumMap(((EnumMetaData)field).enumClass);
-
-        ImmutableMap.Builder<Integer, TEnum> builder = ImmutableMap.builder();
-        for(TEnum e : enumMap.values()) {
-          builder.put(e.getValue(), e);
-        }
-        enumIdMap = builder.build();
-      } else {
-        enumMap = null;
-        enumIdMap = null;
-      }
-
-      if (field.isStruct()) {
-        tStructDescriptor = getInstance((Class<? extends TBase<?, ?>>) genericType);
-      } else {
-        tStructDescriptor = null;
-      }
-
-      // only Thrift 0.6 and above have explicit isBuffer() method.
-      // just check the type instead
-      isBuffer = field.type == TType.STRING
-               && !genericType.equals(String.class);
     }
 
     public short getFieldId() {
@@ -240,19 +224,15 @@ public class TStructDescriptor {
     }
 
     public byte getType() {
-      return field.type;
+      return ttype;
     }
 
     /**
-     * This valid only for fields of a Struct. It is null for other fields
+     * This is valid only for fields of a Struct. It is null for other fields
      * in containers like List.
      */
     public TFieldIdEnum getFieldIdEnum() {
       return fieldIdEnum;
-    }
-
-    public FieldValueMetaData getField() {
-      return field;
     }
 
     public boolean isBuffer() {
@@ -297,22 +277,20 @@ public class TStructDescriptor {
 
     /**
      *
-     * @return true if the field is a known enum. Note that this can return false
-     * in two cases: if the field is not an enum at all, or if the field you are reading
-     * is an unknown enum -- the definition on the classpath is different
-     * from the definition that created the message being read.
+     * @return true if the field is a known enum.
      */
     public boolean isEnum() {
-      return enumMap != null;
+      return enumClass != null;
+    }
+
+    public Class<? extends TEnum> getEnumClass() {
+      return enumClass;
     }
 
     /**
      * @param name string value of the enum
      * @return the TEnum value of the named enum, or null
-     * if the field is not a known enum. A null can happen if
-     * the field is not an enum at all, or if the field you are reading
-     * is an unknown enum -- the definition on the classpath is different
-     * from the definition that created the message being read.
+     * if the field is not a known enum.
      */
     public TEnum getEnumValueOf(String name) {
       return enumMap == null ? null : enumMap.get(name);
@@ -321,10 +299,7 @@ public class TStructDescriptor {
     /**
      * @param id int value of the enum
      * @return the TEnum value of the named enum, or null
-     * if the field is not a known enum. A null can happen if
-     * the field is not an enum at all, or if the field you are reading
-     * is an unknown enum -- the definition on the classpath is different
-     * from the definition that created the message being read.
+     * if the field is not a known enum.
      */
     public TEnum getEnumValueOf(int id) {
       return enumIdMap == null ? null : enumIdMap.get(id);
@@ -332,10 +307,7 @@ public class TStructDescriptor {
 
     /**
      * @return the possible values of the enum field, or null
-     * if the field is not a known enum. A null can happen if
-     * the field is not an enum at all, or if the field you are reading
-     * is an unknown enum -- the definition on the classpath is different
-     * from the definition that created the message being read.
+     * if the field is not a known enum.
      */
     public Collection<TEnum> getEnumValues() {
       return enumMap == null ? null : enumMap.values();
@@ -352,5 +324,40 @@ public class TStructDescriptor {
     public FieldMetaData getFieldMetaData() {
       return fieldMetaData;
     }
+  }
+
+  /** Derives Thrift TType from java {@link Type} of a thrift field */
+  private static byte getTTypeFromJavaType(Type jType) {
+
+    // check primitive types and final classes
+    if (jType == Boolean.TYPE || jType == Boolean.class)   return TType.BOOL;
+    if (jType == Byte.TYPE    || jType == Byte.class)      return TType.BYTE;
+    if (jType == Short.TYPE   || jType == Short.class)     return TType.I16;
+    if (jType == Integer.TYPE || jType == Integer.class)   return TType.I32;
+    if (jType == Long.TYPE    || jType == Long.class)      return TType.I64;
+    if (jType == Double.TYPE  || jType == Double.class)    return TType.DOUBLE;
+    if (jType == String.class)                             return TType.STRING;
+    if (jType == byte[].class)                             return TType.STRING; // buffer
+    if (jType == Void.class)                               return TType.VOID;
+
+    // non-generic simple classes
+    if (jType instanceof Class) {
+      Class<?> klass = (Class<?>) jType;
+
+      if (TEnum.class.isAssignableFrom(klass))      return TType.ENUM;
+      if (ByteBuffer.class.isAssignableFrom(klass)) return TType.STRING; // buffer (ByteBuffer)
+      if (TBase.class.isAssignableFrom(klass))      return TType.STRUCT;
+    }
+
+    // generic types
+    if (jType instanceof ParameterizedType) {
+      Class<?> klass = (Class<?>) ((ParameterizedType)jType).getRawType();
+
+      if (Map.class.isAssignableFrom(klass))    return TType.MAP;
+      if (Set.class.isAssignableFrom(klass))    return TType.SET;
+      if (List.class.isAssignableFrom(klass))   return TType.LIST;
+    }
+
+    throw new IllegalArgumentException("cannot convert java type '" + jType + "'  to thrift type");
   }
 }
