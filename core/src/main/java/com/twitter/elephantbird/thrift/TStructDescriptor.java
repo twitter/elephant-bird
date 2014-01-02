@@ -15,6 +15,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.TUnion;
 import org.apache.thrift.meta_data.FieldMetaData;
+
 import org.apache.thrift.protocol.TType;
 
 import com.google.common.collect.ImmutableList;
@@ -274,6 +275,10 @@ public class TStructDescriptor {
       return tStructDescriptor;
     }
 
+    /**
+     *
+     * @return true if the field is a known enum.
+     */
     public boolean isEnum() {
       return enumClass != null;
     }
@@ -282,16 +287,30 @@ public class TStructDescriptor {
       return enumClass;
     }
 
+    /**
+     * @param name string value of the enum
+     * @return the TEnum value of the named enum, or null
+     * if the field is not a known enum.
+     */
     public TEnum getEnumValueOf(String name) {
-      return enumMap.get(name);
+      return enumMap == null ? null : enumMap.get(name);
     }
 
+    /**
+     * @param id int value of the enum
+     * @return the TEnum value of the named enum, or null
+     * if the field is not a known enum.
+     */
     public TEnum getEnumValueOf(int id) {
-      return enumIdMap.get(id);
+      return enumIdMap == null ? null : enumIdMap.get(id);
     }
 
+    /**
+     * @return the possible values of the enum field, or null
+     * if the field is not a known enum.
+     */
     public Collection<TEnum> getEnumValues() {
-      return enumMap.values();
+      return enumMap == null ? null : enumMap.values();
     }
 
     public String getName() {
