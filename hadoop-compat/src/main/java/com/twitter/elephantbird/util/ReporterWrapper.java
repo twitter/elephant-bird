@@ -64,7 +64,7 @@ public class ReporterWrapper extends StatusReporter implements Reporter {
     }
 
     public float getProgress() {
-        throw new UnsupportedOperationException();
+        return wrappedReporter.getProgress();
     }
 
     @Override

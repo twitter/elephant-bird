@@ -6,16 +6,15 @@ import java.io.IOException;
 import java.util.List;
 
 import com.twitter.elephantbird.util.HadoopCompat;
+import com.twitter.elephantbird.util.ReporterWrapper;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
-import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -150,57 +149,6 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     } catch (InterruptedException e) {
       throw new IOException(e);
-    }
-  }
-
-  /**
-   * A reporter that works with both mapred and mapreduce APIs.
-   */
-  private static class ReporterWrapper extends StatusReporter implements Reporter {
-    private Reporter wrappedReporter;
-
-    public ReporterWrapper(Reporter reporter) {
-      wrappedReporter = reporter;
-    }
-
-    @Override
-    public Counters.Counter getCounter(Enum<?> anEnum) {
-      return wrappedReporter.getCounter(anEnum);
-    }
-
-    @Override
-    public Counters.Counter getCounter(String s, String s1) {
-      return wrappedReporter.getCounter(s, s1);
-    }
-
-    @Override
-    public void incrCounter(Enum<?> anEnum, long l) {
-      wrappedReporter.incrCounter(anEnum, l);
-    }
-
-    @Override
-    public void incrCounter(String s, String s1, long l) {
-      wrappedReporter.incrCounter(s, s1, l);
-    }
-
-    @Override
-    public InputSplit getInputSplit() throws UnsupportedOperationException {
-      return wrappedReporter.getInputSplit();
-    }
-
-    @Override
-    public void progress() {
-      wrappedReporter.progress();
-    }
-
-    // @Override
-    public float getProgress() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setStatus(String s) {
-      wrappedReporter.setStatus(s);
     }
   }
 
