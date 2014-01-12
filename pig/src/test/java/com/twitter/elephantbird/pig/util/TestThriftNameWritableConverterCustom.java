@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.pig.util;
 
-import com.twitter.data.proto.tutorial.thrift.Name;
+import com.twitter.elephantbird.thrift.test.Name;
 
 /**
  * @author Andy Schlaikjer

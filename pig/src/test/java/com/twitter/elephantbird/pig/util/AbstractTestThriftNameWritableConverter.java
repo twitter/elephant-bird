@@ -2,7 +2,7 @@ package com.twitter.elephantbird.pig.util;
 
 import java.lang.reflect.Array;
 
-import com.twitter.data.proto.tutorial.thrift.Name;
+import com.twitter.elephantbird.thrift.test.Name;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
