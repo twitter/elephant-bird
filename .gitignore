@@ -11,5 +11,8 @@
 .settings
 **/target
 target
+# TODO fix this
 core/test.txt
+core/test2.txt
+core/test3.txt
 build
