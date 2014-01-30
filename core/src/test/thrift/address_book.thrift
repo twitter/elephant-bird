@@ -16,22 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-namespace java com.twitter.elephantbird.pig.test.thrift
+ namespace java com.twitter.elephantbird.thrift.test 
 
-enum KeyEnum {
-  A,
-  B,
-  C
+enum PhoneType {
+  MOBILE = 0,
+  HOME = 1,
+  WORK = 2
 }
 
-struct MapKeyTest {
-  1: optional map<bool, i32> booleans
-  2: optional map<byte, i32> bytes
-  3: optional map<i16, i32> shorts
-  4: optional map<i32, i32> ints
-  5: optional map<i64, i32> longs
-  6: optional map<double, i32> doubles
-  7: optional map<KeyEnum, i32> enums
-  8: optional map<string, i32> strings
-  9: optional map<binary, i32> binaries
+struct PhoneNumber {
+  1: string number,
+  2: optional PhoneType type
+}
+
+struct Name {
+  1: string first_name,
+  2: string last_name
+}
+
+struct Person {
+  1: required Name name,
+  2: i32 id,
+  3: string email,
+  4: list<PhoneNumber> phones
+}
+
+struct AddressBook {
+  1: list<Person> persons
 }

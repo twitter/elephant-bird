@@ -15,10 +15,10 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.junit.Test;
 
-import com.twitter.data.proto.tutorial.thrift.Name;
-import com.twitter.data.proto.tutorial.thrift.Person;
-import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
-import com.twitter.data.proto.tutorial.thrift.PhoneType;
+import com.twitter.elephantbird.thrift.test.Name;
+import com.twitter.elephantbird.thrift.test.Person;
+import com.twitter.elephantbird.thrift.test.PhoneNumber;
+import com.twitter.elephantbird.thrift.test.PhoneType;
 import com.twitter.elephantbird.pig.test.thrift.KeyEnum;
 import com.twitter.elephantbird.pig.test.thrift.MapKeyTest;
 

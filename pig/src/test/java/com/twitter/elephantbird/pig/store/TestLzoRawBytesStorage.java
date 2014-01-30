@@ -22,8 +22,8 @@ import org.junit.Test;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.load.LzoRawBytesLoader;
-import com.twitter.elephantbird.pig.test.thrift.Name;
-import com.twitter.elephantbird.pig.test.thrift.Person;
+import com.twitter.elephantbird.thrift.test.Name;
+import com.twitter.elephantbird.thrift.test.Person;
 import com.twitter.elephantbird.pig.util.PigTestUtil;
 import com.twitter.elephantbird.util.CoreTestUtil;
 import com.twitter.elephantbird.util.ThriftUtils;
