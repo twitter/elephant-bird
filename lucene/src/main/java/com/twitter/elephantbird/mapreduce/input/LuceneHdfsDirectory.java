@@ -28,14 +28,14 @@ public class LuceneHdfsDirectory extends Directory {
   private static final String[] EMPTY_STRING_LIST = new String[0];
   private final FileSystem fs;
   private final Path dir;
-  private final List<HDFSIndexInput> index_input_list;
+  private final List<HDFSIndexInput> indexInputList;
 
   public LuceneHdfsDirectory(String name, FileSystem fs) {
     this.fs = Preconditions.checkNotNull(fs,
         "FileSystem provided to LuceneHdfsDirectory cannot be null");
     Preconditions.checkNotNull(name, "File name provided to LuceneHdfsDirectory cannot be null");
     dir = new Path(name);
-    index_input_list = new ArrayList<HDFSIndexInput>();
+    indexInputList = new ArrayList<HDFSIndexInput>();
     try {
       Preconditions.checkArgument(fs.exists(dir), "Directory: " + dir + " does not exist!");
     } catch (IOException e) {
@@ -46,13 +46,13 @@ public class LuceneHdfsDirectory extends Directory {
   public LuceneHdfsDirectory(Path path, FileSystem fs) {
     this.fs = Preconditions.checkNotNull(fs);
     dir = path;
-    index_input_list = new ArrayList<HDFSIndexInput>();
+    indexInputList = new ArrayList<HDFSIndexInput>();
   }
 
   @Override
   public void close() throws IOException {
-    for(HDFSIndexInput index_input : index_input_list) {
-        index_input.close();
+    for(HDFSIndexInput indexInput : indexInputList) {
+        indexInput.close();
     }
   }
 
@@ -90,9 +90,9 @@ public class LuceneHdfsDirectory extends Directory {
 
   @Override
   public IndexInput openInput(String name, IOContext context) throws IOException {
-    HDFSIndexInput index_input = new HDFSIndexInput(new Path(dir, name).toString());
-    index_input_list.add(index_input);
-    return index_input;
+    HDFSIndexInput indexInput = new HDFSIndexInput(new Path(dir, name).toString());
+    indexInputList.add(indexInput);
+    return indexInput;
   }
 
   private class HDFSIndexInput extends IndexInput {
