@@ -28,14 +28,12 @@ public class LuceneHdfsDirectory extends Directory {
   private static final String[] EMPTY_STRING_LIST = new String[0];
   private final FileSystem fs;
   private final Path dir;
-  private final List<HDFSIndexInput> indexInputList;
 
   public LuceneHdfsDirectory(String name, FileSystem fs) {
     this.fs = Preconditions.checkNotNull(fs,
         "FileSystem provided to LuceneHdfsDirectory cannot be null");
     Preconditions.checkNotNull(name, "File name provided to LuceneHdfsDirectory cannot be null");
     dir = new Path(name);
-    indexInputList = new ArrayList<HDFSIndexInput>();
     try {
       Preconditions.checkArgument(fs.exists(dir), "Directory: " + dir + " does not exist!");
     } catch (IOException e) {
@@ -46,14 +44,11 @@ public class LuceneHdfsDirectory extends Directory {
   public LuceneHdfsDirectory(Path path, FileSystem fs) {
     this.fs = Preconditions.checkNotNull(fs);
     dir = path;
-    indexInputList = new ArrayList<HDFSIndexInput>();
   }
 
   @Override
   public void close() throws IOException {
-    for(HDFSIndexInput indexInput : indexInputList) {
-        indexInput.close();
-    }
+    
   }
 
   @Override
@@ -90,25 +85,28 @@ public class LuceneHdfsDirectory extends Directory {
 
   @Override
   public IndexInput openInput(String name, IOContext context) throws IOException {
-    HDFSIndexInput indexInput = new HDFSIndexInput(new Path(dir, name).toString());
-    indexInputList.add(indexInput);
-    return indexInput;
+    return new HDFSIndexInput(new Path(dir, name).toString());
   }
 
   private class HDFSIndexInput extends IndexInput {
     private Path path;
     private final FSDataInputStream in;
     private String resourceDescription;
-
+    private final List<HDFSIndexInput> clonedList;
+    
     protected HDFSIndexInput(String resourceDescription) throws IOException {
       super(resourceDescription);
       this.resourceDescription = resourceDescription;
       path = new Path(resourceDescription);
       this.in = fs.open(path);
+      this.clonedList = new ArrayList<HDFSIndexInput>();
     }
 
     @Override
     public void close() throws IOException {
+      for(HDFSIndexInput clonedIndexInput : clonedList) {
+        clonedIndexInput.close();
+      }
       in.close();
     }
 
@@ -150,6 +148,11 @@ public class LuceneHdfsDirectory extends Directory {
     public IndexInput clone() {
       try {
         HDFSIndexInput copy = new HDFSIndexInput(resourceDescription);
+        
+        // Warning: Lucene never closes cloned IndexInputs, it will only do this on the original one. 
+        // The original instance must take care that cloned instances throw AlreadyClosedException when the original one is closed. 
+        clonedList.add(copy);
+        
         copy.seek(getFilePointer());
         return copy;
       } catch (IOException e) {
