@@ -92,6 +92,9 @@ public class LuceneHdfsDirectory extends Directory {
     private Path path;
     private final FSDataInputStream in;
     private String resourceDescription;
+    
+    // Warning: Lucene never closes cloned IndexInputs, it will only do this on the original one. 
+    // The original instance must take care that cloned instances throw AlreadyClosedException when the original one is closed. 
     private final List<HDFSIndexInput> clonedList;
     
     protected HDFSIndexInput(String resourceDescription) throws IOException {
@@ -149,8 +152,6 @@ public class LuceneHdfsDirectory extends Directory {
       try {
         HDFSIndexInput copy = new HDFSIndexInput(resourceDescription);
         
-        // Warning: Lucene never closes cloned IndexInputs, it will only do this on the original one. 
-        // The original instance must take care that cloned instances throw AlreadyClosedException when the original one is closed. 
         clonedList.add(copy);
         
         copy.seek(getFilePointer());
