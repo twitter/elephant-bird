@@ -162,6 +162,10 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
         // incorrect use of this class
         throw new RuntimeException("Forgot to invoke incRecords()?");
       }
+
+      LOG.warn("Error while reading an input record ("
+          + numErrors + " out of " + numRecords + " so far ): ", cause);
+
       if (!checkOnlyInClose) {
         checkErrorThreshold(cause);
       }
@@ -171,9 +175,6 @@ public abstract class LzoRecordReader<K, V> extends RecordReader<K, V> {
       if (numErrors > 0 && errorThreshold <= 0) { // no errors are tolerated
         throw new RuntimeException("error while reading input records", cause);
       }
-
-      LOG.warn("Error while reading an input record ("
-          + numErrors + " out of " + numRecords + " so far ): ", cause);
 
       double errRate = numErrors/(double)numRecords;
 
