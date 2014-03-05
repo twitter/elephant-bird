@@ -62,6 +62,7 @@ public class HadoopCompat {
   private static final Method GET_COUNTER_METHOD;
   private static final Method INCREMENT_COUNTER_METHOD;
   private static final Method GET_TASK_ATTEMPT_ID;
+  private static final Method PROGRESS_METHOD;
 
   static {
     boolean v21 = true;
@@ -158,6 +159,9 @@ public class HadoopCompat {
                                     .getMethod("getTaskAttemptID");
       INCREMENT_COUNTER_METHOD = Class.forName(PACKAGE+".Counter")
                                     .getMethod("increment", Long.TYPE);
+      PROGRESS_METHOD = Class.forName(PACKAGE+".TaskAttemptContext")
+                                    .getMethod("progress");
+
     } catch (SecurityException e) {
       throw new IllegalArgumentException("Can't run constructor ", e);
     } catch (NoSuchMethodException e) {
@@ -282,6 +286,14 @@ public class HadoopCompat {
   public static Counter getCounter(TaskInputOutputContext context,
                                    String groupName, String counterName) {
     return (Counter) invoke(GET_COUNTER_METHOD, context, groupName, counterName);
+  }
+
+    /**
+     * Invoke TaskAttemptContext.progress(). Works with both
+     * Hadoop 1 and 2.
+     */
+  public static void progress(TaskAttemptContext context) {
+      invoke(PROGRESS_METHOD, context);
   }
 
   /**
