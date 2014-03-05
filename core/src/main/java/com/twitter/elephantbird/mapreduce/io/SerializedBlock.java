@@ -26,8 +26,6 @@ import com.twitter.elephantbird.util.Protobufs;
  * classes. This makes EB libraries compatible with both protobuf 2.4 and 2.5.
  * <p>
  *
- * This is the only protobuf used in eb-core. <p>
- *
  * Developer Note: More documentation on protobuf fields and file format
  * is included at the bottom of this file.
  */
@@ -35,6 +33,7 @@ public class SerializedBlock {
 
   private final Message message;
 
+  // use newInstance() to create a new message
   private SerializedBlock(Message message) {
     this.message = message;
   }
@@ -78,7 +77,7 @@ public class SerializedBlock {
   private static final Descriptors.FieldDescriptor protoBlobsDesc;
 
   static {
-    // initialize messageDescriptor and the three fields
+    // initialize messageDescriptor and the three field descriptors
 
     DescriptorProtos.FieldDescriptorProto version =
         DescriptorProtos.FieldDescriptorProto.newBuilder()
@@ -123,7 +122,8 @@ public class SerializedBlock {
 }
 
 /*
-  Contents of old protobuf spec file block_storage.proto includes detailed documentation :
+  Contents of old protobuf spec file block_storage.proto
+    which included detailed documentation :
 
   package com.twitter.data.proto;
 
