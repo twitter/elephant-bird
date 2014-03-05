@@ -98,7 +98,6 @@ public class HadoopCompat {
         mapContextCls = Class.forName(PACKAGE + ".MapContext");
         genericCounterCls =
             Class.forName("org.apache.hadoop.mapred.Counters$Counter");
-
       }
     } catch (ClassNotFoundException e) {
       throw new IllegalArgumentException("Can't find class", e);
