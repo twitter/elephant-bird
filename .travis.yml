@@ -18,8 +18,8 @@ before_install:
   - git clone git://github.com/twitter/hadoop-lzo.git # for native libgplcompression
   - cd hadoop-lzo
   - git checkout master
-  - ant compile-native
-  - mv build/native/Linux-* ../hadoop-lzo-native
+  - mvn compile
+  - mv target/native/Linux-* ../hadoop-lzo-native
   - cd ..
 
 script:
