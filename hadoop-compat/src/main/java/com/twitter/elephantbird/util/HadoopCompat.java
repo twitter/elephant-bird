@@ -39,6 +39,7 @@ import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
+import org.apache.hadoop.util.Progressable;
 
 /*
  * This is based on ContextFactory.java from hadoop-2.0.x sources.
@@ -306,6 +307,14 @@ public class HadoopCompat {
   public static Counter getCounter(TaskInputOutputContext context,
                                    String groupName, String counterName) {
     return (Counter) invoke(GET_COUNTER_METHOD, context, groupName, counterName);
+  }
+
+    /**
+     * Invoke TaskAttemptContext.progress(). Works with both
+     * Hadoop 1 and 2.
+     */
+  public static void progress(TaskAttemptContext context) {
+    ((Progressable)context).progress();
   }
 
   /**
