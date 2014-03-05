@@ -85,7 +85,7 @@
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
     <protobuf.version>2.4.1</protobuf.version>
-    <hadoop-lzo.version>0.4.16</hadoop-lzo.version>
+    <hadoop-lzo.version>0.4.19</hadoop-lzo.version>
   </properties>
 
   <repositories>
