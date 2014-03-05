@@ -22,9 +22,15 @@ import com.twitter.elephantbird.util.Protobufs;
  *  repeated bytes proto_blobs          = 3;
  * };       </pre>
  *
- * The primary purpose is to avoid any dependence on pre-generated protobuf
- * classes. This makes EB libraries compatible with both protobuf 2.4 and 2.5.
- * <p>
+ * This protobuf is required for BinaryBlock format used to store to binary records.
+ * See {@link BinaryBlockReader} and {@link BinaryBlockWriter}. The file layout
+ * is described in a comment at the bottom of this file. The format is an alternative
+ * to a SequenceFile. <p>
+ *
+ * The primary purpose of DynamicMessage is to avoid any dependence on
+ * pre-generated protobuf classes, since generated files are not compatible between
+ * protobuf versions (2.4.1 and 2.5.0).This class works with either of these
+ * versions at runtime.<p>
  *
  * Developer Note: More documentation on protobuf fields and file format
  * is included at the bottom of this file.
