@@ -76,7 +76,7 @@ public class HadoopCompat {
   private static final Method GET_DEFAULT_BLOCK_SIZE_METHOD;
   private static final Method GET_DEFAULT_REPLICATION_METHOD;
 
-  private static final Method H2_IS_FILE_CLOSED_METHOD;
+  //TODO : private static final Method H2_IS_FILE_CLOSED_METHOD;
 
   static {
     boolean v21 = true;
@@ -150,7 +150,6 @@ public class HadoopCompat {
         GET_COUNTER_ENUM_METHOD         = TaskAttemptContext.class.getMethod("getCounter", Enum.class);
         GET_DEFAULT_BLOCK_SIZE_METHOD   = FileSystem.class.getMethod("getDefaultBlockSize", Path.class);
         GET_DEFAULT_REPLICATION_METHOD  = FileSystem.class.getMethod("getDefaultReplication", Path.class);
-        H2_IS_FILE_CLOSED_METHOD        = FileSystem.class.getMethod("isFileClosed", Path.class);
 
       } else {
         MAP_CONTEXT_CONSTRUCTOR =
@@ -167,7 +166,6 @@ public class HadoopCompat {
         GET_COUNTER_ENUM_METHOD = TaskInputOutputContext.class.getMethod("getCounter", Enum.class);
         GET_DEFAULT_BLOCK_SIZE_METHOD   = FileSystem.class.getMethod("getDefaultBlockSize");
         GET_DEFAULT_REPLICATION_METHOD  = FileSystem.class.getMethod("getDefaultReplication");
-        H2_IS_FILE_CLOSED_METHOD = null;
       }
 
       MAP_CONTEXT_CONSTRUCTOR.setAccessible(true);
@@ -365,30 +363,6 @@ public class HadoopCompat {
    */
   public static InputSplit getInputSplit(MapContext mapContext) {
     return (InputSplit) invoke(GET_INPUT_SPLIT_METHOD, mapContext);
-  }
-
-  /**
-   * On Hadoop 2, invokes FileSystem.isFileClose() API. On Hadoop 1,
-   * throws UnsupportedOperationException. <p>
-   */
-  public static boolean hadoop2IsFileClosed(FileSystem fs, Path path) throws IOException {
-
-    if (HadoopCompat.isVersion2x()) {
-      try {
-        // check if the method throws an IOException.
-        return (Boolean) H2_IS_FILE_CLOSED_METHOD.invoke(fs, path);
-      } catch (InvocationTargetException e) {
-        if (e.getCause() instanceof IOException) {
-          throw (IOException) e.getCause();
-        } else {
-          throw new IllegalArgumentException(e);
-        }
-      } catch (IllegalAccessException e) {
-        throw new IllegalArgumentException(e);
-      }
-    } else {
-      throw new UnsupportedOperationException("isFileClosed() is not supported on Hadoop 1");
-    }
   }
 
   /**
