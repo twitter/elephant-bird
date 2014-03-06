@@ -48,14 +48,21 @@ public class EBTypes {
 
   private static class ProtoOutFn<T extends Message> extends MapFn<T, ProtobufWritable<T>> {
     private final Class<T> clazz;
+    private transient ProtobufConverter<T> converter;
 
     public ProtoOutFn(Class<T> clazz) {
       this.clazz = clazz;
     }
 
     @Override
+    public void initialize() {
+      this.converter = ProtobufConverter.newInstance(clazz);
+    }
+
+    @Override
     public ProtobufWritable<T> map(T input) {
-      ProtobufWritable<T> w = ProtobufWritable.newInstance(clazz);
+      ProtobufWritable<T> w = new ProtobufWritable<T>();
+      w.setConverter(converter);
       w.set(input);
       return w;
     }
@@ -83,14 +90,21 @@ public class EBTypes {
 
   private static class ThriftOutFn<T extends TBase<?, ?>> extends MapFn<T, ThriftWritable<T>> {
     private final Class<T> clazz;
+    private transient ThriftConverter<T> converter;
 
     public ThriftOutFn(Class<T> clazz) {
       this.clazz = clazz;
     }
 
     @Override
+    public void initialize() {
+      this.converter = ThriftConverter.newInstance(clazz);
+    }
+
+    @Override
     public ThriftWritable<T> map(T input) {
-      ThriftWritable<T> w = ThriftWritable.newInstance(clazz);
+      ThriftWritable<T> w = new ThriftWritable<T>();
+      w.setConverter(converter);
       w.set(input);
       return w;
     }
