@@ -79,8 +79,8 @@
     <apache.hadoop1.version>1.1.2</apache.hadoop1.version> <!-- for hadoop1 profile -->
     <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version> <!-- for hadoop2 profile -->
     <apache.pig.version>0.11.1</apache.pig.version>
-    <apache.crunch.hadoop1.version>0.8.1</apache.crunch.hadoop1.version>
-    <apache.crunch.hadoop2.version>0.8.1-hadoop2</apache.crunch.hadoop2.version>
+    <apache.crunch.hadoop1.version>0.8.2</apache.crunch.hadoop1.version>
+    <apache.crunch.hadoop2.version>0.8.2-hadoop2</apache.crunch.hadoop2.version>
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
