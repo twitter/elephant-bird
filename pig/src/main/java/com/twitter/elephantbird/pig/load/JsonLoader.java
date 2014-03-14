@@ -39,6 +39,14 @@ import java.util.Map;
  * <li>setting the <code>elephantbird.jsonloader.nestedLoad</code>
  * property to true. This can be done with the following pig command:
  * <pre>grunt> set elephantbird.jsonloader.nestedLoad 'true'</pre>
+ * It doesn't return invalid record by default. This can be changed by:
+ * <li>setting the -invalidRecord option in the 
+ * {@link JsonLoader#JsonLoader(String)} constructor
+ * Example: 
+ * <pre>
+ * source_data = LOAD '$input' USING com.intuit.iac.pig.udf.JsonLoader('-nestedLoad -invalidRecord') as (json:map[]);
+ * SPLIT source_data INTO source_data_good_record IF json#'error_string' is null,source_data_bad_record IF json#'error_string' !='';
+ * </pre>
  * </ul>
  */
 public class JsonLoader extends LzoBaseLoadFunc {
@@ -52,6 +60,7 @@ public class JsonLoader extends LzoBaseLoadFunc {
   private final CommandLine configuredOptions_;
 
   private final JSONParser jsonParser = new JSONParser();
+  private Map<String, Object> retMap;
 
   private enum JsonLoaderCounters {
     LinesRead,
@@ -62,12 +71,15 @@ public class JsonLoader extends LzoBaseLoadFunc {
 
   private String inputFormatClassName;
   private boolean isNestedLoadEnabled = false;
+  private boolean isInvalidRecordEnabled = false;
   
   private static void populateValidOptions() {
     validOptions_.addOption("nestedLoad", false, "Enables loading of " +
         "nested JSON structures");
     validOptions_.addOption("inputFormat", true, "The input format class name" +
         " used by this loader instance");
+    validOptions_.addOption("invalidRecord", false,
+			"return invalid record  with keys error_line and error_string");
   }
 
   public JsonLoader() {
@@ -95,10 +107,14 @@ public class JsonLoader extends LzoBaseLoadFunc {
       configuredOptions_ = parser_.parse(validOptions_, optsArr);
     } catch (org.apache.commons.cli.ParseException e) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp( "[-nestedLoad] [-inputFormat]", validOptions_ );
+        formatter.printHelp( "[-nestedLoad] [-inputFormat] [-invalidRecord]", validOptions_ );
         throw new RuntimeException(e);
     }
     isNestedLoadEnabled = configuredOptions_.hasOption("nestedLoad");
+    isInvalidRecordEnabled = configuredOptions_.hasOption("invalidRecord");
+    if (isInvalidRecordEnabled) {
+		retMap = Maps.newHashMap();
+	}
     
     if (configuredOptions_.getOptionValue("inputFormat") != null) {
       this.inputFormatClassName = configuredOptions_.getOptionValue("inputFormat");
@@ -169,15 +185,33 @@ public class JsonLoader extends LzoBaseLoadFunc {
     } catch (ParseException e) {
       LOG.warn("Could not json-decode string: " + line, e);
       incrCounter(JsonLoaderCounters.LinesParseError, 1L);
-      return null;
+      if (isInvalidRecordEnabled) {
+			retMap.put("error_line", line);
+			retMap.put("error_string", "LinesParseError");
+			return tupleFactory.newTuple(retMap);
+		} else {
+			return null;
+		}
     } catch (NumberFormatException e) {
       LOG.warn("Very big number exceeds the scale of long: " + line, e);
       incrCounter(JsonLoaderCounters.LinesParseErrorBadNumber, 1L);
-      return null;
+      if (isInvalidRecordEnabled) {
+			retMap.put("error_line", line);
+			retMap.put("error_string", "LinesParseError");
+			return tupleFactory.newTuple(retMap);
+		} else {
+			return null;
+		}
     } catch (ClassCastException e) {
       LOG.warn("Could not convert to Json Object: " + line, e);
       incrCounter(JsonLoaderCounters.LinesParseError, 1L);
-      return null;
+      if (isInvalidRecordEnabled) {
+			retMap.put("error_line", line);
+			retMap.put("error_string", "LinesParseError");
+			return tupleFactory.newTuple(retMap);
+		} else {
+			return null;
+		}
     }
   }
 
