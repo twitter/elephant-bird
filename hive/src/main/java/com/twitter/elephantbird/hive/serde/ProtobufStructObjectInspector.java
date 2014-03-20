@@ -159,6 +159,9 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     if (fieldDescriptor.getType() == Type.ENUM) {
       return ((EnumValueDescriptor)result).getName();
     }
+    if (fieldDescriptor.getType() == Type.BYTES && (result instanceof ByteString)) {
+      return ((ByteString)result).toByteArray();
+    }
     return result;
   }
 
