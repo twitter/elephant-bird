@@ -145,6 +145,16 @@ public class ThriftUtils {
       }
     }
 
+    // look for bean style accessors
+
+    for(String prefix : new String[]{"get_", "is_"}) {
+      try {
+        Method method = containingClass.getDeclaredMethod(prefix + fieldName);
+        return method.getGenericReturnType();
+      } catch (NoSuchMethodException e) {
+      }
+    }
+
     throw new RuntimeException("could not find type for " + fieldName +
                                  " in " + containingClass);
   }
