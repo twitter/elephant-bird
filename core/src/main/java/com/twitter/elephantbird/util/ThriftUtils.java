@@ -145,7 +145,7 @@ public class ThriftUtils {
       }
     }
 
-    // look for bean style accessors
+    // look for bean style accessors get_fieldName and is_fieldName
 
     for(String prefix : new String[]{"get_", "is_"}) {
       try {
