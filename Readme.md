@@ -45,7 +45,7 @@ Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.
 ### Runtime Dependencies
 
 Elephant-Bird defines majority of its depenendencies in maven [provided scope](http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Scope).
-As a result these dependencies are not trasitively Elephant-Bird modules. Please see [wiki page](https://github.com/kevinweil/elephant-bird/wiki/Build-and-Runtime-Dependencies) for more information.
+As a result these dependencies are not transitively Elephant-Bird modules. Please see [wiki page](https://github.com/kevinweil/elephant-bird/wiki/Build-and-Runtime-Dependencies) for more information.
 
 ## Contents
 
