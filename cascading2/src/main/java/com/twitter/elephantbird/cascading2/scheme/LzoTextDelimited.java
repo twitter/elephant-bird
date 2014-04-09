@@ -49,6 +49,11 @@ public class LzoTextDelimited extends TextDelimited {
     super(fields, delimiter, quote, types, safe);
   }
 
+  public LzoTextDelimited(Fields fields, boolean skipHeader, boolean writeHeader, String delimiter,
+    boolean strict, String quote, Class[] types, boolean safe) {
+    super(fields, skipHeader, writeHeader, delimiter, strict, quote,  types, safe);
+  }
+
   public LzoTextDelimited(Fields fields, boolean skipHeader, String delimiter,
     String quote, Class[] types, boolean safe) {
     super(fields, skipHeader, delimiter, quote, types, safe);
