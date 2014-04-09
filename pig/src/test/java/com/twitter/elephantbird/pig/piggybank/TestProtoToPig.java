@@ -35,7 +35,7 @@ public class TestProtoToPig {
     ProtobufBytesToTuple abProtoToPig =
         new ProtobufBytesToTuple(AddressBook.class.getCanonicalName());
     Tuple abTuple = abProtoToPig.exec(abProtoTuple);
-    assertEquals("{(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)}),(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)})}",
+    assertEquals("{(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)}),(Elephant Bird,123,elephant@bird.com,{(415-999-9999,HOME),(415-666-6666,MOBILE),(415-333-3333,WORK)})},",
         abTuple.toDelimitedString(","));
   }
 

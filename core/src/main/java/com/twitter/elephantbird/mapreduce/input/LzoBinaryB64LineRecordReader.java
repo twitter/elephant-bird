@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
+import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.Codecs;
@@ -28,13 +29,14 @@ import org.apache.hadoop.util.LineReader;
  * A small fraction of bad records are tolerated. See {@link LzoRecordReader}
  * for more information on error handling.
  */
-public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> extends LzoRecordReader<LongWritable, W> {
+public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
+    extends LzoRecordReader<LongWritable, W> implements MapredInputFormatCompatible<LongWritable, W> {
 
   private LineReader lineReader_;
 
   private final Text line_ = new Text();
-  private final LongWritable key_ = new LongWritable();
-  private final W value_;
+  private LongWritable key_ = new LongWritable();
+  private W value_;
   private TypeRef<M> typeRef_;
   private int maxLineLen = Integer.MAX_VALUE;
 
@@ -94,6 +96,12 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>> exten
     if (!atFirstRecord) {
       lineReader_.readLine(new Text(), maxLineLen);
     }
+  }
+
+  @Override
+  public void setKeyValue(LongWritable key, W value) {
+    key_ = key;
+    value_ = value;
   }
 
   /**

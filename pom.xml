@@ -9,7 +9,7 @@
 
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
-  <version>4.3-SNAPSHOT</version>
+  <version>4.5-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Elephant Bird</name>
@@ -79,11 +79,13 @@
     <apache.hadoop1.version>1.1.2</apache.hadoop1.version> <!-- for hadoop1 profile -->
     <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version> <!-- for hadoop2 profile -->
     <apache.pig.version>0.11.1</apache.pig.version>
+    <apache.crunch.hadoop1.version>0.8.2</apache.crunch.hadoop1.version>
+    <apache.crunch.hadoop2.version>0.8.2-hadoop2</apache.crunch.hadoop2.version>
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
     <protobuf.version>2.4.1</protobuf.version>
-    <hadoop-lzo.version>0.4.16</hadoop-lzo.version>
+    <hadoop-lzo.version>0.4.19</hadoop-lzo.version>
   </properties>
 
   <repositories>
@@ -111,6 +113,11 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-crunch</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -149,6 +156,13 @@
         <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-pig</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-core</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
@@ -266,6 +280,14 @@
         <groupId>cascading</groupId>
         <artifactId>cascading-hadoop</artifactId>
         <version>2.0.0-wip-288</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- crunch -->
+      <dependency>
+        <groupId>org.apache.crunch</groupId>
+        <artifactId>crunch-core</artifactId>
+        <version>${apache.crunch.version}</version>
         <scope>provided</scope>
       </dependency>
 
@@ -403,6 +425,9 @@
           ${apache.hadoop1.version}
         </specific.hadoop.version>
         <apache.pig.classifier />
+        <apache.crunch.version>
+          ${apache.crunch.hadoop1.version}
+        </apache.crunch.version>
       </properties>
     </profile>
     <profile>
@@ -412,6 +437,9 @@
           ${apache.hadoop2.version}
         </specific.hadoop.version>
         <apache.pig.classifier>h2</apache.pig.classifier>
+        <apache.crunch.version>
+          ${apache.crunch.hadoop2.version}
+        </apache.crunch.version>
       </properties>
     </profile>
   </profiles>
@@ -651,6 +679,7 @@
 
   <modules>
     <module>cascading2</module>
+    <module>crunch</module>
     <module>core</module>
     <module>hadoop-compat</module>
     <module>hive</module>

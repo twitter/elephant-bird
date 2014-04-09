@@ -11,7 +11,7 @@ import com.twitter.elephantbird.util.TypeRef;
  * mapred version of {@link MultiInputFormat}
  */
 public class DeprecatedMultiInputFormat<M>
-          extends DeprecatedInputFormatWrapper<LongWritable, BinaryWritable<M>>{
+          extends DeprecatedFileInputFormatWrapper<LongWritable, BinaryWritable<M>>{
 
   public DeprecatedMultiInputFormat() {
     super(new MultiInputFormat<M>());

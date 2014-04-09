@@ -35,16 +35,17 @@ Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.
 
 1. Hadoop 20.2x, 1.x, 2.x
 1. Pig 0.8+
-1. Protocol Buffers 2.4.1 (default), 2.3.0 (with `-Dprotobuf.version=2.3.0` for mvn)
+1. Protocol Buffers 2.5.0, 2.4.1, 2.3.0 (default build version is 2.4.1 can be changed with `-Dprotobuf.version=2.3.0`)
 1. Hive 0.7 (with HIVE-1616)
 1. Thrift 0.5.0, 0.6.0, 0.7.0
 1. Mahout 0.6
 1. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
+1. Crunch 0.8.1+
 
 ### Runtime Dependencies
 
 Elephant-Bird defines majority of its depenendencies in maven [provided scope](http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Scope).
-As a result these dependencies are not trasitively Elephant-Bird modules. Please see [wiki page](wiki/Build-and-Runtime-Dependencies) for more information.
+As a result these dependencies are not transitively Elephant-Bird modules. Please see [wiki page](https://github.com/kevinweil/elephant-bird/wiki/Build-and-Runtime-Dependencies) for more information.
 
 ## Contents
 

@@ -14,6 +14,9 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Implementation of a Lucene {@link Directory} for reading indexes directly off HDFS.
  * Note: This implementation is READ ONLY, it cannot be used to write to HDFS.
@@ -45,7 +48,7 @@ public class LuceneHdfsDirectory extends Directory {
 
   @Override
   public void close() throws IOException {
-    fs.close();
+    
   }
 
   @Override
@@ -89,16 +92,23 @@ public class LuceneHdfsDirectory extends Directory {
     private Path path;
     private final FSDataInputStream in;
     private String resourceDescription;
-
+    
+    // Lucene never closes cloned IndexInputs, it will only do this on the original one. 
+    private final List<HDFSIndexInput> clonedList;
+    
     protected HDFSIndexInput(String resourceDescription) throws IOException {
       super(resourceDescription);
       this.resourceDescription = resourceDescription;
       path = new Path(resourceDescription);
       this.in = fs.open(path);
+      this.clonedList = new ArrayList<HDFSIndexInput>();
     }
 
     @Override
     public void close() throws IOException {
+      for(HDFSIndexInput clonedIndexInput : clonedList) {
+        clonedIndexInput.close();
+      }
       in.close();
     }
 
@@ -140,6 +150,9 @@ public class LuceneHdfsDirectory extends Directory {
     public IndexInput clone() {
       try {
         HDFSIndexInput copy = new HDFSIndexInput(resourceDescription);
+        
+        clonedList.add(copy);
+        
         copy.seek(getFilePointer());
         return copy;
       } catch (IOException e) {

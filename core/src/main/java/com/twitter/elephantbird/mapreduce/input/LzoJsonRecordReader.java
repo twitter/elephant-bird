@@ -3,6 +3,8 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -21,14 +23,15 @@ import org.slf4j.LoggerFactory;
  * WARNING: Does not handle multi-line json input well, if at all.
  * TODO: Fix that, and keep Hadoop counters for invalid vs. valid lines.
  */
-public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritable> {
+public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritable>
+    implements MapredInputFormatCompatible<LongWritable, MapWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoJsonRecordReader.class);
 
   private LineReader in_;
 
-  private final LongWritable key_ = new LongWritable();
+  private LongWritable key_ = new LongWritable();
+  private MapWritable value_ = new MapWritable();
   private final Text currentLine_ = new Text();
-  private final MapWritable value_ = new MapWritable();
   private final JSONParser jsonParser_ = new JSONParser();
 
   @Override
@@ -59,6 +62,12 @@ public class LzoJsonRecordReader extends LzoRecordReader<LongWritable, MapWritab
     if (!atFirstRecord) {
       in_.readLine(new Text());
     }
+  }
+
+  @Override
+  public void setKeyValue(LongWritable key, MapWritable value) {
+    key_ = key;
+    value_ = value;
   }
 
   @Override
