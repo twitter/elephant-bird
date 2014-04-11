@@ -27,6 +27,17 @@ to `pig-env.sh`. See the instructions for [Hadoop-LZO](http://www.github.com/kev
 There are a few simple examples that use the input formats. Note how the Protocol Buffer and Thrift
 classes are passed to input formats through configuration.
 
+## Registering JARs in a Pig session
+
+Since Elephant-bird doesn't package a full 'fat JAR' anymore, JARs should be registered at the beginning of a Pig session as follows (also note json-simple.jar might be needed as external dependency):
+
+```
+REGISTER '/path/to/json-simple.jar';
+REGISTER '/path/to/elephant-bird-core.jar';
+REGISTER '/path/to/elephant-bird-pig.jar';
+REGISTER '/path/to/elephant-bird-hadoop-compat.jar';
+```
+
 ## Maven repository
 
 Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.sonatype.org/) [releases repository](https://oss.sonatype.org/content/repositories/releases/) and promoted from there to [Maven Central](http://search.maven.org/). From time to time we may also deploy snapshot releases to the Sonatype OSS [snapshots repository](https://oss.sonatype.org/content/repositories/snapshots/).
