@@ -51,7 +51,8 @@ public class LzoTextDelimited extends TextDelimited {
 
   public LzoTextDelimited(Fields fields, boolean skipHeader, boolean writeHeader, String delimiter,
     boolean strict, String quote, Class[] types, boolean safe) {
-    super(fields, skipHeader, writeHeader, delimiter, strict, quote,  types, safe);
+    // We set Compress to null as this class's point is to explicitly handle this
+    super(fields, null, skipHeader, writeHeader, delimiter, strict, quote, types, safe);
   }
 
   public LzoTextDelimited(Fields fields, boolean skipHeader, String delimiter,
