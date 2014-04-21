@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.twitter.elephantbird.util.HadoopCompat;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapred.Counters;
@@ -142,7 +143,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
               mapreduceFileSplit.getLength(),
               mapreduceFileSplit.getLocations());
         } else {
-          resultSplits[i++] = new InputSplitWrapper(split);
+          resultSplits[i++] = new InputSplitWrapper(split, job);
         }
       }
 
@@ -362,7 +363,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
     }
   }
 
-  private static class InputSplitWrapper implements InputSplit {
+  private static class InputSplitWrapper extends Configured implements InputSplit {
 
     org.apache.hadoop.mapreduce.InputSplit realSplit;
 
@@ -372,6 +373,11 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     public InputSplitWrapper(org.apache.hadoop.mapreduce.InputSplit realSplit) {
       this.realSplit = realSplit;
+    }
+
+    public InputSplitWrapper(org.apache.hadoop.mapreduce.InputSplit realSplit, JobConf job) {
+      this.realSplit = realSplit;
+      this.setConf(job);
     }
 
     @Override
@@ -404,7 +410,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       }
 
       realSplit = (org.apache.hadoop.mapreduce.InputSplit)
-                  ReflectionUtils.newInstance(splitClass, null);
+                  ReflectionUtils.newInstance(splitClass, this.getConf());
       ((Writable)realSplit).readFields(in);
     }
 
