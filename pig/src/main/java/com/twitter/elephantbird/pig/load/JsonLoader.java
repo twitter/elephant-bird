@@ -185,34 +185,27 @@ public class JsonLoader extends LzoBaseLoadFunc {
     } catch (ParseException e) {
       LOG.warn("Could not json-decode string: " + line, e);
       incrCounter(JsonLoaderCounters.LinesParseError, 1L);
-      if (isInvalidRecordEnabled) {
-			retMap.put("error_line", line);
-			retMap.put("error_string", "LinesParseError");
-			return tupleFactory.newTuple(retMap);
-		} else {
-			return null;
-		}
+      return emitErrorTuple(line,"LinesParseError");
     } catch (NumberFormatException e) {
       LOG.warn("Very big number exceeds the scale of long: " + line, e);
       incrCounter(JsonLoaderCounters.LinesParseErrorBadNumber, 1L);
-      if (isInvalidRecordEnabled) {
-			retMap.put("error_line", line);
-			retMap.put("error_string", "LinesParseError");
-			return tupleFactory.newTuple(retMap);
-		} else {
-			return null;
-		}
+      return emitErrorTuple(line,"LinesParseError");
     } catch (ClassCastException e) {
       LOG.warn("Could not convert to Json Object: " + line, e);
       incrCounter(JsonLoaderCounters.LinesParseError, 1L);
-      if (isInvalidRecordEnabled) {
-			retMap.put("error_line", line);
-			retMap.put("error_string", "LinesParseError");
-			return tupleFactory.newTuple(retMap);
-		} else {
-			return null;
-		}
+      return emitErrorTuple(line,"LinesParseError");
     }
+  }
+  
+  private Tuple emitErrorTuple(String error_line,String error_string) {
+    if (isInvalidRecordEnabled){
+	  retMap.put("_error_line", error_line);
+	  retMap.put("_error_string", error_string);
+	  return tupleFactory.newTuple(retMap); 
+    }
+    else{
+      return null;  
+    }	  
   }
 
   private Object wrap(Object value) {

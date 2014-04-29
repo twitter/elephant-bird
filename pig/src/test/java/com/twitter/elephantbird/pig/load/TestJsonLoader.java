@@ -165,7 +165,7 @@ public class TestJsonLoader {
 	    PigServer pigServer = PigTestUtil.makePigServer();
 	    logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
 	        + "' using com.twitter.elephantbird.pig.load.JsonLoader('-invalidRecord') as (json: map[]);");
-	    logAndRegisterQuery(pigServer, "split data into good_data IF json#'error_string' is null,bad_data IF json#'error_string' !='';");
+	    logAndRegisterQuery(pigServer, "split data into good_data IF json#'_error_string' is null,bad_data IF json#'_error_string' !='';");
 	    Iterator<Tuple> tuples = pigServer.openIterator("bad_data");
 
 	    int count = 0;
