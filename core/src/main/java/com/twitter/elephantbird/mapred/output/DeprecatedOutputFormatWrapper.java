@@ -15,6 +15,7 @@ import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
+import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper.ReporterWrapper;
 import com.twitter.elephantbird.util.HadoopUtils;
 
 /**
@@ -97,7 +98,7 @@ public class DeprecatedOutputFormatWrapper<K, V>
         // create a MapContext to provide access to the reporter (for counters)
         taskContext = HadoopCompat.newMapContext(
             jobConf, TaskAttemptID.forName(jobConf.get("mapred.task.id")),
-            null, null, null, (StatusReporter) progress, null);
+            null, null, null, new ReporterWrapper(progress), null);
 
         realWriter = realOutputFormat.getRecordWriter(taskContext);
       } catch (InterruptedException e) {

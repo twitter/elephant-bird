@@ -31,7 +31,7 @@ import com.twitter.elephantbird.util.HadoopUtils;
  * interface is required. </p>
  *
  * Current restrictions on InputFormat: <ul>
- *    <li> the record reader should reuse key and value objects 
+ *    <li> the record reader should reuse key and value objects
  *    or implement {@link com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible} </li>
  * </ul>
  *
@@ -77,11 +77,11 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 		HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
 		HadoopUtils.setClassConf(jobConf, VALUE_COPY_CONF_KEY, valueCopyClass);
 	}
-	
+
 	/**
 	 * Only used in very specific cases and does not absolve one from
 	 * calling the static setInptuFormat methods to set up the hadoop job
-	 * properly. 
+	 * properly.
 	 * @param inputFormat
 	 */
 	public void setInputFormatInstance(InputFormat<K, V> inputFormat) {
@@ -156,7 +156,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
   /**
    * A reporter that works with both mapred and mapreduce APIs.
    */
-  private static class ReporterWrapper extends StatusReporter implements Reporter {
+  public static class ReporterWrapper extends StatusReporter implements Reporter {
     private Reporter wrappedReporter;
 
     public ReporterWrapper(Reporter reporter) {
@@ -220,7 +220,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
     private boolean eof = false;
 
     private DeprecatedInputFormatValueCopier<V> valueCopier = null;
-		
+
     public RecordReaderWrapper(InputFormat<K, V> newInputFormat, InputSplit oldSplit, JobConf oldJobConf,
 				Reporter reporter, DeprecatedInputFormatValueCopier<V> valueCopier) throws IOException {
 
@@ -250,7 +250,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       try {
         realReader = newInputFormat.createRecordReader(split, taskContext);
         realReader.initialize(split, taskContext);
-        
+
         if (realReader instanceof MapredInputFormatCompatible) {
           mifcReader = ((MapredInputFormatCompatible) realReader);
         }
@@ -330,9 +330,9 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
             if (mifcReader != null) {
               throw new IOException("The RecordReader returned a key and value that do not match "
                   + "the key and value sent to it. This means the RecordReader did not properly implement "
-                  + "com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible. " 
+                  + "com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible. "
                   + "Current reader class : " + realReader.getClass());
-          
+
             } else {
               throw new IOException("DeprecatedInputFormatWrapper only "
                   + "supports RecordReaders that return the same key & value "
