@@ -80,7 +80,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
    * Refinement of {@link SequenceFileConfig} which adds key/value "type" option.
    */
   private class Config extends SequenceFileConfig<K, V> {
-    public static final char TYPE_PARAM_SHORT = 't';
+    public static final String TYPE_PARAM_SHORT = "t";
     public static final String TYPE_PARAM = "type";
     public Class<K> keyClass;
     public Class<V> valueClass;

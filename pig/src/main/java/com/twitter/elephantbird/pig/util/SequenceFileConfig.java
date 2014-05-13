@@ -31,7 +31,7 @@ import com.twitter.elephantbird.pig.store.SequenceFileStorage;
  * @see WritableConverter
  */
 public class SequenceFileConfig<K extends Writable, V extends Writable> {
-  public static final Char CONVERTER_PARAM_SHORT = 'c';
+  public static final String CONVERTER_PARAM_SHORT = "c";
   public static final String CONVERTER_PARAM = "converter";
   public final CommandLine keyArguments;
   public final CommandLine valueArguments;
