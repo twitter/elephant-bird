@@ -80,6 +80,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
    * Refinement of {@link SequenceFileConfig} which adds key/value "type" option.
    */
   private class Config extends SequenceFileConfig<K, V> {
+    public static final char TYPE_PARAM_SHORT = 't';
     public static final String TYPE_PARAM = "type";
     public Class<K> keyClass;
     public Class<V> valueClass;
@@ -99,7 +100,7 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
               .withArgName("cls")
               .withDescription(
                   "Writable type of data. Defaults to type returned by getWritableClass()"
-                      + " method of configured WritableConverter.").create("t");
+                      + " method of configured WritableConverter.").create(TYPE_PARAM_SHORT);
       return super.getKeyValueOptions().addOption(typeOption);
     }
 
@@ -109,8 +110,8 @@ public class SequenceFileStorage<K extends Writable, V extends Writable> extends
        * Attempt to initialize key, value classes using arguments. If user doesn't specify '--type'
        * arg, then class will be null.
        */
-      keyClass = getWritableClass(keyArguments.getOptionValue(TYPE_PARAM));
-      valueClass = getWritableClass(valueArguments.getOptionValue(TYPE_PARAM));
+      keyClass = getWritableClass(keyArguments.getOptionValue(TYPE_PARAM_SHORT));
+      valueClass = getWritableClass(valueArguments.getOptionValue(TYPE_PARAM_SHORT));
 
       // initialize key, value converters
       keyConverter.initialize(keyClass);

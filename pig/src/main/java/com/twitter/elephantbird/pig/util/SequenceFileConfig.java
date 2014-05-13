@@ -31,6 +31,7 @@ import com.twitter.elephantbird.pig.store.SequenceFileStorage;
  * @see WritableConverter
  */
 public class SequenceFileConfig<K extends Writable, V extends Writable> {
+  public static final Char CONVERTER_PARAM_SHORT = 'c';
   public static final String CONVERTER_PARAM = "converter";
   public final CommandLine keyArguments;
   public final CommandLine valueArguments;
@@ -137,7 +138,7 @@ public class SequenceFileConfig<K extends Writable, V extends Writable> {
             .withArgName("cls")
             .withDescription(
                 String.format("Converter type to use for conversion of data. Defaults to '%s'.",
-                    TextConverter.class.getName())).create("c");
+                    TextConverter.class.getName())).create(CONVERTER_PARAM_SHORT);
     return new Options().addOption(converterOption);
   }
 
@@ -178,7 +179,7 @@ public class SequenceFileConfig<K extends Writable, V extends Writable> {
 
       // get converter classname
       String converterClassName =
-          arguments.getOptionValue(CONVERTER_PARAM, TextConverter.class.getName());
+          arguments.getOptionValue(CONVERTER_PARAM_SHORT, TextConverter.class.getName());
 
       // get converter class
       Class<WritableConverter<T>> converterClass =
