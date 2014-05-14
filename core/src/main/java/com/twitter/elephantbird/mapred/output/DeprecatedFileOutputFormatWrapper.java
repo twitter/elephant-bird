@@ -9,6 +9,8 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Progressable;
 
+import com.twitter.elephantbird.mapreduce.output.WorkFileOverride;
+
 /**
  * The wrapper enables an {@link FileOutputFormat} written for new
  * <code>mapreduce<code> interface to be used in contexts where
@@ -40,6 +42,9 @@ public class DeprecatedFileOutputFormatWrapper<K, V>
   @Override
   public RecordWriter<K, V> getRecordWriter(FileSystem ignored, JobConf job,
       String name, Progressable progress) throws IOException {
+    if (wrapped.realOutputFormat instanceof WorkFileOverride) {
+      ((WorkFileOverride) wrapped.realOutputFormat).setName(name);
+    }
     return wrapped.getRecordWriter(ignored, job, name, progress);
   }
 }
