@@ -98,7 +98,7 @@ public class DeprecatedOutputFormatWrapper<K, V>
         // create a MapContext to provide access to the reporter (for counters)
         taskContext = HadoopCompat.newMapContext(
             jobConf, TaskAttemptID.forName(jobConf.get("mapred.task.id")),
-            null, null, null, new ReporterWrapper((Reporter)progress), null);
+            null, null, null, new ReporterWrapper((Reporter) progress), null);
 
         realWriter = realOutputFormat.getRecordWriter(taskContext);
       } catch (InterruptedException e) {
