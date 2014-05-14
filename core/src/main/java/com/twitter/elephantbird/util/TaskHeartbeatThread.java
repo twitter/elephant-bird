@@ -33,7 +33,7 @@ public class TaskHeartbeatThread {
             }
 
             // keep the task alive
-            context.progress();
+            HadoopCompat.progress(context);
 
             // call the optional custom progress method
             progress();
