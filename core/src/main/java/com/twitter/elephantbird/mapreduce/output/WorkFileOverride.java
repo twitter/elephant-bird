@@ -9,27 +9,37 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 public interface WorkFileOverride {
   public static abstract class FileOutputFormat<K, V>
-    extends org.apache.hadoop.mapreduce.lib.output.FileOutputFormat<K, V> implements WorkFileOverride {
-    @Override
-    public Path getDefaultWorkFile(TaskAttemptContext context, String extension) throws IOException {
-      return WorkFileOverride.Method.getDefaultWorkFileOverride(this, this, context, extension);
-    }
+      extends org.apache.hadoop.mapreduce.lib.output.FileOutputFormat<K, V> implements WorkFileOverride {
 
     private String name;
+
+    @Override
+    public Path getDefaultWorkFile(TaskAttemptContext context, String extension) throws IOException {
+      if (name == null) {
+        return super.getDefaultWorkFile(context, extension);
+      } else {
+        return WorkFileOverride.Method.getDefaultWorkFileOverride(this, name, context, extension);
+      }
+    }
+
     @Override public void setName(String name) { this.name = name; }
-    @Override public String getName() { return name; }
   }
 
   public static abstract class TextOutputFormat<K, V>
       extends org.apache.hadoop.mapreduce.lib.output.TextOutputFormat<K, V> implements WorkFileOverride {
-    @Override
-    public Path getDefaultWorkFile(TaskAttemptContext context, String extension) throws IOException {
-      return WorkFileOverride.Method.getDefaultWorkFileOverride(this, this, context, extension);
-    }
 
     private String name;
+
+    @Override
+    public Path getDefaultWorkFile(TaskAttemptContext context, String extension) throws IOException {
+      if (name == null) {
+        return super.getDefaultWorkFile(context, extension);
+      } else {
+        return WorkFileOverride.Method.getDefaultWorkFileOverride(this, name, context, extension);
+      }
+    }
+
     @Override public void setName(String name) { this.name = name; }
-    @Override public String getName() { return name; }
   }
 
   public static class Method {
@@ -37,21 +47,15 @@ public interface WorkFileOverride {
     }
 
     public static Path getDefaultWorkFileOverride(
-      WorkFileOverride workFileOverride,
       org.apache.hadoop.mapreduce.lib.output.FileOutputFormat<?, ?> outputFormat,
+      String name,
       TaskAttemptContext context,
       String extension
     ) throws IOException {
-      String name = workFileOverride.getName();
-      if (name == null) {
-        return outputFormat.getDefaultWorkFile(context, extension);
-      } else {
-        FileOutputCommitter committer = (FileOutputCommitter) outputFormat.getOutputCommitter(context);
-        return new Path(committer.getWorkPath(), name + extension);
-      }
+      FileOutputCommitter committer = (FileOutputCommitter) outputFormat.getOutputCommitter(context);
+      return new Path(committer.getWorkPath(), name + extension);
     }
   }
 
   void setName(String name);
-  String getName();
 }
