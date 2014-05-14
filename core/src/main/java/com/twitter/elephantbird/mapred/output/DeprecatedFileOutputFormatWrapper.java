@@ -15,6 +15,9 @@ import org.apache.hadoop.util.Progressable;
  * a {@link org.apache.hadoop.mapred.FileOutputFormat} old <code>mapred</code>
  * interface is required. </p>
  *
+ * Note that this does not have a no args constructed, so it cannot currently
+ * be used as an output format. Instead, it must be extended, such as in
+ * {@link DeprecatedLzoTextOutputFormat}.
  *
  * @see DeprecatedOutputFormatWrapper
  *
