@@ -31,7 +31,7 @@ import com.twitter.elephantbird.util.HadoopUtils;
  *
  * @see DeprecatedInputFormatWrapper
  *
- * @author Jonathan Coveney
+ * @author Raghu Angadi
  */
 @SuppressWarnings("deprecation")
 public class DeprecatedOutputFormatWrapper<K, V>

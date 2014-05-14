@@ -18,7 +18,7 @@ import org.apache.hadoop.util.Progressable;
  *
  * @see DeprecatedOutputFormatWrapper
  *
- * @author Raghu Angadi
+ * @author Jonathan Coveney
  */
 public class DeprecatedFileOutputFormatWrapper<K, V>
                extends org.apache.hadoop.mapred.FileOutputFormat<K, V> {
