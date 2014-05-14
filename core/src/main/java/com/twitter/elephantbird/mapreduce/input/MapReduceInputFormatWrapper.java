@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
@@ -23,6 +22,7 @@ import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.util.ReflectionUtils;
 
+import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 
 /**
@@ -167,7 +167,7 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
                 context instanceof TaskInputOutputContext ?
                        (TaskInputOutputContext) context : null;
 
-        public void progress() { context.progress(); }
+        public void progress() { HadoopCompat.progress(context); }
 
         // @Override
         public float getProgress() {
