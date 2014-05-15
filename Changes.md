@@ -1,5 +1,53 @@
 # Elephant Bird #
 
+### Verision 4.4 and 4.5 ###
+
+Issue 395. Incorporate the name given to record writer into the record writer (Jonathan Coveney)
+
+Issue 394. use progress() from HadoopCompat (Raghu Angadi)
+
+Issue 392. Introduce and use DeprecatedFileOutputFormatWrapper (Jonathan Coveney)
+
+Issue 390. Use ReporterWrapper in DeprecatedOutputFormatWrapper (Jonathan Coveney)
+
+Issue 388. Upgrade to use cascading 2.5.2 (Jonathan Coveney)
+
+Issue 386. Add support for strict mode in LzoTextDelimited (Jonathan Coveney)
+
+Issue 383. Fixing a link in the readme (Andrew Ehrlich)
+
+Issue 381. support the --java:bean thrift compiler flag (Soren Macbeth)
+
+Issue 380. Correct an issue parsing bytes field from protobuf (bryanherger)
+
+Issue 375. Crunch version bump and bug fixes for Thrift types and shuffle serialization (Josh Wills)
+
+Issue 374. upgrade hadoop-lzo version to 0.4.19 (Raghu Angadi)
+
+Issue 373. Replace protoc generated SerializedBlock with DynamicMessage (Raghu Angadi)
+
+Issue 372. Added progressable method to HadoopCompat (Ben Coverston)
+
+Issue 371. Close cloned HDFSIndexInput instances (ankurbarua)
+
+Issue 369. Move thrift files from src to test (Aniket Mokashi)
+
+Issue 368. add a few more methods methods to hadoop-compat (Raghu Angadi)
+
+Issue 364. Prevent NPE in TStructDescriptor when an unexpected enum is encountered (Dmitriy Ryaboy)
+
+Issue 362. CombinedFileInputFormat javadoc link didn't have the full path (Chandler Abraham)
+
+Issue 360. Allow DeprecatedInputFormatWrapper to manually set key and value on a mapreduce RecordReader (Chandler Abraham)
+
+Issue 359. make file-based mapred IFs extend a new FIF wrapper (Dmitriy Ryaboy)
+
+Issue 357. Add Crunch module and supporting Sources and Targets for Elephant Bird IO formats. (Josh Wills)
+
+Issue 356. Thrift typedef handling. Avoid relying on Thrift's FieldValueMetaData (Raghu Angadi)
+
+Issue 353. Fix for RCFile[Protobuf|Thrift]PigLoader error when different loaders used in same map task (tmwoodruff)
+
 ### Version 4.3 ###
 
 ISSUE 348. Some refactor for outputSchema wrapping adding in ISSUE 347 (Aniket Mokashi)
