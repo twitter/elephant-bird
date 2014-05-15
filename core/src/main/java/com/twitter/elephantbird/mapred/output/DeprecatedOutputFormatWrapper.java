@@ -16,6 +16,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
 import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper.ReporterWrapper;
+import com.twitter.elephantbird.mapreduce.output.WorkFileOverride;
 import com.twitter.elephantbird.util.HadoopUtils;
 
 /**
@@ -82,6 +83,9 @@ public class DeprecatedOutputFormatWrapper<K, V>
   public RecordWriter<K, V> getRecordWriter(FileSystem ignored, JobConf job,
       String name, Progressable progress) throws IOException {
     initOutputFormat(job);
+    if (realOutputFormat instanceof WorkFileOverride) {
+      ((WorkFileOverride) realOutputFormat).setName(name);
+    }
     return new RecordWriterWrapper<K, V>(realOutputFormat, job, name, progress);
   }
 
