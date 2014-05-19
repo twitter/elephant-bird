@@ -91,8 +91,10 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
       throw new IOException("Delegate error on getSplits", e);
     }
     List<InputSplit> combinedInputSplits = new ArrayList<InputSplit>();
+    Configuration conf = job.getConfiguration();
     try {
-      for (CompositeInputSplit split : SplitUtil.getCombinedCompositeSplits(inputSplits, job.getConfiguration())) {
+      for (CompositeInputSplit split : SplitUtil.getCombinedCompositeSplits(inputSplits, conf)) {
+        split.setConfiguration(conf);
         combinedInputSplits.add(split);
       }
     } catch (InterruptedException e) {
@@ -131,7 +133,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
     }
 
     public String toString() {
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       buf.append("[");
       for (PathFilter f: filters) {
         buf.append(f);

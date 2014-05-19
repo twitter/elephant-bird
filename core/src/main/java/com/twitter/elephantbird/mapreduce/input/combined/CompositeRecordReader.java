@@ -35,6 +35,9 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   private RecordReader<K, V> currentRecordReader;
   private K key;
   private V value;
+  private int recordReadersCount = 0;
+  private int currentRecordReaderIndex = 0;
+
 
   public CompositeRecordReader(InputFormat<K, V> delegate) {
     this.delegate = delegate;
@@ -55,6 +58,7 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       recordReaders.add(recordReader);
       LOG.info("Created record reader for split: " + split + "\nRecord reader: " + recordReader); //TODO remove
     }
+    recordReadersCount = recordReaders.size()
   }
 
   @Override
@@ -70,6 +74,7 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
         return false;
       }
       currentRecordReader = recordReaders.remove();
+      currentRecordReaderIndex++;
       setKeyValue(key, value);
     }
     return true;
@@ -87,7 +92,12 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
 
   @Override
   public float getProgress() throws IOException, InterruptedException {
-    return 0; //TODO need to think about this
+    if (recordReadersCount < 1) {
+      return 1.0f;
+    }
+
+    return (float) currentRecordReader.getProgress() / (float) recordReadersCount
+            + (float) currentRecordReaderIndex / (float) recordReadersCount;
   }
 
   @Override
@@ -95,8 +105,21 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
     if (currentRecordReader != null) {
       currentRecordReader.close();
     }
+    Exception firstException = null;
     for (RecordReader<K, V> recordReader : recordReaders) {
-      recordReader.close();
+      try {
+        recordReader.close();
+      } catch (Exception e) {
+        LOG.error("Exception while closing RecordReader", e);
+        firstException = e;
+      }
+    }
+    if (firstException != null) {
+      if (firstException instanceof IOException) {
+        throw (IOException) firstException;
+      } else {
+        throw new IOException("Exception when closing RecordReader", firstException);
+      }
     }
   }
 

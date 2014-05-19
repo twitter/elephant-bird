@@ -5,11 +5,9 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
+import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -27,9 +25,12 @@ import org.slf4j.LoggerFactory;
  * Also, the version in Hadoop had some bugs.
  */
 public class CompositeInputSplit extends InputSplit implements Writable {
+  private static final Logger LOG = LoggerFactory.getLogger(SplitUtil.class);
+
   private long totalSplitSizes = 0L;
   private List<InputSplit> splits = new ArrayList<InputSplit>();
-  private Configuration conf = new Configuration();
+  private Configuration conf = null;
+  private String[] locations;
 
   public CompositeInputSplit() {
   }
@@ -48,6 +49,7 @@ public class CompositeInputSplit extends InputSplit implements Writable {
   public void add(InputSplit split) throws IOException, InterruptedException {
     splits.add(split);
     totalSplitSizes += split.getLength();
+    locations = null;
   }
 
   public List<InputSplit> getSplits() {
@@ -79,16 +81,19 @@ public class CompositeInputSplit extends InputSplit implements Writable {
    * Collect a set of hosts from all child InputSplits.
    */
   public String[] getLocations() throws IOException, InterruptedException {
-    HashSet<String> hosts = new HashSet<String>();
-    for (InputSplit s : splits) {
-      String[] hints = s.getLocations();
-      if (hints != null && hints.length > 0) {
-        for (String host : hints) {
-          hosts.add(host);
+    if (locations == null) {
+      Set<String> hosts = new HashSet<String>();
+      for (InputSplit s : splits) {
+        String[] hints = s.getLocations();
+        if (hints != null) {
+          for (String host : hints) {
+            hosts.add(host);
+          }
         }
       }
+      locations = hosts.toArray(new String[hosts.size()]);
     }
-    return hosts.toArray(new String[hosts.size()]);
+    return locations;
   }
 
   /**
@@ -106,6 +111,11 @@ public class CompositeInputSplit extends InputSplit implements Writable {
    */
   @SuppressWarnings("unchecked")
   public void write(DataOutput out) throws IOException {
+    Configuration hConf = conf;
+    if (hConf == null) {
+      LOG.warn("Hadoop Configuation not set via setConfiguration, using default in write(DataOutput)");
+      hConf = new Configuration();
+    }
     WritableUtils.writeVInt(out, splits.size());
     for (InputSplit s : splits) {
       Text.writeString(out, s.getClass().getName());
@@ -126,6 +136,11 @@ public class CompositeInputSplit extends InputSplit implements Writable {
    */
   @SuppressWarnings("unchecked")  // Generic array assignment
   public void readFields(DataInput in) throws IOException {
+    Configuration hConf = conf;
+    if (hConf == null) {
+      LOG.warn("Hadoop Configuation not set via setConfiguration, using default in readFields(DataInput)");
+      hConf = new Configuration();
+    }
     int card = WritableUtils.readVInt(in);
     splits = new ArrayList<InputSplit>();
     Class<? extends InputSplit>[] cls = new Class[card];
@@ -143,5 +158,9 @@ public class CompositeInputSplit extends InputSplit implements Writable {
     } catch (ClassNotFoundException e) {
       throw new IOException("Failed split init", e);
     }
+  }
+
+  public void setConfiguration(Configuration conf) {
+    this.conf = conf;
   }
 }
