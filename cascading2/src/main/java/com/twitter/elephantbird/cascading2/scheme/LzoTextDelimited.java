@@ -1,5 +1,7 @@
 package com.twitter.elephantbird.cascading2.scheme;
 
+import com.twitter.elephantbird.mapred.input.DeprecatedCombineLzoTextInputFormat;
+import com.twitter.elephantbird.mapreduce.input.combined.DelegateCombineFileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
@@ -70,7 +72,12 @@ public class LzoTextDelimited extends TextDelimited {
 
   @Override
   public void sourceConfInit(FlowProcess<JobConf> flowProcess, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf ) {
-    conf.setInputFormat(DeprecatedLzoTextInputFormat.class);
+    if (conf.getBoolean(DelegateCombineFileInputFormat.USE_COMBINED_INPUT_FORMAT, false)) {
+      conf.setInputFormat(DeprecatedCombineLzoTextInputFormat.class);
+    } else {
+      conf.setInputFormat(DeprecatedLzoTextInputFormat.class);
+    }
+
   }
 
   @Override
