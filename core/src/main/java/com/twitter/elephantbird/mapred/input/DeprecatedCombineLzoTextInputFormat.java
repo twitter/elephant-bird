@@ -4,8 +4,14 @@ import com.twitter.elephantbird.mapreduce.input.combined.CombineLzoFileInputForm
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 
+/**
+ * This is a mapred api version of {@link CombineLzoFileInputFormat},
+ * provided primarily for use with scalding via cascading.
+ *
+ * @author Jonathan Coveney
+ */
 public class DeprecatedCombineLzoTextInputFormat extends DeprecatedFileInputFormatWrapper<LongWritable, Text> {
   public DeprecatedCombineLzoTextInputFormat() {
-        super(new LzoCombineFileInputFormat());
+        super(new CombineLzoFileInputFormat());
     }
 }

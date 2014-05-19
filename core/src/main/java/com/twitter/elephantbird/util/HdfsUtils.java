@@ -1,7 +1,7 @@
 package com.twitter.elephantbird.util;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -13,7 +13,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.mapreduce.InputSplit;
 
 /**
  * HDFS utilities

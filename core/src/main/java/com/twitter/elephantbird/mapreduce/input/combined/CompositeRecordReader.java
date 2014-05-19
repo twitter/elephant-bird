@@ -16,11 +16,15 @@ import java.util.List;
 import java.util.Queue;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jcoveney
- * Date: 5/16/14
- * Time: 12:41 PM
- * To change this template use File | Settings | File Templates.
+ * This is a record reader which delegates to the RecordReader of a delegate
+ * InputSplit and manages those RecordReaders over all of the splits in a
+ * CompositeInputSplit. It is not as general as it could be as it is meant
+ * to work with {@link com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper},
+ * which means that input RecordReaders must implement
+ * {@link MapredInputFormatCompatible} for compatibility with the mapred
+ * interface.
+ *
+ * @author Jonathan Coveney
  */
 public class CompositeRecordReader<K, V> extends RecordReader<K, V>
         implements MapredInputFormatCompatible<K, V>  {

@@ -11,6 +11,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * This class allows for use of {@link CombineFileInputFormat} with Elephant Bird's other
+ * input formats. It works seamlessly with
+ * {@link com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper} which
+ * means that any of Elephant Bird's Input Formats can be used in Cascading
+ * as a CombineFileInputFormat.
+ *
+ * @author Jonathan Coveney
+ */
 public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat<K, V> {
   public static final String USE_COMBINED_INPUT_FORMAT = "elephantbird.use.combined.input.format";
 

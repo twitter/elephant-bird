@@ -21,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This InputSplit contains a set of child InputSplits. Any InputSplit inserted
- * into this collection must have a public default constructor. This is taken
- * and modified from Hadoop, but is not available in past versions so we copy it here.
+ * This InputSplit wraps a number of child InputSplits. Any InputSplit inserted
+ * into this collection must have a public default constructor. This is based on
+ * code inHadoop, but is not available in past versions so we copy it here.
  * Also, the version in Hadoop had some bugs.
  */
 public class CompositeInputSplit extends InputSplit implements Writable {

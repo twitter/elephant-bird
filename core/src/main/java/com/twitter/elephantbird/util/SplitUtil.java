@@ -13,8 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This code is adapted and cleaned up from Apache Pig. It was copied
- * to avoid having to depend on all of Pig for this utility.
+ * This code facilitates combining InputSplits, managing the locality vs
+ * input size skew tradeoff. This code is adapted and cleaned up from
+ * Apache Pig. It was copied to avoid having to depend on all of Pig for
+ * this utility.
+ *
+ * @author Jonathan Coveney
  */
 public class SplitUtil {
   private static final Logger LOG = LoggerFactory.getLogger(SplitUtil.class);
