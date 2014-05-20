@@ -94,7 +94,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
     Configuration conf = job.getConfiguration();
     try {
       for (CompositeInputSplit split : SplitUtil.getCombinedCompositeSplits(inputSplits, conf)) {
-        split.setConfiguration(conf);
+        split.setConf(conf);
         combinedInputSplits.add(split);
       }
     } catch (InterruptedException e) {

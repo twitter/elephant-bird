@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.*;
 
 import com.twitter.elephantbird.util.SplitUtil;
+import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * code inHadoop, but is not available in past versions so we copy it here.
  * Also, the version in Hadoop had some bugs.
  */
-public class CompositeInputSplit extends InputSplit implements Writable {
+public class CompositeInputSplit extends InputSplit implements Writable, Configurable {
   private static final Logger LOG = LoggerFactory.getLogger(SplitUtil.class);
 
   private long totalSplitSizes = 0L;
@@ -33,6 +34,7 @@ public class CompositeInputSplit extends InputSplit implements Writable {
   private String[] locations;
 
   public CompositeInputSplit() {
+    // Writable
   }
 
   public CompositeInputSplit(List<InputSplit> splits) throws IOException, InterruptedException {
@@ -106,26 +108,22 @@ public class CompositeInputSplit extends InputSplit implements Writable {
   /**
    * Write splits in the following format.
    * {@code
-   * <count><class1><class2>...<classn><split1><split2>...<splitn>
+   * <count><class1><split1><class2><split2>...<classn><splitn>
    * }
    */
   @SuppressWarnings("unchecked")
   public void write(DataOutput out) throws IOException {
-    Configuration hConf = conf;
-    if (hConf == null) {
-      LOG.warn("Hadoop Configuation not set via setConfiguration, using default in write(DataOutput)");
-      hConf = new Configuration();
+    if (conf == null) {
+      throw new IOException("Hadoop Configuration not set via setConf");
     }
     WritableUtils.writeVInt(out, splits.size());
-    for (InputSplit s : splits) {
-      Text.writeString(out, s.getClass().getName());
-    }
-    for (InputSplit s : splits) {
+    for (InputSplit split : splits) {
+      Class<? extends InputSplit> clazz = split.getClass();
+      Text.writeString(out, clazz.getName());
       SerializationFactory factory = new SerializationFactory(conf);
-      Serializer serializer =
-              factory.getSerializer(s.getClass());
+      Serializer serializer = factory.getSerializer(clazz);
       serializer.open((DataOutputStream)out);
-      serializer.serialize(s);
+      serializer.serialize(split);
     }
   }
 
@@ -136,23 +134,18 @@ public class CompositeInputSplit extends InputSplit implements Writable {
    */
   @SuppressWarnings("unchecked")  // Generic array assignment
   public void readFields(DataInput in) throws IOException {
-    Configuration hConf = conf;
-    if (hConf == null) {
-      LOG.warn("Hadoop Configuation not set via setConfiguration, using default in readFields(DataInput)");
-      hConf = new Configuration();
+    if (conf == null) {
+      throw new IOException("Hadoop Configuration not set via setConf");
     }
     int card = WritableUtils.readVInt(in);
     splits = new ArrayList<InputSplit>();
-    Class<? extends InputSplit>[] cls = new Class[card];
     try {
       for (int i = 0; i < card; ++i) {
-        cls[i] = Class.forName(Text.readString(in)).asSubclass(InputSplit.class);
-      }
-      for (int i = 0; i < card; ++i) {
-        InputSplit split = ReflectionUtils.newInstance(cls[i], null);
+        Class<? extends InputSplit> clazz = (Class<? extends InputSplit>) conf.getClassByName(Text.readString(in));
+        InputSplit split = ReflectionUtils.newInstance(clazz, conf);
         SerializationFactory factory = new SerializationFactory(conf);
-        Deserializer deserializer = factory.getDeserializer(cls[i]);
-        deserializer.open((DataInputStream)in);
+        Deserializer deserializer = factory.getDeserializer(clazz);
+        deserializer.open((DataInputStream) in);
         splits.add((InputSplit) deserializer.deserialize(split));
       }
     } catch (ClassNotFoundException e) {
@@ -160,7 +153,13 @@ public class CompositeInputSplit extends InputSplit implements Writable {
     }
   }
 
-  public void setConfiguration(Configuration conf) {
+  @Override
+  public void setConf(Configuration conf) {
     this.conf = conf;
+  }
+
+  @Override
+  public Configuration getConf() {
+    return conf;
   }
 }
