@@ -1,8 +1,6 @@
 package com.twitter.elephantbird.mapreduce.input.combined;
 
 import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -12,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 /**
@@ -28,7 +25,7 @@ import java.util.Queue;
  */
 public class CompositeRecordReader<K, V> extends RecordReader<K, V>
         implements MapredInputFormatCompatible<K, V>  {
-  private static final Logger LOG = LoggerFactory.getLogger(CompositeRecordReader.class); //TODO remove
+  private static final Logger LOG = LoggerFactory.getLogger(CompositeRecordReader.class);
 
   private final InputFormat<K, V> delegate;
   private final Queue<RecordReader<K, V>> recordReaders = new LinkedList<RecordReader<K, V>>();
@@ -56,7 +53,6 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       }
       recordReader.initialize(split, taskAttemptContext);
       recordReaders.add(recordReader);
-      LOG.info("Created record reader for split: " + split + "\nRecord reader: " + recordReader); //TODO remove
     }
     recordReadersCount = recordReaders.size();
   }
@@ -96,8 +92,8 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       return 1.0f;
     }
 
-    return (float) currentRecordReader.getProgress() / (float) recordReadersCount
-            + (float) currentRecordReaderIndex / (float) recordReadersCount;
+    return ((float) currentRecordReader.getProgress() / (float) recordReadersCount)
+            + ((float) currentRecordReaderIndex / (float) recordReadersCount);
   }
 
   @Override
@@ -111,7 +107,9 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
         recordReader.close();
       } catch (Exception e) {
         LOG.error("Exception while closing RecordReader", e);
-        firstException = e;
+        if (firstException == null) {
+          firstException = e;
+        }
       }
     }
     if (firstException != null) {

@@ -5,6 +5,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +23,8 @@ import java.util.List;
  * @author Jonathan Coveney
  */
 public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat<K, V> {
+  private static final Logger LOG = LoggerFactory.getLogger(DelegateCombineFileInputFormat.class);
+
   public static final String USE_COMBINED_INPUT_FORMAT = "elephantbird.use.combined.input.format";
 
   public static void setSplitMinSizePerNode(Configuration conf, long value) {
@@ -75,11 +79,12 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
 
   @Override
   public List<InputSplit> getSplits(JobContext job) throws IOException {
-    List<InputSplit> inputSplits;
+    List<InputSplit> inputSplits = null;
     try {
       inputSplits = delegate.getSplits(job);
     } catch (InterruptedException e) {
-      throw new IOException("Delegate error on getSplits", e);
+      LOG.error("Thread interrupted", e);
+      Thread.currentThread().interrupt();
     }
     List<InputSplit> combinedInputSplits = new ArrayList<InputSplit>();
     Configuration conf = job.getConfiguration();
@@ -89,7 +94,8 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
         combinedInputSplits.add(split);
       }
     } catch (InterruptedException e) {
-      throw new IOException(e);
+      LOG.error("Thread interrupted", e);
+      Thread.currentThread().interrupt();
     }
     return combinedInputSplits;
   }
