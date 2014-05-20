@@ -79,12 +79,13 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
 
   @Override
   public List<InputSplit> getSplits(JobContext job) throws IOException {
-    List<InputSplit> inputSplits = null;
+    List<InputSplit> inputSplits;
     try {
       inputSplits = delegate.getSplits(job);
     } catch (InterruptedException e) {
       LOG.error("Thread interrupted", e);
       Thread.currentThread().interrupt();
+      throw new IOException(e);
     }
     List<InputSplit> combinedInputSplits = new ArrayList<InputSplit>();
     Configuration conf = job.getConfiguration();
@@ -96,6 +97,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
     } catch (InterruptedException e) {
       LOG.error("Thread interrupted", e);
       Thread.currentThread().interrupt();
+      throw new IOException(e);
     }
     return combinedInputSplits;
   }
