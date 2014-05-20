@@ -45,8 +45,6 @@ public class CompositeInputSplit extends InputSplit implements Writable, Configu
 
   /**
    * Add an InputSplit to this collection.
-   * @throws IOException If capacity was not specified during construction
-   *                     or if capacity has been reached.
    */
   public void add(InputSplit split) throws IOException, InterruptedException {
     splits.add(split);

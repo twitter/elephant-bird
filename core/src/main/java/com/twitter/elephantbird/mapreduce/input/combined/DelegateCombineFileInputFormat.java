@@ -2,7 +2,6 @@ package com.twitter.elephantbird.mapreduce.input.combined;
 
 import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
@@ -37,10 +36,6 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   private long minSplitSizeNode;
   private long minSplitSizeRack;
 
-  // A pool of input paths filters. A split cannot have blocks from files
-  // across multiple pools.
-  private ArrayList<MultiPathFilter> pools = new  ArrayList<MultiPathFilter>(); //TODO how do we want to incorporate this!
-
   //TODO theoretically we could also have this take a class reference and a configuration, so then
   // it could arbitrarily compose (since an InputFormat needs this anyway)
   public DelegateCombineFileInputFormat(InputFormat<K, V> delegate) {
@@ -70,16 +65,12 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
 
   @Override
   protected void createPool(List<PathFilter> filters) {
-    pools.add(new MultiPathFilter(filters));
+    throw new UnsupportedOperationException("pools not yet supported");
   }
 
   @Override
   protected void createPool(PathFilter... filters) {
-    MultiPathFilter multi = new MultiPathFilter();
-    for (PathFilter f: filters) {
-      multi.add(f);
-    }
-    pools.add(multi);
+    throw new UnsupportedOperationException("pools not yet supported");
   }
 
   @Override
@@ -101,46 +92,5 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
       throw new IOException(e);
     }
     return combinedInputSplits;
-  }
-
-  /**
-   * Accept a path only if any one of filters given in the
-   * constructor do. This is taken from {@link CombineFileInputFormat}
-   * as it does not make it public.
-   */
-  public static final class MultiPathFilter implements PathFilter {
-    private List<PathFilter> filters;
-
-    public MultiPathFilter() {
-      this.filters = new ArrayList<PathFilter>();
-    }
-
-    public MultiPathFilter(List<PathFilter> filters) {
-      this.filters = filters;
-    }
-
-    public void add(PathFilter one) {
-      filters.add(one);
-    }
-
-    public boolean accept(Path path) {
-      for (PathFilter filter : filters) {
-        if (filter.accept(path)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    public String toString() {
-      StringBuilder buf = new StringBuilder();
-      buf.append("[");
-      for (PathFilter f: filters) {
-        buf.append(f);
-        buf.append(",");
-      }
-      buf.append("]");
-      return buf.toString();
-    }
   }
 }

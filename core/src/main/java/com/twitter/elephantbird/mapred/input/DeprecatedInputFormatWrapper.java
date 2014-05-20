@@ -428,10 +428,12 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
       serializer.close();
     }
 
+    @Override
     public void setConf(Configuration conf) {
       this.conf = conf;
     }
 
+    @Override
     public Configuration getConf() {
       return conf;
     }
