@@ -58,7 +58,7 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       recordReaders.add(recordReader);
       LOG.info("Created record reader for split: " + split + "\nRecord reader: " + recordReader); //TODO remove
     }
-    recordReadersCount = recordReaders.size()
+    recordReadersCount = recordReaders.size();
   }
 
   @Override
