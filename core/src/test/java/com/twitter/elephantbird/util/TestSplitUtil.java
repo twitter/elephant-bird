@@ -239,7 +239,7 @@ public class TestSplitUtil {
     for (CompositeInputSplit split : result) {
       int len = split.getSplits().size();
       Assert.assertEquals(3, len);
-      checkLocationOrdering(split.getLocations(), new String[] { "l5", "l1", "l6", "l3", "l4" });
+      checkLocationOrdering(split.getLocations(), new String[] { "l5", "l3", "l1", "l2", "l4" });
       Assert.assertEquals(400, split.getLength(0));
       Assert.assertEquals(200, split.getLength(1));
       Assert.assertEquals(100, split.getLength(2));
@@ -259,19 +259,11 @@ public class TestSplitUtil {
   }
 
   private void checkLocationOrdering(String[] actual, String[] expected) {
-    System.out.println("Input actual"); //TODO remove
-    Arrays.toString(actual); //TODO remove
-    System.out.println("Input expected"); //TODO remove
-    Arrays.toString(expected); //TODO remove
     actual = Arrays.copyOf(actual, actual.length);
     Arrays.sort(actual);
     expected = Arrays.copyOf(expected, expected.length);
     Arrays.sort(expected);
     Assert.assertEquals(expected.length, actual.length);
-    System.out.println("Sorted actual"); //TODO remove
-    Arrays.toString(actual); //TODO remove
-    System.out.println("Sorted expected"); //TODO remove
-    Arrays.toString(expected); //TODO remove
     for (int i = 0; i < actual.length; i++) {
       Assert.assertEquals(expected[i], actual[i]);
     }
