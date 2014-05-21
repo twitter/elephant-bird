@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 
+import com.twitter.elephantbird.util.Pair;
 import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
@@ -78,22 +79,48 @@ public class CompositeInputSplit extends InputSplit implements Writable, Configu
   }
 
   /**
-   * Collect a set of hosts from all child InputSplits.
+   * Collect a set of hosts from all child InputSplits. Note that this is just a hint to the MapReduce framework
+   * for where the task should go, so we return the top 5, as returning too many can be expensive on the MR side
+   * of things.
    */
   public String[] getLocations() throws IOException, InterruptedException {
     if (locations == null) {
-      Set<String> hosts = new HashSet<String>();
+      Map<String, Integer> hosts = new HashMap<String, Integer>();
       for (InputSplit s : splits) {
         String[] hints = s.getLocations();
         if (hints != null) {
           for (String host : hints) {
-            hosts.add(host);
+            Integer value = hosts.get(host);
+            if (value == null) {
+              value = 0;
+            }
+            value++;
+            hosts.put(host, value);
           }
         }
       }
-      locations = hosts.toArray(new String[hosts.size()]);
+      if (hosts.size() < 5) {
+        locations = hosts.keySet().toArray(new String[hosts.size()]);
+      } else {
+        Queue<Pair<String, Integer>> queue = new PriorityQueue<Pair<String, Integer>>(hosts.size(), new Comparator<Pair<String, Integer>>() {
+          public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
+            return -o1.getSecond().compareTo(o2.getSecond());
+          }
+        });
+        for (Map.Entry<String, Integer> entry : hosts.entrySet()) {
+          queue.add(new Pair<String, Integer>(entry.getKey(), entry.getValue()));
+        }
+        locations = new String[] {
+          queue.remove().getFirst(),
+          queue.remove().getFirst(),
+          queue.remove().getFirst(),
+          queue.remove().getFirst(),
+          queue.remove().getFirst()
+        };
+      }
+
     }
-    return locations;
+    return locations == null ? new String[] {} : locations.length > 5 ? Arrays.copyOf(locations, 5) : locations;
   }
 
   /**

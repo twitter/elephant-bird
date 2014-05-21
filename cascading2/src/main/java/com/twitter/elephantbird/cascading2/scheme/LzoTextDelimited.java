@@ -77,7 +77,6 @@ public class LzoTextDelimited extends TextDelimited {
     } else {
       conf.setInputFormat(DeprecatedLzoTextInputFormat.class);
     }
-
   }
 
   @Override
