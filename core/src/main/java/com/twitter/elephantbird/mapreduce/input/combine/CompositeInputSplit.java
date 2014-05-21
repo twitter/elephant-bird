@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.mapreduce.input.combined;
+package com.twitter.elephantbird.mapreduce.input.combine;
 
 import java.io.DataInput;
 import java.io.DataInputStream;

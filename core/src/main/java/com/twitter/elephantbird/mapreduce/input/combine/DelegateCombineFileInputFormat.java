@@ -1,10 +1,14 @@
-package com.twitter.elephantbird.mapreduce.input.combined;
+package com.twitter.elephantbird.mapreduce.input.combine;
 
+import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatValueCopier;
+import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +29,17 @@ import java.util.List;
 public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(DelegateCombineFileInputFormat.class);
 
-  public static final String USE_COMBINED_INPUT_FORMAT = "elephantbird.use.combined.input.format";
+  public static final String USE_COMBINED_INPUT_FORMAT = "elephantbird.use.combine.input.format";
+  public static final String COMBINED_INPUT_FORMAT_DELEGATE = "elephantbird.combine.input.format.delegate";
+
+  public static void setUseCombinedInputFormat(Configuration conf) {
+    conf.setBoolean(USE_COMBINED_INPUT_FORMAT, true);
+  }
+
+  // This sets configures the delegate, though it does not configure DelegateCombineFileInputFormat.
+  public static void setCombinedInputFormatDelegate(Configuration conf, Class<? extends InputFormat> clazz) {
+    HadoopUtils.setClassConf(conf, COMBINED_INPUT_FORMAT_DELEGATE, clazz);
+  }
 
   public static void setSplitMinSizePerNode(Configuration conf, long value) {
     conf.setLong(SPLIT_MINSIZE_PERNODE, value);
@@ -40,8 +54,21 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   private long minSplitSizeNode;
   private long minSplitSizeRack;
 
-  //TODO theoretically we could also have this take a class reference and a configuration, so then
-  // it could arbitrarily compose (since an InputFormat needs this anyway)
+  private void initInputFormat(Configuration conf) throws IOException {
+    if (delegate == null) {
+      Class<? extends InputFormat> delegateClass =
+        conf.getClass(COMBINED_INPUT_FORMAT_DELEGATE, null, InputFormat.class);
+      if (delegateClass == null) {
+        throw new IOException("No delegate class was set on key: " + COMBINED_INPUT_FORMAT_DELEGATE);
+      }
+      delegate = ReflectionUtils.newInstance(delegateClass, conf);
+    }
+  }
+
+  public DelegateCombineFileInputFormat() {
+    // Will instantiate the delegate via reflection
+  }
+
   public DelegateCombineFileInputFormat(InputFormat<K, V> delegate) {
     this.delegate = delegate;
   }
@@ -49,6 +76,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   @Override
   public RecordReader createRecordReader(
           InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException {
+    initInputFormat(taskAttemptContext.getConfiguration());
     return new CompositeRecordReader(delegate);
   }
 
@@ -79,6 +107,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
 
   @Override
   public List<InputSplit> getSplits(JobContext job) throws IOException {
+    initInputFormat(job.getConfiguration());
     List<InputSplit> inputSplits;
     try {
       inputSplits = delegate.getSplits(job);

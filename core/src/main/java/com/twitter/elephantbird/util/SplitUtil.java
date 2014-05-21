@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.util;
 
-import com.twitter.elephantbird.mapreduce.input.combined.CompositeInputSplit;
+import com.twitter.elephantbird.mapreduce.input.combine.CompositeInputSplit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -228,7 +228,7 @@ public class SplitUtil {
       // combine small splits
       Collections.sort(nodes, nodeComparator);
       DummySplit dummy = new DummySplit();
-      // dummy is used to search for next split of suitable size to be combined
+      // dummy is used to search for next split of suitable size to be combine
       ComparableSplit dummyComparableSplit = new ComparableSplit(dummy, -1);
       for (Node node : nodes) {
         // sort the splits on this node in descending order
@@ -329,7 +329,7 @@ public class SplitUtil {
               }
             }
             if (!combinedSplits.isEmpty()) {
-              // last piece can not be squeezed in, create a new combined split for them.
+              // last piece can not be squeezed in, create a new combine split for them.
               removeSplits(combinedComparableSplits);
               result.add(combinedSplits);
             }
@@ -337,7 +337,7 @@ public class SplitUtil {
         }
       }
     }
-    LOG.info("Original input paths (" + oneInputSplits.size() + ") combined into (" + result.size() + ")");
+    LOG.info("Original input paths (" + oneInputSplits.size() + ") combine into (" + result.size() + ")");
     return result;
   }
 

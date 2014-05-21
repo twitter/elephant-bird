@@ -1,6 +1,6 @@
 package com.twitter.elephantbird.util;
 
-import com.twitter.elephantbird.mapreduce.input.combined.CompositeInputSplit;
+import com.twitter.elephantbird.mapreduce.input.combine.CompositeInputSplit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.junit.Assert;

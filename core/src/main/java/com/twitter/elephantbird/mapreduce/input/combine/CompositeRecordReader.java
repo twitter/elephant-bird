@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.mapreduce.input.combined;
+package com.twitter.elephantbird.mapreduce.input.combine;
 
 import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import org.apache.hadoop.mapreduce.InputFormat;

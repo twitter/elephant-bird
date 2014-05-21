@@ -16,8 +16,7 @@ limitations under the License.
 
 package com.twitter.elephantbird.cascading2.scheme;
 
-import com.twitter.elephantbird.mapreduce.input.combined.CombineMultiInputFormat;
-import com.twitter.elephantbird.mapreduce.input.combined.DelegateCombineFileInputFormat;
+import com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
@@ -46,7 +45,8 @@ public class LzoByteArrayScheme extends LzoBinaryScheme<byte[], RawBytesWritable
       JobConf conf) {
     MultiInputFormat.setClassConf(byte[].class, conf);
     if (conf.getBoolean(DelegateCombineFileInputFormat.USE_COMBINED_INPUT_FORMAT, false)) {
-      DeprecatedInputFormatWrapper.setInputFormat(CombineMultiInputFormat.class, conf);
+      DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
+      DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(conf, MultiInputFormat.class);
     } else {
       DeprecatedInputFormatWrapper.setInputFormat(MultiInputFormat.class, conf);
     }
