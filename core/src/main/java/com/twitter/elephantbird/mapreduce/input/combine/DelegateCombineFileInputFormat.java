@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.mapreduce.input.combine;
 
 import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatValueCopier;
+import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configuration;
@@ -107,7 +108,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
 
   @Override
   public List<InputSplit> getSplits(JobContext job) throws IOException {
-    initInputFormat(job.getConfiguration());
+    initInputFormat(HadoopCompat.getConfiguration(job));
     List<InputSplit> inputSplits;
     try {
       inputSplits = delegate.getSplits(job);
