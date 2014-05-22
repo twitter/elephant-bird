@@ -30,8 +30,8 @@ import com.twitter.elephantbird.hive.serde.ProtobufStructObjectInspector.Protobu
 
 public class ProtobufDeserializerTest {
 
-  private AddressBook test_ab;
-  private PhoneNumber test_pn;
+  private AddressBook.Builder test_ab;
+  private PhoneNumber.Builder test_pn;
   private ProtobufDeserializer deserializer;
   private ProtobufStructObjectInspector protobufOI;
 
@@ -40,15 +40,14 @@ public class ProtobufDeserializerTest {
     PhoneNumber pn1 = PhoneNumber.newBuilder().setNumber("pn0001").setType(PhoneType.HOME).build();
     PhoneNumber pn2 = PhoneNumber.newBuilder().setNumber("pn0002").setType(PhoneType.WORK).build();
     PhoneNumber pn3 = PhoneNumber.newBuilder().setNumber("pn0003").build();
-    test_pn = PhoneNumber.newBuilder().setNumber("pn0004").setType(PhoneType.MOBILE)
-        .build();
+    test_pn = PhoneNumber.newBuilder().setNumber("pn0004").setType(PhoneType.MOBILE);
 
     Person p1 = Person.newBuilder().setName("p1").setId(1).setEmail("p1@twitter").addPhone(pn1)
         .addPhone(pn2).addPhone(pn3).build();
     Person p2 = Person.newBuilder().setName("p2").setId(2).addPhone(test_pn).build();
     Person p3 = Person.newBuilder().setName("p3").setId(3).build();
 
-    test_ab = AddressBook.newBuilder().addPerson(p1).addPerson(p2).addPerson(p3).setByteData(ByteString.copyFrom(new byte[] {16,32,64,(byte) 128})).build();
+    test_ab = AddressBook.newBuilder().addPerson(p1).addPerson(p2).addPerson(p3).setByteData(ByteString.copyFrom(new byte[]{16, 32, 64, (byte) 128}));
     deserializer = new ProtobufDeserializer();
 
     Properties properties = new Properties();
@@ -60,9 +59,9 @@ public class ProtobufDeserializerTest {
 
   @Test
   public final void testDeserializer() throws SerDeException {
-    BytesWritable serialized = new BytesWritable(test_ab.toByteArray());
-    AddressBook ab2 = (AddressBook) deserializer.deserialize(serialized);
-    assertTrue(test_ab.equals(ab2));
+    BytesWritable serialized = new BytesWritable(test_ab.build().toByteArray());
+    AddressBook.Builder ab2 = (AddressBook.Builder) deserializer.deserialize(serialized);
+    assertTrue(test_ab.build().equals(ab2.build()));
   }
 
   @Test
@@ -84,7 +83,7 @@ public class ProtobufDeserializerTest {
     assertEquals(persons.get(0).getId(), 1);
 
     assertEquals(persons.get(1).getPhoneCount(), 1);
-    assertEquals(persons.get(1).getPhone(0), test_pn);
+    assertEquals(persons.get(1).getPhone(0), test_pn.build());
     assertEquals(persons.get(1).getPhone(0).getType(), PhoneType.MOBILE);
 
     assertEquals(persons.get(2).getPhoneCount(), 0);
@@ -98,11 +97,16 @@ public class ProtobufDeserializerTest {
     checkFields(PhoneNumber.getDescriptor().getFields(), test_pn);
   }
 
-  private void checkFields(List<FieldDescriptor> fields, Message message) {
+  private void checkFields(List<FieldDescriptor> fields, Message.Builder builder) {
+    ProtobufStructField psf = null;
     for (FieldDescriptor fieldDescriptor : fields) {
-      ProtobufStructField psf = new ProtobufStructField(fieldDescriptor);
-      Object data = protobufOI.getStructFieldData(message, psf);
-      Object target = message.getField(fieldDescriptor);
+      if (fieldDescriptor.getJavaType() != FieldDescriptor.JavaType.MESSAGE) {
+          psf = new ProtobufStructField(fieldDescriptor);
+      } else {
+          psf = new ProtobufStructField(fieldDescriptor, builder.newBuilderForField(fieldDescriptor));
+      }
+      Object data = protobufOI.getStructFieldData(builder, psf);
+      Object target = builder.getField(fieldDescriptor);
       if (fieldDescriptor.getType() == Type.ENUM) {
         assertEquals(String.class, data.getClass());
         assertEquals(data, ((EnumValueDescriptor) target).getName());
@@ -131,7 +135,7 @@ public class ProtobufDeserializerTest {
         .getObjectInspector();
 
     ProtobufStructObjectInspector personOI = new ProtobufStructObjectInspector(
-        Person.getDescriptor());
+        Person.getDescriptor(), Person.newBuilder());
     assertEquals(protobufOI.getStructFieldRef("person").getFieldObjectInspector().getClass(),
         ObjectInspectorFactory.getStandardListObjectInspector(personOI).getClass());
 

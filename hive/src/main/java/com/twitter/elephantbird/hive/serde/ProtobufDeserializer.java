@@ -44,8 +44,10 @@ public class ProtobufDeserializer implements Deserializer {
           .asSubclass(Message.class);
       protobufConverter = ProtobufConverter.newInstance(protobufClass);
 
+      Message.Builder builder = Protobufs.getMessageBuilder(protobufClass);
+
       Descriptor descriptor = Protobufs.getMessageDescriptor(protobufClass);
-      objectInspector = new ProtobufStructObjectInspector(descriptor);
+      objectInspector = new ProtobufStructObjectInspector(descriptor, builder);
     } catch (Exception e) {
       throw new SerDeException(e);
     }
@@ -54,7 +56,7 @@ public class ProtobufDeserializer implements Deserializer {
   @Override
   public Object deserialize(Writable blob) throws SerDeException {
     BytesWritable bytes = (BytesWritable) blob;
-    return protobufConverter.fromBytes(bytes.getBytes(), 0, bytes.getLength());
+    return protobufConverter.fromBytes(bytes.getBytes(), 0, bytes.getLength()).toBuilder();
   }
 
   @Override
