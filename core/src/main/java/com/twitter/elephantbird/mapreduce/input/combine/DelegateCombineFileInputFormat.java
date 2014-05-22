@@ -118,7 +118,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
       throw new IOException(e);
     }
     List<InputSplit> combinedInputSplits = new ArrayList<InputSplit>();
-    Configuration conf = job.getConfiguration();
+    Configuration conf = HadoopCompat.getConfiguration(job);
     try {
       for (CompositeInputSplit split : SplitUtil.getCombinedCompositeSplits(inputSplits, conf)) {
         split.setConf(conf);
