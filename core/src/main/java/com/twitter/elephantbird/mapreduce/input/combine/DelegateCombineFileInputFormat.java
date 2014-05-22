@@ -77,7 +77,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   @Override
   public RecordReader createRecordReader(
           InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException {
-    initInputFormat(taskAttemptContext.getConfiguration());
+    initInputFormat(HadoopCompat.getConfiguration(taskAttemptContext));
     return new CompositeRecordReader(delegate);
   }
 
