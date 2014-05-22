@@ -23,11 +23,11 @@ import org.slf4j.LoggerFactory;
 /**
  * This InputSplit wraps a number of child InputSplits. Any InputSplit inserted
  * into this collection must have a public default constructor. This is based on
- * code inHadoop, but is not available in past versions so we copy it here.
+ * code in Hadoop, but is not available in past versions so we copy it here.
  * Also, the version in Hadoop had some bugs.
  */
 public class CompositeInputSplit extends InputSplit implements Writable, Configurable {
-  private static final Logger LOG = LoggerFactory.getLogger(SplitUtil.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CompositeInputSplit.class);
 
   private long totalSplitSizes = 0L;
   private List<InputSplit> splits = new ArrayList<InputSplit>();
@@ -120,7 +120,7 @@ public class CompositeInputSplit extends InputSplit implements Writable, Configu
       }
 
     }
-    return locations == null ? new String[] {} : locations.length > 5 ? Arrays.copyOf(locations, 5) : locations;
+    return locations == null ? new String[] {} : locations;
   }
 
   /**
@@ -143,12 +143,7 @@ public class CompositeInputSplit extends InputSplit implements Writable, Configu
     }
     WritableUtils.writeVInt(out, splits.size());
     for (InputSplit split : splits) {
-      Class<? extends InputSplit> clazz = split.getClass();
-      Text.writeString(out, clazz.getName());
-      SerializationFactory factory = new SerializationFactory(conf);
-      Serializer serializer = factory.getSerializer(clazz);
-      serializer.open((DataOutputStream)out);
-      serializer.serialize(split);
+      SplitUtil.serializeInputSplit(conf, (DataOutputStream) out, split);
     }
   }
 
@@ -164,17 +159,8 @@ public class CompositeInputSplit extends InputSplit implements Writable, Configu
     }
     int card = WritableUtils.readVInt(in);
     splits = new ArrayList<InputSplit>();
-    try {
-      for (int i = 0; i < card; ++i) {
-        Class<? extends InputSplit> clazz = (Class<? extends InputSplit>) conf.getClassByName(Text.readString(in));
-        InputSplit split = ReflectionUtils.newInstance(clazz, conf);
-        SerializationFactory factory = new SerializationFactory(conf);
-        Deserializer deserializer = factory.getDeserializer(clazz);
-        deserializer.open((DataInputStream) in);
-        splits.add((InputSplit) deserializer.deserialize(split));
-      }
-    } catch (ClassNotFoundException e) {
-      throw new IOException("Failed split init", e);
+    for (int i = 0; i < card; ++i) {
+      splits.add(SplitUtil.deserializeInputSplit(conf, (DataInputStream) in));
     }
   }
 

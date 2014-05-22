@@ -4,11 +4,18 @@ import com.twitter.elephantbird.mapreduce.input.combine.CompositeInputSplit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.serializer.Deserializer;
+import org.apache.hadoop.io.serializer.SerializationFactory;
+import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapreduce.InputSplit;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.hadoop.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +42,7 @@ public class SplitUtil {
 
   private static class Node {
     private long length = 0;
-    private ArrayList<ComparableSplit> splits;
+    private List<ComparableSplit> splits;
     private boolean sorted;
 
     public Node() throws IOException, InterruptedException {
@@ -67,7 +74,7 @@ public class SplitUtil {
       }
     }
 
-    public ArrayList<ComparableSplit> getSplits() {
+    public List<ComparableSplit> getSplits() {
       return splits;
     }
 
@@ -79,15 +86,13 @@ public class SplitUtil {
   private static Comparator<Node> nodeComparator = new Comparator<Node>() {
     @Override
     public int compare(Node o1, Node o2) {
-      long cmp = o1.length - o2.length;
-      return cmp == 0 ? 0 : cmp < 0 ? -1 : 1;
+      return Long.signum(o1.length - o2.length);
     }
   };
 
-  //TODO can we get rid of this with a Comparator instead?
   private static final class ComparableSplit implements Comparable<ComparableSplit> {
     private InputSplit rawInputSplit;
-    private HashSet<Node> nodes;
+    private Set<Node> nodes;
     // id used as a tie-breaker when two splits are of equal size.
     private long id;
     public ComparableSplit(InputSplit split, long id) {
@@ -129,9 +134,9 @@ public class SplitUtil {
     @Override
     public int compareTo(ComparableSplit other) {
       try {
-        long cmp = rawInputSplit.getLength() - other.rawInputSplit.getLength();
+        int cmp = -Long.signum(rawInputSplit.getLength() - other.rawInputSplit.getLength());
         // in descending order
-        return cmp == 0 ? (id == other.id ? 0 : id < other.id ? -1 : 1) : cmp < 0 ?  1 : -1;
+        return cmp == 0 ? Long.signum(id - other.id) : cmp;
       } catch (IOException e) {
         throw new RuntimeException(e);
       } catch (InterruptedException e) {
@@ -167,8 +172,8 @@ public class SplitUtil {
   public static List<List<InputSplit>> getCombinedSplits(
           List<InputSplit> oneInputSplits, long maxCombinedSplitSize, Configuration conf)
           throws IOException, InterruptedException {
-    ArrayList<Node> nodes = new ArrayList<Node>();
-    HashMap<String, Node> nodeMap = new HashMap<String, Node>();
+    List<Node> nodes = new ArrayList<Node>();
+    Map<String, Node> nodeMap = new HashMap<String, Node>();
     List<List<InputSplit>> result = new ArrayList<List<InputSplit>>();
     List<Long> resultLengths = new ArrayList<Long>();
     long comparableSplitId = 0;
@@ -183,7 +188,7 @@ public class SplitUtil {
       }
       if (split.getLength() >= maxCombinedSplitSize) {
         comparableSplitId++;
-        ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+        List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
         combinedSplits.add(split);
         result.add(combinedSplits);
         resultLengths.add(split.getLength());
@@ -192,11 +197,9 @@ public class SplitUtil {
         String[] locations = split.getLocations();
         // sort the locations to stabilize the number of maps: PIG-1757
         Arrays.sort(locations);
-        HashSet<String> locationSeen = new HashSet<String>();
-        for (String location : locations)
-        {
-          if (!locationSeen.contains(location))
-          {
+        Set<String> locationSeen = new HashSet<String>();
+        for (String location : locations) {
+          if (!locationSeen.contains(location)) {
             Node node = nodeMap.get(location);
             if (node == null) {
               node = new Node();
@@ -216,12 +219,11 @@ public class SplitUtil {
     if (nSplits > 0 && emptyCnt == nSplits) {
       // if all splits are empty, add a single empty split as currently an empty directory is
       // not properly handled somewhere
-      ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+      List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
       combinedSplits.add(oneInputSplits.get(0));
       result.add(combinedSplits);
-    }
-    else if (size == 1) {
-      ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+    } else if (size == 1) {
+      List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
       combinedSplits.add(lastSplit);
       result.add(combinedSplits);
     } else if (size > 1) {
@@ -234,11 +236,11 @@ public class SplitUtil {
         // sort the splits on this node in descending order
         node.sort();
         long totalSize = 0;
-        ArrayList<ComparableSplit> splits = node.getSplits();
+        List<ComparableSplit> splits = node.getSplits();
         int idx;
         int lenSplits;
-        ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
-        ArrayList<ComparableSplit> combinedComparableSplits = new ArrayList<ComparableSplit>();
+        List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+        List<ComparableSplit> combinedComparableSplits = new ArrayList<ComparableSplit>();
         while (!splits.isEmpty()) {
           combinedSplits.add(splits.get(0).getSplit());
           combinedComparableSplits.add(splits.get(0));
@@ -281,8 +283,8 @@ public class SplitUtil {
         }
       }
       // handle leftovers
-      ArrayList<ComparableSplit> leftoverSplits = new ArrayList<ComparableSplit>();
-      HashSet<InputSplit> seen = new HashSet<InputSplit>();
+      List<ComparableSplit> leftoverSplits = new ArrayList<ComparableSplit>();
+      Set<InputSplit> seen = new HashSet<InputSplit>();
       for (Node node : nodes) {
         for (ComparableSplit split : node.getSplits()) {
           if (!seen.contains(split.getSplit())) {
@@ -297,8 +299,8 @@ public class SplitUtil {
 
       if (!leftoverSplits.isEmpty()) {
         long totalSize = 0;
-        ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
-        ArrayList<ComparableSplit> combinedComparableSplits = new ArrayList<ComparableSplit>();
+        List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+        List<ComparableSplit> combinedComparableSplits = new ArrayList<ComparableSplit>();
 
         int splitLen = leftoverSplits.size();
         for (int i = 0; i < splitLen; i++) {
@@ -356,4 +358,58 @@ public class SplitUtil {
           throws IOException, InterruptedException {
     return getCombinedCompositeSplits(oneInputSplits, getCombinedSplitSize(conf), conf);
   }
+
+  public static void serializeInputSplit(Configuration conf, DataOutputStream out, InputSplit split)
+      throws IOException {
+    Class<? extends InputSplit> clazz = split.getClass().asSubclass(InputSplit.class);
+    Text.writeString(out, clazz.getName());
+    SerializationFactory factory = new SerializationFactory(conf);
+    Serializer serializer = factory.getSerializer(clazz);
+    serializer.open(out instanceof UncloseableDataOutputStream ? out : new UncloseableDataOutputStream(out));
+    serializer.serialize(split);
+  }
+
+  public static InputSplit deserializeInputSplit(Configuration conf, DataInputStream in) throws IOException {
+    String name = Text.readString(in);
+    Class<? extends InputSplit> clazz;
+    try {
+      clazz = conf.getClassByName(name).asSubclass(InputSplit.class);
+    } catch (ClassNotFoundException e) {
+      throw new IOException("Could not find class for deserialized class name: " + name, e);
+    }
+    return deserializeInputSplitInternal(
+        conf, in instanceof UncloseableDataInputStream ? in : new UncloseableDataInputStream(in), clazz);
+  }
+
+  private static <T extends InputSplit> T deserializeInputSplitInternal(
+      Configuration conf, DataInputStream in, Class<T> clazz) throws IOException {
+    T split = ReflectionUtils.newInstance(clazz, conf);
+    SerializationFactory factory = new SerializationFactory(conf);
+    Deserializer<T> deserializer = factory.getDeserializer(clazz);
+    deserializer.open(new UncloseableDataInputStream((DataInputStream) in));
+    return deserializer.deserialize(split);
+  }
+
+  private static class UncloseableDataOutputStream extends DataOutputStream {
+    public UncloseableDataOutputStream(DataOutputStream os) {
+      super(os);
+    }
+
+    @Override
+    public void close() {
+      // We don't want classes given this stream to close it
+    }
+  }
+
+  private static class UncloseableDataInputStream extends DataInputStream {
+    public UncloseableDataInputStream(DataInputStream is) {
+      super(is);
+    }
+
+    @Override
+    public void close() {
+      // We don't want classes given this stream to close it
+    }
+  }
+
 }

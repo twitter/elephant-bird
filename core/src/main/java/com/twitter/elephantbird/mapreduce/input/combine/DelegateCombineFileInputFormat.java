@@ -107,26 +107,19 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   @Override
   public List<InputSplit> getSplits(JobContext job) throws IOException {
     initInputFormat(HadoopCompat.getConfiguration(job));
-    List<InputSplit> inputSplits;
     try {
-      inputSplits = delegate.getSplits(job);
-    } catch (InterruptedException e) {
-      LOG.error("Thread interrupted", e);
-      Thread.currentThread().interrupt();
-      throw new IOException(e);
-    }
-    List<InputSplit> combinedInputSplits = new ArrayList<InputSplit>();
-    Configuration conf = HadoopCompat.getConfiguration(job);
-    try {
+      List<InputSplit> inputSplits = delegate.getSplits(job);
+      List<InputSplit> combinedInputSplits = new ArrayList<InputSplit>();
+      Configuration conf = HadoopCompat.getConfiguration(job);
       for (CompositeInputSplit split : SplitUtil.getCombinedCompositeSplits(inputSplits, conf)) {
         split.setConf(conf);
         combinedInputSplits.add(split);
       }
+      return combinedInputSplits;
     } catch (InterruptedException e) {
       LOG.error("Thread interrupted", e);
       Thread.currentThread().interrupt();
       throw new IOException(e);
     }
-    return combinedInputSplits;
   }
 }

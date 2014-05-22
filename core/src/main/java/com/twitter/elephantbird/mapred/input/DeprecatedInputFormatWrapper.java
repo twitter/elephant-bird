@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.List;
 
 import com.twitter.elephantbird.util.HadoopCompat;
+import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
@@ -399,31 +400,12 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     @Override
     public void readFields(DataInput in) throws IOException {
-      Class<? extends org.apache.hadoop.mapreduce.InputSplit> clazz = null;
-      String name = null;
-      try {
-        name = Text.readString(in);
-        clazz = (Class<? extends org.apache.hadoop.mapreduce.InputSplit>) conf.getClassByName(name);
-      } catch (ClassNotFoundException e) {
-        throw new IOException("Could not find class for deserialized class name: " + name, e);
-      }
-      org.apache.hadoop.mapreduce.InputSplit split = ReflectionUtils.newInstance(clazz, conf);
-      SerializationFactory factory = new SerializationFactory(conf);
-      Deserializer deserializer = factory.getDeserializer(clazz);
-      deserializer.open((DataInputStream) in);
-      realSplit = (org.apache.hadoop.mapreduce.InputSplit) deserializer.deserialize(split);
-      deserializer.close();
+      realSplit = SplitUtil.deserializeInputSplit(conf, (DataInputStream) in);
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
-      Class<? extends InputSplit> clazz = (Class<? extends InputSplit>) realSplit.getClass();
-      Text.writeString(out, clazz.getName());
-      SerializationFactory factory = new SerializationFactory(conf);
-      Serializer serializer = factory.getSerializer(clazz);
-      serializer.open((DataOutputStream) out);
-      serializer.serialize(realSplit);
-      serializer.close();
+      SplitUtil.serializeInputSplit(conf, (DataOutputStream) out, realSplit);
     }
 
     @Override
