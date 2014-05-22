@@ -49,7 +49,7 @@ public class LzoProtobufScheme<M extends Message> extends
     MultiInputFormat.setClassConf(protoClass, conf);
     if (conf.getBoolean(DelegateCombineFileInputFormat.USE_COMBINED_INPUT_FORMAT, false)) {
       DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
-      DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(conf, MultiInputFormat.class);
+      DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(MultiInputFormat.class, conf);
     } else {
       DeprecatedInputFormatWrapper.setInputFormat(MultiInputFormat.class, conf);
     }

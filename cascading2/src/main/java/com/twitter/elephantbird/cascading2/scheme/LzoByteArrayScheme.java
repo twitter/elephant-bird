@@ -46,7 +46,7 @@ public class LzoByteArrayScheme extends LzoBinaryScheme<byte[], RawBytesWritable
     MultiInputFormat.setClassConf(byte[].class, conf);
     if (conf.getBoolean(DelegateCombineFileInputFormat.USE_COMBINED_INPUT_FORMAT, false)) {
       DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
-      DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(conf, MultiInputFormat.class);
+      DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(MultiInputFormat.class, conf);
     } else {
       DeprecatedInputFormatWrapper.setInputFormat(MultiInputFormat.class, conf);
     }

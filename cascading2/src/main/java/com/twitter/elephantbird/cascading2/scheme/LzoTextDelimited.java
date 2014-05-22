@@ -75,7 +75,7 @@ public class LzoTextDelimited extends TextDelimited {
   public void sourceConfInit(FlowProcess<JobConf> flowProcess, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf ) {
     if (conf.getBoolean(DelegateCombineFileInputFormat.USE_COMBINED_INPUT_FORMAT, false)) {
       DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
-      DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(conf, LzoTextInputFormat.class);
+      DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(LzoTextInputFormat.class, conf);
     } else {
       conf.setInputFormat(DeprecatedLzoTextInputFormat.class);
     }

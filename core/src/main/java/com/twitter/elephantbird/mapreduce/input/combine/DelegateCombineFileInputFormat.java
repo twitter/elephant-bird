@@ -1,12 +1,10 @@
 package com.twitter.elephantbird.mapreduce.input.combine;
 
-import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatValueCopier;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -38,15 +36,15 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   }
 
   // This sets configures the delegate, though it does not configure DelegateCombineFileInputFormat.
-  public static void setCombinedInputFormatDelegate(Configuration conf, Class<? extends InputFormat> clazz) {
+  public static void setCombinedInputFormatDelegate(Class<? extends InputFormat> clazz, Configuration conf) {
     HadoopUtils.setClassConf(conf, COMBINED_INPUT_FORMAT_DELEGATE, clazz);
   }
 
-  public static void setSplitMinSizePerNode(Configuration conf, long value) {
+  public static void setSplitMinSizePerNode(long value, Configuration conf) {
     conf.setLong(SPLIT_MINSIZE_PERNODE, value);
   }
 
-  public static void setSplitMinSizePerRack(Configuration conf, long value) {
+  public static void setSplitMinSizePerRack(long value, Configuration conf) {
     conf.setLong(SPLIT_MINSIZE_PERRACK, value);
   }
 
