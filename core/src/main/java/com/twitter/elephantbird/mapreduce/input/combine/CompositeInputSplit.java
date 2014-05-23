@@ -118,9 +118,8 @@ public class CompositeInputSplit extends InputSplit implements Writable, Configu
           queue.remove().getFirst()
         };
       }
-
     }
-    return locations == null ? new String[] {} : locations;
+    return locations;
   }
 
   /**

@@ -386,7 +386,7 @@ public class SplitUtil {
     T split = ReflectionUtils.newInstance(clazz, conf);
     SerializationFactory factory = new SerializationFactory(conf);
     Deserializer<T> deserializer = factory.getDeserializer(clazz);
-    deserializer.open(new UncloseableDataInputStream((DataInputStream) in));
+    deserializer.open(in instanceof UncloseableDataInputStream ? in : new UncloseableDataInputStream(in));
     return deserializer.deserialize(split);
   }
 

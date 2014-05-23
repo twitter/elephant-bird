@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -34,7 +35,9 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   private V value;
   private int recordReadersCount = 0;
   private int currentRecordReaderIndex = 0;
-
+  private float totalSplitLengths = 0;
+  private float[] cumulativeSplitLengths;
+  private float[] splitLengths;
 
   public CompositeRecordReader(InputFormat<K, V> delegate) {
     this.delegate = delegate;
@@ -45,7 +48,13 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
     if (!(inputSplit instanceof CompositeInputSplit)) {
       throw new IOException("InputSplit must be a CompositeInputSplit. Received: " + inputSplit);
     }
-    for (InputSplit split : ((CompositeInputSplit) inputSplit).getSplits()) {
+    List<InputSplit> splits = ((CompositeInputSplit) inputSplit).getSplits();
+    int numSplits = splits.size();
+    cumulativeSplitLengths = new float[numSplits];
+    splitLengths = new float[numSplits];
+    long localTotalSplitLength = 0;
+    for (int i = 0; i < numSplits; i++) {
+      InputSplit split = splits.get(i);
       RecordReader<K, V> recordReader = delegate.createRecordReader(split, taskAttemptContext);
       if (!(recordReader instanceof MapredInputFormatCompatible)) {
         throw new RuntimeException("RecordReader does not implement MapredInputFormatCompatible. " +
@@ -53,7 +62,12 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       }
       recordReader.initialize(split, taskAttemptContext);
       recordReaders.add(recordReader);
+      long splitLength = split.getLength();
+      splitLengths[i] = splitLength;
+      cumulativeSplitLengths[i] = localTotalSplitLength;
+      localTotalSplitLength += splitLength;
     }
+    totalSplitLengths = localTotalSplitLength;
     recordReadersCount = recordReaders.size();
   }
 
@@ -92,8 +106,8 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       return 1.0f;
     }
 
-    return ((float) currentRecordReader.getProgress() / (float) recordReadersCount)
-            + ((float) currentRecordReaderIndex / (float) recordReadersCount);
+    return (currentRecordReader.getProgress() / splitLengths[currentRecordReaderIndex])
+      + (cumulativeSplitLengths[currentRecordReaderIndex] / totalSplitLengths);
   }
 
   @Override
