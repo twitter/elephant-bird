@@ -1,10 +1,12 @@
 package com.twitter.elephantbird.mapreduce.input.combine;
 
+import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -36,7 +38,7 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   }
 
   // This sets configures the delegate, though it does not configure DelegateCombineFileInputFormat.
-  public static void setCombinedInputFormatDelegate(Class<? extends InputFormat> clazz, Configuration conf) {
+  public static void setCombinedInputFormatDelegate(Configuration conf, Class<? extends InputFormat> clazz) {
     HadoopUtils.setClassConf(conf, COMBINED_INPUT_FORMAT_DELEGATE, clazz);
   }
 
@@ -52,6 +54,11 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   private long maxSplitSize;
   private long minSplitSizeNode;
   private long minSplitSizeRack;
+
+  public static void setDelegateInputFormat(JobConf conf, Class<? extends InputFormat> inputFormat) {
+    DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
+    setCombinedInputFormatDelegate(conf, inputFormat);
+  }
 
   private void initInputFormat(Configuration conf) throws IOException {
     if (delegate == null) {
@@ -72,11 +79,26 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
     this.delegate = delegate;
   }
 
+  private boolean shouldCombine(Configuration conf) {
+    return conf.getBoolean(USE_COMBINED_INPUT_FORMAT, false);
+  }
+
   @Override
   public RecordReader createRecordReader(
           InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException {
-    initInputFormat(HadoopCompat.getConfiguration(taskAttemptContext));
-    return new CompositeRecordReader(delegate);
+    Configuration conf = HadoopCompat.getConfiguration(taskAttemptContext);
+    initInputFormat(conf);
+    if (shouldCombine(conf)) {
+      return new CompositeRecordReader(delegate);
+    } else {
+      try {
+        return delegate.createRecordReader(inputSplit, taskAttemptContext);
+      } catch (InterruptedException e) {
+        LOG.error("Thread interrupted", e);
+        Thread.currentThread().interrupt();
+        throw new IOException(e);
+      }
+    }
   }
 
   @Override
@@ -106,16 +128,20 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
 
   @Override
   public List<InputSplit> getSplits(JobContext job) throws IOException {
-    initInputFormat(HadoopCompat.getConfiguration(job));
+    Configuration conf = HadoopCompat.getConfiguration(job);
+    initInputFormat(conf);
     try {
-      List<InputSplit> inputSplits = delegate.getSplits(job);
-      List<InputSplit> combinedInputSplits = new ArrayList<InputSplit>();
-      Configuration conf = HadoopCompat.getConfiguration(job);
-      for (CompositeInputSplit split : SplitUtil.getCombinedCompositeSplits(inputSplits, conf)) {
-        split.setConf(conf);
-        combinedInputSplits.add(split);
+      if (shouldCombine(conf)) {
+          List<InputSplit> inputSplits = delegate.getSplits(job);
+          List<InputSplit> combinedInputSplits = new ArrayList<InputSplit>();
+          for (CompositeInputSplit split : SplitUtil.getCombinedCompositeSplits(inputSplits, conf)) {
+            split.setConf(conf);
+            combinedInputSplits.add(split);
+          }
+          return combinedInputSplits;
+      } else {
+        return delegate.getSplits(job);
       }
-      return combinedInputSplits;
     } catch (InterruptedException e) {
       LOG.error("Thread interrupted", e);
       Thread.currentThread().interrupt();

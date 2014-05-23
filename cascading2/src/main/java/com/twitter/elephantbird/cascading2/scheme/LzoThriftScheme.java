@@ -5,7 +5,6 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
 
-import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
@@ -16,7 +15,6 @@ import com.twitter.elephantbird.util.TypeRef;
 import cascading.flow.FlowProcess;
 import cascading.tap.Tap;
 
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.thrift.TBase;
 
 /**
@@ -48,15 +46,6 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   @Override
   public void sourceConfInit(FlowProcess<JobConf> hfp, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
     MultiInputFormat.setClassConf(thriftClass, conf);
-    setInputFormatsWithCombinationIfUsed(conf, MultiInputFormat.class);
-  }
-
-  public static void setInputFormatsWithCombinationIfUsed(JobConf conf, Class<? extends InputFormat> inputFormat) {
-    if (conf.getBoolean(DelegateCombineFileInputFormat.USE_COMBINED_INPUT_FORMAT, false)) {
-      DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
-      DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(inputFormat, conf);
-    } else {
-      DeprecatedInputFormatWrapper.setInputFormat(inputFormat, conf);
-    }
+    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
   }
 }

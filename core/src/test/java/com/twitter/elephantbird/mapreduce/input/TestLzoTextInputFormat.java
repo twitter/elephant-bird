@@ -148,7 +148,7 @@ public class TestLzoTextInputFormat {
     conf.setLong("fs.local.block.size", charsToOutput / 2);
     // reducing block size to force a split of the tiny file
     conf.set("io.compression.codecs", LzopCodec.class.getName());
-    DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(LzoTextInputFormat.class, conf);
+    DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(conf, LzoTextInputFormat.class);
 
     Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
 
