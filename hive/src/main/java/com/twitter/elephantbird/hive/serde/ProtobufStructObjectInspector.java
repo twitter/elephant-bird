@@ -30,7 +30,6 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
 
     @SuppressWarnings("unchecked")
     public ProtobufStructField(FieldDescriptor fieldDescriptor) {
-      assert (fieldDescriptor != null);
       this.fieldDescriptor = fieldDescriptor;
       this.descriptor = null;
       oi = this.createOIForField();
