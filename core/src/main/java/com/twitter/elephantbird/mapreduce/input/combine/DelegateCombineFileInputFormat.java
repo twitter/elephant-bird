@@ -5,10 +5,9 @@ import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.SplitUtil;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +18,15 @@ import java.util.List;
 
 
 /**
- * This class allows for use of {@link CombineFileInputFormat} with Elephant Bird's other
- * input formats. It works seamlessly with
- * {@link com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper} which
- * means that any of Elephant Bird's Input Formats can be used in Cascading
+ * This class allows for combining the InputSplit of an underlying {@link InputFormat}
+ * in a way which functions properly with Elephant Bird's other input formats. It works
+ * seamlessly with {@link com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper}
+ * which means that any of Elephant Bird's Input Formats can be used in Cascading
  * as a CombineFileInputFormat.
  *
  * @author Jonathan Coveney
  */
-public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat<K, V> {
+public class DelegateCombineFileInputFormat<K, V> extends FileInputFormat<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(DelegateCombineFileInputFormat.class);
 
   public static final String USE_COMBINED_INPUT_FORMAT = "elephantbird.use.combine.input.format";
@@ -40,14 +39,6 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
   // This sets configures the delegate, though it does not configure DelegateCombineFileInputFormat.
   public static void setCombinedInputFormatDelegate(Configuration conf, Class<? extends InputFormat> clazz) {
     HadoopUtils.setClassConf(conf, COMBINED_INPUT_FORMAT_DELEGATE, clazz);
-  }
-
-  public static void setSplitMinSizePerNode(long value, Configuration conf) {
-    conf.setLong(SPLIT_MINSIZE_PERNODE, value);
-  }
-
-  public static void setSplitMinSizePerRack(long value, Configuration conf) {
-    conf.setLong(SPLIT_MINSIZE_PERRACK, value);
   }
 
   private InputFormat<K, V> delegate;
@@ -99,31 +90,6 @@ public class DelegateCombineFileInputFormat<K, V> extends CombineFileInputFormat
         throw new IOException(e);
       }
     }
-  }
-
-  @Override
-  protected void setMaxSplitSize(long maxSplitSize) {
-    this.maxSplitSize = maxSplitSize;
-  }
-
-  @Override
-  protected void setMinSplitSizeNode(long minSplitSizeNode) {
-    this.minSplitSizeNode = minSplitSizeNode;
-  }
-
-  @Override
-  protected void setMinSplitSizeRack(long minSplitSizeRack) {
-    this.minSplitSizeRack = minSplitSizeRack;
-  }
-
-  @Override
-  protected void createPool(List<PathFilter> filters) {
-    throw new UnsupportedOperationException("pools not yet supported");
-  }
-
-  @Override
-  protected void createPool(PathFilter... filters) {
-    throw new UnsupportedOperationException("pools not yet supported");
   }
 
   @Override
