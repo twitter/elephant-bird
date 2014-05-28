@@ -76,19 +76,14 @@ public class DelegateCombineFileInputFormat<K, V> extends FileInputFormat<K, V> 
 
   @Override
   public RecordReader createRecordReader(
-          InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException {
+          InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
+      throws IOException, InterruptedException {
     Configuration conf = HadoopCompat.getConfiguration(taskAttemptContext);
     initInputFormat(conf);
     if (shouldCombine(conf)) {
       return new CompositeRecordReader(delegate);
     } else {
-      try {
-        return delegate.createRecordReader(inputSplit, taskAttemptContext);
-      } catch (InterruptedException e) {
-        LOG.error("Thread interrupted", e);
-        Thread.currentThread().interrupt();
-        throw new IOException(e);
-      }
+      return delegate.createRecordReader(inputSplit, taskAttemptContext);
     }
   }
 
