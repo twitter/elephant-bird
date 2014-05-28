@@ -1,12 +1,12 @@
 package com.twitter.elephantbird.cascading2.scheme;
 
+import com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
 
 import com.google.protobuf.Message;
 
-import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
@@ -46,6 +46,6 @@ public class LzoProtobufScheme<M extends Message> extends
   @Override
   public void sourceConfInit(FlowProcess<JobConf> hfp, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
     MultiInputFormat.setClassConf(protoClass, conf);
-    DeprecatedInputFormatWrapper.setInputFormat(MultiInputFormat.class, conf);
+    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
   }
 }

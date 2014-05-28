@@ -1,13 +1,16 @@
 package com.twitter.elephantbird.mapred.input;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
 import com.twitter.elephantbird.util.HadoopCompat;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableUtils;
+import com.twitter.elephantbird.util.SplitUtil;
+import org.apache.hadoop.conf.Configurable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.serializer.Deserializer;
+import org.apache.hadoop.io.serializer.SerializationFactory;
+import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
@@ -142,7 +145,9 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
               mapreduceFileSplit.getLength(),
               mapreduceFileSplit.getLocations());
         } else {
-          resultSplits[i++] = new InputSplitWrapper(split);
+          InputSplitWrapper wrapper = new InputSplitWrapper(split);
+          wrapper.setConf(job);
+          resultSplits[i++] = wrapper;
         }
       }
 
@@ -362,9 +367,10 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
     }
   }
 
-  private static class InputSplitWrapper implements InputSplit {
+  private static class InputSplitWrapper implements InputSplit, Configurable {
 
     org.apache.hadoop.mapreduce.InputSplit realSplit;
+    private Configuration conf;
 
 
     @SuppressWarnings("unused") // MapReduce instantiates this.
@@ -394,24 +400,22 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     @Override
     public void readFields(DataInput in) throws IOException {
-      String className = WritableUtils.readString(in);
-      Class<?> splitClass;
-
-      try {
-        splitClass = Class.forName(className);
-      } catch (ClassNotFoundException e) {
-        throw new IOException(e);
-      }
-
-      realSplit = (org.apache.hadoop.mapreduce.InputSplit)
-                  ReflectionUtils.newInstance(splitClass, null);
-      ((Writable)realSplit).readFields(in);
+      realSplit = SplitUtil.deserializeInputSplit(conf, (DataInputStream) in);
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
-      WritableUtils.writeString(out, realSplit.getClass().getName());
-      ((Writable)realSplit).write(out);
+      SplitUtil.serializeInputSplit(conf, (DataOutputStream) out, realSplit);
+    }
+
+    @Override
+    public void setConf(Configuration conf) {
+      this.conf = conf;
+    }
+
+    @Override
+    public Configuration getConf() {
+      return conf;
     }
   }
 }

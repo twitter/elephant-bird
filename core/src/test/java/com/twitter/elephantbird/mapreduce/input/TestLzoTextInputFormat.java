@@ -10,6 +10,7 @@ import java.util.Random;
 import com.hadoop.compression.lzo.LzoIndex;
 import com.hadoop.compression.lzo.LzopCodec;
 
+import com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.CoreTestUtil;
 import org.apache.commons.logging.Log;
@@ -19,14 +20,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.junit.Assume;
@@ -116,6 +110,27 @@ public class TestLzoTextInputFormat {
     runTest(false, OUTPUT_SMALL);
   }
 
+  @Test
+  public void testCombineWithIndex() throws NoSuchAlgorithmException, IOException,
+          InterruptedException {
+
+    runTest(true, OUTPUT_BIG, true);
+    runTest(true, OUTPUT_SMALL, true);
+  }
+
+  @Test
+  public void testCombineWithoutIndex() throws NoSuchAlgorithmException, IOException,
+          InterruptedException {
+
+    runTest(false, OUTPUT_BIG, true);
+    runTest(false, OUTPUT_SMALL, true);
+  }
+
+  private void runTest(boolean testWithIndex, int charsToOutput) throws IOException,
+          NoSuchAlgorithmException, InterruptedException {
+    runTest(testWithIndex, charsToOutput, false);
+  }
+
   /**
    * Generate random data, compress it, index and md5 hash the data.
    * Then read it all back and md5 that too, to verify that it all went ok.
@@ -126,13 +141,14 @@ public class TestLzoTextInputFormat {
    * @throws NoSuchAlgorithmException
    * @throws InterruptedException
    */
-  private void runTest(boolean testWithIndex, int charsToOutput) throws IOException,
+  private void runTest(boolean testWithIndex, int charsToOutput, boolean combineSplits) throws IOException,
       NoSuchAlgorithmException, InterruptedException {
 
     Configuration conf = new Configuration();
     conf.setLong("fs.local.block.size", charsToOutput / 2);
     // reducing block size to force a split of the tiny file
     conf.set("io.compression.codecs", LzopCodec.class.getName());
+    DelegateCombineFileInputFormat.setCombinedInputFormatDelegate(conf, LzoTextInputFormat.class);
 
     Assume.assumeTrue(CoreTestUtil.okToRunLzoTests(conf));
 
@@ -158,7 +174,13 @@ public class TestLzoTextInputFormat {
       LzoIndex.createIndex(localFs, lzoFile);
     }
 
-    LzoTextInputFormat inputFormat = new LzoTextInputFormat();
+    InputFormat inputFormat;
+    if (combineSplits) {
+      inputFormat = new DelegateCombineFileInputFormat();
+    }  else {
+      inputFormat = new LzoTextInputFormat();
+    }
+
     TextInputFormat.setInputPaths(job, outputDir_);
 
     List<InputSplit> is = inputFormat.getSplits(job);
