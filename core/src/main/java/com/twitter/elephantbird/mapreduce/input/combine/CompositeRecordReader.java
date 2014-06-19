@@ -44,7 +44,8 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   }
 
   /**
-   * In order to avoid opening all of the file handles at once (and before they are actually necessary),
+   * In order to avoid opening all of the file handles at once (and before they are actually necessary), we
+   * wait until the RecordReader is actually used in order to initialize it.
    */
   private class DelayedRecordReader {
     private InputSplit inputSplit;
@@ -99,9 +100,9 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
     while (!currentRecordReader.nextKeyValue()) {
       if (currentRecordReader != null) {
         currentRecordReader.close();
+        currentRecordReader = null;
       }
       if (recordReaders.isEmpty()) {
-        currentRecordReader = null;
         return false;
       }
       currentRecordReader = recordReaders.remove().createRecordReader();
