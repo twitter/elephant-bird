@@ -29,18 +29,42 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   private static final Logger LOG = LoggerFactory.getLogger(CompositeRecordReader.class);
 
   private final InputFormat<K, V> delegate;
-  private final Queue<RecordReader<K, V>> recordReaders = new LinkedList<RecordReader<K, V>>();
+  private final Queue<DelayedRecordReader> recordReaders = new LinkedList<DelayedRecordReader>();
   private RecordReader<K, V> currentRecordReader;
   private K key;
   private V value;
   private int recordReadersCount = 0;
-  private int currentRecordReaderIndex = 0;
+  private int currentRecordReaderIndex = -1;
   private float totalSplitLengths = 0;
   private float[] cumulativeSplitLengths;
   private float[] splitLengths;
 
   public CompositeRecordReader(InputFormat<K, V> delegate) {
     this.delegate = delegate;
+  }
+
+  /**
+   * In order to avoid opening all of the file handles at once (and before they are actually necessary), we
+   * wait until the RecordReader is actually used in order to initialize it.
+   */
+  private class DelayedRecordReader {
+    private InputSplit inputSplit;
+    private TaskAttemptContext taskAttemptContext;
+
+    public DelayedRecordReader(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) {
+      this.inputSplit = inputSplit;
+      this.taskAttemptContext = taskAttemptContext;
+    }
+
+    public RecordReader<K, V> createRecordReader() throws IOException, InterruptedException {
+      RecordReader<K, V> reader = delegate.createRecordReader(inputSplit, taskAttemptContext);
+      if (!(reader instanceof MapredInputFormatCompatible)) {
+        throw new RuntimeException("RecordReader does not implement MapredInputFormatCompatible. " +
+                "Received: " + reader);
+      }
+      reader.initialize(inputSplit, taskAttemptContext);
+      return reader;
+    }
   }
 
   @Override
@@ -55,13 +79,7 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
     long localTotalSplitLength = 0;
     for (int i = 0; i < numSplits; i++) {
       InputSplit split = splits.get(i);
-      RecordReader<K, V> recordReader = delegate.createRecordReader(split, taskAttemptContext);
-      if (!(recordReader instanceof MapredInputFormatCompatible)) {
-        throw new RuntimeException("RecordReader does not implement MapredInputFormatCompatible. " +
-                "Received: " + recordReader);
-      }
-      recordReader.initialize(split, taskAttemptContext);
-      recordReaders.add(recordReader);
+      recordReaders.add(new DelayedRecordReader(inputSplit, taskAttemptContext));
       long splitLength = split.getLength();
       splitLengths[i] = splitLength;
       cumulativeSplitLengths[i] = localTotalSplitLength;
@@ -73,21 +91,32 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
-    if (currentRecordReader == null) {
+    // This is essentially tail recursion, but java style
+    while (true) {
+      // No record reader, and there are no more record readers. No more KV's
+      if (currentRecordReader == null && recordReaders.isEmpty()) {
+        return false;
+      } else if (currentRecordReader != null) {
+        // We have a record reader, and it is either done, or we have more values.
+        if (currentRecordReader.nextKeyValue()) {
+          return true;
+        }
+        currentRecordReader.close();
+        // Rely on the rest of the loop to get a next currentRecordReader, if there is one available.
+        currentRecordReader = null;
+      }
+
+      // At this point, there is no currentRecordReader and no more recordReaders. No more KVs.
       if (recordReaders.isEmpty()) {
         return false;
       }
-      currentRecordReader = recordReaders.remove();
-    }
-    while (!currentRecordReader.nextKeyValue()) {
-      if (recordReaders.isEmpty()) {
-        return false;
-      }
-      currentRecordReader = recordReaders.remove();
+      currentRecordReader = recordReaders.remove().createRecordReader();
       currentRecordReaderIndex++;
+      // This call is purely for interop with DeprecatedInputFormatWrapper. It ensures that a pair of
+      // key value objects which were set by a calling function are passed to the new delegate.
       setKeyValue(key, value);
+      // We will loop again and see if there is a nextKeyValue
     }
-    return true;
   }
 
   @Override
@@ -114,24 +143,6 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   public void close() throws IOException {
     if (currentRecordReader != null) {
       currentRecordReader.close();
-    }
-    Exception firstException = null;
-    for (RecordReader<K, V> recordReader : recordReaders) {
-      try {
-        recordReader.close();
-      } catch (Exception e) {
-        LOG.error("Exception while closing RecordReader", e);
-        if (firstException == null) {
-          firstException = e;
-        }
-      }
-    }
-    if (firstException != null) {
-      if (firstException instanceof IOException) {
-        throw (IOException) firstException;
-      } else {
-        throw new IOException("Exception when closing RecordReader", firstException);
-      }
     }
   }
 
