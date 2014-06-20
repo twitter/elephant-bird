@@ -34,7 +34,7 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   private K key;
   private V value;
   private int recordReadersCount = 0;
-  private int currentRecordReaderIndex = 0;
+  private int currentRecordReaderIndex = -1;
   private float totalSplitLengths = 0;
   private float[] cumulativeSplitLengths;
   private float[] splitLengths;
@@ -91,25 +91,32 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
-    if (currentRecordReader == null) {
-      if (recordReaders.isEmpty()) {
+    // This is essentially tail recursion, but java style
+    while (true) {
+      // No record reader, and there are no more record readers. No more KV's
+      if (currentRecordReader == null && recordReaders.isEmpty()) {
         return false;
-      }
-      currentRecordReader = recordReaders.remove().createRecordReader();
-    }
-    while (!currentRecordReader.nextKeyValue()) {
-      if (currentRecordReader != null) {
+      } else if (currentRecordReader != null) {
+        // We have a record reader, and it is either done, or we have more values.
+        if (currentRecordReader.nextKeyValue()) {
+          return true;
+        }
         currentRecordReader.close();
+        // Rely on the rest of the loop to get a next currentRecordReader, if there is one available.
         currentRecordReader = null;
       }
+
+      // At this point, there is no currentRecordReader and no more recordReaders. No more KVs.
       if (recordReaders.isEmpty()) {
         return false;
       }
       currentRecordReader = recordReaders.remove().createRecordReader();
       currentRecordReaderIndex++;
+      // This call is purely for interop with DeprecatedInputFormatWrapper. It ensures that a pair of
+      // key value objects which were set by a calling function are passed to the new delegate.
       setKeyValue(key, value);
+      // We will loop again and see if there is a nextKeyValue
     }
-    return true;
   }
 
   @Override
