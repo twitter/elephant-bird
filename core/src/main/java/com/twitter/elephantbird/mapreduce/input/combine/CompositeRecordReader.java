@@ -79,7 +79,7 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
     long localTotalSplitLength = 0;
     for (int i = 0; i < numSplits; i++) {
       InputSplit split = splits.get(i);
-      recordReaders.add(new DelayedRecordReader(inputSplit, taskAttemptContext));
+      recordReaders.add(new DelayedRecordReader(split, taskAttemptContext));
       long splitLength = split.getLength();
       splitLengths[i] = splitLength;
       cumulativeSplitLengths[i] = localTotalSplitLength;
