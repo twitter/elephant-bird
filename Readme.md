@@ -8,10 +8,12 @@ Join the conversation about Elephant-Bird on the [developer mailing list](https:
 
 ## License
 
-Apache licensed.
+[Apache License, Version 2.0](http://apache.org/licenses/LICENSE-2.0).
 
 ## Quickstart
 
+1. Make sure you have [Protocol Buffers](http://code.google.com/apis/protocolbuffers/) installed. Please see **Version compatibility** section below.
+1. Make sure you have [Apache Thrift](http://thrist.apache.org) installed. Please see **Version compatibility** section below.
 1. Get the code: `git clone git://github.com/kevinweil/elephant-bird.git`
 1. Build the jar: `mvn package`
 1. Explore what's available: `mvn javadoc:javadoc`
