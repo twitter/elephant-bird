@@ -8,9 +8,9 @@ import org.apache.hadoop.io.BooleanWritable;
 public class IntegrationTestBooleanWritableConverter extends
     AbstractTestWritableConverter<BooleanWritable, BooleanWritableConverter> {
   private static final BooleanWritable[] DATA = { new BooleanWritable(true), new BooleanWritable(false)};
-  private static final String[] EXPECTED = { "true", "false" };
+  private static final String[] EXPECTED = { "1", "0" };
 
   public IntegrationTestBooleanWritableConverter() {
-    super(BooleanWritable.class, BooleanWritableConverter.class, "", DATA, EXPECTED, "boolean");
+    super(BooleanWritable.class, BooleanWritableConverter.class, "", DATA, EXPECTED, "int");
   }
 }
