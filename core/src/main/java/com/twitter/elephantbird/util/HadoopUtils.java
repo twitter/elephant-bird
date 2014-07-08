@@ -7,11 +7,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Iterator;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
@@ -97,10 +100,20 @@ public class HadoopUtils {
    * @throws IOException
    */
   public static void writeObjectToConfAsBase64(String key, Object obj, Configuration conf) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    ObjectOutputStream oos = new ObjectOutputStream(baos);
-    oos.writeObject(obj);
-    oos.close();
+    ByteArrayOutputStream baos = null;
+    GZIPOutputStream gos = null;
+    ObjectOutputStream oos = null;
+
+    try {
+      baos = new ByteArrayOutputStream();
+      gos = new GZIPOutputStream(baos);
+      oos = new ObjectOutputStream(gos);
+      oos.writeObject(obj);
+    } finally {
+      Closeables.close(oos, false);
+      Closeables.close(gos, false);
+      Closeables.close(baos, false);
+    }
 
     conf.set(key, new String(Base64.encodeBase64(baos.toByteArray()), Charsets.UTF_8));
   }
@@ -120,10 +133,17 @@ public class HadoopUtils {
     if (b64 == null) {
       return null;
     }
+
     byte[] bytes = Base64.decodeBase64(b64.getBytes(Charsets.UTF_8));
-    ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-    ObjectInputStream ois = new ObjectInputStream(bais);
+
+    ByteArrayInputStream bais = null;
+    GZIPInputStream gis = null;
+    ObjectInputStream ois = null;
+
     try {
+      bais = new ByteArrayInputStream(bytes);
+      gis = new GZIPInputStream(bais);
+      ois = new ObjectInputStream(gis);
       return (T) ois.readObject();
     } catch (ClassNotFoundException e) {
       LOG.error("Could not read object from config with key " + key, e);
@@ -131,6 +151,10 @@ public class HadoopUtils {
     } catch (ClassCastException e) {
       LOG.error("Couldn't cast object read from config with key " + key, e);
       throw new IOException(e);
+    } finally {
+      Closeables.close(ois, false);
+      Closeables.close(gis, false);
+      Closeables.close(bais, false);
     }
   }
 
