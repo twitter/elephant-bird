@@ -91,11 +91,14 @@ public class HadoopUtils {
   }
 
   /**
-   * Writes an object into a configuration by converting it to a base64 encoded string
-   * obj must be Serializable
+   * Writes an object into a configuration by converting it to a base64 encoded string.
+   * This is done by serializing the object to bytes via an {@link ObjectOutputStream},
+   * gzip compressing those bytes, and then base64 encoding the compressed bytes.
+   *
+   * NOTE: obj must implement {@link java.io.Serializable}
    *
    * @param key for the configuration
-   * @param obj to write
+   * @param obj to write (must be Serializable)
    * @param conf to write to
    * @throws IOException
    */
@@ -120,7 +123,7 @@ public class HadoopUtils {
 
   /**
    * Reads an object (that was written using
-   * {@link #writeObjectToConfAsBase64}) from a configuration
+   * {@link #writeObjectToConfAsBase64}) from a configuration.
    *
    * @param key for the configuration
    * @param conf to read from
