@@ -42,17 +42,17 @@ public class BooleanWritableConverter extends AbstractWritableConverter<BooleanW
 
   @Override
   protected Long toLong(BooleanWritable writable) throws IOException {
-    return (long)( writable.get() ? 1:0);
+    return writable.get() ? 1L : 0L;
   }
 
   @Override
   protected Float toFloat(BooleanWritable writable) throws IOException {
-    return (float)( writable.get() ? 1:0);
+    return writable.get() ? 1f : 0f;
   }
 
   @Override
   protected Double toDouble(BooleanWritable writable) throws IOException {
-    return (double)( writable.get() ? 1: 0);
+    return writable.get() ? 1.0 : 0.0;
   }
 
   @Override
@@ -75,7 +75,14 @@ public class BooleanWritableConverter extends AbstractWritableConverter<BooleanW
 
   @Override
   protected BooleanWritable toWritable(Integer value) throws IOException {
-    writable.set(value.intValue() == 1 ? true : false);
+    int valueInt = value.intValue();
+    if (valueInt == 1 ) {
+      writable.set(true);
+    } else if (valueInt == 0) {
+      writable.set(false);
+    } else {
+      throw new IllegalArgumentException("Only 1 and 0 could be convert to BooleanWritable!");
+    }
     return writable;
   }
 
