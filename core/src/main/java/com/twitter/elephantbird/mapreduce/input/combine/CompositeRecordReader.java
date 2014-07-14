@@ -31,6 +31,10 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   private final InputFormat<K, V> delegate;
   private final Queue<DelayedRecordReader> recordReaders = new LinkedList<DelayedRecordReader>();
   private RecordReader<K, V> currentRecordReader;
+  // The key and value objects are necessary for mapred interop via MapredInputFormatCompatible. The
+  // DeprecatedInputFormatWrapper ensures that the same objects are used to ferry data around, and so we
+  // must cache these locally as when RecordReaders roll over, we need to make sure the new ones are using
+  // the same objects.
   private K key;
   private V value;
   private int recordReadersCount = 0;
@@ -38,7 +42,8 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   private long totalSplitLengths = 0;
   private long[] cumulativeSplitLengths;
   private long[] splitLengths;
-  // TODO the purpose of this
+  // Set to true after we've initialized the first delegate RecordRecord and have set the key and value objects
+  // based on that.
   private boolean haveInitializedFirstRecordReader = false;
 
   public CompositeRecordReader(InputFormat<K, V> delegate) {
