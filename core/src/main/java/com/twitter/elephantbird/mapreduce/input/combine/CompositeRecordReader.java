@@ -35,9 +35,11 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   private V value;
   private int recordReadersCount = 0;
   private int currentRecordReaderIndex = -1;
-  private float totalSplitLengths = 0;
-  private float[] cumulativeSplitLengths;
-  private float[] splitLengths;
+  private long totalSplitLengths = 0;
+  private long[] cumulativeSplitLengths;
+  private long[] splitLengths;
+  // TODO the purpose of this
+  private boolean haveInitializedFirstRecordReader = false;
 
   public CompositeRecordReader(InputFormat<K, V> delegate) {
     this.delegate = delegate;
@@ -74,8 +76,8 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
     }
     List<InputSplit> splits = ((CompositeInputSplit) inputSplit).getSplits();
     int numSplits = splits.size();
-    cumulativeSplitLengths = new float[numSplits];
-    splitLengths = new float[numSplits];
+    cumulativeSplitLengths = new long[numSplits];
+    splitLengths = new long[numSplits];
     long localTotalSplitLength = 0;
     for (int i = 0; i < numSplits; i++) {
       InputSplit split = splits.get(i);
@@ -112,9 +114,20 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       }
       currentRecordReader = recordReaders.remove().createRecordReader();
       currentRecordReaderIndex++;
-      // This call is purely for interop with DeprecatedInputFormatWrapper. It ensures that a pair of
-      // key value objects which were set by a calling function are passed to the new delegate.
-      setKeyValue(key, value);
+      // The DeprecatedInputFormatWrapper has a check in it which ensures that the key and value
+      // objects of the underlying MapredInputFormatCompatible are the same. Thus, we rely on the
+      // very first RecordReader that we instantiate to create the underlying objects which we
+      // will use for the rest of the process.
+      if (!haveInitializedFirstRecordReader) {
+        key = currentRecordReader.getCurrentKey();
+        value = currentRecordReader.getCurrentValue();
+        haveInitializedFirstRecordReader = true;
+      } else {
+        // This call is purely for interop with DeprecatedInputFormatWrapper. It ensures that a pair of
+        // key value objects which were set by a calling function are passed to the new delegate so that it
+        // will be consistent the entire time.
+        setKeyValue(key, value);
+      }
       // We will loop again and see if there is a nextKeyValue
     }
   }
@@ -135,8 +148,9 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       return 1.0f;
     }
 
-    return (currentRecordReader.getProgress() / splitLengths[currentRecordReaderIndex])
-      + (cumulativeSplitLengths[currentRecordReaderIndex] / totalSplitLengths);
+    long cur = currentRecordReader == null ?
+      0L : (long)(currentRecordReader.getProgress() * splitLengths[currentRecordReaderIndex]);
+    return 1.0f * (cur + cumulativeSplitLengths[currentRecordReaderIndex]) / totalSplitLengths;
   }
 
   @Override
