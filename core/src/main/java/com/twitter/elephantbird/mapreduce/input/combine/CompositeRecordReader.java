@@ -150,7 +150,11 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   @Override
   public float getProgress() throws IOException, InterruptedException {
     if (recordReadersCount < 1) {
-      return 1.0f;
+      return 1f;
+    }
+
+    if (totalSplitLengths == 0) {
+      return 0f;
     }
 
     long cur = currentRecordReader == null ?
