@@ -309,7 +309,7 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
 
   protected Tuple toDenseVectorTuple(Vector v) {
     List<Number> values = Lists.newArrayListWithCapacity(v.size());
-    for (Element e : v) {
+    for (Element e : v.all()) {
       values.add(floatPrecision ? (float) e.get() : e.get());
     }
     return tupleFactory.newTupleNoCopy(values);
@@ -317,7 +317,7 @@ public class VectorWritableConverter extends AbstractWritableConverter<VectorWri
 
   protected Tuple toSparseVectorTuple(Vector v) {
     DataBag bag = bagFactory.newDefaultBag();
-    Iterator<Element> itr = v.iterateNonZero();
+    Iterator<Element> itr = v.nonZeroes().iterator(); //iterateNonZero();
     while (itr.hasNext()) {
       Element e = itr.next();
       bag.add(tupleFactory.newTupleNoCopy(Lists.<Number> newArrayList(e.index(),
