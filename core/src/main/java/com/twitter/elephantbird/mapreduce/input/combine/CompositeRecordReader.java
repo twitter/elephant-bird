@@ -31,13 +31,20 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   private final InputFormat<K, V> delegate;
   private final Queue<DelayedRecordReader> recordReaders = new LinkedList<DelayedRecordReader>();
   private RecordReader<K, V> currentRecordReader;
+  // The key and value objects are necessary for mapred interop via MapredInputFormatCompatible. The
+  // DeprecatedInputFormatWrapper ensures that the same objects are used to ferry data around, and so we
+  // must cache these locally as when RecordReaders roll over, we need to make sure the new ones are using
+  // the same objects.
   private K key;
   private V value;
   private int recordReadersCount = 0;
   private int currentRecordReaderIndex = -1;
-  private float totalSplitLengths = 0;
-  private float[] cumulativeSplitLengths;
-  private float[] splitLengths;
+  private long totalSplitLengths = 0;
+  private long[] cumulativeSplitLengths;
+  private long[] splitLengths;
+  // Set to true after we've initialized the first delegate RecordRecord and have set the key and value objects
+  // based on that.
+  private boolean haveInitializedFirstRecordReader = false;
 
   public CompositeRecordReader(InputFormat<K, V> delegate) {
     this.delegate = delegate;
@@ -74,8 +81,8 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
     }
     List<InputSplit> splits = ((CompositeInputSplit) inputSplit).getSplits();
     int numSplits = splits.size();
-    cumulativeSplitLengths = new float[numSplits];
-    splitLengths = new float[numSplits];
+    cumulativeSplitLengths = new long[numSplits];
+    splitLengths = new long[numSplits];
     long localTotalSplitLength = 0;
     for (int i = 0; i < numSplits; i++) {
       InputSplit split = splits.get(i);
@@ -112,9 +119,20 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
       }
       currentRecordReader = recordReaders.remove().createRecordReader();
       currentRecordReaderIndex++;
-      // This call is purely for interop with DeprecatedInputFormatWrapper. It ensures that a pair of
-      // key value objects which were set by a calling function are passed to the new delegate.
-      setKeyValue(key, value);
+      // The DeprecatedInputFormatWrapper has a check in it which ensures that the key and value
+      // objects of the underlying MapredInputFormatCompatible are the same. Thus, we rely on the
+      // very first RecordReader that we instantiate to create the underlying objects which we
+      // will use for the rest of the process.
+      if (!haveInitializedFirstRecordReader) {
+        key = currentRecordReader.getCurrentKey();
+        value = currentRecordReader.getCurrentValue();
+        haveInitializedFirstRecordReader = true;
+      } else {
+        // This call is purely for interop with DeprecatedInputFormatWrapper. It ensures that a pair of
+        // key value objects which were set by a calling function are passed to the new delegate so that it
+        // will be consistent the entire time.
+        setKeyValue(key, value);
+      }
       // We will loop again and see if there is a nextKeyValue
     }
   }
@@ -132,11 +150,16 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
   @Override
   public float getProgress() throws IOException, InterruptedException {
     if (recordReadersCount < 1) {
-      return 1.0f;
+      return 1f;
     }
 
-    return (currentRecordReader.getProgress() / splitLengths[currentRecordReaderIndex])
-      + (cumulativeSplitLengths[currentRecordReaderIndex] / totalSplitLengths);
+    if (totalSplitLengths == 0) {
+      return 0f;
+    }
+
+    long cur = currentRecordReader == null ?
+      0L : (long)(currentRecordReader.getProgress() * splitLengths[currentRecordReaderIndex]);
+    return 1.0f * (cur + cumulativeSplitLengths[currentRecordReaderIndex]) / totalSplitLengths;
   }
 
   @Override
