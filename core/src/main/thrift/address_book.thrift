@@ -1,4 +1,4 @@
-namespace java com.twitter.data.proto.tutorial.thrift 
+namespace java com.twitter.data.proto.tutorial.thrift
 
 enum PhoneType {
   MOBILE = 0,
@@ -25,4 +25,8 @@ struct Person {
 
 struct AddressBook {
   1: list<Person> persons
+}
+
+struct StringListStruct {
+  1: list<string> strings
 }

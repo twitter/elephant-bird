@@ -19,7 +19,6 @@ import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.ThriftToProto;
 
 public class TestThriftToProto {
-
   @Test
   public void testThriftToProto() throws TException, IOException {
     OneOfEach ooe = Fixtures.oneOfEach;
@@ -38,15 +37,5 @@ public class TestThriftToProto {
     assertEquals(ooe.what_who, proto.getWhatWho());
 
     assertEquals(new String(ooe.getBase64(), "UTF-8"), proto.getBase64().toStringUtf8());
-  }
-
-  @Test
-  public void testThriftToDynamicProto() throws DescriptorValidationException {
-    PhoneNumber thriftPhone = new PhoneNumber("123-34-5467");
-    thriftPhone.type = PhoneType.HOME;
-    ThriftToDynamicProto<PhoneNumber> thriftToProto = new ThriftToDynamicProto<PhoneNumber>(PhoneNumber.class);
-    DynamicMessage msg = thriftToProto.convert(thriftPhone);
-    assertEquals(thriftPhone.number, Protobufs.getFieldByName(msg, "number"));
-    assertEquals(thriftPhone.type.toString(), Protobufs.getFieldByName(msg, "type"));
   }
 }
