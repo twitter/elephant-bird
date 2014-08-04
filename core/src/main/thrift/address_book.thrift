@@ -27,6 +27,7 @@ struct AddressBook {
   1: list<Person> persons
 }
 
-struct StringListStruct {
+struct PrimitiveListsStruct {
   1: list<string> strings
+  2: list<i64> longs
 }
