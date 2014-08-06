@@ -101,7 +101,8 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
    * @param extraFields a list of pairs of (fieldName, protobufType) that defines extra fields to
    * add to the generated message.
    * @param supportNestedObjects if true, builds a nested structure. Defaults is false, which will
-   * silently ignore Thrift structs.
+   * silently ignore nested objects, which include structs, lists/sets of structs and maps of all
+   * types.  Lists/sets of base types are not considered to be nested objects.
    * @param ignoreUnsupportedTypes if true, ignores types that aren't supported. If false an
    * exception will be thrown when an unsupported type is encountered. Default is false.
    * @throws DescriptorValidationException
@@ -201,7 +202,8 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
                         typeName,
                         isContainer);
         } else if (protoType != null) {
-          if(supportNestedObjects || (!supportNestedObjects && !isNestedStruct(tField))) {
+          if (supportNestedObjects
+             || (!supportNestedObjects && !hasNestedObject(tField))) {
             addProtoField(desBuilder,
                           tField.getName(),
                           tField.getFieldId() + 1,
@@ -224,6 +226,19 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
     } else {
       return inputField;
     }
+  }
+
+  /**
+   * Determines whether a field is considered to be a nested object based on:
+   * - whether the field itself is a struct
+   * - whether the field is a list/set of structs
+   * - whether field is a Map
+   */
+  private boolean hasNestedObject(Field field) {
+    return field.isStruct()
+      || (field.isList() && field.getListElemField().isStruct())
+      || (field.isSet() && field.getSetElemField().isStruct())
+      || field.isMap();
   }
 
   /**
@@ -352,7 +367,8 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
     int fieldId = 0;
     for (Field tField : fieldDesc.getFields()) {
       // don't want to carry over default values from unset fields
-      if (!thriftObj.isSet(tField.getFieldIdEnum()) || (!supportNestedObjects && isNestedStruct(tField))) {
+      if (!thriftObj.isSet(tField.getFieldIdEnum())
+          || (!supportNestedObjects && hasNestedObject(tField))) {
         fieldId++;
         continue;
       }
@@ -404,16 +420,6 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
       || (tField.isSet() && tField.getSetElemField().isStruct());
   }
 
-  /**
-   * Convenience method for checking whether a field is a struct
-   * or contains a nested struct
-   */
-  private boolean isNestedStruct(Field field) {
-    return field.isStruct()
-      || (field.isList() && field.getListElemField().isStruct())
-      || (field.isSet() && field.getSetElemField().isStruct())
-      || field.isMap();
-  }
   private int convertField(TBase thriftObj, Message.Builder builder,
                            TStructDescriptor fieldDesc, int fieldId, Field tField) {
     int tmpFieldId = fieldId;
@@ -425,7 +431,7 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
       Type protoType = thriftTypeToProtoType(tField);
       if (protoType == null
           && (ignoreUnsupportedTypes
-              || (!supportNestedObjects && isNestedStruct(tField)))) {
+              || (!supportNestedObjects && hasNestedObject(tField)))) {
         return tmpFieldId; // no-op
       }
       throw new RuntimeException("Field " + tField.getName() + " not found in dynamic protobuf.");
