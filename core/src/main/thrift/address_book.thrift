@@ -31,3 +31,8 @@ struct PrimitiveListsStruct {
   1: list<string> strings
   2: list<i64> longs
 }
+
+struct PrimitiveSetsStruct {
+  1: set<string> strings
+  2: set<i64> longs
+}
