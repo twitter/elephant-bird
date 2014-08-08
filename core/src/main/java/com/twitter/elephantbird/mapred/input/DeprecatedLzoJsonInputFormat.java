@@ -8,7 +8,7 @@ import com.twitter.elephantbird.mapreduce.input.LzoJsonInputFormat;
 /**
  * mapred version of {@link LzoJsonInputFormat}.
  */
-public class DeprecatedLzoJsonInputFormat extends DeprecatedInputFormatWrapper<LongWritable, MapWritable>{
+public class DeprecatedLzoJsonInputFormat extends DeprecatedFileInputFormatWrapper<LongWritable, MapWritable>{
   public DeprecatedLzoJsonInputFormat() {
     super(new LzoJsonInputFormat());
   }

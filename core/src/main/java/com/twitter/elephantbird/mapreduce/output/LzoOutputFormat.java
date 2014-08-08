@@ -16,7 +16,7 @@ import com.twitter.elephantbird.util.LzoUtils;
  * Base class for Lzo outputformats.
  * provides an helper method to create lzo output stream.
  */
-public abstract class LzoOutputFormat<K, V> extends FileOutputFormat<K, V> {
+public abstract class LzoOutputFormat<K, V> extends WorkFileOverride.FileOutputFormat<K, V> {
 
   public static final Logger LOG = LoggerFactory.getLogger(LzoOutputFormat.class);
 

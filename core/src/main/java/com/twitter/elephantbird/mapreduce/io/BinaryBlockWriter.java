@@ -2,10 +2,11 @@ package com.twitter.elephantbird.mapreduce.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
-import com.twitter.data.proto.BlockStorage.SerializedBlock;
 import com.twitter.elephantbird.util.Protobufs;
 
 /**
@@ -19,39 +20,33 @@ public abstract class BinaryBlockWriter<M> {
   protected final Class<M> innerClass_;
   private final BinaryConverter<M> binaryConverter_;
   private int numRecordsWritten_ = 0;
-  private SerializedBlock.Builder builder_;
+  private List<ByteString> protoBlobs_;
 
   protected BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> binaryConverter, int numRecordsPerBlock) {
     out_ = out;
     numRecordsPerBlock_ = numRecordsPerBlock;
     innerClass_ = protoClass;
     binaryConverter_ = binaryConverter;
-    builder_ = reinitializeBlockBuilder();
+    protoBlobs_ = new ArrayList<ByteString>(numRecordsPerBlock_);
   }
 
   public void write(M message) throws IOException {
     if (message instanceof Message) {
       //a small hack to avoid extra copy, since we need a ByteString anyway.
-      builder_.addProtoBlobs(((Message)message).toByteString());
+      protoBlobs_.add(((Message) message).toByteString());
     } else {
-      builder_.addProtoBlobs(ByteString.copyFrom(binaryConverter_.toBytes(message)));
+      protoBlobs_.add(ByteString.copyFrom(binaryConverter_.toBytes(message)));
     }
 
     numRecordsWritten_++;
 
-    if (builder_.getProtoBlobsCount() == numRecordsPerBlock_) {
+    if (protoBlobs_.size() == numRecordsPerBlock_) {
       serialize();
     }
   }
 
-  public SerializedBlock.Builder reinitializeBlockBuilder() {
-    return SerializedBlock.newBuilder()
-                          .setVersion(1)
-                          .setProtoClassName(innerClass_.getCanonicalName());
-  }
-
   public void finish() throws IOException {
-    if (builder_.getProtoBlobsCount() > 0) {
+    if (protoBlobs_.size() > 0) {
       serialize();
     }
   }
@@ -62,9 +57,11 @@ public abstract class BinaryBlockWriter<M> {
   }
 
   protected void serialize() throws IOException {
-    SerializedBlock block = builder_.build();
-    builder_ = reinitializeBlockBuilder();
     out_.write(Protobufs.KNOWN_GOOD_POSITION_MARKER);
+    Message block = SerializedBlock
+        .newInstance(innerClass_.getCanonicalName(),protoBlobs_)
+        .getMessage();
+    protoBlobs_ = new ArrayList<ByteString>(numRecordsPerBlock_);
     writeRawLittleEndian32(block.getSerializedSize());
     block.writeTo(out_);
   }

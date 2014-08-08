@@ -1,13 +1,16 @@
 package com.twitter.elephantbird.mapred.input;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
 import com.twitter.elephantbird.util.HadoopCompat;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableUtils;
+import com.twitter.elephantbird.util.SplitUtil;
+import org.apache.hadoop.conf.Configurable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.serializer.Deserializer;
+import org.apache.hadoop.io.serializer.SerializationFactory;
+import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
@@ -20,6 +23,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.util.ReflectionUtils;
 
+import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
 import com.twitter.elephantbird.util.HadoopUtils;
 
@@ -31,6 +35,7 @@ import com.twitter.elephantbird.util.HadoopUtils;
  *
  * Current restrictions on InputFormat: <ul>
  *    <li> the record reader should reuse key and value objects
+ *    or implement {@link com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible} </li>
  * </ul>
  *
  * While this restriction is satisfied by most input formats,
@@ -74,6 +79,16 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 		jobConf.setInputFormat(DeprecatedInputFormatWrapper.class);
 		HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
 		HadoopUtils.setClassConf(jobConf, VALUE_COPY_CONF_KEY, valueCopyClass);
+	}
+
+	/**
+	 * Only used in very specific cases and does not absolve one from
+	 * calling the static setInptuFormat methods to set up the hadoop job
+	 * properly.
+	 * @param inputFormat
+	 */
+	public void setInputFormatInstance(InputFormat<K, V> inputFormat) {
+	  realInputFormat = inputFormat;
 	}
 
   @SuppressWarnings("unchecked")
@@ -130,7 +145,9 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
               mapreduceFileSplit.getLength(),
               mapreduceFileSplit.getLocations());
         } else {
-          resultSplits[i++] = new InputSplitWrapper(split);
+          InputSplitWrapper wrapper = new InputSplitWrapper(split);
+          wrapper.setConf(job);
+          resultSplits[i++] = wrapper;
         }
       }
 
@@ -144,7 +161,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
   /**
    * A reporter that works with both mapred and mapreduce APIs.
    */
-  private static class ReporterWrapper extends StatusReporter implements Reporter {
+  public static class ReporterWrapper extends StatusReporter implements Reporter {
     private Reporter wrappedReporter;
 
     public ReporterWrapper(Reporter reporter) {
@@ -195,6 +212,8 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
   private static class RecordReaderWrapper<K, V> implements RecordReader<K, V> {
 
     private org.apache.hadoop.mapreduce.RecordReader<K, V> realReader;
+    private MapredInputFormatCompatible mifcReader = null;
+
     private long splitLen; // for getPos()
 
     // expect readReader return same Key & Value objects (common case)
@@ -205,9 +224,9 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
     private boolean firstRecord = false;
     private boolean eof = false;
 
-		private DeprecatedInputFormatValueCopier<V> valueCopier = null;
+    private DeprecatedInputFormatValueCopier<V> valueCopier = null;
 
-		public RecordReaderWrapper(InputFormat<K, V> newInputFormat, InputSplit oldSplit, JobConf oldJobConf,
+    public RecordReaderWrapper(InputFormat<K, V> newInputFormat, InputSplit oldSplit, JobConf oldJobConf,
 				Reporter reporter, DeprecatedInputFormatValueCopier<V> valueCopier) throws IOException {
 
 			this.valueCopier = valueCopier;
@@ -237,16 +256,28 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
         realReader = newInputFormat.createRecordReader(split, taskContext);
         realReader.initialize(split, taskContext);
 
-        // read once to gain access to key and value objects
-        if (realReader.nextKeyValue()) {
-          firstRecord = true;
-          keyObj = realReader.getCurrentKey();
-          valueObj = realReader.getCurrentValue();
-        } else {
-          eof = true;
+        if (realReader instanceof MapredInputFormatCompatible) {
+          mifcReader = ((MapredInputFormatCompatible) realReader);
         }
       } catch (InterruptedException e) {
         throw new IOException(e);
+      }
+    }
+
+    private void initKeyValueObjects() {
+      // read once to gain access to key and value objects
+      try {
+        if (!firstRecord & !eof) {
+          if (realReader.nextKeyValue()) {
+            firstRecord = true;
+            keyObj = realReader.getCurrentKey();
+            valueObj = realReader.getCurrentValue();
+          } else {
+            eof = true;
+          }
+        }
+      } catch (Exception e) {
+        throw new RuntimeException("Could not read first record (and it was not an EOF)", e);
       }
     }
 
@@ -257,11 +288,13 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     @Override
     public K createKey() {
+      initKeyValueObjects();
       return keyObj;
     }
 
     @Override
     public V createValue() {
+      initKeyValueObjects();
       return valueObj;
     }
 
@@ -290,14 +323,28 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
         return true;
       }
 
+      if (mifcReader != null) {
+        mifcReader.setKeyValue(key, value);
+      }
+
       try {
         if (realReader.nextKeyValue()) {
 
 					if (key != realReader.getCurrentKey()) {
 
-            throw new IOException("DeprecatedInputFormatWrapper can not "
-                + "support RecordReaders that don't return same key & value "
-                + "objects. current reader class : " + realReader.getClass());
+            if (mifcReader != null) {
+              throw new IOException("The RecordReader returned a key and value that do not match "
+                  + "the key and value sent to it. This means the RecordReader did not properly implement "
+                  + "com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible. "
+                  + "Current reader class : " + realReader.getClass());
+
+            } else {
+              throw new IOException("DeprecatedInputFormatWrapper only "
+                  + "supports RecordReaders that return the same key & value "
+                  + "objects or implement com.twitter.elephantbird.mapred.input.MapredInputFormatCompatible. "
+                  + "Current reader class : " + realReader.getClass());
+            }
+
 					}
 
 					if (value != realReader.getCurrentValue()) {
@@ -306,7 +353,7 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 						else {
 							throw new IOException("DeprecatedInputFormatWrapper - value is different "
 									+ "and no value copier provided. "
-									+ "current reader class : " + realReader.getClass());
+									+ "Current reader class : " + realReader.getClass());
           }
 					}
           return true;
@@ -320,9 +367,10 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
     }
   }
 
-  private static class InputSplitWrapper implements InputSplit {
+  private static class InputSplitWrapper implements InputSplit, Configurable {
 
     org.apache.hadoop.mapreduce.InputSplit realSplit;
+    private Configuration conf;
 
 
     @SuppressWarnings("unused") // MapReduce instantiates this.
@@ -352,24 +400,22 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
     @Override
     public void readFields(DataInput in) throws IOException {
-      String className = WritableUtils.readString(in);
-      Class<?> splitClass;
-
-      try {
-        splitClass = Class.forName(className);
-      } catch (ClassNotFoundException e) {
-        throw new IOException(e);
-      }
-
-      realSplit = (org.apache.hadoop.mapreduce.InputSplit)
-                  ReflectionUtils.newInstance(splitClass, null);
-      ((Writable)realSplit).readFields(in);
+      realSplit = SplitUtil.deserializeInputSplit(conf, (DataInputStream) in);
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
-      WritableUtils.writeString(out, realSplit.getClass().getName());
-      ((Writable)realSplit).write(out);
+      SplitUtil.serializeInputSplit(conf, (DataOutputStream) out, realSplit);
+    }
+
+    @Override
+    public void setConf(Configuration conf) {
+      this.conf = conf;
+    }
+
+    @Override
+    public Configuration getConf() {
+      return conf;
     }
   }
 }

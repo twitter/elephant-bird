@@ -12,8 +12,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import com.hadoop.compression.lzo.LzopCodec;
 import com.twitter.elephantbird.util.LzoUtils;
 
-public class LzoTextOutputFormat<K, V> extends TextOutputFormat<K, V>  {
-
+public class LzoTextOutputFormat<K, V> extends WorkFileOverride.TextOutputFormat<K, V> {
   @Override
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
@@ -26,5 +25,4 @@ public class LzoTextOutputFormat<K, V> extends TextOutputFormat<K, V>  {
                    conf.get("mapred.textoutputformat.separator", "\t")
                    );
   }
-
 }

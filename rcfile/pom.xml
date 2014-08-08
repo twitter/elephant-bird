@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.1-SNAPSHOT</version>
+    <version>4.6-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -13,6 +13,11 @@
   <description>RCFile utilities.</description>
 
   <dependencies>
+    <dependency>
+      <groupId>com.twitter.elephantbird</groupId>
+      <artifactId>elephant-bird-core</artifactId>
+      <type>test-jar</type>
+    </dependency>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-pig</artifactId>

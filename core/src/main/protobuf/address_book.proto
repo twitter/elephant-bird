@@ -27,6 +27,7 @@ message Person {
 
 message AddressBook {
   repeated Person person = 1;
+  optional bytes byteData = 2;
 }
 
 // used testing handling of unknown fields

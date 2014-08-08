@@ -33,10 +33,10 @@ import thrift.test.OneOfEach;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.twitter.data.proto.tutorial.thrift.Name;
-import com.twitter.data.proto.tutorial.thrift.Person;
-import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
-import com.twitter.data.proto.tutorial.thrift.PhoneType;
+import com.twitter.elephantbird.thrift.test.Name;
+import com.twitter.elephantbird.thrift.test.Person;
+import com.twitter.elephantbird.thrift.test.PhoneNumber;
+import com.twitter.elephantbird.thrift.test.PhoneType;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.util.ProjectedThriftTupleFactory;
 import com.twitter.elephantbird.pig.util.ThriftToPig;
@@ -184,6 +184,7 @@ public class TestThriftToPig {
         toTuple(type, n2).toDelimitedString("-"));
 
     // test enum.
+    ThriftToPig.setConversionProperties(new Configuration(false));
     PhoneNumber ph = new PhoneNumber();
     ph.setNumber("415-555-5555");
     ph.setType(PhoneType.HOME);
@@ -224,7 +225,8 @@ public class TestThriftToPig {
   //test a set of a struct
   @Test
   public void nestedStructInSetTest() throws FrontendException {
-    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUniqueRecipe","name:chararray,ingredients:bag{t:tuple(name:chararray,color:chararray)}");
+    nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestUniqueRecipe",
+        "name:chararray,ingredients:bag{t:tuple(name:chararray,color:chararray)}");
   }
 
   @Test
@@ -279,7 +281,8 @@ public class TestThriftToPig {
 
   @Test
   public void structInMapTest() throws FrontendException {
-      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestStructInMap","name:chararray,names:map[(name: (first_name: chararray,last_name: chararray),phones: map[chararray])]");
+      nestedInListTestHelper("com.twitter.elephantbird.thrift.test.TestStructInMap",
+          "name:chararray,names:map[(name: (first_name: chararray,last_name: chararray),phones: map[chararray])],name_to_id: map[int]");
   }
 
   @Test
@@ -309,8 +312,8 @@ public class TestThriftToPig {
     Schema oldSchema = Schema.getPigSchema(new ResourceSchema(schema));
     assertTrue(Schema.equals(schema, oldSchema, false, true));
     Schema expectedSchema=Utils.getSchemaFromString(expSchema);
-    assertTrue("expected : " + expSchema + " got " +  schema.toString(),
-               Schema.equals(schema, expectedSchema, false, true));
+    assertTrue("expected : " + expSchema + " got " + schema.toString(),
+        Schema.equals(schema, expectedSchema, false, true));
   }
 
   /**

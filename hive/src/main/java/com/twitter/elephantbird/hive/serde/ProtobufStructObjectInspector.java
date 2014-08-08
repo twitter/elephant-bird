@@ -8,6 +8,7 @@ import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.JavaType;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -158,6 +159,9 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     Object result = m.getField(fieldDescriptor);
     if (fieldDescriptor.getType() == Type.ENUM) {
       return ((EnumValueDescriptor)result).getName();
+    }
+    if (fieldDescriptor.getType() == Type.BYTES && (result instanceof ByteString)) {
+        return ((ByteString)result).toByteArray();
     }
     return result;
   }

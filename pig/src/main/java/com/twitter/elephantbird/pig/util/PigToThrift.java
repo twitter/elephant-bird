@@ -11,8 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.base.Charsets;
 
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
@@ -21,6 +20,8 @@ import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TEnum;
 import org.apache.thrift.protocol.TType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
@@ -164,14 +165,29 @@ public class PigToThrift<T extends TBase<?, ?>> {
   private static Map<Object, Object> toThriftMap(Field field, Map<String, Object> map) {
     Field keyField   = field.getMapKeyField();
     Field valueField = field.getMapValueField();
-    if (keyField.getType() != TType.STRING
-        && keyField.getType() != TType.ENUM) {
-      throw new IllegalArgumentException("TStructs's map key should be a STRING or an ENUM");
-    }
     HashMap<Object, Object> out = new HashMap<Object, Object>(map.size());
     for(Entry<String, Object> e : map.entrySet()) {
-      out.put(toThriftValue(keyField,   e.getKey()),
-              toThriftValue(valueField, e.getValue()));
+      String s = e.getKey();
+      Object key;
+      switch (keyField.getType()) {
+        case TType.STRING: key = s; break;
+        case TType.BOOL: key = Boolean.parseBoolean(s); break;
+        case TType.BYTE: key = Byte.parseByte(s); break;
+        case TType.I16: key = Short.parseShort(s); break;
+        case TType.I32: key = Integer.parseInt(s); break;
+        case TType.I64: key = Long.parseLong(s); break;
+        case TType.DOUBLE: key = Double.parseDouble(s); break;
+        case TType.ENUM: key = toThriftEnum(keyField, s); break;
+        default:
+          // LIST, MAP, SET, STOP, STRUCT, VOID types are unsupported
+          throw new RuntimeException(String.format(
+              "Conversion from string map key to type '%s' is unsupported",
+              ThriftUtils.getFieldValueType(keyField).getName()));
+      }
+      if (keyField.isBuffer()) {
+        key = ByteBuffer.wrap(s.getBytes(Charsets.UTF_8));
+      }
+      out.put(key, toThriftValue(valueField, e.getValue()));
     }
     return out;
   }

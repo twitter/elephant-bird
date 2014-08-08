@@ -2,8 +2,9 @@ package com.twitter.elephantbird.mapreduce.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
-import com.twitter.data.proto.BlockStorage.SerializedBlock;
+import com.google.protobuf.ByteString;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.StreamSearcher;
 
@@ -24,7 +25,7 @@ public abstract class BinaryBlockReader<M> {
   private InputStream in_;
   private final StreamSearcher searcher_;
   private final BinaryConverter<M> protoConverter_;
-  private SerializedBlock curBlock_;
+  private List<ByteString> curBlobs_;
   private int numLeftToReadThisBlock_ = 0;
   private boolean readNewBlocks_ = true;
   private boolean skipEmptyRecords = true; // skip any records of length zero
@@ -87,9 +88,9 @@ public abstract class BinaryBlockReader<M> {
         return null;
       }
 
-      int blobIndex = curBlock_.getProtoBlobsCount() - numLeftToReadThisBlock_;
+      int blobIndex = curBlobs_.size() - numLeftToReadThisBlock_;
       numLeftToReadThisBlock_--;
-      byte[] blob = curBlock_.getProtoBlobs(blobIndex).toByteArray();
+      byte[] blob = curBlobs_.get(blobIndex).toByteArray();
       if (blob.length == 0 && skipEmptyRecords) {
         continue;
       }
@@ -118,7 +119,7 @@ public abstract class BinaryBlockReader<M> {
     return searcher_.search(in_);
   }
 
-  public SerializedBlock parseNextBlock() throws IOException {
+  public List<ByteString> parseNextBlock() throws IOException {
     LOG.debug("BlockReader: none left to read, skipping to sync point");
     if (!skipToNextSyncPoint()) {
       LOG.debug("BlockReader: SYNC point eof");
@@ -138,9 +139,10 @@ public abstract class BinaryBlockReader<M> {
     IOUtils.readFully(in_, byteArray, 0, blockSize);
     SerializedBlock block = SerializedBlock.parseFrom(byteArray);
 
-    numLeftToReadThisBlock_ = block.getProtoBlobsCount();
+    curBlobs_ = block.getProtoBlobs();
+    numLeftToReadThisBlock_ = curBlobs_.size();
     LOG.debug("ProtobufReader: number in next block is " + numLeftToReadThisBlock_);
-    return block;
+    return curBlobs_;
   }
 
   private boolean setupNewBlockIfNeeded() throws IOException {
@@ -152,8 +154,8 @@ public abstract class BinaryBlockReader<M> {
         // handle everything starting at the next sync point.
         return false;
       }
-      curBlock_ = parseNextBlock();
-      if (curBlock_ == null) {
+      curBlobs_ = parseNextBlock();
+      if (curBlobs_ == null) {
         // If there is nothing, it likely means EOF. Signal that processing is done.
         return false;
       }

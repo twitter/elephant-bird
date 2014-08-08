@@ -3,6 +3,7 @@ package com.twitter.elephantbird.hive.serde;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -19,6 +20,7 @@ import org.junit.Test;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
@@ -46,7 +48,7 @@ public class ProtobufDeserializerTest {
     Person p2 = Person.newBuilder().setName("p2").setId(2).addPhone(test_pn).build();
     Person p3 = Person.newBuilder().setName("p3").setId(3).build();
 
-    test_ab = AddressBook.newBuilder().addPerson(p1).addPerson(p2).addPerson(p3).build();
+    test_ab = AddressBook.newBuilder().addPerson(p1).addPerson(p2).addPerson(p3).setByteData(ByteString.copyFrom(new byte[] {16,32,64,(byte) 128})).build();
     deserializer = new ProtobufDeserializer();
 
     Properties properties = new Properties();
@@ -71,8 +73,10 @@ public class ProtobufDeserializerTest {
     ProtobufStructObjectInspector protobufOI = (ProtobufStructObjectInspector) oi;
     List<Object> readData = protobufOI.getStructFieldsDataAsList(test_ab);
 
-    assertEquals(readData.size(), 1);
+    assertEquals(readData.size(), 2);
     @SuppressWarnings("unchecked")
+    ByteString byteStr = (ByteString)readData.get(1);
+    assertEquals(byteStr, ByteString.copyFrom(new byte[] {16,32,64,(byte) 128}));
     List<Person> persons = (List<Person>) readData.get(0);
     assertEquals(persons.size(), 3);
     assertEquals(persons.get(0).getPhoneCount(), 3);
@@ -102,6 +106,9 @@ public class ProtobufDeserializerTest {
       if (fieldDescriptor.getType() == Type.ENUM) {
         assertEquals(String.class, data.getClass());
         assertEquals(data, ((EnumValueDescriptor) target).getName());
+      } else if (fieldDescriptor.getType() == Type.BYTES) {
+        assertTrue(data instanceof byte[]);
+        assertTrue( Arrays.equals((byte[])data, ((ByteString) target).toByteArray()) );
       } else {
         assertEquals(data, target);
       }
@@ -115,7 +122,7 @@ public class ProtobufDeserializerTest {
     assertEquals(protobufOI.getTypeName(),
         "struct<person:array<"
             + "struct<name:string,id:int,email:string,"
-            + "phone:array<struct<number:string,type:string>>>>>");
+            + "phone:array<struct<number:string,type:string>>>>,byteData:binary>");
   }
 
   @Test
