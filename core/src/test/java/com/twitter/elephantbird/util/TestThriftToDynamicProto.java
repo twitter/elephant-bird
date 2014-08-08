@@ -2,8 +2,10 @@ package com.twitter.elephantbird.util;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Message;
 
@@ -49,18 +51,35 @@ public class TestThriftToDynamicProto {
   private PrimitiveListsStruct genPrimitiveListsStruct() {
     PrimitiveListsStruct listStruct = new PrimitiveListsStruct();
 
-    List strings = Lists.newLinkedList();
+    List<String> strings = Lists.newLinkedList();
     strings.add("string1");
     strings.add("string2");
     strings.add("string3");
 
-    List longs = Lists.newLinkedList();
+    List<Long> longs = Lists.newLinkedList();
     longs.add(1L);
     longs.add(2L);
     longs.add(3L);
 
     return listStruct.setStrings(strings).setLongs(longs);
   }
+
+  private PrimitiveSetsStruct genPrimitiveSetsStruct() {
+    PrimitiveSetsStruct setsStruct = new PrimitiveSetsStruct();
+
+    Set<String> strings = Sets.newHashSet();
+    strings.add("string1");
+    strings.add("string2");
+    strings.add("string3");
+
+    Set<Long> longs = Sets.newHashSet();
+    longs.add(1L);
+    longs.add(2L);
+    longs.add(3L);
+
+    return setsStruct.setStrings(strings).setLongs(longs);
+  }
+
 
   private void compareName(Name expected, Message actual) {
     assertNotNull(actual);
@@ -79,6 +98,32 @@ public class TestThriftToDynamicProto {
     }
   }
 
+  private void comparePrimitiveListStruct(PrimitiveListsStruct expected, Message actual) {
+    List<String> strings = (List<String>) Protobufs.getFieldByName(actual, "strings");
+    List<Long> longs = (List<Long>) Protobufs.getFieldByName(actual, "longs");
+    assertEquals(expected.getStrings(), strings);
+    assertEquals(expected.getLongs(), longs);
+  }
+
+  // We iterate through the Message and confirm its List elements match the Set elements
+  private void comparePrimitiveSetsStruct(PrimitiveSetsStruct expected, Message actual) {
+    List<String> actualStrings = (List<String>) Protobufs.getFieldByName(actual, "strings");
+    List<Long> actualLongs = (List<Long>) Protobufs.getFieldByName(actual, "longs");
+
+    Set<String> expectedStrings = expected.strings;
+    Set<Long> expectedLongs = expected.longs;
+
+    for (String entry : actualStrings) {
+      assertTrue(expectedStrings.remove(entry));
+    }
+    assertEquals(expectedStrings.size(), 0);
+
+    for (Long entry : actualLongs) {
+      assertTrue(expectedLongs.remove(entry));
+    }
+    assertEquals(expectedLongs.size(), 0);
+  }
+
   @Test
   public void testSimpleStructConversion() throws DescriptorValidationException {
     PhoneNumber thriftPhone = genPhoneNumber("123-34-5467", PhoneType.HOME);
@@ -94,10 +139,7 @@ public class TestThriftToDynamicProto {
       new ThriftToDynamicProto<PrimitiveListsStruct>(PrimitiveListsStruct.class);
     PrimitiveListsStruct listStruct = genPrimitiveListsStruct();
     Message msg = thriftToProto.convert(listStruct);
-    List<String> strings = (List<String>) Protobufs.getFieldByName(msg, "strings");
-    List<Long> longs = (List<Long>) Protobufs.getFieldByName(msg, "longs");
-    assertEquals(listStruct.getStrings(), strings);
-    assertEquals(listStruct.getLongs(), longs);
+
   }
 
   @Test
@@ -106,10 +148,7 @@ public class TestThriftToDynamicProto {
       new ThriftToDynamicProto<PrimitiveListsStruct>(PrimitiveListsStruct.class, true, false);
     PrimitiveListsStruct listStruct = genPrimitiveListsStruct();
     Message msg = thriftToProto.convert(listStruct);
-    List<String> strings = (List<String>) Protobufs.getFieldByName(msg, "strings");
-    List<Long> longs = (List<Long>) Protobufs.getFieldByName(msg, "longs");
-    assertEquals(listStruct.getStrings(), strings);
-    assertEquals(listStruct.getLongs(), longs);
+    comparePrimitiveListStruct(listStruct, msg);
   }
 
   @Test
@@ -137,6 +176,20 @@ public class TestThriftToDynamicProto {
   }
 
   @Test
-  public void testPrimitiveSetConversion() throws DescriptorValidationException {
+  public void testPrimitiveSetConversionWhenNestedStructsDisabled() throws DescriptorValidationException {
+    ThriftToDynamicProto<PrimitiveSetsStruct> thriftToProto =
+      new ThriftToDynamicProto<PrimitiveSetsStruct>(PrimitiveSetsStruct.class);
+    PrimitiveSetsStruct setsStruct = genPrimitiveSetsStruct();
+    Message msg = thriftToProto.convert(setsStruct);
+    comparePrimitiveSetsStruct(setsStruct, msg);
+  }
+
+  @Test
+  public void testPrimitiveSetConversionWhenNestedStructsEnabled() throws DescriptorValidationException {
+    ThriftToDynamicProto<PrimitiveSetsStruct> thriftToProto =
+      new ThriftToDynamicProto<PrimitiveSetsStruct>(PrimitiveSetsStruct.class, true, false);
+    PrimitiveSetsStruct setsStruct = genPrimitiveSetsStruct();
+    Message msg = thriftToProto.convert(setsStruct);
+    comparePrimitiveSetsStruct(setsStruct, msg);
   }
 }
