@@ -41,8 +41,6 @@ import com.twitter.elephantbird.util.Pair;
  * create an intermediate Message type with key and value fields of the
  * appropriate types and add these as repeated fields of the enclosing
  * struct.<ul/>
- * <p>
- * TODO: move to Elephant-Bird
  *
  * @param <T> Source thrift class
  */
