@@ -36,3 +36,7 @@ struct PrimitiveSetsStruct {
   1: set<string> strings
   2: set<i64> longs
 }
+
+struct MapStruct {
+  1: map<i32, string> entries
+}
