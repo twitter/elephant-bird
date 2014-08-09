@@ -11,14 +11,14 @@ import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Message;
 
-import com.twitter.data.proto.tutorial.thrift.AddressBook;
-import com.twitter.data.proto.tutorial.thrift.MapStruct;
-import com.twitter.data.proto.tutorial.thrift.Name;
-import com.twitter.data.proto.tutorial.thrift.Person;
-import com.twitter.data.proto.tutorial.thrift.PhoneNumber;
-import com.twitter.data.proto.tutorial.thrift.PhoneType;
-import com.twitter.data.proto.tutorial.thrift.PrimitiveListsStruct;
-import com.twitter.data.proto.tutorial.thrift.PrimitiveSetsStruct;
+import com.twitter.elephantbird.thrift.test.AddressBook;
+import com.twitter.elephantbird.thrift.test.MapStruct;
+import com.twitter.elephantbird.thrift.test.Name;
+import com.twitter.elephantbird.thrift.test.Person;
+import com.twitter.elephantbird.thrift.test.PhoneNumber;
+import com.twitter.elephantbird.thrift.test.PhoneType;
+import com.twitter.elephantbird.thrift.test.PrimitiveListsStruct;
+import com.twitter.elephantbird.thrift.test.PrimitiveSetsStruct;
 import com.twitter.elephantbird.util.Protobufs;
 
 import org.junit.Test;
