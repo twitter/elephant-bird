@@ -147,3 +147,17 @@ struct TestExceptionInMap {
   1: string name,
   2: map<string, TestException> exceptionMap
 }
+
+struct PrimitiveListsStruct {
+  1: list<string> strings
+  2: list<i64> longs
+}
+
+struct PrimitiveSetsStruct {
+  1: set<string> strings
+  2: set<i64> longs
+}
+
+struct MapStruct {
+  1: map<i32, string> entries
+}
