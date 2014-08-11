@@ -341,7 +341,7 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
     public LuceneIndexInputSplit() { }
 
     /**
-     * Default constructor for this class.
+     * Constructor for this class.
      * @param indexDirs a {@link java.util.List} of directories
      * containing existing Lucene indexes.
      * @param length the size of the split in bytes
@@ -416,8 +416,7 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
     }
 
     /**
-     * Simply prints the {@link java.util.List} of Lucene index 
-     * directories and the combined length/size of the split in bytes.
+     * Prints the directories and the combined length/size of the split in bytes.
      */
     @Override
     public String toString() {
