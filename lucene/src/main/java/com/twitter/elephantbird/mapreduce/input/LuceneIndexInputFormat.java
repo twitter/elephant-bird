@@ -43,7 +43,7 @@ import com.twitter.elephantbird.util.HdfsUtils;
  * </ul>
  * Subclasses may provide:d
  * <ul>
- *   <li> a {@link PathFilter} for identifying HDFS directories that contain lucene indexes</li>
+ *   <li> a {@link PathFilter} for identifying HDFS directories that contain Lucene indexes</li>
  * </ul>
  *
  * @param <T> - the type that your lucene Documents will be converted to
@@ -225,7 +225,6 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
    * @return queries as passed to {@link #setQueries}
    * @throws IOException
    */
-  @SuppressWarnings("unchecked")
   public static List<String> getQueries(Configuration conf) throws IOException {
     return Preconditions.checkNotNull(HadoopUtils.readStringListFromConfAsBase64(QUERIES_KEY, conf),
       "You must call LuceneIndexInputFormat.setQueries()");
@@ -341,6 +340,12 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
      */
     public LuceneIndexInputSplit() { }
 
+    /**
+     * Constructor for this class.
+     * @param indexDirs a {@link java.util.List} of directories
+     * containing existing Lucene indexes.
+     * @param length the size of the split in bytes
+     */
     public LuceneIndexInputSplit(List<Path> indexDirs, long length) {
       this.indexDirs = indexDirs;
       this.length = length;
@@ -410,6 +415,9 @@ public abstract class LuceneIndexInputFormat<T extends Writable>
       return length.compareTo(other.getLength());
     }
 
+    /**
+     * Prints the directories and the combined length/size of the split in bytes.
+     */
     @Override
     public String toString() {
       return "LuceneIndexInputSplit<indexDirs:" + indexDirs.toString() + " length:" + length + ">";
