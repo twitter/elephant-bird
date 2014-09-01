@@ -15,3 +15,9 @@ sizes = foreach json_data generate flatten($0#'Sizes');
 grouped = group sizes by $0#'Size';
 size_and_count = foreach grouped generate group as size, COUNT($1) as count;
 dump size_and_count;
+
+/* Output:
+(Large,5)
+(Small,2)
+(Medium,5)
+*/

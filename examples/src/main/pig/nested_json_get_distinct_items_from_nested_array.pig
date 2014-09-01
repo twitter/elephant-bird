@@ -14,3 +14,14 @@ json_data = load '/path/to/nested_json_pizza_sample_data.json' using com.twitter
 toppings = foreach json_data generate flatten($0#'Toppings');
 distinct_toppings = distinct toppings;
 dump distinct_toppings;
+
+/* Output:
+(Ham)
+(Cheese)
+(Tomato)
+(Chicken)
+(Broccoli)
+(Pepperoni)
+(Pineapple)
+(Barbecue Sauce)
+*/

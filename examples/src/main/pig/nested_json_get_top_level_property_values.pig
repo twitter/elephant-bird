@@ -14,3 +14,11 @@ json_data = load '/path/to/nested_json_pizza_sample_data.json' using com.twitter
 names = foreach json_data generate $0#'Name' as name;
 ordered = order names by name;
 dump ordered;
+
+/* Output:
+(BBQ Chicken)
+(Cheese)
+(Hawaiian)
+(Pepperoni)
+(Vegetable)
+*/
