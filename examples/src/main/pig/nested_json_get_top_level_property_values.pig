@@ -7,6 +7,7 @@
 
 register /path/to/json-simple.jar;
 register /path/to/elephant-bird-core.jar;
+register /path/to/elephant-bird-hadoop-compat.jar;
 register /path/to/elephant-bird-pig.jar;
 
 json_data = load '/path/to/nested_json_pizza_sample_data.json' using com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad');
