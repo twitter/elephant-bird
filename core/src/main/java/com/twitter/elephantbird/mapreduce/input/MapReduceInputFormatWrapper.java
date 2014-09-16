@@ -58,7 +58,11 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
    */
   public static void setInputFormat(Class<?> realInputFormatClass, Job job) {
     job.setInputFormatClass(MapReduceInputFormatWrapper.class);
-    HadoopUtils.setClassConf(HadoopCompat.getConfiguration(job), CLASS_CONF_KEY, realInputFormatClass);
+    setWrappedInputFormat(realInputFormatClass, HadoopCompat.getConfiguration(job));
+  }
+
+  public static void setWrappedInputFormat(Class<?> realInputFormatClass, Configuration conf) {
+    HadoopUtils.setClassConf(conf, CLASS_CONF_KEY, realInputFormatClass);
   }
 
   @SuppressWarnings("unchecked")
