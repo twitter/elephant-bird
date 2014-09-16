@@ -120,7 +120,8 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
     return resultSplits;
   }
 
-  private static class RecordReaderWrapper<K, V> extends RecordReader<K, V> {
+  private static class RecordReaderWrapper<K, V>
+      extends RecordReader<K, V> implements MapredInputFormatCompatible<K, V> {
 
 
     private org.apache.hadoop.mapred.RecordReader<K, V> realReader;
@@ -232,6 +233,11 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
       return realReader.next(keyObj, valueObj);
     }
 
+    @Override
+    public void setKeyValue(K key, V value) {
+      keyObj = key;
+      valueObj = value;
+    }
   }
 
   private static class InputSplitWrapper extends InputSplit implements Writable {
