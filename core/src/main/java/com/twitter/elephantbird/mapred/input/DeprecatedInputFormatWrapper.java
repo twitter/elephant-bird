@@ -57,8 +57,8 @@ import com.twitter.elephantbird.util.HadoopUtils;
 @SuppressWarnings("deprecation")
 public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputFormat<K, V> {
 
-  private static final String CLASS_CONF_KEY = "elephantbird.class.for.DeprecatedInputFormatWrapper";
-	private static final String VALUE_COPY_CONF_KEY = "elephantbird.class.for.ValueCopyClass";
+  public static final String CLASS_CONF_KEY = "elephantbird.class.for.DeprecatedInputFormatWrapper";
+	public static final String VALUE_COPY_CONF_KEY = "elephantbird.class.for.ValueCopyClass";
 
   protected InputFormat<K, V> realInputFormat;
 	protected DeprecatedInputFormatValueCopier<V> valueCopier = null;

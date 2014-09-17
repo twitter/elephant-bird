@@ -45,7 +45,7 @@ import com.twitter.elephantbird.util.HadoopUtils;
 @SuppressWarnings("deprecation")
 public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapreduce.InputFormat<K, V> {
 
-  private static final String CLASS_CONF_KEY = "elephantbird.class.for.MapReduceInputFormatWrapper";
+  public static final String CLASS_CONF_KEY = "elephantbird.class.for.MapReduceInputFormatWrapper";
 
   protected InputFormat<K, V> realInputFormat;
 
