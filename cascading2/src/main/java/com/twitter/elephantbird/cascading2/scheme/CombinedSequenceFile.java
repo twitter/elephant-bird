@@ -13,6 +13,15 @@ import cascading.scheme.hadoop.SequenceFile;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 
+/**
+ * This scheme allows SequenceFile splits to be combined via the DelegateCombineFileInputFormat
+ * before it is read. It can be used to combine inputs for intermediate MR jobs in Cascading.
+ *
+ * To enable, set cascading.flowconnector.intermediateschemeclass to this class in the Hadoop
+ * configuration.
+ *
+ * @author Akihiro Matsukawa
+ */
 public class CombinedSequenceFile extends SequenceFile {
 
   protected CombinedSequenceFile() { super(); }
