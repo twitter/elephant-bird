@@ -45,7 +45,7 @@ import com.twitter.elephantbird.util.HadoopUtils;
 @SuppressWarnings("deprecation")
 public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapreduce.InputFormat<K, V> {
 
-  private static final String CLASS_CONF_KEY = "elephantbird.class.for.MapReduceInputFormatWrapper";
+  public static final String CLASS_CONF_KEY = "elephantbird.class.for.MapReduceInputFormatWrapper";
 
   protected InputFormat<K, V> realInputFormat;
 
@@ -58,7 +58,11 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
    */
   public static void setInputFormat(Class<?> realInputFormatClass, Job job) {
     job.setInputFormatClass(MapReduceInputFormatWrapper.class);
-    HadoopUtils.setClassConf(HadoopCompat.getConfiguration(job), CLASS_CONF_KEY, realInputFormatClass);
+    setWrappedInputFormat(realInputFormatClass, HadoopCompat.getConfiguration(job));
+  }
+
+  public static void setWrappedInputFormat(Class<?> realInputFormatClass, Configuration conf) {
+    HadoopUtils.setClassConf(conf, CLASS_CONF_KEY, realInputFormatClass);
   }
 
   @SuppressWarnings("unchecked")
@@ -120,7 +124,8 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
     return resultSplits;
   }
 
-  private static class RecordReaderWrapper<K, V> extends RecordReader<K, V> {
+  private static class RecordReaderWrapper<K, V>
+      extends RecordReader<K, V> implements MapredInputFormatCompatible<K, V> {
 
 
     private org.apache.hadoop.mapred.RecordReader<K, V> realReader;
@@ -232,6 +237,11 @@ public class MapReduceInputFormatWrapper<K, V> extends org.apache.hadoop.mapredu
       return realReader.next(keyObj, valueObj);
     }
 
+    @Override
+    public void setKeyValue(K key, V value) {
+      keyObj = key;
+      valueObj = value;
+    }
   }
 
   private static class InputSplitWrapper extends InputSplit implements Writable {
