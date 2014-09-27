@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import com.twitter.data.proto.Misc.ColumnarMetadata;
 
 public class RCFileUtil {
 
@@ -70,8 +69,7 @@ public class RCFileUtil {
       throw new IOException("could not find ColumnarMetadata in " + rcfile);
     }
 
-    return Protobufs.mergeFromText(ColumnarMetadata.newBuilder(),
-                                   metadata.get(metadataKey)).build();
+    return ColumnarMetadata.parseFrom(metadata.get(metadataKey).getBytes());
   }
 
   /**
@@ -139,7 +137,7 @@ public class RCFileUtil {
         "reading %d%s out of %d stored columns for %d required columns",
         columnsToRead.size(),
         (unknownFields.length() > 0 ? " (including unknowns column)" : ""),
-        storedInfo.getFieldIdCount(),
+        storedInfo.getFieldIdList().size(),
         requiredFieldIds.size()));
 
     return columnsToRead;

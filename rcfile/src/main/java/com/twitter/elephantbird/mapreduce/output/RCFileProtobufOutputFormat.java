@@ -3,6 +3,8 @@ package com.twitter.elephantbird.mapreduce.output;
 import java.io.IOException;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+import com.twitter.elephantbird.util.ColumnarMetadata;
 import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.ByteStream;
@@ -17,7 +19,6 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.Message;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message.Builder;
-import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.mapreduce.io.ProtobufWritable;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
@@ -71,21 +72,22 @@ public class RCFileProtobufOutputFormat extends RCFileOutputFormat {
   }
 
   protected ColumnarMetadata makeColumnarMetadata() {
-    ColumnarMetadata.Builder metadata = ColumnarMetadata.newBuilder();
 
-    metadata.setClassname(typeRef.getRawClass().getName());
+    List<Integer> fieldIds = Lists.newArrayList();
+
     for(FieldDescriptor fd : msgFields) {
-      metadata.addFieldId(fd.getNumber());
+      fieldIds.add(fd.getNumber());
     }
-    metadata.addFieldId(-1); // -1 for unknown fields
+    fieldIds.add(-1); // -1 for unknown fields
 
-    return metadata.build();
+    return ColumnarMetadata.newInstance(typeRef.getRawClass().getName(), fieldIds);
   }
 
   private class ProtobufWriter extends RCFileOutputFormat.Writer {
 
     ProtobufWriter(TaskAttemptContext job) throws IOException {
-      super(RCFileProtobufOutputFormat.this, job, Protobufs.toText(makeColumnarMetadata()));
+      super(RCFileProtobufOutputFormat.this, job,
+            Protobufs.toText(makeColumnarMetadata().getMessage()));
     }
 
     @Override
