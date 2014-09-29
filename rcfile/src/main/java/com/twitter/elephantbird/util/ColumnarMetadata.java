@@ -21,10 +21,8 @@ import com.google.protobuf.Message;
  *   optional int32    nesting     = 3 [default = 0];  // when nesting is used
  * };
  * </pre>
- *
  */
 public class ColumnarMetadata {
-
 
   private final Message message;
 
