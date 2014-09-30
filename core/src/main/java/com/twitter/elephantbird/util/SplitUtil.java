@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.util;
 
 import com.twitter.elephantbird.mapreduce.input.combine.CompositeInputSplit;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -30,13 +31,24 @@ import org.slf4j.LoggerFactory;
 public class SplitUtil {
   private static final Logger LOG = LoggerFactory.getLogger(SplitUtil.class);
 
-  public static final  String COMBINE_SPLIT_SIZE = "elephantbird.combine.split.size";
+  public static final String COMBINE_SPLIT_SIZE = "elephantbird.combine.split.size";
+  public static final String CFIF_MAX_SPLIT_SIZE_KEY = "mapreduce.input.fileinputformat.split.maxsize";
 
   private static long getCombinedSplitSize(Configuration conf) throws IOException {
+    // Try for EB specific configuration
     long splitSize = conf.getLong(COMBINE_SPLIT_SIZE, -1);
-    if (splitSize == -1) {
-      splitSize = FileSystem.get(conf).getDefaultBlockSize(new Path("."));
+    if (splitSize != -1) {
+      return splitSize;
     }
+    
+    // Try for CombineFileInputFormat specific configuration
+    splitSize = conf.getLong(CFIF_MAX_SPLIT_SIZE_KEY, -1);
+    if (splitSize != -1) {
+      return splitSize;
+    }
+    
+    // Try for a block size
+    splitSize = FileSystem.get(conf).getDefaultBlockSize(new Path("."));
     return splitSize;
   }
 
