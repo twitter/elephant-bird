@@ -50,6 +50,12 @@ public class DelegateCombineFileInputFormat<K, V> extends FileInputFormat<K, V> 
     long cfifMaxSplitSize = conf.getLong(
         CFIF_MAX_SPLIT_SIZE_KEY, CFIF_MAX_SPLIT_SIZE_DEFAULT);
     if (cfifMaxSplitSize != CFIF_MAX_SPLIT_SIZE_DEFAULT) {
+      long splitUtilSplitSize = conf.getLong(SplitUtil.COMBINE_SPLIT_SIZE, -1);
+      if (splitUtilSplitSize != -1) {
+        LOG.warn("Overwriting configuration value " + splitUtilSplitSize + " at key "
+            + SplitUtil.COMBINE_SPLIT_SIZE + " with value " + cfifMaxSplitSize
+            + " from key " + CFIF_MAX_SPLIT_SIZE_KEY);
+      }
       conf.setLong(SplitUtil.COMBINE_SPLIT_SIZE, cfifMaxSplitSize);
     }
   }
