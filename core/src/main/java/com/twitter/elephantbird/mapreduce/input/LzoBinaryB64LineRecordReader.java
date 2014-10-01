@@ -139,8 +139,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
       Throwable decodeException = null;
 
       try {
-        byte[] lineBytes = Arrays.copyOf(line_.getBytes(), line_.getLength());
-        protoValue = converter_.fromBytes(Base64Codec.decodeFast(lineBytes));
+        protoValue = converter_.fromBytes(Base64Codec.decodeFast(line_.getBytes(), line_.getLength()));
       } catch(Throwable t1) {
         decodeException = t1;
       }

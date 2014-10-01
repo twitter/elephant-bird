@@ -225,10 +225,9 @@ public class Base64Codec
    * @param sArr The source array. Length 0 will return an empty array. <code>null</code> will throw an exception.
    * @return The decoded array of bytes. May be of length 0.
    */
-  public final static byte[] decodeFast(byte[] sArr)
+  public final static byte[] decodeFast(byte[] sArr, int sLen)
   {
     // Check special case
-    int sLen = sArr.length;
     if (sLen == 0)
       return new byte[0];
 
