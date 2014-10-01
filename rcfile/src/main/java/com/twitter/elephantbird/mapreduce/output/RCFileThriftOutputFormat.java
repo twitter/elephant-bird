@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Lists;
 import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.ByteStream;
@@ -25,10 +26,10 @@ import org.apache.thrift.transport.TMemoryInputTransport;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.twitter.data.proto.Misc.ColumnarMetadata;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.thrift.TStructDescriptor;
 import com.twitter.elephantbird.thrift.TStructDescriptor.Field;
+import com.twitter.elephantbird.util.ColumnarMetadata;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.ThriftUtils;
 import com.twitter.elephantbird.util.TypeRef;
@@ -79,15 +80,14 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
   }
 
   protected ColumnarMetadata makeColumnarMetadata() {
-    ColumnarMetadata.Builder metadata = ColumnarMetadata.newBuilder();
 
-    metadata.setClassname(typeRef.getRawClass().getName());
+    List<Integer> fieldIds = Lists.newArrayList();
     for(Field fd : tDesc.getFields()) {
-      metadata.addFieldId(fd.getFieldId());
+      fieldIds.add((int)fd.getFieldId());
     }
-    metadata.addFieldId(-1); // -1 for unknown fields
+    fieldIds.add(-1); // -1 for unknown fields
 
-    return metadata.build();
+    return ColumnarMetadata.newInstance(typeRef.getRawClass().getName(), fieldIds);
   }
 
   private class ThriftWriter extends RCFileOutputFormat.Writer {
@@ -102,7 +102,8 @@ public class RCFileThriftOutputFormat extends RCFileOutputFormat {
     private TBinaryProtocol skipProto;
 
     ThriftWriter(TaskAttemptContext job) throws IOException {
-      super(RCFileThriftOutputFormat.this, job, Protobufs.toText(makeColumnarMetadata()));
+      super(RCFileThriftOutputFormat.this, job,
+          Protobufs.toText(makeColumnarMetadata().getMessage()));
     }
 
     @Override @SuppressWarnings("unchecked")
