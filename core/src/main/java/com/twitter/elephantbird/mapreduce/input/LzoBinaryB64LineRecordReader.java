@@ -12,7 +12,6 @@ import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -40,7 +39,6 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
   private TypeRef<M> typeRef_;
   private int maxLineLen = Integer.MAX_VALUE;
 
-  private final Base64 base64_ = Codecs.createStandardBase64();
   private final BinaryConverter<M> converter_;
 
   private Counter linesReadCounter;
@@ -142,9 +140,9 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
 
       try {
         byte[] lineBytes = Arrays.copyOf(line_.getBytes(), line_.getLength());
-        protoValue = converter_.fromBytes(base64_.decode(lineBytes));
-      } catch(Throwable t) {
-        decodeException = t;
+        protoValue = converter_.fromBytes(Base64Codec.decodeFast(lineBytes));
+      } catch(Throwable t1) {
+        decodeException = t1;
       }
 
       if (protoValue == null) {
