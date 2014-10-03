@@ -18,6 +18,7 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Message;
 
 import org.apache.thrift.TBase;
+import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.protocol.TType;
 
 import org.slf4j.Logger;
@@ -53,6 +54,8 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
 
   private boolean supportNestedObjects = false;
   private boolean ignoreUnsupportedTypes = false;
+
+  private final Descriptors.FileDescriptor fileDescriptor;
 
   // a map of descriptors keyed to their typeName
   private Map<String, DescriptorProtos.DescriptorProto.Builder> descriptorBuilderMap
@@ -136,6 +139,8 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
       Descriptors.Descriptor msgDescriptor = dynamicDescriptor.findMessageTypeByName(type);
       messageBuilderMap.put(type, DynamicMessage.newBuilder(msgDescriptor));
     }
+
+    fileDescriptor = dynamicDescriptor;
   }
 
   /**
@@ -143,7 +148,7 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
    * @param thriftClass The thrift class for which the builder is desired.
    * @return a protobuf message builder
    */
-  public Message.Builder getBuilder(Class<? extends TBase> thriftClass) {
+  public Message.Builder getBuilder(Class<? extends TBase<?, ?>> thriftClass) {
     return messageBuilderMap.get(protoMessageType(thriftClass)).clone();
   }
 
@@ -343,8 +348,10 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
    * @param thriftObj thrift object
    * @return protobuf protobuf message
    */
+  @SuppressWarnings("unchecked")
   public Message convert(T thriftObj) {
-    return doConvert(Preconditions.checkNotNull(thriftObj, "Can not convert a null object"));
+    return doConvert((TBase<?, ?>)
+                     Preconditions.checkNotNull(thriftObj, "Can not convert a null object"));
   }
 
   /**
@@ -352,20 +359,19 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
    * @param thriftObj
    */
   @SuppressWarnings("unchecked")
-  public Message doConvert(TBase thriftObj) {
+  public <F extends TFieldIdEnum> Message doConvert(TBase<?, F> thriftObj) {
     if (thriftObj == null) { return null; }
 
-    Preconditions.checkState(hasBuilder(thriftObj.getClass()),
-      "No message builder found for thrift class: " + thriftObj.getClass().getCanonicalName());
+    Class<TBase<?, F>> clazz = (Class<TBase<?, F>>) thriftObj.getClass();
+    checkState(clazz);
 
-    Message.Builder builder = getBuilder(thriftObj.getClass());
+    Message.Builder builder = getBuilder(clazz);
 
-    TStructDescriptor fieldDesc = TStructDescriptor.getInstance(
-        (Class<? extends TBase<?, ?>>) thriftObj.getClass());
+    TStructDescriptor fieldDesc = TStructDescriptor.getInstance(clazz);
     int fieldId = 0;
     for (Field tField : fieldDesc.getFields()) {
       // don't want to carry over default values from unset fields
-      if (!thriftObj.isSet(tField.getFieldIdEnum())
+      if (!thriftObj.isSet((F) tField.getFieldIdEnum())
           || (!supportNestedObjects && hasNestedObject(tField))) {
         fieldId++;
         continue;
@@ -373,7 +379,7 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
 
       // recurse into the object if it's a struct, otherwise just add the field
       if (supportNestedObjects && tField.getType() == TType.STRUCT) {
-        TBase fieldValue = (TBase) fieldDesc.getFieldValue(fieldId++, thriftObj);
+        TBase<?, ?> fieldValue = (TBase<?, ?>) fieldDesc.getFieldValue(fieldId++, thriftObj);
         Message message = doConvert(fieldValue);
         if (message != null) {
           FieldDescriptor protoFieldDesc = builder.getDescriptorForType().findFieldByName(
@@ -387,7 +393,12 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
     return builder.build();
   }
 
-  private boolean hasBuilder(Class<? extends TBase> thriftClass) {
+  private void checkState(Class<? extends TBase<?, ?>> thriftClass) {
+    Preconditions.checkState(hasBuilder(thriftClass),
+      "No message builder found for thrift class: " + thriftClass.getCanonicalName());
+  }
+
+  private boolean hasBuilder(Class<? extends TBase<?, ?>> thriftClass) {
     return messageBuilderMap.get(protoMessageType(thriftClass)) != null;
   }
 
@@ -418,7 +429,8 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
       || (tField.isSet() && tField.getSetElemField().isStruct());
   }
 
-  private int convertField(TBase thriftObj, Message.Builder builder,
+  @SuppressWarnings("unchecked")
+  private int convertField(TBase<?, ?> thriftObj, Message.Builder builder,
                            TStructDescriptor fieldDesc, int fieldId, Field tField) {
     int tmpFieldId = fieldId;
     FieldDescriptor protoFieldDesc = builder.getDescriptorForType().findFieldByName(
@@ -446,8 +458,8 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
       if (isStructContainer(tField)) {
         List<Message> convertedStructs = Lists.newLinkedList();
 
-        Iterable<TBase> structIterator = (Iterable<TBase>) fieldValue;
-        for (TBase struct : structIterator) {
+        Iterable<TBase<?, ?>> structIterator = (Iterable<TBase<?, ?>>) fieldValue;
+        for (TBase<?, ?> struct : structIterator) {
           convertedStructs.add(doConvert(struct));
         }
 
@@ -504,14 +516,14 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
 
     Object convertedKey;
     if (isKeyStruct) {
-      convertedKey = doConvert((TBase) mapKey);
+      convertedKey = doConvert((TBase<?, ?>) mapKey);
     } else {
       convertedKey = sanitizeRawValue(mapKey, field.getMapKeyField());
     }
 
     Object convertedValue;
     if (isValueStruct) {
-      convertedValue = doConvert((TBase) mapValue);
+      convertedValue = doConvert((TBase<?, ?>) mapValue);
     } else {
       convertedValue = sanitizeRawValue(mapValue, field.getMapValueField());
     }
@@ -570,7 +582,7 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
 
   // name the proto message type after the thrift class name. Dots are not permitted in protobuf
   // names
-  private String protoMessageType(Class<? extends TBase> thriftClass) {
+  private String protoMessageType(Class<? extends TBase<?, ?>> thriftClass) {
     return thriftClass.getCanonicalName().replace(".", "_");
   }
 
@@ -580,5 +592,19 @@ public class ThriftToDynamicProto<T extends TBase<?, ?>> {
    */
   private String mapProtoMessageType(TStructDescriptor descriptor, Field field) {
     return String.format("%s_%s", protoMessageType(descriptor.getThriftClass()), field.getName());
+  }
+
+  // Given the class name, finds the corresponding Descriptor and return the appropriate
+  // FieldDescriptor
+  public FieldDescriptor getFieldDescriptor(Class<? extends TBase<?, ?>> thriftClass,
+                                            String fieldName) {
+    checkState(thriftClass);
+    Descriptors.Descriptor descriptor = getBuilder(thriftClass).getDescriptorForType();
+    return descriptor.findFieldByName(fieldName);
+  }
+
+  // Picks off the FileDescriptor for this instance
+  public Descriptors.FileDescriptor getFileDescriptor() {
+    return fileDescriptor;
   }
 }

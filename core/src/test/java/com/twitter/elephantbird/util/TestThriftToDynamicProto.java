@@ -9,6 +9,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.Message;
 
 import com.twitter.elephantbird.thrift.test.AddressBook;
@@ -21,13 +23,19 @@ import com.twitter.elephantbird.thrift.test.PrimitiveListsStruct;
 import com.twitter.elephantbird.thrift.test.PrimitiveSetsStruct;
 import com.twitter.elephantbird.util.Protobufs;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestThriftToDynamicProto {
+
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
+
   private PhoneNumber genPhoneNumber(String number, PhoneType type) {
     PhoneNumber phoneNumber = new PhoneNumber(number);
     phoneNumber.setType(type);
@@ -233,5 +241,37 @@ public class TestThriftToDynamicProto {
     MapStruct mapStruct = genMapStruct();
     Message msg = thriftToProto.convert(mapStruct);
     assertTrue(!Protobufs.hasFieldByName(msg, "entries"));
+  }
+
+  @Test
+  public void testBadThriftTypeForGetFieldDescriptor() throws DescriptorValidationException {
+    ThriftToDynamicProto<PhoneNumber> converter = new ThriftToDynamicProto<PhoneNumber>(PhoneNumber.class);
+
+    exception.expect(IllegalStateException.class);
+    converter.getFieldDescriptor(Person.class, "some_field");
+  }
+
+  @Test
+  public void testGetFieldTypeDescriptor() throws DescriptorValidationException {
+    ThriftToDynamicProto<Person> converter = new ThriftToDynamicProto<Person>(Person.class);
+    Person person = genPerson();
+    Message msg = converter.convert(person);
+
+    FieldDescriptor expectedFd = msg.getDescriptorForType().findFieldByName("email");
+    FieldDescriptor actualFd = converter.getFieldDescriptor(Person.class, "email");
+
+    assertEquals(expectedFd, actualFd);
+  }
+
+  @Test
+  public void testGetFileDescriptor() throws DescriptorValidationException {
+    ThriftToDynamicProto<Person> converter = new ThriftToDynamicProto<Person>(Person.class);
+    Person person = genPerson();
+    Message msg = converter.convert(person);
+
+    FileDescriptor expectedFd = msg.getDescriptorForType().getFile();
+    FileDescriptor actualFd = converter.getFileDescriptor();
+
+    assertEquals(expectedFd, actualFd);
   }
 }
