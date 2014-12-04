@@ -9,6 +9,7 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.JavaType;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Message;
 
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -30,6 +31,21 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     public ProtobufStructField(FieldDescriptor fieldDescriptor) {
       this.fieldDescriptor = fieldDescriptor;
       oi = this.createOIForField();
+      comment = fieldDescriptor.getFullName();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof ProtobufStructField) {
+        ProtobufStructField other = (ProtobufStructField)obj;
+        return fieldDescriptor.equals(other.fieldDescriptor);
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return fieldDescriptor.hashCode();
     }
 
     @Override
@@ -109,6 +125,21 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
   }
 
   @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof ProtobufStructObjectInspector) {
+      ProtobufStructObjectInspector other = (ProtobufStructObjectInspector)obj;
+      return this.descriptor.equals(other.descriptor) &&
+              this.structFields.equals(other.structFields);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return descriptor.hashCode();
+  }
+
+  @Override
   public Category getCategory() {
     return Category.STRUCT;
   }
@@ -132,15 +163,32 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
 
   @Override
   public Object create() {
-    return descriptor.toProto().toBuilder().build();
+    return DynamicMessage.newBuilder(descriptor);
   }
 
   @Override
   public Object setStructFieldData(Object data, StructField field, Object fieldValue) {
-    return ((Message) data)
-        .toBuilder()
-        .setField(descriptor.findFieldByName(field.getFieldName()), fieldValue)
-        .build();
+    DynamicMessage.Builder builder = (DynamicMessage.Builder)data;
+    ProtobufStructField psf = (ProtobufStructField)field;
+    FieldDescriptor fd = psf.getFieldDescriptor();
+    if (fd.isRepeated()) {
+      return builder.setField(fd, fieldValue);
+    }
+    switch (fd.getType()) {
+      case ENUM:
+        builder.setField(fd, fd.getEnumType().findValueByName((String) fieldValue));
+        break;
+      case BYTES:
+        builder.setField(fd, ByteString.copyFrom((byte[])fieldValue));
+        break;
+      case MESSAGE:
+        builder.setField(fd, ((Message.Builder)fieldValue).build());
+        break;
+      default:
+        builder.setField(fd, fieldValue);
+        break;
+    }
+    return builder;
   }
 
   @Override
@@ -153,15 +201,23 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     if (data == null) {
       return null;
     }
-    Message m = (Message) data;
+    Message.Builder builder = (Message.Builder) data;
     ProtobufStructField psf = (ProtobufStructField) structField;
     FieldDescriptor fieldDescriptor = psf.getFieldDescriptor();
-    Object result = m.getField(fieldDescriptor);
+    Object result = builder.getField(fieldDescriptor);
+
+    if (fieldDescriptor.isRepeated()) {
+      return result;
+    }
+
     if (fieldDescriptor.getType() == Type.ENUM) {
       return ((EnumValueDescriptor)result).getName();
     }
     if (fieldDescriptor.getType() == Type.BYTES && (result instanceof ByteString)) {
         return ((ByteString)result).toByteArray();
+    }
+    if (fieldDescriptor.getType() == Type.MESSAGE) {
+      return ((Message)result).toBuilder();
     }
     return result;
   }
@@ -177,9 +233,8 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
       return null;
     }
     List<Object> result = Lists.newArrayList();
-    Message m = (Message) data;
-    for (FieldDescriptor fd : descriptor.getFields()) {
-      result.add(m.getField(fd));
+    for (StructField field : structFields) {
+      result.add(getStructFieldData(data, field));
     }
     return result;
   }

@@ -1,5 +1,6 @@
 package com.twitter.elephantbird.hive.serde;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -61,7 +62,7 @@ public class ProtobufDeserializerTest {
   @Test
   public final void testDeserializer() throws SerDeException {
     BytesWritable serialized = new BytesWritable(test_ab.toByteArray());
-    AddressBook ab2 = (AddressBook) deserializer.deserialize(serialized);
+    AddressBook ab2 = ((AddressBook.Builder) deserializer.deserialize(serialized)).build();
     assertTrue(test_ab.equals(ab2));
   }
 
@@ -71,12 +72,13 @@ public class ProtobufDeserializerTest {
     assertEquals(oi.getCategory(), Category.STRUCT);
 
     ProtobufStructObjectInspector protobufOI = (ProtobufStructObjectInspector) oi;
-    List<Object> readData = protobufOI.getStructFieldsDataAsList(test_ab);
+
+    List<Object> readData = protobufOI.getStructFieldsDataAsList(test_ab.toBuilder());
 
     assertEquals(readData.size(), 2);
     @SuppressWarnings("unchecked")
-    ByteString byteStr = (ByteString)readData.get(1);
-    assertEquals(byteStr, ByteString.copyFrom(new byte[] {16,32,64,(byte) 128}));
+    byte[] byteStr = (byte[])readData.get(1);
+    assertArrayEquals(new byte[] {16,32,64,(byte) 128}, byteStr);
     List<Person> persons = (List<Person>) readData.get(0);
     assertEquals(persons.size(), 3);
     assertEquals(persons.get(0).getPhoneCount(), 3);
@@ -101,7 +103,7 @@ public class ProtobufDeserializerTest {
   private void checkFields(List<FieldDescriptor> fields, Message message) {
     for (FieldDescriptor fieldDescriptor : fields) {
       ProtobufStructField psf = new ProtobufStructField(fieldDescriptor);
-      Object data = protobufOI.getStructFieldData(message, psf);
+      Object data = protobufOI.getStructFieldData(message.toBuilder(), psf);
       Object target = message.getField(fieldDescriptor);
       if (fieldDescriptor.getType() == Type.ENUM) {
         assertEquals(String.class, data.getClass());

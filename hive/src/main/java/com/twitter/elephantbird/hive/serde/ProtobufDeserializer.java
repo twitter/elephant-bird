@@ -1,8 +1,8 @@
 package com.twitter.elephantbird.hive.serde;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Descriptors.Descriptor;
-import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.util.Protobufs;
 
 import org.apache.hadoop.conf.Configuration;
@@ -31,7 +31,7 @@ import java.util.Properties;
  */
 public class ProtobufDeserializer implements Deserializer {
 
-  private ProtobufConverter<? extends Message> protobufConverter = null;
+  private Message.Builder msgBuilder;
   private ObjectInspector objectInspector;
 
   @Override
@@ -42,8 +42,7 @@ public class ProtobufDeserializer implements Deserializer {
 
       Class<? extends Message> protobufClass = job.getClassByName(protoClassName)
           .asSubclass(Message.class);
-      protobufConverter = ProtobufConverter.newInstance(protobufClass);
-
+      msgBuilder = Protobufs.getMessageBuilder(protobufClass);
       Descriptor descriptor = Protobufs.getMessageDescriptor(protobufClass);
       objectInspector = new ProtobufStructObjectInspector(descriptor);
     } catch (Exception e) {
@@ -54,7 +53,11 @@ public class ProtobufDeserializer implements Deserializer {
   @Override
   public Object deserialize(Writable blob) throws SerDeException {
     BytesWritable bytes = (BytesWritable) blob;
-    return protobufConverter.fromBytes(bytes.getBytes(), 0, bytes.getLength());
+    try {
+      return msgBuilder.clear().mergeFrom(bytes.getBytes(), 0, bytes.getLength());
+    } catch (InvalidProtocolBufferException e) {
+      throw new SerDeException(e);
+    }
   }
 
   @Override
