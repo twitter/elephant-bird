@@ -201,7 +201,15 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     if (data == null) {
       return null;
     }
-    Message.Builder builder = (Message.Builder) data;
+    Message.Builder builder;
+    if (data instanceof Message.Builder) {
+      builder = (Message.Builder)data;
+    } else if (data instanceof Message) {
+      builder = ((Message)data).toBuilder();
+    } else {
+      throw new RuntimeException("Type Message or Message.Builder expected: " +
+              data.getClass().getCanonicalName());
+    }
     ProtobufStructField psf = (ProtobufStructField) structField;
     FieldDescriptor fieldDescriptor = psf.getFieldDescriptor();
     Object result = builder.getField(fieldDescriptor);
