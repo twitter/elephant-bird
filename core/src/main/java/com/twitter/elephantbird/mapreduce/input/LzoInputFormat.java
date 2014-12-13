@@ -66,7 +66,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       }
     }
 
-    LOG.debug("Total LZO input paths to process: " + results.size() ".");
+    LOG.debug("Total LZO input paths to process: " + results.size() + ".");
     return results;
   }
 
