@@ -93,6 +93,9 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
     // No need to skip to the sync point here; the block reader will do it for us.
     LOG.debug("LzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
     updatePosition = !atFirstRecord;
+    // except for the first split, skip a protobuf block if it starts exactly at the split boundary
+    // because such a block would be read by the previous split
+    reader_.parseNextBlock(!atFirstRecord);
   }
 
   @Override
