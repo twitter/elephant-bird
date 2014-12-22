@@ -127,7 +127,7 @@ public abstract class BinaryBlockReader<M> {
   public List<ByteString> parseNextBlock(boolean skipIfStartingOnBoundary) throws IOException {
     LOG.debug("BlockReader: none left to read, skipping to sync point");
     long skipped = skipToNextSyncPoint();
-    if (skipped < -1) {
+    if (skipped <= -1) {
       LOG.debug("BlockReader: SYNC point eof");
       // EOF if there are no more sync markers.
       return null;
