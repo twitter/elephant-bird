@@ -133,10 +133,6 @@ public abstract class BinaryBlockReader<M> {
       return null;
     }
 
-    if (skipIfStartingOnBoundary && skipped == Protobufs.KNOWN_GOOD_POSITION_MARKER.length) {
-      return parseNextBlock(false);
-    }
-
     int blockSize = readInt();
     LOG.debug("BlockReader: found sync point, next block has size " + blockSize);
     if (blockSize < 0) {
@@ -147,6 +143,12 @@ public abstract class BinaryBlockReader<M> {
 
     byte[] byteArray = new byte[blockSize];
     IOUtils.readFully(in_, byteArray, 0, blockSize);
+
+    if (skipIfStartingOnBoundary && skipped == Protobufs.KNOWN_GOOD_POSITION_MARKER.length) {
+      // skip the current current block
+      return parseNextBlock(false);
+    }
+
     SerializedBlock block = SerializedBlock.parseFrom(byteArray);
 
     curBlobs_ = block.getProtoBlobs();
