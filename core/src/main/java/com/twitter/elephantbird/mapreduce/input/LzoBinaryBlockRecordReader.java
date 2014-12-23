@@ -94,7 +94,8 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
     LOG.debug("LzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
     updatePosition = !atFirstRecord;
     // except for the first split, skip a protobuf block if it starts exactly at the split boundary
-    // because such a block would be read by the previous split
+    // because such a block would be read by the previous split (note comment about 'pos_ > end_'
+    // in nextKeyValue() below)
     reader_.parseNextBlock(!atFirstRecord);
   }
 
@@ -122,6 +123,12 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
     while (true) { // loop to skip over bad records
       if (pos_ > end_) {
         reader_.markNoMoreNewBlocks();
+        // Why not pos_ >= end_, stop when when we just reached the end?
+        // we don't know if we have read all the bytes uncompressed in the current lzo block,
+        // only way to make sure that we have read all of the split is to read till the
+        // first record that has at least one byte in the next split.
+        // As a consequence of this, next split reader skips at least one byte
+        // (i.e. skips either partial or full record at the beginning).
       }
 
       value_.set(null);
