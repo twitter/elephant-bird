@@ -119,11 +119,10 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
   public boolean nextKeyValue() throws IOException, InterruptedException {
     // If we are past the end of the file split, tell the reader not to read any more new blocks.
     // Then continue reading until the last of the reader's already-parsed values are used up.
-    // The next split will start at the next sync point and no records will be missed.
     while (true) { // loop to skip over bad records
       if (pos_ > end_) {
         reader_.markNoMoreNewBlocks();
-        // Why not pos_ >= end_, stop when when we just reached the end?
+        // Why not pos_ >= end_, stop when we just reach the end?
         // we don't know if we have read all the bytes uncompressed in the current lzo block,
         // only way to make sure that we have read all of the split is to read till the
         // first record that has at least one byte in the next split.
