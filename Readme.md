@@ -1,4 +1,4 @@
-# Elephant Bird [![Build Status](https://secure.travis-ci.org/kevinweil/elephant-bird.png)](http://travis-ci.org/kevinweil/elephant-bird)
+# Elephant Bird [![Build Status](https://secure.travis-ci.org/twitter/elephant-bird.png)](http://travis-ci.org/twitter/elephant-bird)
 
 ## About
 
