@@ -81,15 +81,14 @@ public class TestBinaryLoaderWithManySplits {
     pigServer.getPigContext().getProperties().setProperty(
         "mapred.max.split.size", "1024");
 
-        // set low block size
     pigServer.registerQuery(String.format(
         "A = load '%s' using %s as (bytes);\n",
         inputDir.toURI().toString(),
         LzoRawBytesLoader.class.getName()));
 
     Iterator<Tuple> rows = pigServer.openIterator("A");
-    // verify:
 
+    // verify:
     // read all the records and sort them since the splits are not processed in order
     ArrayList<Byte> actual = new ArrayList(expectedRecords.length);
     while (rows.hasNext()) {
