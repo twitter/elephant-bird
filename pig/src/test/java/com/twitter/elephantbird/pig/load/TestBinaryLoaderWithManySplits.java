@@ -60,7 +60,7 @@ public class TestBinaryLoaderWithManySplits {
     // use just one record for each protobuf block so that we have lots of records at
     // lzo level
     BinaryBlockWriter<byte[]> blk_writer = new BinaryBlockWriter<byte[]>(
-        createLzoOut("1-block.lzo", conf), byte[].class, new IdentityBinaryConverter(), 1) {};
+        createLzoOut("many-blocks.lzo", conf), byte[].class, new IdentityBinaryConverter(), 1) {};
 
     Random rand = new Random(20150107L);
     for (int i=0; i<NUM_RECORDS; i++) {
