@@ -54,6 +54,7 @@ public class LzoUtils {
     LzopCodec codec = new LzopCodec();
     codec.setConf(conf);
 
+    final Configuration config = conf;
     final Path file = path;
     final FileSystem fs = file.getFileSystem(conf);
     FSDataOutputStream fileOut = fs.create(file, false);
@@ -80,19 +81,91 @@ public class LzoUtils {
       // override close() to handle renaming index file.
 
       public void close() throws IOException {
-        super.close();
+        try {
+          super.close();
 
-        if ( isIndexed ) {
-          // rename or remove the index file based on file size.
-
-          Path tmpPath = file.suffix(LzoIndex.LZO_TMP_INDEX_SUFFIX);
-          FileStatus stat = fs.getFileStatus(file);
-          if (stat.getLen() <= stat.getBlockSize()) {
-            fs.delete(tmpPath, false);
-          } else {
-            fs.rename(tmpPath, file.suffix(LzoIndex.LZO_INDEX_SUFFIX));
+          if ( isIndexed ) {
+            // rename or remove the index file based on file size.
+            Path tmpPath = getIndexFilePath();
+            FileStatus stat = getFileStatus(file, config);
+            if (stat.getLen() <= stat.getBlockSize()) {
+              fs.delete(tmpPath, false);
+            } else {
+              fs.rename(tmpPath, file.suffix(LzoIndex.LZO_INDEX_SUFFIX));
+            }
           }
+        } catch(IOException e) {
+          // cleanup any output, as S3 file system sometimes fails with
+          // partial output saved, killing downstream retries of the task
+          deleteOutput();
+          throw e;
         }
+      }
+      
+      private Path getIndexFilePath() {
+          return file.suffix(LzoIndex.LZO_TMP_INDEX_SUFFIX);
+      }
+      
+      /**
+       * Delete the output file and index file, if they exist.
+       */
+      private void deleteOutput() {
+          // delete main data output file, if it exists
+          try {
+            // try to get the file with retries to allow
+            // for S3 eventual consistency.
+            // will throw IOException if cannot reach file
+            getFileStatus(file, config);
+            fs.delete(file, false);
+          } catch(IOException e) {
+            LOG.warn("Unable to delete file" + file + ", continuing.", e);
+          }
+          
+          if (isIndexed) {
+            Path indexFilePath = getIndexFilePath();
+            try {
+                // try to get the file with retries to allow
+                // for eventual consistency
+                getFileStatus(indexFilePath, config);
+                fs.delete(indexFilePath, false);
+              } catch(IOException e) {
+                LOG.warn("Unable to delete file" + indexFilePath + ", continuing.", e);
+              }
+          }
+      }
+      
+      /**
+       * Get the status of a file with retries in case of errors.  This is useful
+       * for the S3 file system, where eventual consistency can cause files to not appear
+       * for a few seconds, which would otherwise cause the task to fail, and then future
+       * tasks to fail when the file already exists. 
+       * @param conf
+       * @return
+     * @throws IOException 
+       */
+      private FileStatus getFileStatus(Path filePath, Configuration conf) throws IOException {
+          int numRetriesRemaining = 
+                  conf.getInt("elephantbird.lzo.output.index.retries", 20);
+          int retrySleepMs = 
+                  conf.getInt("elephantbird.lzo.output.index.retries.sleep", 1000);
+          do {
+              try {
+                  return fs.getFileStatus(filePath);
+              } catch (IOException e) {
+                  if (numRetriesRemaining <= 0) {
+                      throw e;
+                  } else {
+                      LOG.warn("Exception trying to get status of path " + filePath + "-  Retrying.", e);
+                      numRetriesRemaining -= 1;
+                  }
+                  
+                  try {
+                    Thread.sleep(retrySleepMs);
+                } catch (InterruptedException e1) {
+                    throw new IOException(e1);
+                }
+              }
+          } while (true);
       }
     };
   }
