@@ -22,6 +22,9 @@ import com.hadoop.compression.lzo.LzopCodec;
 public class LzoUtils {
 
   public static final Logger LOG = LoggerFactory.getLogger(LzoUtils.class);
+  public static final String LZO_OUTPUT_INDEXABLE_MINSIZE =
+      "elephantbird.lzo.output.indexable.minsize";
+  public static final String LZO_OUTPUT_INDEX = "elephantbird.lzo.output.index";
 
   /**
    * A work-around to support environments with older versions of LzopCodec.
@@ -59,7 +62,7 @@ public class LzoUtils {
     FSDataOutputStream fileOut = fs.create(file, false);
 
     FSDataOutputStream indexOut = null;
-    if (conf.getBoolean("elephantbird.lzo.output.index", false)) {
+    if (conf.getBoolean(LZO_OUTPUT_INDEX, false)) {
       if ( isLzopIndexSupported ) {
         Path indexPath = file.suffix(LzoIndex.LZO_TMP_INDEX_SUFFIX);
         indexOut = fs.create(indexPath, false);
@@ -71,6 +74,8 @@ public class LzoUtils {
     }
 
     final boolean isIndexed = indexOut != null;
+    final long minIndexableSize = conf.getLong(LZO_OUTPUT_INDEXABLE_MINSIZE,
+        -1L);
 
     OutputStream out = ( isIndexed ?
         codec.createIndexedOutputStream(fileOut, indexOut) :
@@ -87,7 +92,11 @@ public class LzoUtils {
 
           Path tmpPath = file.suffix(LzoIndex.LZO_TMP_INDEX_SUFFIX);
           FileStatus stat = fs.getFileStatus(file);
-          if (stat.getLen() <= stat.getBlockSize()) {
+          final long minSizeToIndex = minIndexableSize < 0
+              ? stat.getBlockSize()
+              : minIndexableSize;
+
+          if (stat.getLen() <= minSizeToIndex) {
             fs.delete(tmpPath, false);
           } else {
             fs.rename(tmpPath, file.suffix(LzoIndex.LZO_INDEX_SUFFIX));
