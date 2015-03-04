@@ -24,11 +24,22 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
 
     private ObjectInspector oi = null;
     private String comment = null;
-    private FieldDescriptor fieldDescriptor;
+    private FieldDescriptor fieldDescriptor = null;
+    private Descriptor descriptor = null;
+    private Message.Builder builder = null;
 
     @SuppressWarnings("unchecked")
     public ProtobufStructField(FieldDescriptor fieldDescriptor) {
       this.fieldDescriptor = fieldDescriptor;
+      this.descriptor = null;
+      oi = this.createOIForField();
+    }
+
+    @SuppressWarnings("unchecked")
+    public ProtobufStructField(FieldDescriptor fd, Message.Builder builder) {
+      this.descriptor = fd.getMessageType();
+      this.fieldDescriptor = fd;
+      this.builder = builder;
       oi = this.createOIForField();
     }
 
@@ -75,19 +86,15 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     }
 
     private ObjectInspector createOIForField() {
-      JavaType fieldType = fieldDescriptor.getJavaType();
-      PrimitiveCategory category = getPrimitiveCategory(fieldType);
       ObjectInspector elementOI = null;
-      if (category != null) {
-        elementOI = PrimitiveObjectInspectorFactory.getPrimitiveJavaObjectInspector(category);
+      if (descriptor != null) {
+        // this field is a Message
+        elementOI = new ProtobufStructObjectInspector(descriptor, builder);
       } else {
-        switch (fieldType) {
-          case MESSAGE:
-            elementOI = new ProtobufStructObjectInspector(fieldDescriptor.getMessageType());
-            break;
-          default:
-            throw new RuntimeException("JavaType " + fieldType
-                + " from protobuf is not supported.");
+        JavaType fieldType = fieldDescriptor.getJavaType();
+        PrimitiveCategory category = getPrimitiveCategory(fieldType);
+        if (category != null) {
+          elementOI = PrimitiveObjectInspectorFactory.getPrimitiveJavaObjectInspector(category);
         }
       }
       if (fieldDescriptor.isRepeated()) {
@@ -99,12 +106,18 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
   }
 
   private Descriptor descriptor;
+  private Message.Builder builder;
   private List<StructField> structFields = Lists.newArrayList();
 
-  ProtobufStructObjectInspector(Descriptor descriptor) {
+  ProtobufStructObjectInspector(Descriptor descriptor, Message.Builder builder) {
     this.descriptor = descriptor;
+    this.builder = builder;
     for (FieldDescriptor fd : descriptor.getFields()) {
-      structFields.add(new ProtobufStructField(fd));
+      if (fd.getType() != Type.MESSAGE) {
+        structFields.add(new ProtobufStructField(fd));
+      } else {
+        structFields.add(new ProtobufStructField(fd, builder.newBuilderForField(fd)));
+      }
     }
   }
 
@@ -132,15 +145,22 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
 
   @Override
   public Object create() {
-    return descriptor.toProto().toBuilder().build();
+    return builder;
   }
 
   @Override
   public Object setStructFieldData(Object data, StructField field, Object fieldValue) {
-    return ((Message) data)
-        .toBuilder()
-        .setField(descriptor.findFieldByName(field.getFieldName()), fieldValue)
-        .build();
+    Message.Builder builder = (Message.Builder) data;
+    ProtobufStructField psf = (ProtobufStructField) field;
+    FieldDescriptor fieldDescriptor = psf.getFieldDescriptor();
+    if (fieldDescriptor.getType() != Type.MESSAGE) {
+      builder.setField(descriptor.findFieldByName(field.getFieldName()), fieldValue);
+    } else {
+      Message.Builder subFieldBuilder = (Message.Builder) fieldValue;
+      builder.setField(descriptor.findFieldByName(field.getFieldName()), subFieldBuilder.build());
+    }
+    return builder;
+
   }
 
   @Override
@@ -153,22 +173,35 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
     if (data == null) {
       return null;
     }
-    Message m = (Message) data;
+    Message.Builder m = ((Message.Builder) data);
     ProtobufStructField psf = (ProtobufStructField) structField;
     FieldDescriptor fieldDescriptor = psf.getFieldDescriptor();
+
     Object result = m.getField(fieldDescriptor);
     if (fieldDescriptor.getType() == Type.ENUM) {
-      return ((EnumValueDescriptor)result).getName();
+      return ((EnumValueDescriptor) result).getName();
     }
     if (fieldDescriptor.getType() == Type.BYTES && (result instanceof ByteString)) {
-        return ((ByteString)result).toByteArray();
+      return ((ByteString) result).toByteArray();
     }
+
+    if (fieldDescriptor.getType() == Type.MESSAGE && !fieldDescriptor.isRepeated()) {
+      result = ((Message) result).toBuilder();
+    }
+
     return result;
   }
 
   @Override
   public StructField getStructFieldRef(String fieldName) {
-    return new ProtobufStructField(descriptor.findFieldByName(fieldName));
+    FieldDescriptor fd = descriptor.findFieldByName(fieldName);
+    ProtobufStructField result = null;
+    if (fd.getType() != Type.MESSAGE) {
+      result = new ProtobufStructField(fd);
+    } else {
+      result = new ProtobufStructField(fd, builder.newBuilderForField(fd));
+    }
+    return result;
   }
 
   @Override
@@ -177,7 +210,7 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
       return null;
     }
     List<Object> result = Lists.newArrayList();
-    Message m = (Message) data;
+    Message.Builder m = (Message.Builder) data;
     for (FieldDescriptor fd : descriptor.getFields()) {
       result.add(m.getField(fd));
     }
