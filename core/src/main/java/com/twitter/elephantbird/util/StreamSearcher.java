@@ -37,14 +37,18 @@ public class StreamSearcher {
    * byte AFTER the pattern. Else, the stream is entirely consumed. The latter is because InputStream semantics make it difficult to have
    * another reasonable default, i.e. leave the stream unchanged.
    *
-   * @return true if found, false otherwise.
+   * @return bytes consumed if found, -1 otherwise.
    * @throws IOException
    */
-  public boolean search(InputStream stream) throws IOException {
-    int b = 0;
+  public long search(InputStream stream) throws IOException {
+    long bytesRead = 0;
+
+    int b;
     int j = 0;
 
     while ((b = stream.read()) != -1) {
+      bytesRead++;
+
       while (j >= 0 && (byte)b != pattern_[j]) {
         j = borders_[j];
       }
@@ -55,12 +59,12 @@ public class StreamSearcher {
       // which will automatically save our position in the InputStream at the point immediately
       // following the pattern match.
       if (j == pattern_.length) {
-        return true;
+        return bytesRead;
       }
     }
 
-    // No dice, return false.  Note that the stream is now completely consumed.
-    return false;
+    // No dice, Note that the stream is now completely consumed.
+    return -1;
   }
 
   /**

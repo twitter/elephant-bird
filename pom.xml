@@ -9,11 +9,11 @@
 
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
-  <version>4.6-SNAPSHOT</version>
+  <version>4.7-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Elephant Bird</name>
-  <url>https://github.com/kevinweil/elephant-bird</url>
+  <url>https://github.com/twitter/elephant-bird</url>
   <description>
     Elephant Bird is Twitter's open source library of LZO, Thrift, and/or
     Protocol Buffer-related Hadoop InputFormats, OutputFormats, Writables, Pig
@@ -63,13 +63,13 @@
 
   <issueManagement>
     <system>github</system>
-    <url>https://github.com/kevinweil/elephant-bird/issues</url>
+    <url>https://github.com/twitter/elephant-bird/issues</url>
   </issueManagement>
 
   <scm>
-    <connection>scm:git:https://github.com/kevinweil/elephant-bird.git</connection>
-    <developerConnection>scm:git:git@github.com:kevinweil/elephant-bird.git</developerConnection>
-    <url>https://github.com/kevinweil/elephant-bird</url>
+    <connection>scm:git:https://github.com/twitter/elephant-bird.git</connection>
+    <developerConnection>scm:git:git@github.com:twitter/elephant-bird.git</developerConnection>
+    <url>https://github.com/twitter/elephant-bird</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -567,7 +567,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.4.1</version>
+          <version>2.5.1</version>
           <configuration>
             <autoVersionSubmodules>true</autoVersionSubmodules>
             <!-- do not auto push release commits / tag -->

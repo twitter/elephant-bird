@@ -1,5 +1,37 @@
 # Elephant Bird #
 
+### Version 4.6 ###
+
+Issue 429 Avoid double reading first block in split in block-format (Raghu Angadi)
+
+Issue 421. Expose FileDescriptor and FieldDescriptor (Brian Ramos)
+
+Issue 423. Don't copy the array before handing it for base64 decode (Ian O'Connell)
+
+Issue 422. Pulls in the source of a BSD licenced base64 implementation that is 5x faster than the Apache one for our usage (Ian O'Connell)
+
+Issue 418. Use dynamic protobufs (Remove protobufs) (Raghu Angadi)
+
+Issue 417. A Cascading scheme for combining intermediate sequence files (Akihiro Matsukawa)
+
+Issue 414. Fix typo in docs (thrift, not thrist) (gstaubli)
+
+Issue 413. Trivial Javadocs for LuceneIndexInputFormat (Lewis John McGibbney)
+
+Issue 412. Adding support for Map, Sets and Lists to ThriftToDynamicProto (Brian Ramos)
+
+Issue 411. Fix NPE in CompositeRecordReader due to improper delegate initialization (Jonathan Coveney)
+
+Issue 409. Gzip objects before storing them in the job conf (Alex Levenson)
+
+Issue 407. Make dependencies expicit in Readme quickstart (fixes #406) (Lewis John McGibbney)
+
+Issue 405. Fix bug in CompositeRecordReader (Jonathan Coveney)
+
+Issue 403. Refactor CompositeRecordReader to only make a record reader when necessary (Jonathan Coveney)
+
+Issue 398. Add CombineFileInputFormat support (esp. for lzo) (Jonathan Coveney)
+
 ### Verision 4.4 and 4.5 ###
 
 Issue 395. Incorporate the name given to record writer into the record writer (Jonathan Coveney)

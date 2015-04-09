@@ -115,13 +115,19 @@ public abstract class BinaryBlockReader<M> {
     readNewBlocks_ = false;
   }
 
-  public boolean skipToNextSyncPoint() throws IOException {
+  public long skipToNextSyncPoint() throws IOException {
     return searcher_.search(in_);
   }
 
-  public List<ByteString> parseNextBlock() throws IOException {
+  /**
+   * Finds next block marker and reads the block. If skipIfStartingOnBoundary is set
+   * skips the the first block if the marker starts exactly at the current position.
+   * (i.e. there were no bytes from previous block before the start of the marker).
+   */
+  public List<ByteString> parseNextBlock(boolean skipIfStartingOnBoundary) throws IOException {
     LOG.debug("BlockReader: none left to read, skipping to sync point");
-    if (!skipToNextSyncPoint()) {
+    long skipped = skipToNextSyncPoint();
+    if (skipped <= -1) {
       LOG.debug("BlockReader: SYNC point eof");
       // EOF if there are no more sync markers.
       return null;
@@ -139,6 +145,12 @@ public abstract class BinaryBlockReader<M> {
 
     byte[] byteArray = new byte[blockSize];
     IOUtils.readFully(in_, byteArray, 0, blockSize);
+
+    if (skipIfStartingOnBoundary && skipped == Protobufs.KNOWN_GOOD_POSITION_MARKER.length) {
+      // skip the current current block
+      return parseNextBlock(false);
+    }
+
     SerializedBlock block = SerializedBlock.parseFrom(byteArray);
 
     curBlobs_ = block.getProtoBlobs();
@@ -156,7 +168,7 @@ public abstract class BinaryBlockReader<M> {
         // handle everything starting at the next sync point.
         return false;
       }
-      curBlobs_ = parseNextBlock();
+      curBlobs_ = parseNextBlock(false);
       if (curBlobs_ == null) {
         // If there is nothing, it likely means EOF. Signal that processing is done.
         return false;
