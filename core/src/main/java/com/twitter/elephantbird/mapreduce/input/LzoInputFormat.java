@@ -3,7 +3,12 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
 
 import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.fs.FileStatus;
@@ -108,6 +113,27 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     }
   }
 
+  private static class SplitFetcher implements Runnable {
+    Path filePath;
+    JobContext job;
+    ConcurrentHashMap<Path, LzoIndex> indexMap;
+
+    public SplitFetcher(Path _filePath, JobContext _job, ConcurrentHashMap<Path, LzoIndex> _indexMap) {
+      filePath = _filePath;
+      job = _job;
+      indexMap = _indexMap;
+    }
+
+    public void run() {
+      try {
+        LzoIndex index = LzoIndex.readIndex(filePath.getFileSystem(HadoopCompat.getConfiguration(job)), filePath);
+        indexMap.put(filePath, index);
+      } catch (Exception e) {
+        System.err.println("Caught Exception: " + e.getMessage());
+      }
+    }
+  }
+
   @Override
   public List<InputSplit> getSplits(JobContext job) throws IOException {
     List<InputSplit> defaultSplits = super.getSplits(job);
@@ -115,22 +141,43 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     // Find new starts and ends of the file splits that align with the lzo blocks.
     List<InputSplit> result = new ArrayList<InputSplit>();
 
-    Path prevFile = null;
-    LzoIndex prevIndex = null;
+    ConcurrentHashMap<Path, LzoIndex> indexMap = new ConcurrentHashMap<Path, LzoIndex>();
+
+    int numThreads = HadoopCompat.getConfiguration(job).getInt("com.twitter.elephantbird.lzo.num_split_fetch_threads", 50);
+
+    ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
+
+    Path lastFile = null;
+    for (InputSplit genericSplit : defaultSplits) {
+      // Load the index.
+      FileSplit fileSplit = (FileSplit)genericSplit;
+      Path file = fileSplit.getPath();
+      if(file != lastFile) {
+        Runnable r = new SplitFetcher(file, job, indexMap);
+        threadPool.submit(r);
+        lastFile = file;
+      }
+    }
+
+    // Everything submitted, do an orderly shutdown
+    // so that they all complete
+    threadPool.shutdown();
+
+    // Wait for 20 minutes at most to fetch all the split info
+    try {
+      if(!threadPool.awaitTermination(20, TimeUnit.MINUTES)) {
+        throw new IOException("Threads not responsive in fetching lzo splits");
+      }
+    } catch (InterruptedException e) {
+      throw new IOException("Failed to await", e);
+    }
 
     for (InputSplit genericSplit : defaultSplits) {
       // Load the index.
       FileSplit fileSplit = (FileSplit)genericSplit;
       Path file = fileSplit.getPath();
 
-      LzoIndex index; // reuse index for files with multiple blocks.
-      if ( file.equals(prevFile) ) {
-        index = prevIndex;
-      } else {
-        index = LzoIndex.readIndex(file.getFileSystem(HadoopCompat.getConfiguration(job)), file);
-        prevFile = file;
-        prevIndex = index;
-      }
+      LzoIndex index = indexMap.get(file);
 
       if (index == null) {
         // In listStatus above, a (possibly empty, but non-null) index was put in for every split.

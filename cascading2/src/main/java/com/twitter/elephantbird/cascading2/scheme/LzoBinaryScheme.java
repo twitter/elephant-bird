@@ -17,6 +17,7 @@ import cascading.scheme.Scheme;
 import cascading.scheme.SinkCall;
 import cascading.scheme.SourceCall;
 import cascading.tap.Tap;
+import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 
@@ -30,6 +31,10 @@ abstract public class LzoBinaryScheme<M, T extends BinaryWritable<M>> extends
 
   private static final Logger LOG = LoggerFactory.getLogger(LzoBinaryScheme.class);
   private static final long serialVersionUID = -5011096855302946106L;
+
+  public LzoBinaryScheme() {
+    super(Fields.FIRST);
+  }
 
   @Override
   public void sink(FlowProcess<JobConf> flowProcess, SinkCall<T, OutputCollector> sinkCall)
