@@ -12,7 +12,6 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 /**
  * A class to read blocks of binary objects like protobufs.
  */
@@ -30,6 +29,8 @@ public abstract class BinaryBlockReader<M> {
   private boolean readNewBlocks_ = true;
   private boolean skipEmptyRecords = true; // skip any records of length zero
 
+  private byte[] lastBlock = null;
+
   protected BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
     this(in, protoConverter, true);
   }
@@ -37,6 +38,7 @@ public abstract class BinaryBlockReader<M> {
   protected BinaryBlockReader(InputStream in,
                               BinaryConverter<M> protoConverter,
                               boolean skipEmptyRecords) {
+    lastBlock = new byte[1];
     in_ = in;
     protoConverter_ = protoConverter;
     searcher_ = new StreamSearcher(Protobufs.KNOWN_GOOD_POSITION_MARKER);
@@ -143,7 +145,15 @@ public abstract class BinaryBlockReader<M> {
       return null;
     }
 
-    byte[] byteArray = new byte[blockSize];
+    byte[] byteArray;
+    // Cache the allocation
+    if(lastBlock.length >= blockSize) {
+      byteArray = lastBlock;
+    } else {
+      lastBlock = new byte[blockSize*2];
+      byteArray = lastBlock;
+    }
+
     IOUtils.readFully(in_, byteArray, 0, blockSize);
 
     if (skipIfStartingOnBoundary && skipped == Protobufs.KNOWN_GOOD_POSITION_MARKER.length) {
@@ -151,7 +161,7 @@ public abstract class BinaryBlockReader<M> {
       return parseNextBlock(false);
     }
 
-    SerializedBlock block = SerializedBlock.parseFrom(byteArray);
+    SerializedBlock block = SerializedBlock.parseFrom(byteArray, blockSize);
 
     curBlobs_ = block.getProtoBlobs();
     numLeftToReadThisBlock_ = curBlobs_.size();
