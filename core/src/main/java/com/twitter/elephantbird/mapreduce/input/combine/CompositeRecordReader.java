@@ -171,8 +171,22 @@ public class CompositeRecordReader<K, V> extends RecordReader<K, V>
 
   @Override
   public void setKeyValue(K key, V value) {
-    ((MapredInputFormatCompatible) currentRecordReader).setKeyValue(key, value);
-    this.key = key;
-    this.value = value;
+    if (currentRecordReader == null) {
+      try {
+        if (!nextKeyValue()) {
+          throw new RuntimeException("No more valid record readers found");
+        }
+
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    if (currentRecordReader != null) {
+      ((MapredInputFormatCompatible) currentRecordReader).setKeyValue(key, value);
+      this.key = key;
+      this.value = value;
+    }
   }
 }
