@@ -81,10 +81,8 @@ public abstract class BinaryBlockReader<M> {
     return false;
   }
 
-  /**
-   * Return byte blob for the next proto object. null indicates end of stream;
-   */
-  public byte[] readNextProtoBytes() throws IOException {
+
+  public ByteString readNextProtoByteString() throws IOException {
     while (true) {
       if (!setupNewBlockIfNeeded()) {
         return null;
@@ -92,11 +90,22 @@ public abstract class BinaryBlockReader<M> {
 
       int blobIndex = curBlobs_.size() - numLeftToReadThisBlock_;
       numLeftToReadThisBlock_--;
-      byte[] blob = curBlobs_.get(blobIndex).toByteArray();
-      if (blob.length == 0 && skipEmptyRecords) {
+      ByteString blob = curBlobs_.get(blobIndex);
+      if (blob.isEmpty() && skipEmptyRecords) {
         continue;
       }
       return blob;
+    }
+  }
+  /**
+   * Return byte blob for the next proto object. null indicates end of stream;
+   */
+  public byte[] readNextProtoBytes() throws IOException {
+    ByteString bs = readNextProtoByteString();
+    if(bs != null) {
+      return bs.toByteArray();
+    } else {
+      return null;
     }
   }
 
