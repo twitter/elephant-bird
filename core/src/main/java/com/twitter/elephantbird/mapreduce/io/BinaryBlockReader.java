@@ -145,9 +145,7 @@ public abstract class BinaryBlockReader<M> {
     }
 
     int blockSize = readInt();
-    if(LOG.isDebugEnabled()) {
-      LOG.debug("BlockReader: found sync point, next block has size " + blockSize);
-    }
+    LOG.debug("BlockReader: found sync point, next block has size " + blockSize);
     if (blockSize < 0) {
       LOG.debug("ProtobufReader: reading size after sync point eof");
       // EOF if the size cannot be read.
