@@ -12,10 +12,11 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * A class to read blocks of binary objects like protobufs.
  */
-public abstract class BinaryBlockReader<M> {
+public abstract class BinaryBlockReader<M> implements BlockReader<M> {
   private static final Logger LOG = LoggerFactory.getLogger(BinaryBlockReader.class);
 
   // though any type of objects can be stored, each block itself is

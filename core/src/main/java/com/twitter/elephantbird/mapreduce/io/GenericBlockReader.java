@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A class to read blocks of binary objects like protobufs.
  */
-public class GenericBlockReader {
+public class GenericBlockReader implements BlockReader<ByteString> {
   private static final Logger LOG = LoggerFactory.getLogger(GenericBlockReader.class);
 
   // though any type of objects can be stored, each block itself is

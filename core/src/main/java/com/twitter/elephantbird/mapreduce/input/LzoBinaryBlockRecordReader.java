@@ -1,21 +1,13 @@
 package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.HadoopCompat;
-import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,81 +20,12 @@ import org.slf4j.LoggerFactory;
  * for more information on error handling.
  */
 public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
-    extends LzoRecordReader<LongWritable, W> implements MapredInputFormatCompatible<LongWritable, W> {
+    extends LzoBlockRecordReader<M, W, BinaryBlockReader<M>> {
+
   private static final Logger LOG = LoggerFactory.getLogger(LzoBinaryBlockRecordReader.class);
 
-  private LongWritable key_;
-  private W value_;
-  private final TypeRef<M> typeRef_;
-  boolean updatePosition = false;
-  /* make LzoBinaryBlockRecordReader return lzoblock offset the same way as
-   * LzoBinaryBlockRecordReader for indexing purposes.
-   * For the the first record returned, pos_ should be 0
-   * if the recordreader is reading the first split,
-   * otherwise it should be end of the current lzo block.
-   * This makes pos_ consistent with LzoBinaryB64LineRecordReader.
-   */
-
-  private final BinaryBlockReader<M> reader_;
-
-  private Counter recordsReadCounter;
-  private Counter recordErrorsCounter;
-
   public LzoBinaryBlockRecordReader(TypeRef<M> typeRef, BinaryBlockReader<M> reader, W binaryWritable) {
-    key_ = new LongWritable();
-    value_ = binaryWritable;
-    reader_ = reader;
-    typeRef_ = typeRef;
-  }
-
-  @Override
-  public synchronized void close() throws IOException {
-    super.close();
-    if (reader_ != null) {
-      reader_.close();
-    }
-  }
-
-  @Override
-  public LongWritable getCurrentKey() throws IOException, InterruptedException {
-    return key_;
-  }
-
-  @Override
-  public W getCurrentValue() throws IOException, InterruptedException {
-    return value_;
-  }
-
-  @Override
-  protected void createInputReader(InputStream input, Configuration conf) throws IOException {
-    reader_.setInputStream(input);
-  }
-
-  @Override
-  public void initialize(InputSplit genericSplit, TaskAttemptContext context)
-                                     throws IOException, InterruptedException {
-    String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
-    recordsReadCounter = HadoopUtils.getCounter(context, group, "Records Read");
-    recordErrorsCounter = HadoopUtils.getCounter(context, group, "Errors");
-
-    super.initialize(genericSplit, context);
-  }
-
-  @Override
-  protected void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
-    // No need to skip to the sync point here; the block reader will do it for us.
-    LOG.debug("LzoProtobufBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
-    updatePosition = !atFirstRecord;
-    // except for the first split, skip a protobuf block if it starts exactly at the split boundary
-    // because such a block would be read by the previous split (note comment about 'pos_ > end_'
-    // in nextKeyValue() below)
-    reader_.parseNextBlock(!atFirstRecord);
-  }
-
-  @Override
-  public void setKeyValue(LongWritable key, W value) {
-    key_ = key;
-    value_ = value;
+    super(typeRef, reader, binaryWritable);
   }
 
   /**
