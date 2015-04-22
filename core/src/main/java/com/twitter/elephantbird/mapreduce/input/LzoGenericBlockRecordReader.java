@@ -9,42 +9,107 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import com.google.protobuf.ByteString;
 
+import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.TypeRef;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Generic lzo block record reader that uses the provided BinaryConverter to deserialize data.
- */
+
 public class LzoGenericBlockRecordReader<M>
-    extends LzoBlockRecordReader<M, GenericWritable<M>, GenericBlockReader> {
+    extends LzoRecordReader<LongWritable, GenericWritable<M>> implements MapredInputFormatCompatible<LongWritable, GenericWritable<M>> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoGenericBlockRecordReader.class);
 
+  private LongWritable key_;
+  private GenericWritable<M> value_;
+  private final TypeRef<M> typeRef_;
+  boolean updatePosition = false;
+  /* make LzoGenericBlockRecordReader return lzoblock offset the same way as
+   * LzoBinaryBlockRecordReader for indexing purposes.
+   * For the the first record returned, pos_ should be 0
+   * if the recordreader is reading the first split,
+   * otherwise it should be end of the current lzo block.
+   * This makes pos_ consistent with LzoBinaryB64LineRecordReader.
+   */
+
+  private final GenericBlockReader reader_;
+
+  private Counter recordsReadCounter;
+  private Counter recordErrorsCounter;
   private Counter recordsSkippedCounter;
 
   private final BinaryConverter<M> deserializer_;
 
   public LzoGenericBlockRecordReader(TypeRef<M> typeRef, BinaryConverter<M> binaryConverter) {
-    super(typeRef, new GenericBlockReader(null), new GenericWritable<M>(binaryConverter));
+    key_ = new LongWritable();
     deserializer_ = binaryConverter;
+    reader_ =  new GenericBlockReader(null);
+    value_ = new GenericWritable<M>(binaryConverter);
+    typeRef_ = typeRef;
+    LOG.info("LzoGenericBlockRecordReader, type args are " + typeRef.getRawClass());
+  }
+
+
+  @Override
+  public synchronized void close() throws IOException {
+    super.close();
+    if (reader_ != null) {
+      reader_.close();
+    }
+  }
+
+  @Override
+  public LongWritable getCurrentKey() throws IOException, InterruptedException {
+    return key_;
+  }
+
+  @Override
+  public GenericWritable<M> getCurrentValue() throws IOException, InterruptedException {
+    return value_;
+  }
+
+  @Override
+  protected void createInputReader(InputStream input, Configuration conf) throws IOException {
+    reader_.setInputStream(input);
   }
 
   @Override
   public void initialize(InputSplit genericSplit, TaskAttemptContext context)
                                      throws IOException, InterruptedException {
     String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
+    recordsReadCounter = HadoopUtils.getCounter(context, group, "Records Read");
     recordsSkippedCounter = HadoopUtils.getCounter(context, group, "Records Skipped");
+    recordErrorsCounter = HadoopUtils.getCounter(context, group, "Errors");
 
     super.initialize(genericSplit, context);
+  }
+
+  @Override
+  protected void skipToNextSyncPoint(boolean atFirstRecord) throws IOException {
+    // No need to skip to the sync point here; the block reader will do it for us.
+    LOG.debug("LzoGenericBlockRecordReader.skipToNextSyncPoint called with atFirstRecord = " + atFirstRecord);
+    updatePosition = !atFirstRecord;
+    // except for the first split, skip a protobuf block if it starts exactly at the split boundary
+    // because such a block would be read by the previous split (note comment about 'pos_ > end_'
+    // in nextKeyValue() below)
+    reader_.parseNextBlock(!atFirstRecord);
+  }
+
+  @Override
+  public void setKeyValue(LongWritable key, GenericWritable<M> value) {
+    key_ = key;
+    value_ = value;
   }
 
   /**
