@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.mapreduce.io;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -13,6 +14,8 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.util.Protobufs;
+
+import org.apache.hadoop.io.IOUtils;
 
 /**
  * This is a {@link DynamicMessage} equivalent of following protobuf : <pre>
@@ -70,6 +73,15 @@ public class SerializedBlock {
             .build());
   }
 
+  public static SerializedBlock parseFrom(InputStream in)
+                                          throws InvalidProtocolBufferException, IOException {
+    // note this reads the entire input stream so it should
+    // be bounded by the caller already if required
+    return new SerializedBlock(
+        DynamicMessage.newBuilder(messageDescriptor)
+            .mergeFrom(in)
+            .build());
+  }
 
   public static SerializedBlock parseFrom(byte[] messageBuffer)
                                           throws InvalidProtocolBufferException {
@@ -77,19 +89,6 @@ public class SerializedBlock {
         DynamicMessage.newBuilder(messageDescriptor)
             .mergeFrom(messageBuffer)
             .build());
-  }
-
-  public static SerializedBlock parseFrom(byte[] messageBuffer, int limit)
-                                          throws InvalidProtocolBufferException {
-    ByteArrayInputStream bais = new ByteArrayInputStream(messageBuffer, 0, limit);
-    try {
-    return new SerializedBlock(
-        DynamicMessage.newBuilder(messageDescriptor)
-            .mergeFrom(bais)
-            .build());
-    }catch (IOException e) {
-      throw new RuntimeException("IO exception reading array, shouldn't happen", e);
-    }
   }
 
   private static final Descriptors.Descriptor messageDescriptor;

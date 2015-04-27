@@ -46,6 +46,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
   private Counter recordsReadCounter;
   private Counter recordErrorsCounter;
   private Counter truncatedLinesCounter;
+  private Counter recordsSkippedCounter;
 
   protected LzoBinaryB64LineRecordReader(TypeRef<M> typeRef, W protobufWritable, BinaryConverter<M> protoConverter) {
     typeRef_ = typeRef;
@@ -86,6 +87,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
     recordErrorsCounter = HadoopUtils.getCounter(context, group, "Errors");
     emptyLinesCounter = HadoopUtils.getCounter(context, group, "Empty Lines");
     truncatedLinesCounter = HadoopUtils.getCounter(context, group, "Truncated Lines");
+    recordsSkippedCounter = HadoopUtils.getCounter(context, group, "Null Records Skipped");
     super.initialize(genericSplit, context);
   }
 
@@ -136,17 +138,16 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
       M protoValue = null;
 
       errorTracker.incRecords();
-      Throwable decodeException = null;
 
       try {
         protoValue = converter_.fromBytes(Base64Codec.decodeFast(line_.getBytes(), line_.getLength()));
       } catch(Throwable t1) {
-        decodeException = t1;
+        HadoopCompat.incrementCounter(recordErrorsCounter, 1);
+        errorTracker.incErrors(t1);
       }
 
       if (protoValue == null) {
-        HadoopCompat.incrementCounter(recordErrorsCounter, 1);
-        errorTracker.incErrors(decodeException);
+        HadoopCompat.incrementCounter(recordsSkippedCounter, 1);
         continue;
       }
 

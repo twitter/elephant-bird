@@ -8,5 +8,5 @@ import org.apache.hadoop.conf.Configuration;
  * A simple interface to serialize and deserialize objects
  */
 public interface BinaryConverterProvider<M> {
-  BinaryConverter<M> getProvider(Configuration conf);
+  BinaryConverter<M> getConverter(Configuration conf);
 }

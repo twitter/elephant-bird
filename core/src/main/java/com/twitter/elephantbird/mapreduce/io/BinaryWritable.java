@@ -79,7 +79,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
    * ( in case of default construction. see {@link #setConverter(Class)} ),
    * and this will throw an {@link IllegalStateException}.
    */
-  public M get() {
+  public M get() throws Exception {
     // may be we should rename this method. the contract would be less
     // confusing with a different name.
     if (message == null && messageBytes != null) {
@@ -196,7 +196,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     M msgObj = null;
     try {
       msgObj = get();
-    } catch (IllegalStateException e) {
+    } catch (Exception e) {
       // It is ok. might not be able to avoid this case in some situations.
       return super.toString() + "{could not be deserialized}";
     }

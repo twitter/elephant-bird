@@ -1,5 +1,7 @@
 package com.twitter.elephantbird.mapreduce.io;
 
+import java.io.IOException;
+
 import com.twitter.elephantbird.thrift.ThriftBinaryDeserializer;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
@@ -46,19 +48,12 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
   }
 
   @Override
-  public M fromBytes(byte[] messageBuffer) {
+  public M fromBytes(byte[] messageBuffer) throws TException {
     if (deserializer == null)
       deserializer = new ThriftBinaryDeserializer();
-    try {
-      M message = typeRef.safeNewInstance();
-      deserializer.deserialize(message, messageBuffer);
-      return message;
-    } catch (Throwable e) {
-      // normally a TException. but some corrupt records can cause
-      // other runtime exceptions (e.g. IndexOutOfBoundsException).
-      logWarning("failed to deserialize", e);
-      return null;
-    }
+    M message = typeRef.safeNewInstance();
+    deserializer.deserialize(message, messageBuffer);
+    return message;
   }
 
   @Override
