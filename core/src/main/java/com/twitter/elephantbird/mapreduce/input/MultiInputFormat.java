@@ -137,7 +137,7 @@ public class MultiInputFormat<M>
         throw new RuntimeException("failed to instantiate class '" + genericDecoder + "'", e);
       }
 
-      BinaryConverter<?> converter = converterProvider.getProvider(conf);
+      BinaryConverter<?> converter = converterProvider.getConverter(conf);
       switch (fileFormat) {
         case LZO_BLOCK:
           return new LzoGenericBlockRecordReader(typeRef, converter);
