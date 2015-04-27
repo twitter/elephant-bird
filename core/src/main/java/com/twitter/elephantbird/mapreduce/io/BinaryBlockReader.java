@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A class to read blocks of binary objects like protobufs.
  */
-public abstract class BinaryBlockReader<M> {
+public class BinaryBlockReader<M> {
   private static final Logger LOG = LoggerFactory.getLogger(BinaryBlockReader.class);
 
   // though any type of objects can be stored, each block itself is
@@ -31,11 +31,11 @@ public abstract class BinaryBlockReader<M> {
 
   private byte[] lastBlock = null;
 
-  protected BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
+  public BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
     this(in, protoConverter, true);
   }
 
-  protected BinaryBlockReader(InputStream in,
+  public BinaryBlockReader(InputStream in,
                               BinaryConverter<M> protoConverter,
                               boolean skipEmptyRecords) {
     lastBlock = new byte[1];
@@ -43,6 +43,10 @@ public abstract class BinaryBlockReader<M> {
     protoConverter_ = protoConverter;
     searcher_ = new StreamSearcher(Protobufs.KNOWN_GOOD_POSITION_MARKER);
     this.skipEmptyRecords = skipEmptyRecords;
+  }
+
+  public BinaryConverter<M> getProtoConverter() {
+    return protoConverter_;
   }
 
   public void close() throws IOException {

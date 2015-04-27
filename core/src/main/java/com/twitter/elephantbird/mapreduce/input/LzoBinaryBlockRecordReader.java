@@ -3,9 +3,12 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.google.protobuf.ByteString;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
+import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
@@ -47,12 +50,16 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
 
   private Counter recordsReadCounter;
   private Counter recordErrorsCounter;
+  private Counter recordsSkippedCounter;
+
+  private final BinaryConverter<M> deserializer_;
 
   public LzoBinaryBlockRecordReader(TypeRef<M> typeRef, BinaryBlockReader<M> reader, W binaryWritable) {
     key_ = new LongWritable();
     value_ = binaryWritable;
     reader_ = reader;
     typeRef_ = typeRef;
+    deserializer_ = reader.getProtoConverter();
   }
 
   @Override
@@ -83,6 +90,7 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
                                      throws IOException, InterruptedException {
     String group = "LzoBlocks of " + typeRef_.getRawClass().getName();
     recordsReadCounter = HadoopUtils.getCounter(context, group, "Records Read");
+    recordsSkippedCounter = HadoopUtils.getCounter(context, group, "Records Skipped");
     recordErrorsCounter = HadoopUtils.getCounter(context, group, "Errors");
 
     super.initialize(genericSplit, context);
@@ -129,38 +137,36 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
         // As a consequence of this, next split reader skips at least one byte
         // (i.e. skips either partial or full record at the beginning).
       }
+      ByteString bs = reader_.readNextProtoByteString();
 
-      value_.set(null);
+      if(bs == null) {
+        return false;
+      }
+
       errorTracker.incRecords();
-      Throwable decodeException = null;
-
+      M decoded = null;
       try {
-        if (!reader_.readNext(value_)) {
-          return false; // EOF
-        }
-      } catch (InvalidProtocolBufferException e) {
-        decodeException = e;
-      } catch (IOException e) {
-        // Re-throw IOExceptions that are not due to protobuf decode errors
-        throw e;
+        decoded = deserializer_.fromBytes(bs.toByteArray());
       } catch (Throwable e) {
-        decodeException = e;
+        errorTracker.incErrors(e);
+        HadoopCompat.incrementCounter(recordErrorsCounter, 1);
+        continue;
       }
 
-      if (updatePosition) {
+      if (decoded != null) {
+        if (updatePosition) {
+          pos_ = getLzoFilePos();
+          updatePosition = false;
+        }
+        key_.set(pos_);
+        value_.set(decoded);
         pos_ = getLzoFilePos();
-        updatePosition = false;
-      }
 
-      key_.set(pos_);
-      pos_ = getLzoFilePos();
-      if (value_.get() != null) {
         HadoopCompat.incrementCounter(recordsReadCounter, 1);
         return true;
+      } else {
+        HadoopCompat.incrementCounter(recordsSkippedCounter, 1);
       }
-      errorTracker.incErrors(decodeException);
-      HadoopCompat.incrementCounter(recordErrorsCounter, 1);
-      // continue
     }
   }
 }
