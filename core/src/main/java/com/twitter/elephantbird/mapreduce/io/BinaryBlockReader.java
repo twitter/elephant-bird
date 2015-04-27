@@ -8,6 +8,7 @@ import com.google.protobuf.ByteString;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.StreamSearcher;
 
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
@@ -29,8 +30,6 @@ public class BinaryBlockReader<M> {
   private boolean readNewBlocks_ = true;
   private boolean skipEmptyRecords = true; // skip any records of length zero
 
-  private byte[] lastBlock = null;
-
   public BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
     this(in, protoConverter, true);
   }
@@ -38,7 +37,6 @@ public class BinaryBlockReader<M> {
   public BinaryBlockReader(InputStream in,
                               BinaryConverter<M> protoConverter,
                               boolean skipEmptyRecords) {
-    lastBlock = new byte[1];
     in_ = in;
     protoConverter_ = protoConverter;
     searcher_ = new StreamSearcher(Protobufs.KNOWN_GOOD_POSITION_MARKER);
@@ -67,7 +65,7 @@ public class BinaryBlockReader<M> {
    * deserialization error. Use {@link #readNext(BinaryWritable)} to
    * distinguish betwen end of stream or deserialization error.
    */
-  public M readNext() throws IOException {
+  public M readNext() throws Exception {
     byte[] blob = readNextProtoBytes();
     return blob == null ?
         null : protoConverter_.fromBytes(blob);
@@ -76,7 +74,7 @@ public class BinaryBlockReader<M> {
   /**
    * Returns true if new proto object was read into writable, false other wise.
    */
-  public boolean readNext(BinaryWritable<M> writable) throws IOException {
+  public boolean readNext(BinaryWritable<M> writable) throws Exception {
     byte[] blob = readNextProtoBytes();
     if (blob != null) {
       writable.set(protoConverter_.fromBytes(blob));
@@ -156,23 +154,13 @@ public class BinaryBlockReader<M> {
       return null;
     }
 
-    byte[] byteArray;
-    // Cache the allocation
-    if(lastBlock.length >= blockSize) {
-      byteArray = lastBlock;
-    } else {
-      lastBlock = new byte[blockSize*2];
-      byteArray = lastBlock;
-    }
-
-    IOUtils.readFully(in_, byteArray, 0, blockSize);
-
     if (skipIfStartingOnBoundary && skipped == Protobufs.KNOWN_GOOD_POSITION_MARKER.length) {
       // skip the current current block
+      in_.skip(blockSize);
       return parseNextBlock(false);
     }
 
-    SerializedBlock block = SerializedBlock.parseFrom(byteArray, blockSize);
+    SerializedBlock block = SerializedBlock.parseFrom(new BoundedInputStream(in_, blockSize));
 
     curBlobs_ = block.getProtoBlobs();
     numLeftToReadThisBlock_ = curBlobs_.size();
