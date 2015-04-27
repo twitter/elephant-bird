@@ -56,7 +56,7 @@ public class TestProtobufWritable {
   }
 
   @Test
-  public void testReadWrite() throws IOException {
+  public void testReadWrite() throws Exception {
 
     DataOutputStream dos = new DataOutputStream(new FileOutputStream("test.txt"));
     referenceAbWritable.write(dos);

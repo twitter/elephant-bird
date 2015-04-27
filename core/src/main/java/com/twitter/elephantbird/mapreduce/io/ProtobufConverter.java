@@ -46,12 +46,13 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   }
 
   @Override
-  public M fromBytes(byte[] messageBuffer) {
+  public M fromBytes(byte[] messageBuffer) throws InvalidProtocolBufferException, UninitializedMessageException {
     return fromBytes(messageBuffer, 0, messageBuffer.length);
   }
 
   @SuppressWarnings("unchecked")
-  public M fromBytes(byte[] messageBuffer, int offset, int len) {
+  public M fromBytes(byte[] messageBuffer, int offset, int len)
+      throws InvalidProtocolBufferException, UninitializedMessageException {
     try {
       if (defaultInstance == null) {
         defaultInstance = Protobufs.getMessageBuilder(typeRef.getRawClass())
@@ -62,10 +63,11 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
                                 .build();
     } catch (InvalidProtocolBufferException e) {
       logWarning("Invalid Protobuf exception while building " + typeRef.getRawClass().getName(), e);
+      throw e;
     } catch(UninitializedMessageException ume) {
       logWarning("Uninitialized Message Exception while building " + typeRef.getRawClass().getName(), ume);
+      throw ume;
     }
-    return null;
   }
 
   @Override
