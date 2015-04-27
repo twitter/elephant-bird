@@ -153,11 +153,12 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
         continue;
       }
 
+      if (updatePosition) {
+        pos_ = getLzoFilePos();
+        updatePosition = false;
+      }
+
       if (decoded != null) {
-        if (updatePosition) {
-          pos_ = getLzoFilePos();
-          updatePosition = false;
-        }
         key_.set(pos_);
         value_.set(decoded);
         pos_ = getLzoFilePos();
