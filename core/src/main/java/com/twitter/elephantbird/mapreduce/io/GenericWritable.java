@@ -14,6 +14,6 @@ public class GenericWritable<M> extends BinaryWritable<M> {
 
   @Override
   protected BinaryConverter<M> getConverterFor(Class<M> clazz) {
-    throw new RuntimeException("Unsupported");
+    throw new UnsupportedOperationException();
   }
 }

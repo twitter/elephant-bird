@@ -18,15 +18,15 @@ import com.twitter.elephantbird.util.TypeRef;
 
 import org.slf4j.Logger;
 
+/**
+ * Generic reader for LZO-encoded protobuf blocks. Uses the supplied BinaryConverter for deserialization.
+ */
 public class LzoGenericBlockRecordReader<M>
     extends LzoBinaryBlockRecordReader<M, GenericWritable<M>> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(LzoGenericBlockRecordReader.class);
 
   public LzoGenericBlockRecordReader(TypeRef<M> typeRef, BinaryConverter<M> binaryConverter) {
     super(typeRef,
       new BinaryBlockReader(null, binaryConverter),
       new GenericWritable<M>(binaryConverter));
-    LOG.info("LzoGenericBlockRecordReader, type args are " + typeRef.getRawClass());
   }
 }

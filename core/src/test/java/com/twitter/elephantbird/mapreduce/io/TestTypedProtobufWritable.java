@@ -56,7 +56,7 @@ public class TestTypedProtobufWritable {
   }
 
   @Test
-  public void testReadWrite() throws Exception {
+  public void testReadWrite() throws IOException {
 
     DataOutputStream dos = new DataOutputStream(new FileOutputStream("test.txt"));
     referenceAbWritable.write(dos);
@@ -73,7 +73,7 @@ public class TestTypedProtobufWritable {
   }
   
   @Test
-  public void testMessageReadWrite() throws Exception {
+  public void testMessageReadWrite() throws IOException {
 
     DataOutputStream dos = new DataOutputStream(new FileOutputStream("test2.txt"));
     referenceAbWritable.write(dos);
@@ -90,7 +90,7 @@ public class TestTypedProtobufWritable {
   }
   
   @Test
-  public void testMessageReadWriteEmpty() throws Exception {
+  public void testMessageReadWriteEmpty() throws IOException {
 
     DataOutputStream dos = new DataOutputStream(new FileOutputStream("test3.txt"));
     TypedProtobufWritable<AddressBook> empty = new TypedProtobufWritable<AddressBook>();

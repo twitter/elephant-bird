@@ -86,7 +86,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
       checkConverter();
       try {
         return converter.fromBytes(messageBytes);
-      } catch (Exception e) {
+      } catch (BinaryConverterDecodeException e) {
         throw new IllegalStateException("Converter failed to deserialize", e);
       }
     }
@@ -200,7 +200,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     M msgObj = null;
     try {
       msgObj = get();
-    } catch (Exception e) {
+    } catch (IllegalStateException e) {
       // It is ok. might not be able to avoid this case in some situations.
       return super.toString() + "{could not be deserialized}";
     }

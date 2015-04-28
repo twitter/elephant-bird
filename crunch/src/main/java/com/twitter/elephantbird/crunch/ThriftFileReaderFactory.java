@@ -36,7 +36,7 @@ class ThriftFileReaderFactory<T extends TBase<?, ?>> implements FileReaderFactor
         public boolean hasNext() {
           try {
             return reader.readNext(tw);
-          } catch (Exception e) {
+          } catch (IOException e) {
             //TODO
             return false;
           }
