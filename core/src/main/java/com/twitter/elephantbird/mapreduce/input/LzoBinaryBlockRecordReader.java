@@ -3,8 +3,6 @@ package com.twitter.elephantbird.mapreduce.input;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.google.protobuf.ByteString;
-
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
@@ -137,16 +135,16 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
         // As a consequence of this, next split reader skips at least one byte
         // (i.e. skips either partial or full record at the beginning).
       }
-      ByteString bs = reader_.readNextProtoByteString();
+      byte[] byteArray = reader_.readNextProtoBytes();
 
-      if(bs == null) {
+      if(byteArray == null) {
         return false;
       }
 
       errorTracker.incRecords();
       M decoded = null;
       try {
-        decoded = deserializer_.fromBytes(bs.toByteArray());
+        decoded = deserializer_.fromBytes(byteArray);
       } catch (Throwable e) {
         errorTracker.incErrors(e);
         HadoopCompat.incrementCounter(recordErrorsCounter, 1);
