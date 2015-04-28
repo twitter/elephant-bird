@@ -200,7 +200,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     M msgObj = null;
     try {
       msgObj = get();
-    } catch (Exception e) {
+    } catch (IllegalStateException e) {
       // It is ok. might not be able to avoid this case in some situations.
       return super.toString() + "{could not be deserialized}";
     }

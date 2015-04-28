@@ -38,7 +38,7 @@ public class ProtobufBlockReader<M extends Message> extends BinaryBlockReader<M>
 
   // for backward compatibility :
 
-  public boolean readProtobuf(ProtobufWritable<M> message) throws Exception {
+  public boolean readProtobuf(ProtobufWritable<M> message) throws IOException {
     return readNext(message);
   }
 
