@@ -44,7 +44,7 @@ public class BinaryBlockReader<M> {
     this.skipEmptyRecords = skipEmptyRecords;
   }
 
-  public BinaryConverter<M> getProtoConverter() {
+  public BinaryConverter<M> getConverter() {
     return protoConverter_;
   }
 

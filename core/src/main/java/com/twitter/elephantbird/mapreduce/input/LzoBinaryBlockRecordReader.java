@@ -57,7 +57,7 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
     value_ = binaryWritable;
     reader_ = reader;
     typeRef_ = typeRef;
-    deserializer_ = reader.getProtoConverter();
+    deserializer_ = reader.getConverter();
   }
 
   @Override
@@ -145,7 +145,7 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
       M decoded = null;
       try {
         decoded = deserializer_.fromBytes(byteArray);
-      } catch (Throwable e) {
+      } catch (Exception e) {
         errorTracker.incErrors(e);
         HadoopCompat.incrementCounter(recordErrorsCounter, 1);
         continue;
