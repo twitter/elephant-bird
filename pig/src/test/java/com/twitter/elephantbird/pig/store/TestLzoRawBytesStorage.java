@@ -17,6 +17,7 @@ import org.apache.pig.PigServer;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
+import org.apache.thrift.TException;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -144,7 +145,7 @@ public class TestLzoRawBytesStorage {
     });
   }
 
-  public void validate(Iterator<Tuple> itr) throws ExecException {
+  public void validate(Iterator<Tuple> itr) throws ExecException, TException {
     assertNotNull(itr);
     assertTrue(itr.hasNext());
     Tuple t = itr.next();

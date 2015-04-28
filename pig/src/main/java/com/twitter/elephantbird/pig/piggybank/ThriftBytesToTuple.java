@@ -9,6 +9,7 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.thrift.TBase;
+import org.apache.thrift.TException;
 
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.util.PigUtil;
@@ -45,6 +46,8 @@ public class ThriftBytesToTuple<M extends TBase<?,?>> extends EvalFunc<Tuple> {
       DataByteArray bytes = (DataByteArray) input.get(0);
       M value = thriftConverter.fromBytes(bytes.get());
       return value == null ? null : thriftToPig.getPigTuple(value);
+    } catch (TException e) {
+      return null;
     } catch (IOException e) {
       return null;
     }

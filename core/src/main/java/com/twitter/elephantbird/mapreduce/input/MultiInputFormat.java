@@ -96,6 +96,9 @@ public class MultiInputFormat<M>
     // Explicit class names for Message and TBase are used so that
     // these classes need not be present when not required.
 
+    // TODO: merge all the switch (fileFormat) cases below
+    // and set the right converter/writable for each
+
     if (isSubclass(recordClass, "com.google.protobuf.Message")) {
       switch (fileFormat) {
       case LZO_BLOCK:

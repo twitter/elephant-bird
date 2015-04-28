@@ -54,7 +54,11 @@ public class ProtobufDeserializer implements Deserializer {
   @Override
   public Object deserialize(Writable blob) throws SerDeException {
     BytesWritable bytes = (BytesWritable) blob;
-    return protobufConverter.fromBytes(bytes.getBytes(), 0, bytes.getLength());
+    try {
+      return protobufConverter.fromBytes(bytes.getBytes(), 0, bytes.getLength());
+    } catch (Exception e) {
+      throw new SerDeException(e);
+    }
   }
 
   @Override

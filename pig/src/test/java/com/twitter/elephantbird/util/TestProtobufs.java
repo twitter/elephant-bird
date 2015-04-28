@@ -35,7 +35,7 @@ public class TestProtobufs {
   }
 
   @Test
-  public void testConverterParsing() {
+  public void testConverterParsing() throws Exception {
     ProtobufConverter<AddressBook> protoConverter = ProtobufConverter.newInstance(AddressBook.class);
     assertEquals(ab_, protoConverter.fromBytes(abBytes_));
   }

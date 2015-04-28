@@ -13,6 +13,7 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * A class to read blocks of binary objects like protobufs.
  */
@@ -83,8 +84,10 @@ public class BinaryBlockReader<M> {
     return false;
   }
 
-
-  public ByteString readNextProtoByteString() throws IOException {
+  /**
+   * Return byte blob for the next proto object. null indicates end of stream;
+   */
+  public byte[] readNextProtoBytes() throws IOException {
     while (true) {
       if (!setupNewBlockIfNeeded()) {
         return null;
@@ -92,22 +95,11 @@ public class BinaryBlockReader<M> {
 
       int blobIndex = curBlobs_.size() - numLeftToReadThisBlock_;
       numLeftToReadThisBlock_--;
-      ByteString blob = curBlobs_.get(blobIndex);
-      if (blob.isEmpty() && skipEmptyRecords) {
+      byte[] blob = curBlobs_.get(blobIndex).toByteArray();
+      if (blob.length == 0 && skipEmptyRecords) {
         continue;
       }
       return blob;
-    }
-  }
-  /**
-   * Return byte blob for the next proto object. null indicates end of stream;
-   */
-  public byte[] readNextProtoBytes() throws IOException {
-    ByteString bs = readNextProtoByteString();
-    if(bs != null) {
-      return bs.toByteArray();
-    } else {
-      return null;
     }
   }
 

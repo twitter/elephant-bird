@@ -87,7 +87,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
     recordErrorsCounter = HadoopUtils.getCounter(context, group, "Errors");
     emptyLinesCounter = HadoopUtils.getCounter(context, group, "Empty Lines");
     truncatedLinesCounter = HadoopUtils.getCounter(context, group, "Truncated Lines");
-    recordsSkippedCounter = HadoopUtils.getCounter(context, group, "Null Records Skipped");
+    recordsSkippedCounter = HadoopUtils.getCounter(context, group, "Records Skipped by Converter");
     super.initialize(genericSplit, context);
   }
 
