@@ -86,7 +86,7 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
       checkConverter();
       try {
         return converter.fromBytes(messageBytes);
-      } catch (Exception e) {
+      } catch (BinaryConverterDecodeException e) {
         throw new IllegalStateException("Converter failed to deserialize", e);
       }
     }

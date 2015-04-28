@@ -66,7 +66,7 @@ public class BinaryBlockReader<M> {
    * deserialization error. Use {@link #readNext(BinaryWritable)} to
    * distinguish betwen end of stream or deserialization error.
    */
-  public M readNext() throws Exception {
+  public M readNext() throws IOException {
     byte[] blob = readNextProtoBytes();
     return blob == null ?
         null : protoConverter_.fromBytes(blob);
@@ -75,7 +75,7 @@ public class BinaryBlockReader<M> {
   /**
    * Returns true if new proto object was read into writable, false other wise.
    */
-  public boolean readNext(BinaryWritable<M> writable) throws Exception {
+  public boolean readNext(BinaryWritable<M> writable) throws IOException {
     byte[] blob = readNextProtoBytes();
     if (blob != null) {
       writable.set(protoConverter_.fromBytes(blob));

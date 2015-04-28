@@ -37,7 +37,7 @@ class ProtobufFileReaderFactory<T extends Message> implements FileReaderFactory<
         public boolean hasNext() {
           try {
             return reader.readNext(pw);
-          } catch (Exception e) {
+          } catch (IOException e) {
             //TODO
             return false;
           }

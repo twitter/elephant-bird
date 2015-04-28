@@ -48,12 +48,16 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
   }
 
   @Override
-  public M fromBytes(byte[] messageBuffer) throws TException {
-    if (deserializer == null)
-      deserializer = new ThriftBinaryDeserializer();
-    M message = typeRef.safeNewInstance();
-    deserializer.deserialize(message, messageBuffer);
-    return message;
+  public M fromBytes(byte[] messageBuffer) throws BinaryConverterDecodeException {
+    try {
+      if (deserializer == null)
+        deserializer = new ThriftBinaryDeserializer();
+      M message = typeRef.safeNewInstance();
+      deserializer.deserialize(message, messageBuffer);
+      return message;
+    } catch (TException e) {
+      throw new BinaryConverterDecodeException(e);
+    }
   }
 
   @Override

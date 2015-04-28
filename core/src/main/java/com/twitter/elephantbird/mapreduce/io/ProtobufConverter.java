@@ -46,8 +46,14 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   }
 
   @Override
-  public M fromBytes(byte[] messageBuffer) throws InvalidProtocolBufferException, UninitializedMessageException {
-    return fromBytes(messageBuffer, 0, messageBuffer.length);
+  public M fromBytes(byte[] messageBuffer) throws BinaryConverterDecodeException {
+    try {
+      return fromBytes(messageBuffer, 0, messageBuffer.length);
+    } catch (InvalidProtocolBufferException ipbe) {
+      throw new BinaryConverterDecodeException(ipbe);
+    } catch (UninitializedMessageException ume) {
+      throw new BinaryConverterDecodeException(ume);
+    }
   }
 
   @SuppressWarnings("unchecked")
