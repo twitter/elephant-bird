@@ -66,7 +66,9 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
       serializer = new TSerializer();
     try {
       return serializer.serialize(message);
-    } catch (TException e) {
+    } catch (Exception e) {
+      // normally a TException. but some corrupt records can cause
+      // other runtime exceptions (e.g. IndexOutOfBoundsException).
       logWarning("failed to serialize", e);
       return null;
     }
