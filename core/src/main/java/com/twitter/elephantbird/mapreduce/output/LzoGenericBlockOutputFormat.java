@@ -6,14 +6,17 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import com.twitter.elephantbird.mapreduce.input.BinaryConverterProvider;
+import com.twitter.elephantbird.mapreduce.io.BinaryBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
-import com.twitter.elephantbird.mapreduce.io.GenericBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.GenericWritable;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 
 import org.apache.hadoop.conf.Configuration;
 
+/**
+ * Generic OutputFormat for records to be stored as lzo-compressed protobuf blocks.
+ */
 public class LzoGenericBlockOutputFormat<M> extends LzoOutputFormat<M, GenericWritable<M>> {
 
   private static String CLASS_CONF_KEY = "elephantbird.class.for.LzoGenericBlockOutputFormat";
@@ -31,22 +34,22 @@ public class LzoGenericBlockOutputFormat<M> extends LzoOutputFormat<M, GenericWr
   public RecordWriter<M, GenericWritable<M>> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
     Configuration conf = HadoopCompat.getConfiguration(job);
+    String encoderClassName = conf.get(GENERIC_ENCODER_KEY);
     Class<?> typeRef = null;
-    String genericEncoder = conf.get(GENERIC_ENCODER_KEY);
     Class<?> encoderClazz = null;
     BinaryConverterProvider<?> converterProvider = null;
     try {
       String typeRefClass = conf.get(CLASS_CONF_KEY);
       typeRef = conf.getClassByName(typeRefClass);
-      encoderClazz = conf.getClassByName(genericEncoder);
+      encoderClazz = conf.getClassByName(encoderClassName);
       converterProvider = (BinaryConverterProvider<?>)encoderClazz.newInstance();
     } catch (Exception e) {
-      throw new RuntimeException("failed to instantiate class '" + genericEncoder + "'", e);
+      throw new RuntimeException("failed to instantiate class '" + encoderClassName + "'", e);
     }
 
     BinaryConverter<?> converter = converterProvider.getConverter(conf);
 
-    return new LzoBinaryBlockRecordWriter<M, GenericWritable<M>>(new GenericBlockWriter(
-        getOutputStream(job), converter, typeRef));
+    return new LzoBinaryBlockRecordWriter<M, GenericWritable<M>>(new BinaryBlockWriter(
+        getOutputStream(job), typeRef, converter));
   }
 }
