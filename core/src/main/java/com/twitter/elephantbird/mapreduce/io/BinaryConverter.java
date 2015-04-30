@@ -8,7 +8,7 @@ public interface BinaryConverter<M> {
    */
 
   /** Returns deserialized object. Throws if deserialization fails. */
-  M fromBytes(byte[] messageBuffer) throws BinaryConverterDecodeException;
+  M fromBytes(byte[] messageBuffer) throws DecodeException;
   
   byte[] toBytes(M message);
   

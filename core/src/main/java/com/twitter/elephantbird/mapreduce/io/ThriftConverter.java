@@ -48,7 +48,7 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
   }
 
   @Override
-  public M fromBytes(byte[] messageBuffer) throws BinaryConverterDecodeException {
+  public M fromBytes(byte[] messageBuffer) throws DecodeException {
     try {
       if (deserializer == null)
         deserializer = new ThriftBinaryDeserializer();
@@ -58,7 +58,7 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
     } catch (Exception e) {
       // normally a TException. but some corrupt records can cause
       // other runtime exceptions (e.g. IndexOutOfBoundsException).
-      throw new BinaryConverterDecodeException(e);
+      throw new DecodeException(e);
     }
   }
 
