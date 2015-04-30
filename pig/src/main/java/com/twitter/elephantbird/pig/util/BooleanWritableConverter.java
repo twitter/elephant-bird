@@ -1,6 +1,5 @@
 package com.twitter.elephantbird.pig.util;
 
-import com.twitter.elephantbird.pig.util.AbstractWritableConverter;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.data.DataByteArray;
@@ -63,6 +62,7 @@ public class BooleanWritableConverter extends AbstractWritableConverter<BooleanW
       case DataType.LONG:
       case DataType.FLOAT:
       case DataType.DOUBLE:
+      case DataType.BOOLEAN:
         return;
     }
     throw new IOException("Pig type '" + DataType.findTypeName(schema.getType()) + "' unsupported");
@@ -99,5 +99,10 @@ public class BooleanWritableConverter extends AbstractWritableConverter<BooleanW
   @Override
   protected BooleanWritable toWritable(Double value) throws IOException {
     return toWritable(value.intValue());
+  }
+
+  @Override
+  protected BooleanWritable toWritable(Boolean value) throws IOException {
+    return toWritable(value.booleanValue() ? 1 : 0);
   }
 }
