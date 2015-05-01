@@ -37,8 +37,7 @@ public class LzoBinaryB64LineRecordWriter<M, W extends BinaryWritable<M>>
   }
 
   @Override
-  public void write(M nullWritable, W writable)
-      throws IOException, InterruptedException {
+  public void write(M nullWritable, W writable) throws IOException {
     byte[] b64Bytes = base64.encode(converter.toBytes(writable.get()));
     out.write(b64Bytes);
     out.write(Protobufs.NEWLINE_UTF8_BYTE);

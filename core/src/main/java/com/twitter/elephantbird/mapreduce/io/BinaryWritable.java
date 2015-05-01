@@ -84,7 +84,11 @@ public abstract class BinaryWritable<M> implements WritableComparable<BinaryWrit
     // confusing with a different name.
     if (message == null && messageBytes != null) {
       checkConverter();
-      return converter.fromBytes(messageBytes);
+      try {
+        return converter.fromBytes(messageBytes);
+      } catch (DecodeException e) {
+        throw new IllegalStateException("Converter failed to deserialize", e);
+      }
     }
     return message;
   }

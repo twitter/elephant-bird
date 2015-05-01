@@ -19,6 +19,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.mapreduce.io.IdentityBinaryConverter;
+import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.RawBytesWritable;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
@@ -42,6 +43,7 @@ public class MultiInputFormat<M>
   // TODO need handle multiple input formats in a job better.
   //      might be better to store classname in the input split rather than in config.
   private static String CLASS_CONF_KEY = "elephantbird.class.for.MultiInputFormat";
+  private static String GENERIC_DECODER_KEY = "elephantbird.decoder.class.for.MultiInputFormat";
 
   private TypeRef<M> typeRef;
 
@@ -74,6 +76,10 @@ public class MultiInputFormat<M>
     HadoopUtils.setClassConf(conf, CLASS_CONF_KEY, clazz);
   }
 
+  public static void setGenericConverterClassConf(Class<?> clazz, Configuration conf) {
+    HadoopUtils.setClassConf(conf, GENERIC_DECODER_KEY, clazz);
+  }
+
   @SuppressWarnings({ "unchecked", "rawtypes" }) // return type is runtime dependent
   @Override
   public RecordReader<LongWritable, BinaryWritable<M>>
@@ -89,6 +95,9 @@ public class MultiInputFormat<M>
 
     // Explicit class names for Message and TBase are used so that
     // these classes need not be present when not required.
+
+    // TODO: merge all the switch (fileFormat) cases below
+    // and set the right converter/writable for each
 
     if (isSubclass(recordClass, "com.google.protobuf.Message")) {
       switch (fileFormat) {
@@ -117,6 +126,26 @@ public class MultiInputFormat<M>
       case LZO_B64LINE:
         return new LzoBinaryB64LineRecordReader(typeRef,
             new RawBytesWritable(), new IdentityBinaryConverter());
+      }
+    }
+
+    String genericDecoder = conf.get(GENERIC_DECODER_KEY);
+    if(genericDecoder != null) {
+      Class<?> decoderClazz = null;
+      BinaryConverterProvider<?> converterProvider = null;
+      try {
+        decoderClazz = conf.getClassByName(genericDecoder);
+        converterProvider = (BinaryConverterProvider<?>)decoderClazz.newInstance();
+      } catch (Exception e) {
+        throw new RuntimeException("failed to instantiate class '" + genericDecoder + "'", e);
+      }
+
+      BinaryConverter<?> converter = converterProvider.getConverter(conf);
+      switch (fileFormat) {
+        case LZO_BLOCK:
+          return new LzoGenericBlockRecordReader(typeRef, converter);
+        case LZO_B64LINE:
+          return new LzoGenericB64LineRecordReader(typeRef, converter);
       }
     }
 

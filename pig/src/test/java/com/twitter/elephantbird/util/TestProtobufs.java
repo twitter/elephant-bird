@@ -8,6 +8,7 @@ import com.google.common.base.Function;
 import com.google.protobuf.Message;
 import com.twitter.data.proto.tutorial.AddressBookProtos.AddressBook;
 import com.twitter.data.proto.tutorial.AddressBookProtos.Person;
+import com.twitter.elephantbird.mapreduce.io.DecodeException;
 import com.twitter.elephantbird.mapreduce.io.ProtobufConverter;
 import com.twitter.elephantbird.pig.piggybank.Fixtures;
 import com.twitter.elephantbird.util.Protobufs;
@@ -35,7 +36,7 @@ public class TestProtobufs {
   }
 
   @Test
-  public void testConverterParsing() {
+  public void testConverterParsing() throws DecodeException {
     ProtobufConverter<AddressBook> protoConverter = ProtobufConverter.newInstance(AddressBook.class);
     assertEquals(ab_, protoConverter.fromBytes(abBytes_));
   }

@@ -1,5 +1,8 @@
 package com.twitter.elephantbird.mapreduce.io;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.List;
 
 import com.google.protobuf.ByteString;
@@ -10,8 +13,9 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-
 import com.twitter.elephantbird.util.Protobufs;
+
+import org.apache.hadoop.io.IOUtils;
 
 /**
  * This is a {@link DynamicMessage} equivalent of following protobuf : <pre>
@@ -66,6 +70,16 @@ public class SerializedBlock {
             .setField(versionDesc, Integer.valueOf(1))
             .setField(protoClassNameDesc, protoClassName)
             .setField(protoBlobsDesc, protoBlobs)
+            .build());
+  }
+
+  public static SerializedBlock parseFrom(InputStream in)
+                                          throws InvalidProtocolBufferException, IOException {
+    // note this reads the entire input stream so it should
+    // be bounded by the caller already if required
+    return new SerializedBlock(
+        DynamicMessage.newBuilder(messageDescriptor)
+            .mergeFrom(in)
             .build());
   }
 
