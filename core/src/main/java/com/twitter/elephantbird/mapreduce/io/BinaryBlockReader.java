@@ -8,6 +8,7 @@ import com.google.protobuf.ByteString;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.StreamSearcher;
 
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A class to read blocks of binary objects like protobufs.
  */
-public abstract class BinaryBlockReader<M> {
+public class BinaryBlockReader<M> {
   private static final Logger LOG = LoggerFactory.getLogger(BinaryBlockReader.class);
 
   // though any type of objects can be stored, each block itself is
@@ -30,17 +31,21 @@ public abstract class BinaryBlockReader<M> {
   private boolean readNewBlocks_ = true;
   private boolean skipEmptyRecords = true; // skip any records of length zero
 
-  protected BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
+  public BinaryBlockReader(InputStream in, BinaryConverter<M> protoConverter) {
     this(in, protoConverter, true);
   }
 
-  protected BinaryBlockReader(InputStream in,
+  public BinaryBlockReader(InputStream in,
                               BinaryConverter<M> protoConverter,
                               boolean skipEmptyRecords) {
     in_ = in;
     protoConverter_ = protoConverter;
     searcher_ = new StreamSearcher(Protobufs.KNOWN_GOOD_POSITION_MARKER);
     this.skipEmptyRecords = skipEmptyRecords;
+  }
+
+  public BinaryConverter<M> getConverter() {
+    return protoConverter_;
   }
 
   public void close() throws IOException {
@@ -141,15 +146,13 @@ public abstract class BinaryBlockReader<M> {
       return null;
     }
 
-    byte[] byteArray = new byte[blockSize];
-    IOUtils.readFully(in_, byteArray, 0, blockSize);
-
     if (skipIfStartingOnBoundary && skipped == Protobufs.KNOWN_GOOD_POSITION_MARKER.length) {
       // skip the current current block
+      in_.skip(blockSize);
       return parseNextBlock(false);
     }
 
-    SerializedBlock block = SerializedBlock.parseFrom(byteArray);
+    SerializedBlock block = SerializedBlock.parseFrom(new BoundedInputStream(in_, blockSize));
 
     curBlobs_ = block.getProtoBlobs();
     numLeftToReadThisBlock_ = curBlobs_.size();

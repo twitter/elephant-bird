@@ -46,26 +46,26 @@ public class ProtobufConverter<M extends Message> implements BinaryConverter<M> 
   }
 
   @Override
-  public M fromBytes(byte[] messageBuffer) {
-    return fromBytes(messageBuffer, 0, messageBuffer.length);
+  public M fromBytes(byte[] messageBuffer) throws DecodeException {
+    try {
+      return fromBytes(messageBuffer, 0, messageBuffer.length);
+    } catch (InvalidProtocolBufferException ipbe) {
+      throw new DecodeException(ipbe);
+    } catch (UninitializedMessageException ume) {
+      throw new DecodeException(ume);
+    }
   }
 
   @SuppressWarnings("unchecked")
-  public M fromBytes(byte[] messageBuffer, int offset, int len) {
-    try {
-      if (defaultInstance == null) {
-        defaultInstance = Protobufs.getMessageBuilder(typeRef.getRawClass())
-                                   .getDefaultInstanceForType();
-      }
-      return (M) defaultInstance.newBuilderForType()
-                                .mergeFrom(messageBuffer, offset, len)
-                                .build();
-    } catch (InvalidProtocolBufferException e) {
-      logWarning("Invalid Protobuf exception while building " + typeRef.getRawClass().getName(), e);
-    } catch(UninitializedMessageException ume) {
-      logWarning("Uninitialized Message Exception while building " + typeRef.getRawClass().getName(), ume);
+  public M fromBytes(byte[] messageBuffer, int offset, int len)
+      throws InvalidProtocolBufferException, UninitializedMessageException {
+    if (defaultInstance == null) {
+      defaultInstance = Protobufs.getMessageBuilder(typeRef.getRawClass())
+                                 .getDefaultInstanceForType();
     }
-    return null;
+    return (M) defaultInstance.newBuilderForType()
+                              .mergeFrom(messageBuffer, offset, len)
+                              .build();
   }
 
   @Override

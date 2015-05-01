@@ -13,6 +13,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Writable;
 
+import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -54,7 +55,11 @@ public class ProtobufDeserializer implements Deserializer {
   @Override
   public Object deserialize(Writable blob) throws SerDeException {
     BytesWritable bytes = (BytesWritable) blob;
-    return protobufConverter.fromBytes(bytes.getBytes(), 0, bytes.getLength());
+    try {
+      return protobufConverter.fromBytes(bytes.getBytes(), 0, bytes.getLength());
+    } catch (IOException e) {
+      throw new SerDeException(e);
+    }
   }
 
   @Override

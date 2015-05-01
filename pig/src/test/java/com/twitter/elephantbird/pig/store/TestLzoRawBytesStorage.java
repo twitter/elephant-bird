@@ -20,6 +20,7 @@ import org.apache.pig.data.Tuple;
 import org.junit.Assume;
 import org.junit.Test;
 
+import com.twitter.elephantbird.mapreduce.io.DecodeException;
 import com.twitter.elephantbird.mapreduce.io.ThriftConverter;
 import com.twitter.elephantbird.pig.load.LzoRawBytesLoader;
 import com.twitter.elephantbird.thrift.test.Name;
@@ -144,7 +145,7 @@ public class TestLzoRawBytesStorage {
     });
   }
 
-  public void validate(Iterator<Tuple> itr) throws ExecException {
+  public void validate(Iterator<Tuple> itr) throws ExecException, DecodeException {
     assertNotNull(itr);
     assertTrue(itr.hasNext());
     Tuple t = itr.next();
