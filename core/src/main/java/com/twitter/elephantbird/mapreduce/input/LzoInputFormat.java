@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Arrays;
 
 import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.fs.FileStatus;
@@ -51,18 +52,21 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
   @Override
   protected List<FileStatus> listStatus(JobContext job) throws IOException {
-    // The list of files is no different.
-    List<FileStatus> files = super.listStatus(job);
+    Path[] dirs = getInputPaths(job);
     List<FileStatus> results = Lists.newArrayList();
     boolean recursive = HadoopCompat.getConfiguration(job).getBoolean("mapred.input.dir.recursive", false);
-    Iterator<FileStatus> it = files.iterator();
-    while (it.hasNext()) {
-      FileStatus fileStatus = it.next();
-      FileSystem fs = fileStatus.getPath().getFileSystem(HadoopCompat.getConfiguration(job));
-      addInputPath(results, fs, fileStatus, recursive);
+    for (Path dir : dirs) {
+      // Get filesystem on path-by-path basis
+      FileSystem fs = dir.getFileSystem(HadoopCompat.getConfiguration(job));
+      List<FileStatus> files = Arrays.asList(fs.listStatus(dir));
+      Iterator<FileStatus> it = files.iterator();
+      while (it.hasNext()) {
+        FileStatus fileStatus = it.next();
+        addInputPath(results, fs, fileStatus, recursive);
+      }
     }
 
-    LOG.debug("Total lzo input paths to process : " + results.size());
+    LOG.debug("Total LZO input paths to process: " + results.size() + ".");
     return results;
   }
 
