@@ -38,6 +38,8 @@ public class LzoGenericBlockOutputFormat<M> extends LzoOutputFormat<M, GenericWr
     Class<?> typeRef = null;
     Class<?> encoderClazz = null;
     BinaryConverterProvider<?> converterProvider = null;
+    // get the converter provider from job conf
+    // which then gives us the BinaryConverter for the type M in question
     try {
       String typeRefClass = conf.get(CLASS_CONF_KEY);
       typeRef = conf.getClassByName(typeRefClass);
