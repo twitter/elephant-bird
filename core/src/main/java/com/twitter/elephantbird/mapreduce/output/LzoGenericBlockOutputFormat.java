@@ -43,8 +43,12 @@ public class LzoGenericBlockOutputFormat<M> extends LzoOutputFormat<M, GenericWr
       typeRef = conf.getClassByName(typeRefClass);
       encoderClazz = conf.getClassByName(encoderClassName);
       converterProvider = (BinaryConverterProvider<?>)encoderClazz.newInstance();
-    } catch (Exception e) {
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    } catch (InstantiationException e) {
       throw new RuntimeException("failed to instantiate class '" + encoderClassName + "'", e);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
     }
 
     BinaryConverter<?> converter = converterProvider.getConverter(conf);
