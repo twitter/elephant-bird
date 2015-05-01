@@ -8,6 +8,7 @@ import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.mapreduce.io.DecodeException;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.TypeRef;
@@ -145,7 +146,7 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
       M decoded = null;
       try {
         decoded = deserializer_.fromBytes(byteArray);
-      } catch (Exception e) {
+      } catch (DecodeException e) {
         errorTracker.incErrors(e);
         HadoopCompat.incrementCounter(recordErrorsCounter, 1);
         continue;

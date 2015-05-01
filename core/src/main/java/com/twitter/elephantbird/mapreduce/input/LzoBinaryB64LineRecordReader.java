@@ -7,6 +7,7 @@ import java.util.Arrays;
 import com.twitter.elephantbird.mapreduce.input.MapredInputFormatCompatible;
 import com.twitter.elephantbird.mapreduce.io.BinaryConverter;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
+import com.twitter.elephantbird.mapreduce.io.DecodeException;
 import com.twitter.elephantbird.util.Codecs;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
@@ -141,7 +142,7 @@ public class  LzoBinaryB64LineRecordReader<M, W extends BinaryWritable<M>>
 
       try {
         protoValue = converter_.fromBytes(Base64Codec.decodeFast(line_.getBytes(), line_.getLength()));
-      } catch(Throwable t1) {
+      } catch(DecodeException t1) {
         HadoopCompat.incrementCounter(recordErrorsCounter, 1);
         errorTracker.incErrors(t1);
       }
