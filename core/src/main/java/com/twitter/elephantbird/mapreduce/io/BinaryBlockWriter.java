@@ -22,7 +22,7 @@ public class BinaryBlockWriter<M> {
   private int numRecordsWritten_ = 0;
   private List<ByteString> protoBlobs_;
 
-  public BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> binaryConverter, int numRecordsPerBlock) {
+  protected BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> binaryConverter, int numRecordsPerBlock) {
     out_ = out;
     numRecordsPerBlock_ = numRecordsPerBlock;
     innerClass_ = protoClass;
