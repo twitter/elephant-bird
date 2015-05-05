@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import com.twitter.elephantbird.mapreduce.input.BinaryConverterProvider;
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockWriter;
@@ -36,21 +37,16 @@ public class LzoGenericBlockOutputFormat<M> extends LzoOutputFormat<M, GenericWr
     Configuration conf = HadoopCompat.getConfiguration(job);
     String encoderClassName = conf.get(GENERIC_ENCODER_KEY);
     Class<?> typeRef = null;
-    Class<?> encoderClazz = null;
     BinaryConverterProvider<?> converterProvider = null;
     // get the converter provider from job conf
     // which then gives us the BinaryConverter for the type M in question
     try {
       String typeRefClass = conf.get(CLASS_CONF_KEY);
       typeRef = conf.getClassByName(typeRefClass);
-      encoderClazz = conf.getClassByName(encoderClassName);
-      converterProvider = (BinaryConverterProvider<?>)encoderClazz.newInstance();
+      converterProvider = (BinaryConverterProvider<?>) ReflectionUtils.newInstance(
+        conf.getClassByName(encoderClassName), conf);
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    } catch (InstantiationException e) {
       throw new RuntimeException("failed to instantiate class '" + encoderClassName + "'", e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
     }
 
     BinaryConverter<?> converter = converterProvider.getConverter(conf);
