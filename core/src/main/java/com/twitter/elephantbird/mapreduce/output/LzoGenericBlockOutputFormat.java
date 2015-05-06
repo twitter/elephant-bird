@@ -36,13 +36,13 @@ public class LzoGenericBlockOutputFormat<M> extends LzoOutputFormat<M, GenericWr
       throws IOException, InterruptedException {
     Configuration conf = HadoopCompat.getConfiguration(job);
     String encoderClassName = conf.get(GENERIC_ENCODER_KEY);
-    Class<?> typeRef = null;
+    Class<?> valueClass = null;
     BinaryConverterProvider<?> converterProvider = null;
     // get the converter provider from job conf
     // which then gives us the BinaryConverter for the type M in question
     try {
-      String typeRefClass = conf.get(CLASS_CONF_KEY);
-      typeRef = conf.getClassByName(typeRefClass);
+      String valueClassName = conf.get(CLASS_CONF_KEY);
+      valueClass = conf.getClassByName(valueClassName);
       converterProvider = (BinaryConverterProvider<?>) ReflectionUtils.newInstance(
         conf.getClassByName(encoderClassName), conf);
     } catch (ClassNotFoundException e) {
@@ -52,6 +52,6 @@ public class LzoGenericBlockOutputFormat<M> extends LzoOutputFormat<M, GenericWr
     BinaryConverter<?> converter = converterProvider.getConverter(conf);
 
     return new LzoBinaryBlockRecordWriter<M, GenericWritable<M>>(new BinaryBlockWriter(
-        getOutputStream(job), typeRef, converter));
+        getOutputStream(job), valueClass, converter));
   }
 }
