@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.twitter.elephantbird.util.HadoopCompat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -28,6 +29,8 @@ import com.hadoop.compression.lzo.LzoIndex;
  */
 public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(LzoInputFormat.class);
+
+  public static final String READ_INDEXES_KEY = "elephantbird.index.read";
 
   private final PathFilter hiddenPathFilter = new PathFilter() {
     // avoid hidden files and directories.
@@ -112,6 +115,11 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
   public List<InputSplit> getSplits(JobContext job) throws IOException {
     List<InputSplit> defaultSplits = super.getSplits(job);
 
+    Configuration config = HadoopCompat.getConfiguration(job);
+
+    boolean readIndexes = config.getBoolean(READ_INDEXES_KEY, true);
+    if (!readIndexes) return defaultSplits;
+
     // Find new starts and ends of the file splits that align with the lzo blocks.
     List<InputSplit> result = new ArrayList<InputSplit>();
 
@@ -127,7 +135,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       if ( file.equals(prevFile) ) {
         index = prevIndex;
       } else {
-        index = LzoIndex.readIndex(file.getFileSystem(HadoopCompat.getConfiguration(job)), file);
+        index = LzoIndex.readIndex(file.getFileSystem(config), file);
         prevFile = file;
         prevIndex = index;
       }
