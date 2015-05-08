@@ -1,5 +1,17 @@
 # Elephant Bird #
 
+### Version 4.7 ###
+
+Issue 440. LzoGenericBlockOutputFormat (Ruban Monu)
+
+Issue 439. Adds generic block record readers (Ruban Monu)
+
+Issue 435. Faster working with LzoBinary data (Ian O'Connell)
+
+Issue 434. Speed up getSplits by reusing FileStatus'es from the very first listStatus (Gera Shegalov)
+
+Issue 430. Configurable minimum indexable file size (Gera Shegalov)
+
 ### Version 4.6 ###
 
 Issue 429 Avoid double reading first block in split in block-format (Raghu Angadi)
