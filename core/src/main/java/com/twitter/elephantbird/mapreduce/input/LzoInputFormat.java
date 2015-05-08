@@ -2,8 +2,10 @@ package com.twitter.elephantbird.mapreduce.input;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.twitter.elephantbird.util.HadoopCompat;
 import org.apache.hadoop.fs.FileStatus;
@@ -44,10 +46,32 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     @Override
     public boolean accept(Path path) {
       String name = path.getName();
-      return !name.startsWith(".") &&
-             !name.startsWith("_") &&
+      return hiddenPathFilter.accept(path) &&
              name.endsWith(".lzo");
     }};
+
+  private final PathFilter lzoIndexFilter = new PathFilter() {
+    @Override
+    public boolean accept(Path path) {
+      final String name = path.getName();
+      return hiddenPathFilter.accept(path) &&
+             name.endsWith(LzoIndex.LZO_INDEX_SUFFIX);
+    }
+  };
+
+  private static class LzoSplitStatus {
+    private FileStatus lzoFileStatus;
+    private FileStatus lzoIndexFileStatus;
+
+    @Override
+    public String toString() {
+      return LzoSplitStatus.class.getName() + "[ lzo=" + lzoFileStatus
+          + " index=" + lzoIndexFileStatus + " ]";
+    }
+  }
+
+  private final Map<Path,LzoSplitStatus> splitStatusMap
+      = new HashMap<Path,LzoSplitStatus>();
 
   @Override
   protected List<FileStatus> listStatus(JobContext job) throws IOException {
@@ -61,15 +85,16 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       FileSystem fs = fileStatus.getPath().getFileSystem(HadoopCompat.getConfiguration(job));
       addInputPath(results, fs, fileStatus, recursive);
     }
-
-    LOG.debug("Total lzo input paths to process : " + results.size());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Total lzo input paths to process : " + results.size());
+    }
     return results;
   }
 
   //MAPREDUCE-1501
   /**
    * Add lzo file(s). If recursive is set, traverses the directories.
-   * @param result
+   * @param results
    *          The List to store all files.
    * @param fs
    *          The FileSystem.
@@ -90,7 +115,23 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       }
     } else if ( visibleLzoFilter.accept(path) ) {
       results.add(pathStat);
+      lzoSplitStatus(path).lzoFileStatus = pathStat;
+    } else if (lzoIndexFilter.accept(path)) {
+      final String lzoIndexName = path.getName();
+      final String lzoName = lzoIndexName.substring(0, lzoIndexName.length() -
+          LzoIndex.LZO_INDEX_SUFFIX.length());
+      final Path lzoPath = new Path(path.getParent(), lzoName);
+      lzoSplitStatus(lzoPath).lzoIndexFileStatus = pathStat;
     }
+  }
+
+  private LzoSplitStatus lzoSplitStatus(Path path) {
+    LzoSplitStatus lzoSplitStatus = splitStatusMap.get(path);
+    if (lzoSplitStatus == null) {
+      lzoSplitStatus = new LzoSplitStatus();
+      splitStatusMap.put(path, lzoSplitStatus);
+    }
+    return lzoSplitStatus;
   }
 
   @Override
@@ -100,16 +141,12 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
      * this.getSplit(). Right now, FileInputFormat splits across the
      * blocks and this.getSplits() adjusts the positions.
      */
-    try {
-      FileSystem fs = filename.getFileSystem(HadoopCompat.getConfiguration(context) );
-      return fs.exists( filename.suffix( LzoIndex.LZO_INDEX_SUFFIX ) );
-    } catch (IOException e) { // not expected
-      throw new RuntimeException(e);
-    }
+    LzoSplitStatus lzoSplitStatus = splitStatusMap.get(filename);
+    return lzoSplitStatus != null && lzoSplitStatus.lzoIndexFileStatus != null;
   }
 
-  @Override
-  public List<InputSplit> getSplits(JobContext job) throws IOException {
+  private List<InputSplit> getSplitsInternal(JobContext job)
+      throws IOException {
     List<InputSplit> defaultSplits = super.getSplits(job);
 
     // Find new starts and ends of the file splits that align with the lzo blocks.
@@ -124,10 +161,18 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       Path file = fileSplit.getPath();
 
       LzoIndex index; // reuse index for files with multiple blocks.
+      final LzoSplitStatus lzoSplitStatus = splitStatusMap.get(file);
       if ( file.equals(prevFile) ) {
         index = prevIndex;
       } else {
-        index = LzoIndex.readIndex(file.getFileSystem(HadoopCompat.getConfiguration(job)), file);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Cached file status " + lzoSplitStatus);
+        }
+        final FileStatus indexFileStatus = lzoSplitStatus.lzoIndexFileStatus;
+        index = indexFileStatus == null
+            ? new LzoIndex()
+            : LzoIndex.readIndex(
+                  file.getFileSystem(HadoopCompat.getConfiguration(job)), file);
         prevFile = file;
         prevIndex = index;
       }
@@ -148,11 +193,14 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
       long end = start + fileSplit.getLength();
 
       long lzoStart = index.alignSliceStartToIndex(start, end);
-      long lzoEnd = index.alignSliceEndToIndex(end, file.getFileSystem(HadoopCompat.getConfiguration(job)).getFileStatus(file).getLen());
+      long lzoEnd = index.alignSliceEndToIndex(end,
+          lzoSplitStatus.lzoFileStatus.getLen());
 
       if (lzoStart != LzoIndex.NOT_FOUND  && lzoEnd != LzoIndex.NOT_FOUND) {
         result.add(new FileSplit(file, lzoStart, lzoEnd - lzoStart, fileSplit.getLocations()));
-        LOG.debug("Added LZO split for " + file + "[start=" + lzoStart + ", length=" + (lzoEnd - lzoStart) + "]");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Added LZO split for " + file + "[start=" + lzoStart + ", length=" + (lzoEnd - lzoStart) + "]");
+        }
       }
       // else ignore the data?
       // should handle splitting the entire file here so that
@@ -160,5 +208,14 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
     }
 
     return result;
+  }
+
+  @Override
+  public List<InputSplit> getSplits(JobContext job) throws IOException {
+    try {
+      return getSplitsInternal(job);
+    } finally {
+      splitStatusMap.clear(); // no use beyond getSplits
+    }
   }
 }
