@@ -168,8 +168,7 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Cached file status " + lzoSplitStatus);
         }
-        final FileStatus indexFileStatus = lzoSplitStatus
-            .lzoIndexFileStatus;
+        final FileStatus indexFileStatus = lzoSplitStatus.lzoIndexFileStatus;
         index = indexFileStatus == null
             ? new LzoIndex()
             : LzoIndex.readIndex(
