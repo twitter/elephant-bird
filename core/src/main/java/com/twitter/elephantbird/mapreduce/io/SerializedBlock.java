@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Label;
@@ -79,6 +80,19 @@ public class SerializedBlock {
         DynamicMessage.newBuilder(messageDescriptor)
             .mergeFrom(messageBuffer)
             .build());
+  }
+
+  public static SerializedBlock parseFrom(InputStream in, int maxSize)
+                                          throws InvalidProtocolBufferException, IOException {
+    // create a CodedInputStream so that protobuf can enforce the configured max size
+    // instead of using the default which may not be large enough for this data
+    CodedInputStream codedInput = CodedInputStream.newInstance(in);
+    codedInput.setSizeLimit(maxSize);
+    DynamicMessage.Builder messageBuilder = DynamicMessage.newBuilder(messageDescriptor)
+      .mergeFrom(codedInput);
+    // verify we've read to the end
+    codedInput.checkLastTagWas(0);
+    return new SerializedBlock(messageBuilder.build());
   }
 
   private static final Descriptors.Descriptor messageDescriptor;

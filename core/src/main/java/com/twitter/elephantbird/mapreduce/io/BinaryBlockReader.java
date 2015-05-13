@@ -145,15 +145,16 @@ public class BinaryBlockReader<M> {
       // EOF if the size cannot be read.
       return null;
     }
-    byte[] byteArray = new byte[blockSize];
-    IOUtils.readFully(in_, byteArray, 0, blockSize);
 
     if (skipIfStartingOnBoundary && skipped == Protobufs.KNOWN_GOOD_POSITION_MARKER.length) {
       // skip the current current block
+      in_.skip(blockSize);
       return parseNextBlock(false);
     }
 
-    SerializedBlock block = SerializedBlock.parseFrom(byteArray);
+    SerializedBlock block = SerializedBlock.parseFrom(
+      new BoundedInputStream(in_, blockSize),
+      blockSize);
 
     curBlobs_ = block.getProtoBlobs();
     numLeftToReadThisBlock_ = curBlobs_.size();
