@@ -1,5 +1,9 @@
 # Elephant Bird #
 
+### Version 4.8 ###
+
+Issue 441. Use CodedInputStream in SerializedBlock to fix the max size limit check (Ruban Monu)
+
 ### Version 4.7 ###
 
 Issue 440. LzoGenericBlockOutputFormat (Ruban Monu)
