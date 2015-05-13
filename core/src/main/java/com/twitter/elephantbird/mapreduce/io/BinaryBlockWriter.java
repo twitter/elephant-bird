@@ -12,7 +12,7 @@ import com.twitter.elephantbird.util.Protobufs;
 /**
  * A class to write blocks of serialized objects.
  */
-public abstract class BinaryBlockWriter<M> {
+public class BinaryBlockWriter<M> {
   protected static final int DEFAULT_NUM_RECORDS_PER_BLOCK = 100;
 
   private final OutputStream out_;
@@ -28,6 +28,10 @@ public abstract class BinaryBlockWriter<M> {
     innerClass_ = protoClass;
     binaryConverter_ = binaryConverter;
     protoBlobs_ = new ArrayList<ByteString>(numRecordsPerBlock_);
+  }
+
+  public BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> binaryConverter) {
+    this(out, protoClass, binaryConverter, DEFAULT_NUM_RECORDS_PER_BLOCK);
   }
 
   public void write(M message) throws IOException {
