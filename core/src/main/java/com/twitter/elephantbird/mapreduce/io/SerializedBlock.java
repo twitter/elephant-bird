@@ -73,16 +73,6 @@ public class SerializedBlock {
             .build());
   }
 
-  public static SerializedBlock parseFrom(InputStream in)
-                                          throws InvalidProtocolBufferException, IOException {
-    // note this reads the entire input stream so it should
-    // be bounded by the caller already if required
-    return new SerializedBlock(
-        DynamicMessage.newBuilder(messageDescriptor)
-            .mergeFrom(in)
-            .build());
-  }
-
   public static SerializedBlock parseFrom(byte[] messageBuffer)
                                           throws InvalidProtocolBufferException {
     return new SerializedBlock(
