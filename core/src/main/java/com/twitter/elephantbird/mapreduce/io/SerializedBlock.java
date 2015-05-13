@@ -74,14 +74,6 @@ public class SerializedBlock {
             .build());
   }
 
-  public static SerializedBlock parseFrom(byte[] messageBuffer)
-                                          throws InvalidProtocolBufferException {
-    return new SerializedBlock(
-        DynamicMessage.newBuilder(messageDescriptor)
-            .mergeFrom(messageBuffer)
-            .build());
-  }
-
   public static SerializedBlock parseFrom(InputStream in, int maxSize)
                                           throws InvalidProtocolBufferException, IOException {
     // create a CodedInputStream so that protobuf can enforce the configured max size
@@ -93,6 +85,14 @@ public class SerializedBlock {
     // verify we've read to the end
     codedInput.checkLastTagWas(0);
     return new SerializedBlock(messageBuilder.build());
+  }
+
+  public static SerializedBlock parseFrom(byte[] messageBuffer)
+                                          throws InvalidProtocolBufferException {
+    return new SerializedBlock(
+        DynamicMessage.newBuilder(messageDescriptor)
+            .mergeFrom(messageBuffer)
+            .build());
   }
 
   private static final Descriptors.Descriptor messageDescriptor;
