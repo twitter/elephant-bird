@@ -152,7 +152,9 @@ public class BinaryBlockReader<M> {
       return parseNextBlock(false);
     }
 
-    SerializedBlock block = SerializedBlock.parseFrom(new BoundedInputStream(in_, blockSize));
+    SerializedBlock block = SerializedBlock.parseFrom(
+      new BoundedInputStream(in_, blockSize),
+      blockSize);
 
     curBlobs_ = block.getProtoBlobs();
     numLeftToReadThisBlock_ = curBlobs_.size();
