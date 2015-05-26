@@ -176,7 +176,7 @@ public class Base64Codec
   {
     try {
       return doDecode(sArr, sOff, sLen);
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       throw new DecodeException(e);
     }
   }
@@ -239,7 +239,7 @@ public class Base64Codec
   {
     try {
       return doDecodeFast(sArr, sLen);
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       throw new DecodeException(e);
     }
   }
