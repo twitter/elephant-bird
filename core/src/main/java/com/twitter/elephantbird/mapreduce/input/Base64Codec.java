@@ -2,6 +2,8 @@ package com.twitter.elephantbird.mapreduce.input;
 
 import java.util.Arrays;
 
+import com.twitter.elephantbird.mapreduce.io.DecodeException;
+
 /** A very fast and memory efficient class to encode and decode to and from BASE64 in full accordance
  * with RFC 2045.<br><br>
  * On Windows XP sp1 with 1.4.2_04 and later ;), this encoder and decoder is about 10 times faster
@@ -157,7 +159,7 @@ public class Base64Codec
    * @return The decoded array of bytes. May be of length 0. Will be <code>null</code> if the legal characters
    * (including '=') isn't divideable by 4. (I.e. definitely corrupted).
    */
-  public final static byte[] decode(byte[] sArr)
+  public final static byte[] decode(byte[] sArr) throws DecodeException
   {
     return decode(sArr, 0, sArr.length);
   }
@@ -170,8 +172,16 @@ public class Base64Codec
    * @return The decoded array of bytes. May be of length 0. Will be <code>null</code> if the legal characters
    * (including '=') isn't divideable by 4. (I.e. definitely corrupted).
    */
-  public final static byte[] decode(byte[] sArr, int sOff, int sLen)
+  public final static byte[] decode(byte[] sArr, int sOff, int sLen) throws DecodeException
   {
+    try {
+      return doDecode(sArr, sOff, sLen);
+    } catch (RuntimeException e) {
+      throw new DecodeException(e);
+    }
+  }
+
+  private final static byte[] doDecode(byte[] sArr, int sOff, int sLen) {
     // Count illegal characters (including '\r', '\n') to know what size the returned array will be,
     // so we don't have to reallocate & copy it later.
     int sepCnt = 0; // Number of separator characters. (Actually illegal characters, but that's a bonus...)
@@ -225,8 +235,16 @@ public class Base64Codec
    * @param sArr The source array. Length 0 will return an empty array. <code>null</code> will throw an exception.
    * @return The decoded array of bytes. May be of length 0.
    */
-  public final static byte[] decodeFast(byte[] sArr, int sLen)
+  public final static byte[] decodeFast(byte[] sArr, int sLen) throws DecodeException
   {
+    try {
+      return doDecodeFast(sArr, sLen);
+    } catch (RuntimeException e) {
+      throw new DecodeException(e);
+    }
+  }
+
+  private final static byte[] doDecodeFast(byte[] sArr, int sLen) {
     // Check special case
     if (sLen == 0)
       return new byte[0];
