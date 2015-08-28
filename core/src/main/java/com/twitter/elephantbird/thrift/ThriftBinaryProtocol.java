@@ -59,6 +59,7 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   public TMap readMapBegin() throws TException {
     TMap map = super.readMapBegin();
     checkContainerElemType(map.keyType);
+    checkReadLength(map.size);
     checkContainerElemType(map.valueType);
     return map;
   }
@@ -66,6 +67,7 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TList readListBegin() throws TException {
     TList list = super.readListBegin();
+    checkReadLength(list.size);
     checkContainerElemType(list.elemType);
     return list;
   }
@@ -73,6 +75,7 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TSet readSetBegin() throws TException {
     TSet set = super.readSetBegin();
+    checkReadLength(set.size);
     checkContainerElemType(set.elemType);
     return set;
   }
