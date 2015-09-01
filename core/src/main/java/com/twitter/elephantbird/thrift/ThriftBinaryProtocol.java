@@ -96,7 +96,7 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
     }
     if (checkReadLength_) {
       if ((readLength_ - size) < 0) {
-        throw new TProtocolException("Remaining message length is " + readLength_ + " but container size is at least: " + size);
+        throw new TProtocolException("Remaining message length is " + readLength_ + " but container size in underlying TTransport is set to at least: " + size);
       }
     }
   }

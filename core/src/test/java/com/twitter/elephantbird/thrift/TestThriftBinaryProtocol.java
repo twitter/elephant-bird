@@ -3,40 +3,25 @@ package com.twitter.elephantbird.thrift;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.junit.Test;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.easymock.IAnswer;
+import org.easymock.EasyMock;
+import org.junit.Test;
 
-// mock transport for Set and List container types
-class TestTransport extends TTransport {
+import static org.easymock.EasyMock.anyInt;
+import static org.easymock.EasyMock.createStrictMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.replay;
 
-  protected int containerSize;
+public class TestThriftBinaryProtocol {
 
-  protected int readAllCalls = 0;
-
-  // returns the supplied int as the container size
-  // when called by ThriftBinaryProtocol
-  public TestTransport(int containerSize) {
-    this.containerSize = containerSize;
-  }
-
-  @Override
-  public void close() {}
-
-  @Override
-  public boolean isOpen() { return true; }
-
-  @Override
-  public void open() throws TTransportException {}
-
-  // should not be invoked in unit tests
-  public int read(byte[] buf, int off, int len) throws TTransportException {
-    throw new IllegalStateException();
-  }
+  int METADATA_BYTES = 5; // type(1) + size(4)
+  int MAP_METADATA_BYTES = 6; // key type(1) + value type(1) + size(4)
 
   // helper method to set container size correctly in the supplied byte array
   protected void setContainerSize(byte[] buf, int n) {
@@ -46,92 +31,126 @@ class TestTransport extends TTransport {
     }
   }
 
-  @Override
-  public int readAll(byte[] buf, int off, int len) throws TTransportException {
-    int bytesWritten = 0;
-    switch(++readAllCalls) {
-      case 1:
-        // first call, set data type
-        buf[0] = TType.BYTE;
-        bytesWritten = 1;
-        break;
-      case 2:
-        // second call, set container size
-        setContainerSize(buf, containerSize);
-        bytesWritten = 4;
-        break;
-      default:
-        // only two calls are needed for List and Set metadata
-        throw new IllegalStateException();
-    }
-    return bytesWritten;
+  protected void setDataType(byte[] buf) {
+    buf[0] = TType.BYTE;
   }
 
-  @Override
-  public void write(byte[] buf, int off, int len) throws TTransportException {}
-}
-
-// mock transport for Map container type
-class TestMapTransport extends TestTransport {
-
-  public TestMapTransport(int containerSize) {
-    super(containerSize);
+  // mock transport for Set and List container types
+  private TTransport getMockTransport(final int containerSize) throws TException {
+    TTransport transport = createStrictMock(TTransport.class);
+    // not using buffered mode for tests, so return -1 per the contract
+    expect(transport.getBytesRemainingInBuffer()).andReturn(-1);
+    // first call, set data type
+    expect(transport.readAll(isA(byte[].class), anyInt(), anyInt()))
+      .andAnswer(
+        new IAnswer<Integer>() {
+          public Integer answer() {
+            byte[] buf = (byte[])(EasyMock.getCurrentArguments()[0]);
+            setDataType(buf);
+            return 1;
+          }
+        }
+      );
+    expect(transport.getBytesRemainingInBuffer()).andReturn(-1);
+    // second call, set container size
+    expect(transport.readAll(isA(byte[].class), anyInt(), anyInt()))
+      .andAnswer(
+        new IAnswer<Integer>() {
+          public Integer answer() {
+            byte[] buf = (byte[])(EasyMock.getCurrentArguments()[0]);
+            setContainerSize(buf, containerSize);
+            return 4;
+          }
+        }
+      );
+    return transport;
   }
 
-  @Override
-  public int readAll(byte[] buf, int off, int len) throws TTransportException {
-    int bytesWritten = 0;
-    switch(++readAllCalls) {
-      case 1:
-        // first call, set key type
-        buf[0] = TType.BYTE;
-        bytesWritten = 1;
-        break;
-      case 2:
-        // second call, set value type
-        buf[0] = TType.BYTE;
-        bytesWritten = 1;
-        break;
-      case 3:
-        // third call, set container size
-        setContainerSize(buf, containerSize);
-        bytesWritten = 4;
-        break;
-      default:
-        // only three calls are needed for Map metadata 
-        throw new IllegalStateException();
-    }
-    return bytesWritten;
+  // mock transport for Map container type
+  private TTransport getMockMapTransport(final int containerSize) throws TException {
+    TTransport transport = createStrictMock(TTransport.class);
+    // not using buffered mode for tests, so return -1 per the contract
+    expect(transport.getBytesRemainingInBuffer()).andReturn(-1);
+    // first call, set key type
+    expect(transport.readAll(isA(byte[].class), anyInt(), anyInt()))
+      .andAnswer(
+        new IAnswer<Integer>() {
+          public Integer answer() {
+            byte[] buf = (byte[])(EasyMock.getCurrentArguments()[0]);
+            setDataType(buf);
+            return 1;
+          }
+        }
+      );
+    expect(transport.getBytesRemainingInBuffer()).andReturn(-1);
+    // second call, set value type
+    expect(transport.readAll(isA(byte[].class), anyInt(), anyInt()))
+      .andAnswer(
+        new IAnswer<Integer>() {
+          public Integer answer() {
+            byte[] buf = (byte[])(EasyMock.getCurrentArguments()[0]);
+            setDataType(buf);
+            return 1;
+          }
+        }
+      );
+    expect(transport.getBytesRemainingInBuffer()).andReturn(-1);
+    // third call, set container size
+    expect(transport.readAll(isA(byte[].class), anyInt(), anyInt()))
+      .andAnswer(
+        new IAnswer<Integer>() {
+          public Integer answer() {
+            byte[] buf = (byte[])(EasyMock.getCurrentArguments()[0]);
+            setContainerSize(buf, containerSize);
+            return 4;
+          }
+        }
+      );
+    return transport;
   }
-}
-
-public class TestThriftBinaryProtocol {
-
-  int METADATA_BYTES = 5; // type(1) + size(4)
-  int MAP_METADATA_BYTES = 6; // key type(1) + value type(1) + size(4)
 
   @Test
   public void testCheckContainerSizeValid() throws TException {
     // any non-negative value is considered valid when checkReadLength is not enabled
+    TTransport transport;
     ThriftBinaryProtocol protocol;
-    protocol = new ThriftBinaryProtocol(new TestTransport(3));
+
+    transport = getMockTransport(3);
+    replay(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.readListBegin();
-    protocol = new ThriftBinaryProtocol(new TestTransport(3));
+
+    transport = getMockTransport(3);
+    replay(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.readSetBegin();
-    protocol = new ThriftBinaryProtocol(new TestMapTransport(3));
+
+    transport = getMockMapTransport(3);
+    replay(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.readMapBegin();
   }
 
   @Test
   public void testCheckContainerSizeValidWhenCheckReadLength() throws TException {
+    TTransport transport;
     ThriftBinaryProtocol protocol;
-    protocol = new ThriftBinaryProtocol(new TestTransport(3));
+
+    transport = getMockTransport(3);
+    replay(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readListBegin();
-    protocol = new ThriftBinaryProtocol(new TestTransport(3));
+
+    transport = getMockTransport(3);
+    replay(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readSetBegin();
-    protocol = new ThriftBinaryProtocol(new TestMapTransport(3));
+
+    transport = getMockMapTransport(3);
+    replay(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(MAP_METADATA_BYTES + 3);
     protocol.readMapBegin();
   }
@@ -139,25 +158,33 @@ public class TestThriftBinaryProtocol {
   @Test(expected=TProtocolException.class)
   public void testCheckListContainerSizeInvalid() throws TException {
     // any negative value is considered invalid when checkReadLength is not enabled
-    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(new TestTransport(-1));
+    TTransport transport = getMockTransport(-1);
+    replay(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readListBegin();
   }
 
   @Test(expected=TProtocolException.class)
   public void testCheckSetContainerSizeInvalid() throws TException {
-    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(new TestTransport(-1));
+    TTransport transport = getMockTransport(-1);
+    replay(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readSetBegin();
   }
 
   @Test(expected=TProtocolException.class)
   public void testCheckMapContainerSizeInvalid() throws TException {
-    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(new TestMapTransport(-1));
+    TTransport transport = getMockMapTransport(-1);
+    replay(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readMapBegin();
   }
 
   @Test(expected=TProtocolException.class)
   public void testCheckListContainerSizeInvalidWhenCheckReadLength() throws TException {
-    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(new TestTransport(400));
+    TTransport transport = getMockTransport(400);
+    replay(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(METADATA_BYTES + 3);
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.readListBegin();
@@ -165,7 +192,9 @@ public class TestThriftBinaryProtocol {
 
   @Test(expected=TProtocolException.class)
   public void testCheckSetContainerSizeInvalidWhenCheckReadLength() throws TException {
-    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(new TestTransport(400));
+    TTransport transport = getMockTransport(400);
+    replay(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readSetBegin();
@@ -173,7 +202,9 @@ public class TestThriftBinaryProtocol {
 
   @Test(expected=TProtocolException.class)
   public void testCheckMapContainerSizeInvalidWhenCheckReadLength() throws TException {
-    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(new TestMapTransport(400));
+    TTransport transport = getMockMapTransport(400);
+    replay(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.setReadLength(MAP_METADATA_BYTES + 3);
     protocol.readMapBegin();
