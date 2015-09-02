@@ -58,6 +58,11 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>ant</groupId>
       <artifactId>ant</artifactId>
     </dependency>

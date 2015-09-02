@@ -5,6 +5,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TList;
 import org.apache.thrift.protocol.TMap;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TType;
@@ -58,6 +59,7 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TMap readMapBegin() throws TException {
     TMap map = super.readMapBegin();
+    checkContainerSize(map.size);
     checkContainerElemType(map.keyType);
     checkContainerElemType(map.valueType);
     return map;
@@ -66,6 +68,7 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TList readListBegin() throws TException {
     TList list = super.readListBegin();
+    checkContainerSize(list.size);
     checkContainerElemType(list.elemType);
     return list;
   }
@@ -73,8 +76,29 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TSet readSetBegin() throws TException {
     TSet set = super.readSetBegin();
+    checkContainerSize(set.size);
     checkContainerElemType(set.elemType);
     return set;
+  }
+
+ /**
+   * Check if the container size if valid.
+   *
+   * NOTE: This assumes that the elements are one byte each.
+   * So this does not catch all cases, but does increase the chances of
+   * handling malformed lengths when the number of remaining bytes in
+   * the underlying Transport is clearly less than the container size
+   * that the Transport provides.
+   */
+  protected void checkContainerSize(int size) throws TProtocolException {
+    if (size < 0) {
+      throw new TProtocolException("Negative container size: " + size);
+    }
+    if (checkReadLength_) {
+      if ((readLength_ - size) < 0) {
+        throw new TProtocolException("Remaining message length is " + readLength_ + " but container size in underlying TTransport is set to at least: " + size);
+      }
+    }
   }
 
   public static class Factory implements TProtocolFactory {
