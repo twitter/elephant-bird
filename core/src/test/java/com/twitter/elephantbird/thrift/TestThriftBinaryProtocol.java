@@ -17,6 +17,7 @@ import static org.easymock.EasyMock.createStrictMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 
 public class TestThriftBinaryProtocol {
 
@@ -119,16 +120,19 @@ public class TestThriftBinaryProtocol {
     replay(transport);
     protocol = new ThriftBinaryProtocol(transport);
     protocol.readListBegin();
+    verify(transport);
 
     transport = getMockTransport(3);
     replay(transport);
     protocol = new ThriftBinaryProtocol(transport);
     protocol.readSetBegin();
+    verify(transport);
 
     transport = getMockMapTransport(3);
     replay(transport);
     protocol = new ThriftBinaryProtocol(transport);
     protocol.readMapBegin();
+    verify(transport);
   }
 
   @Test
@@ -141,18 +145,21 @@ public class TestThriftBinaryProtocol {
     protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readListBegin();
+    verify(transport);
 
     transport = getMockTransport(3);
     replay(transport);
     protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readSetBegin();
+    verify(transport);
 
     transport = getMockMapTransport(3);
     replay(transport);
     protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(MAP_METADATA_BYTES + 3);
     protocol.readMapBegin();
+    verify(transport);
   }
 
   @Test(expected=TProtocolException.class)
@@ -162,6 +169,7 @@ public class TestThriftBinaryProtocol {
     replay(transport);
     ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readListBegin();
+    verify(transport);
   }
 
   @Test(expected=TProtocolException.class)
@@ -170,6 +178,7 @@ public class TestThriftBinaryProtocol {
     replay(transport);
     ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readSetBegin();
+    verify(transport);
   }
 
   @Test(expected=TProtocolException.class)
@@ -178,6 +187,7 @@ public class TestThriftBinaryProtocol {
     replay(transport);
     ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readMapBegin();
+    verify(transport);
   }
 
   @Test(expected=TProtocolException.class)
@@ -188,6 +198,7 @@ public class TestThriftBinaryProtocol {
     protocol.setReadLength(METADATA_BYTES + 3);
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.readListBegin();
+    verify(transport);
   }
 
   @Test(expected=TProtocolException.class)
@@ -198,6 +209,7 @@ public class TestThriftBinaryProtocol {
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readSetBegin();
+    verify(transport);
   }
 
   @Test(expected=TProtocolException.class)
@@ -208,5 +220,6 @@ public class TestThriftBinaryProtocol {
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.setReadLength(MAP_METADATA_BYTES + 3);
     protocol.readMapBegin();
+    verify(transport);
   }
 }
