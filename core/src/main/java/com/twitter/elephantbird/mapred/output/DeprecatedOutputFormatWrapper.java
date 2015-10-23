@@ -3,6 +3,7 @@ package com.twitter.elephantbird.mapred.output;
 import java.io.IOException;
 
 import com.twitter.elephantbird.util.HadoopCompat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordWriter;
@@ -55,9 +56,9 @@ public class DeprecatedOutputFormatWrapper<K, V>
    * This configuration is read on the remote tasks to instantiate actual
    * OutputFormat correctly.
    */
-  public static void setOutputFormat(Class<?> realOutputFormatClass, JobConf jobConf) {
-    jobConf.setOutputFormat(DeprecatedOutputFormatWrapper.class);
-    HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realOutputFormatClass);
+  public static void setOutputFormat(Class<?> realOutputFormatClass, Configuration conf) {
+    conf.setClass("mapred.output.format.class", realOutputFormatClass, OutputFormat.class);
+    HadoopUtils.setClassConf(conf, CLASS_CONF_KEY, realOutputFormatClass);
   }
 
   @SuppressWarnings("unchecked")
