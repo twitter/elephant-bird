@@ -46,7 +46,7 @@ public class DelegateCombineFileInputFormat<K, V> extends FileInputFormat<K, V> 
   private long minSplitSizeNode;
   private long minSplitSizeRack;
 
-  public static void setDelegateInputFormat(JobConf conf, Class<? extends InputFormat> inputFormat) {
+  public static void setDelegateInputFormat(Configuration conf, Class<? extends InputFormat> inputFormat) {
     DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
     setCombinedInputFormatDelegate(conf, inputFormat);
   }

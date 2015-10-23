@@ -1,5 +1,6 @@
-package com.twitter.elephantbird.cascading2.scheme;
+package com.twitter.elephantbird.cascading3.scheme;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
@@ -39,7 +40,7 @@ public class CombinedSequenceFile extends SequenceFile {
   public CombinedSequenceFile(Fields fields) { super(fields); }
 
   // We can allow overriding the compression settings for just this scheme here
-  private void updateJobConfForLocalSettings(JobConf conf) {
+  private void updateJobConfForLocalSettings(Configuration conf) {
     String localSetCompressionEnabled = conf.get(COMPRESS_ENABLE);
     if(localSetCompressionEnabled != null) {
       conf.set(MR_COMPRESS_ENABLE, localSetCompressionEnabled);
@@ -58,9 +59,9 @@ public class CombinedSequenceFile extends SequenceFile {
 
   @Override
   public void sourceConfInit(
-      FlowProcess<JobConf> flowProcess,
-      Tap<JobConf, RecordReader, OutputCollector> tap,
-      JobConf conf ) {
+      FlowProcess<? extends Configuration> flowProcess,
+      Tap<Configuration, RecordReader, OutputCollector> tap,
+      Configuration conf ) {
     super.sourceConfInit(flowProcess, tap, conf);
 
     updateJobConfForLocalSettings(conf);
@@ -74,7 +75,7 @@ public class CombinedSequenceFile extends SequenceFile {
   }
 
   @Override
-  public void sinkConfInit( FlowProcess<JobConf> flowProcess, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf )
+  public void sinkConfInit( FlowProcess<? extends Configuration> flowProcess, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf )
   {
     super.sinkConfInit(flowProcess, tap, conf);
 

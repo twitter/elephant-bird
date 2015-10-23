@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.cascading2.scheme;
+package com.twitter.elephantbird.cascading3.scheme;
 
 import com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
@@ -33,7 +33,7 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   }
 
   @Override
-  public void sinkConfInit(FlowProcess<JobConf> hfp, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
+  public void sinkConfInit(FlowProcess<? extends JobConf> hfp, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
     LzoThriftBlockOutputFormat.setClassConf(thriftClass, conf);
     DeprecatedOutputFormatWrapper.setOutputFormat(LzoThriftBlockOutputFormat.class, conf);
   }
@@ -44,7 +44,7 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   }
 
   @Override
-  public void sourceConfInit(FlowProcess<JobConf> hfp, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
+  public void sourceConfInit(FlowProcess<? extends JobConf> hfp, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
     MultiInputFormat.setClassConf(thriftClass, conf);
     DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
   }

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package com.twitter.elephantbird.cascading2.scheme;
+package com.twitter.elephantbird.cascading3.scheme;
 
 import com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
@@ -39,14 +39,14 @@ public class LzoByteArrayScheme extends LzoBinaryScheme<byte[], RawBytesWritable
     return new RawBytesWritable();
   }
 
-  @Override public void sourceConfInit(FlowProcess<JobConf> fp,
+  @Override public void sourceConfInit(FlowProcess<? extends JobConf> fp,
       Tap<JobConf, RecordReader, OutputCollector> tap,
       JobConf conf) {
     MultiInputFormat.setClassConf(byte[].class, conf);
     DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
   }
 
-  @Override public void sinkConfInit(FlowProcess<JobConf> fp,
+  @Override public void sinkConfInit(FlowProcess<? extends JobConf> fp,
       Tap<JobConf, RecordReader, OutputCollector> tap,
       JobConf conf) {
     DeprecatedOutputFormatWrapper.setOutputFormat(LzoBinaryBlockOutputFormat.class, conf);

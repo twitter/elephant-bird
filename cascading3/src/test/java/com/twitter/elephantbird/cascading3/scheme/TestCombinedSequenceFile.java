@@ -1,5 +1,6 @@
-package com.twitter.elephantbird.cascading2.scheme;
+package com.twitter.elephantbird.cascading3.scheme;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
@@ -23,7 +24,7 @@ public class TestCombinedSequenceFile {
     CombinedSequenceFile csfScheme = new CombinedSequenceFile(Fields.ALL);
     JobConf conf = new JobConf();
     FlowProcess fp = new HadoopFlowProcess();
-    Tap<JobConf, RecordReader, OutputCollector> tap =
+    Tap<Configuration, RecordReader, OutputCollector> tap =
         new TempHfs(conf, "test", CombinedSequenceFile.class, false);
 
     csfScheme.sourceConfInit(fp, tap, conf);

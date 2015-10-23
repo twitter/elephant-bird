@@ -1,9 +1,12 @@
-package com.twitter.elephantbird.cascading2.scheme;
+package com.twitter.elephantbird.cascading3.scheme;
 
 import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
 import com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.mapred.RecordReader;
 
 import com.twitter.elephantbird.mapred.output.DeprecatedLzoTextOutputFormat;
@@ -45,12 +48,12 @@ public class LzoTextLine extends TextLine {
   }
 
   @Override
-  public void sourceConfInit(FlowProcess<JobConf> flowProcess, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf ) {
-    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, LzoTextInputFormat.class);
+  public void sourceConfInit(FlowProcess<? extends Configuration> flowProcess, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf ) {
+    conf.setClass("mapred.input.format.class", LzoTextInputFormat.class, InputFormat.class);
   }
 
   @Override
-  public void sinkConfInit(FlowProcess<JobConf> flowProcess, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf ) {
-    conf.setOutputFormat(DeprecatedLzoTextOutputFormat.class);
+  public void sinkConfInit(FlowProcess<? extends Configuration> flowProcess, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf ) {
+    conf.setClass("mapred.output.format.class", DeprecatedLzoTextOutputFormat.class, OutputFormat.class);
   }
 }

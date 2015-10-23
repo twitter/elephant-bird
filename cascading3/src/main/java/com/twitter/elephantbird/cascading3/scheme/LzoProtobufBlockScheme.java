@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.cascading2.scheme;
+package com.twitter.elephantbird.cascading3.scheme;
 
 import com.google.protobuf.Message;
 
