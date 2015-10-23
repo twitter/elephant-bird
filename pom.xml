@@ -86,6 +86,8 @@
     <apache.lucene.version>4.0.0</apache.lucene.version>
     <protobuf.version>2.4.1</protobuf.version>
     <hadoop-lzo.version>0.4.19</hadoop-lzo.version>
+    <cascading2.version>2.5.2</cascading2.version>
+    <cascading3.version>3.0.2</cascading3.version>    
   </properties>
 
   <repositories>
@@ -108,6 +110,11 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-cascading2</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-cascading3</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -273,14 +280,6 @@
         <groupId>com.hadoop.gplcompression</groupId>
         <artifactId>hadoop-lzo</artifactId>
         <version>${hadoop-lzo.version}</version>
-      </dependency>
-
-      <!-- cascading -->
-      <dependency>
-        <groupId>cascading</groupId>
-        <artifactId>cascading-hadoop</artifactId>
-        <version>2.5.2</version>
-        <scope>provided</scope>
       </dependency>
 
       <!-- crunch -->
@@ -679,6 +678,7 @@
 
   <modules>
     <module>cascading2</module>
+    <module>cascading3</module>
     <module>crunch</module>
     <module>core</module>
     <module>hadoop-compat</module>

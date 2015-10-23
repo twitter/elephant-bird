@@ -8,8 +8,8 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <artifactId>elephant-bird-cascading2</artifactId>
-  <name>Elephant Bird Cascading2</name>
+  <artifactId>elephant-bird-cascading3</artifactId>
+  <name>Elephant Bird Cascading3</name>
   <description>Cascading utilities.</description>
 
   <repositories>
