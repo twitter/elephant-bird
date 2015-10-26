@@ -3,6 +3,7 @@ package com.twitter.elephantbird.cascading3.scheme;
 import java.io.IOException;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
@@ -26,13 +27,13 @@ import cascading.tuple.TupleEntry;
  * @author Argyris Zymnis
  */
 abstract public class LzoBinaryScheme<M, T extends BinaryWritable<M>> extends
-  Scheme<JobConf, RecordReader, OutputCollector, Object[], T> {
+  Scheme<Configuration, RecordReader, OutputCollector, Object[], T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(LzoBinaryScheme.class);
   private static final long serialVersionUID = -5011096855302946106L;
 
   @Override
-  public void sink(FlowProcess<? extends JobConf> flowProcess, SinkCall<T, OutputCollector> sinkCall)
+  public void sink(FlowProcess<? extends Configuration> flowProcess, SinkCall<T, OutputCollector> sinkCall)
     throws IOException {
     OutputCollector collector = sinkCall.getOutput();
     TupleEntry entry = sinkCall.getOutgoingEntry();
@@ -42,14 +43,14 @@ abstract public class LzoBinaryScheme<M, T extends BinaryWritable<M>> extends
   }
 
   @Override
-  public void sinkPrepare( FlowProcess<? extends JobConf> fp, SinkCall<T, OutputCollector> sinkCall ) {
+  public void sinkPrepare( FlowProcess<? extends Configuration> fp, SinkCall<T, OutputCollector> sinkCall ) {
     sinkCall.setContext(prepareBinaryWritable());
   }
 
   protected abstract T prepareBinaryWritable();
 
   @Override
-  public boolean source(FlowProcess<? extends JobConf> flowProcess,
+  public boolean source(FlowProcess<? extends Configuration> flowProcess,
     SourceCall<Object[], RecordReader> sourceCall) throws IOException {
 
     Object[] context = sourceCall.getContext();
@@ -65,7 +66,7 @@ abstract public class LzoBinaryScheme<M, T extends BinaryWritable<M>> extends
   }
 
   @Override
-  public void sourceCleanup(FlowProcess<? extends JobConf> flowProcess,
+  public void sourceCleanup(FlowProcess<? extends Configuration> flowProcess,
     SourceCall<Object[], RecordReader> sourceCall) {
     sourceCall.setContext(null);
   }
@@ -74,7 +75,7 @@ abstract public class LzoBinaryScheme<M, T extends BinaryWritable<M>> extends
   * This sets up the state between succesive calls to source
   */
   @Override
-  public void sourcePrepare(FlowProcess<? extends JobConf> flowProcess,
+  public void sourcePrepare(FlowProcess<? extends Configuration> flowProcess,
     SourceCall<Object[], RecordReader> sourceCall) {
     //Hadoop sets a key value pair:
     sourceCall.setContext(new Object[2]);
