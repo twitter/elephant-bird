@@ -2,6 +2,8 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 import java.util.Map;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import com.google.common.base.Preconditions;
 
@@ -92,6 +94,16 @@ public abstract class WritableStoreCaster<W extends Writable> extends WritableLo
     return write(toWritable(value));
   }
 
+  @Override
+  public byte[] toBytes(BigDecimal value) throws IOException {
+    return write(toWritable(value));
+  }
+
+  @Override
+  public byte[] toBytes(BigInteger value) throws IOException {
+    return write(toWritable(value));
+  }
+
   protected W toWritable(DataByteArray value) throws IOException {
     throw new UnsupportedOperationException();
   }
@@ -133,6 +145,14 @@ public abstract class WritableStoreCaster<W extends Writable> extends WritableLo
   }
 
   protected W toWritable(DateTime value) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  protected W toWritable(BigDecimal value) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  protected W toWritable(BigInteger value) throws IOException {
     throw new UnsupportedOperationException();
   }
 }
