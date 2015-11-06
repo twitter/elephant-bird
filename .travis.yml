@@ -7,11 +7,16 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq protobuf-compiler
   - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev
-  - wget -nv http://archive.apache.org/dist/thrift/0.7.0/thrift-0.7.0.tar.gz
-  - tar zxf thrift-0.7.0.tar.gz
-  - cd thrift-0.7.0
-  - chmod +x ./configure
-  - ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-erlang
+  - git clone https://git-wip-us.apache.org/repos/asf/thrift.git
+  - cd thrift
+  - git checkout 0.7.0
+  - ./bootstrap.sh
+  - ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-erlang --prefix=/var/thrift-old
+  - sudo make install
+  - sudo make clean
+  - git checkout 0.9.1
+  - ./bootstrap.sh
+  - ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-erlang --prefix=/var/thrift-new
   - sudo make install
   - cd ..
   - sudo apt-get -qq install lzop liblzo2-dev # libzo2-dev for compiling hadoop-lzo
@@ -22,12 +27,16 @@ before_install:
   - mv target/native/Linux-* ../hadoop-lzo-native
   - cd ..
 
+install: true
+
 script:
   - echo ============ Build and test with hadoop2 profile =====================
-  - mvn clean test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop2
+  - mvn clean test -Dthrift.cmd=/var/thrift-old/bin/thrift -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop2
   - echo ============ Build with hadoop2 and test with hadoop1 ================
-  - mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop1
+  - mvn test -Dthrift.cmd=/var/thrift-old/bin/thrift -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true
   - echo ============ Build and test with hadoop1 profile =====================
-  - mvn clean test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop1
+  - mvn clean test -Dthrift.cmd=/var/thrift-old/bin/thrift -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true
   - echo ============ Build with hadoop2 and test with hadoop1 ================
-  - mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop2
+  - mvn test -Dthrift.cmd=/var/thrift-old/bin/thrift -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P hadoop2
+  - echo ============ Build and test for thrift 0.9+ ================
+  - mvn clean test -Dthrift.cmd=/var/thrift-new/bin/thrift -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true -P thrift9
