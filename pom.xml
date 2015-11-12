@@ -90,7 +90,6 @@
     <protobuf.version>2.4.1</protobuf.version>
     <hadoop-lzo.version>0.4.19</hadoop-lzo.version>
     <thrift.version>0.7.0</thrift.version>
-    <thrift.cmd>thrift</thrift.cmd>
   </properties>
 
   <repositories>
@@ -604,7 +603,7 @@
           <artifactId>maven-thrift-plugin</artifactId>
           <version>0.1.10</version>
           <configuration>
-            <thriftExecutable>${thrift.cmd}</thriftExecutable>
+            <thriftExecutable>thrift</thriftExecutable>
           </configuration>
         </plugin>
 
