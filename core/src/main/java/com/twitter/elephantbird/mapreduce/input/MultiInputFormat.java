@@ -15,6 +15,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.twitter.elephantbird.mapreduce.io.BinaryBlockReader;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
@@ -39,6 +41,8 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class MultiInputFormat<M>
                 extends LzoInputFormat<LongWritable, BinaryWritable<M>> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MultiInputFormat.class);
 
   // TODO need handle multiple input formats in a job better.
   //      might be better to store classname in the input split rather than in config.
@@ -91,7 +95,18 @@ public class MultiInputFormat<M>
     }
     Class<?> recordClass = typeRef.getRawClass();
 
-    Format fileFormat = determineFileFormat(split, conf);
+    Format fileFormat = null;
+
+    FileSplit fileSplit = (FileSplit) split;
+
+    try {
+      LOG.info("Determining format of file: " + fileSplit.getPath());
+      fileFormat = determineFileFormat(fileSplit, conf);
+    } catch (IOException e) {
+      throw new IOException("Could not determine format of file: " + fileSplit.getPath(), e);
+    } catch (RuntimeException e) {
+      throw new RuntimeException("Could not determine format of file: " + fileSplit.getPath(), e);
+    }
 
     // Explicit class names for Message and TBase are used so that
     // these classes need not be present when not required.
@@ -186,11 +201,9 @@ public class MultiInputFormat<M>
    * The block format starts with {@link Protobufs#KNOWN_GOOD_POSITION_MARKER}.
    * Otherwise the input is assumed to be Base64 encoded lines.
    */
-  private static Format determineFileFormat(InputSplit split,
+  private static Format determineFileFormat(FileSplit fileSplit,
                                             Configuration conf)
                                             throws IOException {
-    FileSplit fileSplit = (FileSplit)split;
-
     Path file = fileSplit.getPath();
 
     /* we could have a an optional configuration that maps a regex on a

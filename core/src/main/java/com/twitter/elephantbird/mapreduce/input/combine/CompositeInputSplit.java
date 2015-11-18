@@ -172,4 +172,9 @@ public class CompositeInputSplit extends InputSplit implements Writable, Configu
   public Configuration getConf() {
     return conf;
   }
+
+  @Override
+  public String toString() {
+    return "CompositeInputSplit(totalSplitSizes=" + totalSplitSizes + ", splits=" + splits + ")";
+  }
 }
