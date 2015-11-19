@@ -95,10 +95,9 @@ public class MultiInputFormat<M>
     }
     Class<?> recordClass = typeRef.getRawClass();
 
-    Format fileFormat = null;
-
     FileSplit fileSplit = (FileSplit) split;
 
+    final Format fileFormat;
     try {
       LOG.info("Determining format of file: " + fileSplit.getPath());
       fileFormat = determineFileFormat(fileSplit, conf);
