@@ -24,6 +24,8 @@ import com.twitter.elephantbird.mapreduce.io.RawBytesWritable;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.Protobufs;
 import com.twitter.elephantbird.util.TypeRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The input could consist of heterogeneous mix of formats storing
@@ -39,7 +41,7 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public class MultiInputFormat<M>
                 extends LzoInputFormat<LongWritable, BinaryWritable<M>> {
-
+  private static final Logger LOG = LoggerFactory.getLogger(LzoInputFormat.class);
   // TODO need handle multiple input formats in a job better.
   //      might be better to store classname in the input split rather than in config.
   private static String CLASS_CONF_KEY = "elephantbird.class.for.MultiInputFormat";
@@ -81,9 +83,8 @@ public class MultiInputFormat<M>
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" }) // return type is runtime dependent
-  @Override
-  public RecordReader<LongWritable, BinaryWritable<M>>
-  createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
+  private RecordReader<LongWritable, BinaryWritable<M>>
+  createRecordReader_(InputSplit split, TaskAttemptContext taskAttempt)
                      throws IOException, InterruptedException {
     Configuration conf = HadoopCompat.getConfiguration(taskAttempt);
     if (typeRef == null) {
@@ -148,9 +149,25 @@ public class MultiInputFormat<M>
           return new LzoGenericB64LineRecordReader(typeRef, converter);
       }
     }
+    return null;
+  }
 
-    throw new IOException( "could not determine reader for "
-        + ((FileSplit)split).getPath() + " with class " + recordClass.getName());
+  public RecordReader<LongWritable, BinaryWritable<M>>
+  createRecordReader(InputSplit split, TaskAttemptContext taskAttempt)
+      throws IOException, InterruptedException {
+    LOG.info("Creating record reader for split: " + split);
+    Exception createEx = null;
+    try {
+      final RecordReader<LongWritable, BinaryWritable<M>> res =  createRecordReader_(split,
+          taskAttempt);
+      if (res != null) {
+        return res;
+      }
+    } catch (Exception e) {
+      createEx = e;
+    }
+    throw new IOException("Could not determine reader for split "
+        + split + " with class " + typeRef.getRawClass().getName(), createEx);
   }
 
   /** set typeRef from conf */
