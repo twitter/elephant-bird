@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MultiInputFormat<M>
                 extends LzoInputFormat<LongWritable, BinaryWritable<M>> {
-  private static final Logger LOG = LoggerFactory.getLogger(LzoInputFormat.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MultiInputFormat.class);
   // TODO need handle multiple input formats in a job better.
   //      might be better to store classname in the input split rather than in config.
   private static String CLASS_CONF_KEY = "elephantbird.class.for.MultiInputFormat";
