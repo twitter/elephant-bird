@@ -95,16 +95,14 @@ public class MultiInputFormat<M>
     }
     Class<?> recordClass = typeRef.getRawClass();
 
-    FileSplit fileSplit = (FileSplit) split;
-
     final Format fileFormat;
     try {
-      LOG.info("Determining format of file: " + fileSplit.getPath());
-      fileFormat = determineFileFormat(fileSplit, conf);
+      LOG.info("Determining format of file in split: " + split);
+      fileFormat = determineFileFormat(split, conf);
     } catch (IOException e) {
-      throw new IOException("Could not determine format of file: " + fileSplit.getPath(), e);
+      throw new IOException("Could not determine format of file in split: " + split, e);
     } catch (RuntimeException e) {
-      throw new RuntimeException("Could not determine format of file: " + fileSplit.getPath(), e);
+      throw new RuntimeException("Could not determine format of file in split: " + split, e);
     }
 
     // Explicit class names for Message and TBase are used so that
@@ -200,9 +198,11 @@ public class MultiInputFormat<M>
    * The block format starts with {@link Protobufs#KNOWN_GOOD_POSITION_MARKER}.
    * Otherwise the input is assumed to be Base64 encoded lines.
    */
-  private static Format determineFileFormat(FileSplit fileSplit,
+  private static Format determineFileFormat(InputSplit split,
                                             Configuration conf)
                                             throws IOException {
+    FileSplit fileSplit = (FileSplit) split;
+
     Path file = fileSplit.getPath();
 
     /* we could have a an optional configuration that maps a regex on a
