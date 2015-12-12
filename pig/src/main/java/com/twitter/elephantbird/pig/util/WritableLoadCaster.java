@@ -2,6 +2,8 @@ package com.twitter.elephantbird.pig.util;
 
 import java.io.IOException;
 import java.util.Map;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import com.google.common.base.Preconditions;
 
@@ -79,11 +81,11 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
     return toDouble(writable = readFields(bytes, writable));
   }
 
-  @Override
   public Map<String, Object> bytesToMap(byte[] bytes) throws IOException {
     return toMap(writable = readFields(bytes, writable));
   }
   
+  @Override
   public Map<String, Object> bytesToMap(byte[] bytes, ResourceFieldSchema schema) throws IOException {
     return toMap(writable = readFields(bytes, writable), schema);
   }
@@ -144,6 +146,16 @@ public abstract class WritableLoadCaster<W extends Writable> implements LoadCast
   }
 
   protected DateTime toDateTime(W writable) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public BigDecimal bytesToBigDecimal(byte[] b) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public BigInteger bytesToBigInteger(byte[] b) throws IOException {
     throw new UnsupportedOperationException();
   }
 }

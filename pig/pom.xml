@@ -17,11 +17,12 @@
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-core</artifactId>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-core</artifactId>
       <type>test-jar</type> 
-    </dependency>
+      <scope>test</scope>
+    </dependency> -->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
@@ -82,7 +83,7 @@
       </plugin>
 
       <!-- need this for the mahout tests -->
-      <plugin>
+      <!-- <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
@@ -91,7 +92,7 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
+      </plugin> -->
 
     </plugins>
   </build>

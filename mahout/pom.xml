@@ -17,11 +17,11 @@
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-pig</artifactId>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-pig</artifactId>
       <type>test-jar</type>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
