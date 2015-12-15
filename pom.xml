@@ -88,8 +88,10 @@
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
     <protobuf.version>2.4.1</protobuf.version>
+    <protoc.executable>protoc</protoc.executable>
     <hadoop-lzo.version>0.4.19</hadoop-lzo.version>
     <thrift.version>0.7.0</thrift.version>
+    <thrift.executable>thrift</thrift.executable>
   </properties>
 
   <repositories>
@@ -594,7 +596,10 @@
         <plugin>
           <groupId>com.github.igor-petruk.protobuf</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
-          <version>0.4</version>
+          <version>0.6.5</version>
+          <configuration>
+            <protocCommand>${protoc.executable}</protocCommand>
+          </configuration>
         </plugin>
 
         <!-- thrift -->
@@ -603,7 +608,7 @@
           <artifactId>maven-thrift-plugin</artifactId>
           <version>0.1.10</version>
           <configuration>
-            <thriftExecutable>thrift</thriftExecutable>
+            <thriftExecutable>${thrift.executable}</thriftExecutable>
           </configuration>
         </plugin>
 
