@@ -39,7 +39,7 @@ Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.
 1. Pig 0.8+
 1. Protocol Buffers 2.5.0, 2.4.1, 2.3.0 (default build version is 2.4.1 can be changed with `-Dprotobuf.version=2.3.0`)
 1. Hive 0.7 (with HIVE-1616)
-1. Thrift 0.5.0, 0.6.0, 0.7.0
+1. Thrift 0.5.0, 0.6.0, 0.7.0, greater versions than 0.9 are provided via thrift9 maven profile
 1. Mahout 0.6
 1. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
 1. Crunch 0.8.1+

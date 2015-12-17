@@ -16,10 +16,15 @@ import org.apache.thrift.transport.TTransport;
  *
  * Overwrites a few methods so that some malformed messages don't end up
  * taking excessively large amounts of cpu inside TProtocolUtil.skip().
+ *
+ * To obtain an instance of ThriftBinaryProtocol use {@link ThriftCompat#createBinaryProtocol(TTransport)}.
+ * It will take care of cross version compatibility between thrift 0.7 and 0.9+ code.
+ *
+ * @see ThriftCompat
  */
 public class ThriftBinaryProtocol extends TBinaryProtocol {
 
-  public ThriftBinaryProtocol(TTransport trans) {
+  ThriftBinaryProtocol(TTransport trans) {
     super(trans);
   }
 
@@ -82,29 +87,18 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   }
 
  /**
-   * Check if the container size if valid.
-   *
-   * NOTE: This assumes that the elements are one byte each.
-   * So this does not catch all cases, but does increase the chances of
-   * handling malformed lengths when the number of remaining bytes in
-   * the underlying Transport is clearly less than the container size
-   * that the Transport provides.
+   * Check if the container size is valid.
    */
   protected void checkContainerSize(int size) throws TProtocolException {
     if (size < 0) {
       throw new TProtocolException("Negative container size: " + size);
-    }
-    if (checkReadLength_) {
-      if ((readLength_ - size) < 0) {
-        throw new TProtocolException("Remaining message length is " + readLength_ + " but container size in underlying TTransport is set to at least: " + size);
-      }
     }
   }
 
   public static class Factory implements TProtocolFactory {
 
     public TProtocol getProtocol(TTransport trans) {
-      return new ThriftBinaryProtocol(trans);
+      return ThriftCompat.createBinaryProtocol(trans);
     }
   }
 }

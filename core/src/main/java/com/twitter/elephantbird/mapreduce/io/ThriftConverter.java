@@ -1,8 +1,5 @@
 package com.twitter.elephantbird.mapreduce.io;
 
-import java.io.IOException;
-
-import com.twitter.elephantbird.thrift.ThriftBinaryDeserializer;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
@@ -10,6 +7,7 @@ import org.apache.thrift.TSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.twitter.elephantbird.thrift.ThriftCompat;
 import com.twitter.elephantbird.util.TypeRef;
 
 public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M> {
@@ -51,7 +49,7 @@ public class ThriftConverter<M extends TBase<?, ?>> implements BinaryConverter<M
   public M fromBytes(byte[] messageBuffer) throws DecodeException {
     try {
       if (deserializer == null)
-        deserializer = new ThriftBinaryDeserializer();
+        deserializer = ThriftCompat.createBinaryDeserializer();
       M message = typeRef.safeNewInstance();
       deserializer.deserialize(message, messageBuffer);
       return message;

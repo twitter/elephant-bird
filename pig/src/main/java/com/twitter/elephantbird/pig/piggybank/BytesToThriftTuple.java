@@ -2,14 +2,13 @@ package com.twitter.elephantbird.pig.piggybank;
 
 import java.io.IOException;
 
-import com.twitter.elephantbird.thrift.ThriftBinaryDeserializer;
+import com.twitter.elephantbird.thrift.ThriftCompat;
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
 
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;
@@ -30,7 +29,7 @@ import com.twitter.elephantbird.util.TypeRef;
  */
 public abstract class BytesToThriftTuple<T extends TBase<?, ?>> extends EvalFunc<Tuple> {
 
-  private final TDeserializer deserializer_ = new ThriftBinaryDeserializer();
+  private final TDeserializer deserializer_ = ThriftCompat.createBinaryDeserializer();
   private ThriftToPig<T> thriftToTuple_;
   private TypeRef<T> typeRef_;
 
