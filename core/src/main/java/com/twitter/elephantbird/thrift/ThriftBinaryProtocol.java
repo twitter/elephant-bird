@@ -1,5 +1,8 @@
 package com.twitter.elephantbird.thrift;
 
+import java.lang.reflect.Method;
+
+import com.google.common.base.Throwables;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TList;
@@ -18,6 +21,23 @@ import org.apache.thrift.transport.TTransport;
  * taking excessively large amounts of cpu inside TProtocolUtil.skip().
  */
 public class ThriftBinaryProtocol extends TBinaryProtocol {
+
+  // handle missing SetReadLength
+  private static final Method SetReadLengthMethod;
+
+  static {
+    Method method = null;
+    try {
+      method = TBinaryProtocol.class.getMethod("setReadLength", Integer.class);
+      // Thrift 0.7
+    } catch (NoSuchMethodException e) {
+      // Thrift 0.9+
+    }
+    SetReadLengthMethod = method;
+  }
+
+  // Thrift 0.9.1 doees not support setReadLength(). This get around that.
+  protected int maxReadLength = -1;
 
   public ThriftBinaryProtocol(TTransport trans) {
     super(trans);
@@ -53,6 +73,17 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
       case TType.ENUM: // would be I32 on the wire
       default:
         throw new TException("Unexpected type " + type + " in a container");
+    }
+  }
+
+  public void setMaxReadLength(int maxReadLength) {
+    this.maxReadLength = maxReadLength;
+    if (SetReadLengthMethod != null) {
+      try {
+        SetReadLengthMethod.invoke(this, maxReadLength);
+      } catch (Exception e) {
+        Throwables.propagate(e);
+      }
     }
   }
 
@@ -94,10 +125,9 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
     if (size < 0) {
       throw new TProtocolException("Negative container size: " + size);
     }
-    if (checkReadLength_) {
-      if ((readLength_ - size) < 0) {
-        throw new TProtocolException("Remaining message length is " + readLength_ + " but container size in underlying TTransport is set to at least: " + size);
-      }
+    if (maxReadLength >= 0 && size > maxReadLength) {
+      throw new TProtocolException("The length of the buffer is " + maxReadLength
+          + " but container size in underlying TTransport is set to at least: " + size);
     }
   }
 

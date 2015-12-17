@@ -29,7 +29,7 @@ public class ThriftBinaryDeserializer extends TDeserializer {
 
   // use protocol and transport directly instead of using ones in TDeserializer
   private final TMemoryInputTransport trans = new TMemoryInputTransport();
-  private final TBinaryProtocol protocol = new ThriftBinaryProtocol(trans);
+  private final ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(trans);
 
   public ThriftBinaryDeserializer() {
     super(new ThriftBinaryProtocol.Factory());
@@ -45,7 +45,7 @@ public class ThriftBinaryDeserializer extends TDeserializer {
    */
   public void deserialize(TBase base, byte[] bytes, int offset, int len) throws TException {
     protocol.reset();
-    protocol.setReadLength(len); // reduces OutOfMemoryError exceptions
+    protocol.setMaxReadLength(len); // reduces OutOfMemoryError exceptions
     trans.reset(bytes, offset, len);
     base.read(protocol);
   }
