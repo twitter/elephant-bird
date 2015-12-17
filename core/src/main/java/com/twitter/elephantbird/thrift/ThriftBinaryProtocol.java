@@ -36,7 +36,8 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
     SetReadLengthMethod = method;
   }
 
-  // Thrift 0.9.1 doees not support setReadLength(). This get around that.
+  // Thrift 0.9.1 does not support setReadLength(). Store it here so that it works
+  // for thrift 0.9.x as well
   protected int maxReadLength = -1;
 
   public ThriftBinaryProtocol(TTransport trans) {

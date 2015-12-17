@@ -195,7 +195,7 @@ public class TestThriftBinaryProtocol {
     TTransport transport = getMockTransport(400);
     replay(transport);
     ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
-    protocol.setReadLength(METADATA_BYTES + 3);
+    protocol.setMaxReadLength(METADATA_BYTES + 3);
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.readListBegin();
     verify(transport);
@@ -207,7 +207,7 @@ public class TestThriftBinaryProtocol {
     replay(transport);
     ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     // this throws because size returned by Transport (400) > size per readLength (3)
-    protocol.setReadLength(METADATA_BYTES + 3);
+    protocol.setMaxReadLength(METADATA_BYTES + 3);
     protocol.readSetBegin();
     verify(transport);
   }
@@ -218,7 +218,7 @@ public class TestThriftBinaryProtocol {
     replay(transport);
     ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     // this throws because size returned by Transport (400) > size per readLength (3)
-    protocol.setReadLength(MAP_METADATA_BYTES + 3);
+    protocol.setMaxReadLength(MAP_METADATA_BYTES + 3);
     protocol.readMapBegin();
     verify(transport);
   }
