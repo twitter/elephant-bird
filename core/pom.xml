@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.11rc2-SNAPSHOT</version>
+    <version>4.12</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-core</artifactId>
   <name>Elephant Bird Core</name>
   <description>Core utilities.</description>
-
   <dependencies>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
@@ -66,9 +64,7 @@
       <groupId>ant</groupId>
       <artifactId>ant</artifactId>
     </dependency>
-
   </dependencies>
-
   <profiles>
     <profile>
       <id>thrift7</id>
@@ -147,10 +143,8 @@
       </build>
     </profile>
   </profiles>
-
   <build>
     <plugins>
-
       <!-- protobuf -->
       <plugin>
         <groupId>com.github.igor-petruk.protobuf</groupId>
@@ -163,7 +157,6 @@
           </execution>
         </executions>
       </plugin>
-
       <!-- thrift -->
       <plugin>
         <groupId>org.apache.thrift.tools</groupId>
@@ -178,7 +171,6 @@
           </execution>
         </executions>
       </plugin>
-
       <!-- need this for the pig, rcfile tests -->
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -190,7 +182,6 @@
           </execution>
         </executions>
       </plugin>
-
     </plugins>
   </build>
 </project>

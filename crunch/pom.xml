@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.11rc2-SNAPSHOT</version>
+    <version>4.12</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-crunch</artifactId>
   <name>Elephant Bird Crunch</name>
   <description>Crunch utilities.</description>
-
   <dependencies>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>

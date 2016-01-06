@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.11rc2-SNAPSHOT</version>
+    <version>4.12</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-examples</artifactId>
   <name>Elephant Bird Examples</name>
   <description>Elephant Bird Examples.</description>
-
   <dependencies>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
@@ -39,10 +37,8 @@
       <artifactId>slf4j-simple</artifactId>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
-
       <!-- protobuf -->
       <plugin>
         <groupId>com.github.igor-petruk.protobuf</groupId>
@@ -55,7 +51,6 @@
           </execution>
         </executions>
       </plugin>
-
       <!-- thrift -->
       <plugin>
         <groupId>org.apache.thrift.tools</groupId>
@@ -70,7 +65,6 @@
           </execution>
         </executions>
       </plugin>
-
       <!-- add generated sources -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -91,7 +85,6 @@
           </execution>
         </executions>
       </plugin>
-
     </plugins>
   </build>
 </project>

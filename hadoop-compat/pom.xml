@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.11rc2-SNAPSHOT</version>
+    <version>4.12</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-hadoop-compat</artifactId>
   <name>Elephant Bird Hadoop Compatibility</name>
   <description>Utilities for dealing with Hadoop incompatibilities between 1.x and 2.x</description>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
