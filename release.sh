@@ -3,7 +3,7 @@
 set -ex
 
 # Trying to install it for the user so he doesn't have to bother with installing stuff by hand
-sudo apt-get -qq install xmlstarlet
+sudo apt-get -qq install xmlstarlet maven
 
 # Global default vars used in this script
 ######################################################################################
@@ -242,7 +242,9 @@ case "$COMMAND" in
     echo "Will run full release including: release branch, deploy artifacts and update current branch to next version"
 
     checkNoUncommitedChanges
-    prepareFromRemote
+  
+    # Ensure our copy is fresh
+    git pull
 
     # We want to make the release from the initial branch, here we are in the working copy, not the original directory
     git checkout $BASE_BRANCH
@@ -261,20 +263,20 @@ case "$COMMAND" in
     mvn clean deploy $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE -DperformRelease=true
     mvn clean deploy $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE -DperformRelease=true
 
-    git push origin $BASE_BRANCH
-    git push origin "elephant-bird-$RELEASE_VERSION"
-
 
     # Update to the next development version and push those changes to master
     updateVersions . $NEXT_DEV_VERSION
     git add pom.xml **/pom.xml
     git commit -m "[Release] - $RELEASE_VERSION, prepare for next development iteration $NEXT_DEV_VERSION"
 
-    git push origin $BASE_BRANCH
-
     # Until here we are supposed to be able to easily revert things as we still have our unchanged clone
     cd $BASE_DIR
     git pull origin $BASE_BRANCH
+
+    echo "Local tag created named elephant-bird-$RELEASE_VERSION"
+    echo "Local branch $BASE_BRANCH updated"
+    echo "Use git push origin HEAD && git push --tags"
+    echo "to update the remote if all looks good"
     ;;
 *)
     echo "Unknown command: $COMMAND"
