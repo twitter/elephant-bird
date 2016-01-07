@@ -14,7 +14,7 @@ Join the conversation about Elephant-Bird on the [developer mailing list](https:
 
 1. Make sure you have [Protocol Buffers](http://code.google.com/apis/protocolbuffers/) installed. Please see **Version compatibility** section below.
 1. Make sure you have [Apache Thrift](http://thrift.apache.org) installed. Please see **Version compatibility** section below.
-1. Get the code: `git clone git://github.com/kevinweil/elephant-bird.git`
+1. Get the code: `git clone git://github.com/twitter/elephant-bird.git`
 1. Build the jar: `mvn package`
 1. Explore what's available: `mvn javadoc:javadoc`
 
