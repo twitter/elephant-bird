@@ -115,19 +115,19 @@ public class TestThriftBinaryProtocol {
 
     transport = getMockTransport(3);
     replay(transport);
-    protocol = ThriftCompat.createBinaryProtocol(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.readListBegin();
     verify(transport);
 
     transport = getMockTransport(3);
     replay(transport);
-    protocol = ThriftCompat.createBinaryProtocol(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.readSetBegin();
     verify(transport);
 
     transport = getMockMapTransport(3);
     replay(transport);
-    protocol = ThriftCompat.createBinaryProtocol(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.readMapBegin();
     verify(transport);
   }
@@ -137,7 +137,7 @@ public class TestThriftBinaryProtocol {
     // any negative value is considered invalid when checkReadLength is not enabled
     TTransport transport = getMockTransport(-1);
     replay(transport);
-    ThriftBinaryProtocol protocol = ThriftCompat.createBinaryProtocol(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readListBegin();
     verify(transport);
   }
@@ -146,7 +146,7 @@ public class TestThriftBinaryProtocol {
   public void testCheckSetContainerSizeInvalid() throws TException {
     TTransport transport = getMockTransport(-1);
     replay(transport);
-    ThriftBinaryProtocol protocol = ThriftCompat.createBinaryProtocol(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readSetBegin();
     verify(transport);
   }
@@ -155,7 +155,7 @@ public class TestThriftBinaryProtocol {
   public void testCheckMapContainerSizeInvalid() throws TException {
     TTransport transport = getMockMapTransport(-1);
     replay(transport);
-    ThriftBinaryProtocol protocol = ThriftCompat.createBinaryProtocol(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.readMapBegin();
     verify(transport);
   }
