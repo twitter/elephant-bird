@@ -7,7 +7,7 @@ import org.apache.thrift.transport.TTransport;
 /**
  * A shim on top of thrift to allow for thrift 0.7/0.9 compatibility.
  * 
- * This one is designed for thrift 0.8
+ * This one is designed for thrift 0.7
  *
  */
 abstract class AbstractThriftBinaryProtocol extends TBinaryProtocol {
