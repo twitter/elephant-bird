@@ -20,21 +20,21 @@ public class TestThrift7BinaryProtocol extends TestThriftBinaryProtocol {
 
     transport = getMockTransport(3);
     replay(transport);
-    protocol = ThriftCompat.createBinaryProtocol(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readListBegin();
     verify(transport);
 
     transport = getMockTransport(3);
     replay(transport);
-    protocol = ThriftCompat.createBinaryProtocol(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readSetBegin();
     verify(transport);
 
     transport = getMockMapTransport(3);
     replay(transport);
-    protocol = ThriftCompat.createBinaryProtocol(transport);
+    protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(MAP_METADATA_BYTES + 3);
     protocol.readMapBegin();
     verify(transport);
@@ -44,7 +44,7 @@ public class TestThrift7BinaryProtocol extends TestThriftBinaryProtocol {
   public void testCheckListContainerSizeInvalidWhenCheckReadLength() throws TException {
     TTransport transport = getMockTransport(400);
     replay(transport);
-    ThriftBinaryProtocol protocol = ThriftCompat.createBinaryProtocol(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     protocol.setReadLength(METADATA_BYTES + 3);
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.readListBegin();
@@ -55,7 +55,7 @@ public class TestThrift7BinaryProtocol extends TestThriftBinaryProtocol {
   public void testCheckSetContainerSizeInvalidWhenCheckReadLength() throws TException {
     TTransport transport = getMockTransport(400);
     replay(transport);
-    ThriftBinaryProtocol protocol = ThriftCompat.createBinaryProtocol(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.setReadLength(METADATA_BYTES + 3);
     protocol.readSetBegin();
@@ -66,7 +66,7 @@ public class TestThrift7BinaryProtocol extends TestThriftBinaryProtocol {
   public void testCheckMapContainerSizeInvalidWhenCheckReadLength() throws TException {
     TTransport transport = getMockMapTransport(400);
     replay(transport);
-    ThriftBinaryProtocol protocol = ThriftCompat.createBinaryProtocol(transport);
+    ThriftBinaryProtocol protocol = new ThriftBinaryProtocol(transport);
     // this throws because size returned by Transport (400) > size per readLength (3)
     protocol.setReadLength(MAP_METADATA_BYTES + 3);
     protocol.readMapBegin();

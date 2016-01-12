@@ -1,7 +1,6 @@
 package com.twitter.elephantbird.thrift;
 
 import org.apache.thrift.TBase;
-import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TMemoryInputTransport;
@@ -25,13 +24,13 @@ import org.apache.thrift.transport.TMemoryInputTransport;
  *
  * @see ThriftCompat
  */
-public class ThriftBinaryDeserializer extends TDeserializer {
+public class ThriftBinaryDeserializer extends AbstractThriftBinaryDeserializer {
 
   // use protocol and transport directly instead of using ones in TDeserializer
   private final TMemoryInputTransport trans = new TMemoryInputTransport();
-  private final TBinaryProtocol protocol = ThriftCompat.createBinaryProtocol(trans);
+  private final TBinaryProtocol protocol = new ThriftBinaryProtocol(trans);
 
-  ThriftBinaryDeserializer() {
+  public ThriftBinaryDeserializer() {
     super(new ThriftBinaryProtocol.Factory());
   }
 
@@ -47,9 +46,5 @@ public class ThriftBinaryDeserializer extends TDeserializer {
     resetAndInitialize(protocol, len);
     trans.reset(bytes, offset, len);
     base.read(protocol);
-  }
-
-  protected void resetAndInitialize(TBinaryProtocol protocol, int newLength) {
-    protocol.reset();
   }
 }

@@ -1,11 +1,9 @@
 package com.twitter.elephantbird.thrift;
 
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TList;
 import org.apache.thrift.protocol.TMap;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TType;
@@ -22,7 +20,7 @@ import org.apache.thrift.transport.TTransport;
  *
  * @see ThriftCompat
  */
-public class ThriftBinaryProtocol extends TBinaryProtocol {
+public class ThriftBinaryProtocol extends AbstractThriftBinaryProtocol {
 
   ThriftBinaryProtocol(TTransport trans) {
     super(trans);
@@ -86,19 +84,11 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
     return set;
   }
 
- /**
-   * Check if the container size is valid.
-   */
-  protected void checkContainerSize(int size) throws TProtocolException {
-    if (size < 0) {
-      throw new TProtocolException("Negative container size: " + size);
-    }
-  }
-
+  @SuppressWarnings("serial")
   public static class Factory implements TProtocolFactory {
 
     public TProtocol getProtocol(TTransport trans) {
-      return ThriftCompat.createBinaryProtocol(trans);
+      return new ThriftBinaryProtocol(trans);
     }
   }
 }
