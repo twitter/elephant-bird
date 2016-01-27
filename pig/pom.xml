@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.10-SNAPSHOT</version>
+    <version>4.13-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-pig</artifactId>
   <name>Elephant Bird Pig</name>
   <description>Pig utilities.</description>
-
   <dependencies>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
@@ -20,7 +18,7 @@
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
       <artifactId>elephant-bird-core</artifactId>
-      <type>test-jar</type> 
+      <type>test-jar</type>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -40,10 +38,9 @@
       <artifactId>joda-time</artifactId>
     </dependency>
     <dependency>
-     <groupId>org.codehaus.jackson</groupId>
+      <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
     </dependency>
-
     <!-- log4j required for tests-->
     <dependency>
       <groupId>log4j</groupId>
@@ -54,10 +51,8 @@
       <artifactId>easymock</artifactId>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
-
       <!-- thrift -->
       <plugin>
         <groupId>org.apache.thrift.tools</groupId>
@@ -72,7 +67,6 @@
           </execution>
         </executions>
       </plugin>
-
       <!-- increase memory -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -80,7 +74,6 @@
           <argLine>-Djava.library.path=${test.library.path} -Xmx1024m</argLine>
         </configuration>
       </plugin>
-
       <!-- need this for the mahout tests -->
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -92,7 +85,6 @@
           </execution>
         </executions>
       </plugin>
-
     </plugins>
   </build>
 </project>

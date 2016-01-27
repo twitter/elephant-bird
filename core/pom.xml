@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.10-SNAPSHOT</version>
+    <version>4.13-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-core</artifactId>
   <name>Elephant Bird Core</name>
   <description>Core utilities.</description>
-
   <dependencies>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
@@ -58,15 +56,95 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>ant</groupId>
       <artifactId>ant</artifactId>
     </dependency>
-
   </dependencies>
-
+  <profiles>
+    <profile>
+      <id>thrift7</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>add-source</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>thrift7/src/main/java</source>
+                  </sources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>add-test-source</id>
+                <phase>generate-test-sources</phase>
+                <goals>
+                  <goal>add-test-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>thrift7/src/test/java</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>thrift9</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>add-source</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>thrift9/src/main/java</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default-jar</id>
+                <configuration>
+                  <classifier>thrift9</classifier>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   <build>
     <plugins>
-
       <!-- protobuf -->
       <plugin>
         <groupId>com.github.igor-petruk.protobuf</groupId>
@@ -79,7 +157,6 @@
           </execution>
         </executions>
       </plugin>
-
       <!-- thrift -->
       <plugin>
         <groupId>org.apache.thrift.tools</groupId>
@@ -94,7 +171,6 @@
           </execution>
         </executions>
       </plugin>
-
       <!-- need this for the pig, rcfile tests -->
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -106,7 +182,6 @@
           </execution>
         </executions>
       </plugin>
-
     </plugins>
   </build>
 </project>

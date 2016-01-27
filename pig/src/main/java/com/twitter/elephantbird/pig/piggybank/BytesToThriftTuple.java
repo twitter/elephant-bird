@@ -9,7 +9,6 @@ import org.apache.pig.data.Tuple;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
 
 import com.twitter.elephantbird.pig.util.ThriftToPig;
 import com.twitter.elephantbird.util.TypeRef;

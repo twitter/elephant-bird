@@ -31,7 +31,6 @@ public class Fixtures {
   public static final OneOfEach oneOfEach;
   public static final Nesting nesting;
   public static final HolyMoley holyMoley;
-  public static final CompactProtoTestStruct compactProtoTestStruct;
 
   private static final byte[] kUnicodeBytes = {
     (byte)0xd3, (byte)0x80, (byte)0xe2, (byte)0x85, (byte)0xae, (byte)0xce,
@@ -113,10 +112,6 @@ public class Fixtures {
       b.type = 5;
       b.message = "nevermore";
       holyMoley.bonks.put("three", stage2);
-
-      // superhuge compact proto test struct
-      compactProtoTestStruct = new CompactProtoTestStruct(thrift.test.Constants.COMPACT_TEST);
-      compactProtoTestStruct.a_binary = ByteBuffer.wrap(new byte[]{0,1,2,3,4,5,6,7,8});
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

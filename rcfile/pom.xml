@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.10-SNAPSHOT</version>
+    <version>4.13-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-rcfile</artifactId>
   <name>Elephant Bird RCFile</name>
   <description>RCFile utilities.</description>
-
   <dependencies>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>

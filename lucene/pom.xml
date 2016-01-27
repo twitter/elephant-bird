@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.10-SNAPSHOT</version>
+    <version>4.13-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-lucene</artifactId>
   <name>Elephant Bird Lucene</name>
   <description>Lucene Index InputFormats and OutputFormats</description>
-
   <dependencies>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
@@ -59,7 +57,6 @@
       <artifactId>easymock</artifactId>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <!-- publish tests so they can be shared with elephant-bird-pig-lucene -->

@@ -6,12 +6,10 @@
     <artifactId>oss-parent</artifactId>
     <version>7</version>
   </parent>
-
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
-  <version>4.10-SNAPSHOT</version>
+  <version>4.13-SNAPSHOT</version>
   <packaging>pom</packaging>
-
   <name>Elephant Bird</name>
   <url>https://github.com/twitter/elephant-bird</url>
   <description>
@@ -20,7 +18,6 @@
     LoadFuncs, Hive SerDe, HBase miscellanea, etc. The majority of these are in
     production at Twitter running over data every day.
   </description>
-
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
@@ -28,12 +25,10 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-
   <organization>
     <name>Twitter</name>
     <url>http://twitter.com/</url>
   </organization>
-
   <developers>
     <developer>
       <id>kevin</id>
@@ -60,34 +55,38 @@
       <name>Johan Oskarsson</name>
     </developer>
   </developers>
-
   <issueManagement>
     <system>github</system>
     <url>https://github.com/twitter/elephant-bird/issues</url>
   </issueManagement>
-
   <scm>
     <connection>scm:git:https://github.com/twitter/elephant-bird.git</connection>
     <developerConnection>scm:git:git@github.com:twitter/elephant-bird.git</developerConnection>
     <url>https://github.com/twitter/elephant-bird</url>
     <tag>HEAD</tag>
   </scm>
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <slf4j.version>1.6.4</slf4j.version>
-    <apache.hadoop1.version>1.1.2</apache.hadoop1.version> <!-- for hadoop1 profile -->
-    <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version> <!-- for hadoop2 profile -->
+    <apache.hadoop1.version>1.1.2</apache.hadoop1.version>
+    <!-- for hadoop1 profile -->
+    <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version>
+    <!-- for hadoop2 profile -->
+    <specific.hadoop.version>${apache.hadoop1.version}</specific.hadoop.version>
     <apache.pig.version>0.11.1</apache.pig.version>
+    <apache.pig.classifier/>
     <apache.crunch.hadoop1.version>0.8.2</apache.crunch.hadoop1.version>
+    <apache.crunch.version>${apache.crunch.hadoop1.version}</apache.crunch.version>
     <apache.crunch.hadoop2.version>0.8.2-hadoop2</apache.crunch.hadoop2.version>
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
     <apache.lucene.version>4.0.0</apache.lucene.version>
     <protobuf.version>2.4.1</protobuf.version>
+    <protoc.executable>protoc</protoc.executable>
     <hadoop-lzo.version>0.4.19</hadoop-lzo.version>
+    <thrift.version>0.7.0</thrift.version>
+    <thrift.executable>thrift</thrift.executable>
   </properties>
-
   <repositories>
     <repository>
       <id>twitter</id>
@@ -100,10 +99,8 @@
       <url>http://maven.twttr.com</url>
     </pluginRepository>
   </pluginRepositories>
-
   <dependencyManagement>
     <dependencies>
-
       <!-- EB modules -->
       <dependency>
         <groupId>${project.groupId}</groupId>
@@ -181,7 +178,6 @@
         <artifactId>elephant-bird-examples</artifactId>
         <version>${project.version}</version>
       </dependency>
-
       <!-- testing -->
       <dependency>
         <groupId>junit</groupId>
@@ -201,7 +197,6 @@
         <version>3.1</version>
         <scope>test</scope>
       </dependency>
-
       <!-- logging -->
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -221,7 +216,6 @@
         <version>1.2.17</version>
         <scope>test</scope>
       </dependency>
-
       <!-- utils -->
       <dependency>
         <groupId>commons-lang</groupId>
@@ -238,7 +232,6 @@
         <artifactId>guava</artifactId>
         <version>11.0.1</version>
       </dependency>
-
       <!-- serialization -->
       <dependency>
         <groupId>com.google.protobuf</groupId>
@@ -248,14 +241,13 @@
       <dependency>
         <groupId>org.apache.thrift</groupId>
         <artifactId>libthrift</artifactId>
-        <version>0.7.0</version>
+        <version>${thrift.version}</version>
       </dependency>
       <dependency>
         <groupId>com.googlecode.json-simple</groupId>
         <artifactId>json-simple</artifactId>
         <version>1.1</version>
       </dependency>
-
       <!-- hadoop -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -274,7 +266,6 @@
         <artifactId>hadoop-lzo</artifactId>
         <version>${hadoop-lzo.version}</version>
       </dependency>
-
       <!-- cascading -->
       <dependency>
         <groupId>cascading</groupId>
@@ -282,7 +273,6 @@
         <version>2.5.2</version>
         <scope>provided</scope>
       </dependency>
-
       <!-- crunch -->
       <dependency>
         <groupId>org.apache.crunch</groupId>
@@ -290,7 +280,6 @@
         <version>${apache.crunch.version}</version>
         <scope>provided</scope>
       </dependency>
-
       <!-- pig -->
       <dependency>
         <groupId>org.apache.pig</groupId>
@@ -317,7 +306,6 @@
         <version>1.8.8</version>
         <scope>provided</scope>
       </dependency>
-
       <!-- hive -->
       <dependency>
         <groupId>org.apache.hive</groupId>
@@ -361,7 +349,6 @@
         <version>2.3-eb</version>
         <scope>provided</scope>
       </dependency>
-
       <!-- lucene -->
       <dependency>
         <groupId>org.apache.lucene</groupId>
@@ -384,7 +371,6 @@
         <version>1.2</version>
         <scope>provided</scope>
       </dependency>
-
       <!-- pig-lucene -->
       <!-- jline is needed for PigServer which is used in integration tests -->
       <dependency>
@@ -393,7 +379,6 @@
         <version>0.9.94</version>
         <scope>test</scope>
       </dependency>
-
       <!-- mahout -->
       <dependency>
         <groupId>org.apache.mahout</groupId>
@@ -410,26 +395,9 @@
         <artifactId>mahout-math</artifactId>
         <version>${apache.mahout.version}</version>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
-
   <profiles>
-    <profile>
-      <id>hadoop1</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <specific.hadoop.version>
-          ${apache.hadoop1.version}
-        </specific.hadoop.version>
-        <apache.pig.classifier />
-        <apache.crunch.version>
-          ${apache.crunch.hadoop1.version}
-        </apache.crunch.version>
-      </properties>
-    </profile>
     <profile>
       <id>hadoop2</id>
       <properties>
@@ -442,8 +410,22 @@
         </apache.crunch.version>
       </properties>
     </profile>
+    <profile>
+      <id>thrift7</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <thrift.version>0.7.0</thrift.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>thrift9</id>
+      <properties>
+        <thrift.version>0.9.1</thrift.version>
+      </properties>
+    </profile>
   </profiles>
-
   <build>
     <defaultGoal>package</defaultGoal>
     <plugins>
@@ -469,10 +451,23 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.6</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
-
         <!-- core -->
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
@@ -517,17 +512,17 @@
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
             <systemPropertyVariables>
               <test.build.data>${basedir}/target/tests/data</test.build.data>
-              <log4j.configuration> <!-- required when log4j is included (pig tests) -->
+              <log4j.configuration><!-- required when log4j is included (pig tests) -->
                 file:${basedir}/../pig/src/test/resources/test-log4j.properties
               </log4j.configuration>
             </systemPropertyVariables>
-            <environmentVariables> <!-- for OSX 10.7+ -->
-                <DYLD_LIBRARY_PATH>${test.library.path}</DYLD_LIBRARY_PATH>
+            <environmentVariables>
+              <!-- for OSX 10.7+ -->
+              <DYLD_LIBRARY_PATH>${test.library.path}</DYLD_LIBRARY_PATH>
             </environmentVariables>
             <argLine>-Djava.library.path=${test.library.path}</argLine>
           </configuration>
         </plugin>
-
         <!-- package types -->
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -537,7 +532,6 @@
           <artifactId>maven-war-plugin</artifactId>
           <version>2.2</version>
         </plugin>
-
         <!-- reporting -->
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
@@ -547,7 +541,6 @@
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>2.4</version>
         </plugin>
-
         <!-- tools -->
         <plugin>
           <artifactId>maven-antrun-plugin</artifactId>
@@ -560,10 +553,6 @@
         <plugin>
           <artifactId>maven-dependency-plugin</artifactId>
           <version>2.4</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>1.4</version>
         </plugin>
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
@@ -583,31 +572,30 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
-          <version>1.7</version>
+          <version>1.9.1</version>
         </plugin>
-
         <!-- protobuf -->
         <plugin>
           <groupId>com.github.igor-petruk.protobuf</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
-          <version>0.4</version>
+          <version>0.6.5</version>
+          <configuration>
+            <protocCommand>${protoc.executable}</protocCommand>
+          </configuration>
         </plugin>
-
         <!-- thrift -->
         <plugin>
           <groupId>org.apache.thrift.tools</groupId>
           <artifactId>maven-thrift-plugin</artifactId>
           <version>0.1.10</version>
           <configuration>
-            <thriftExecutable>thrift</thriftExecutable>
+            <thriftExecutable>${thrift.executable}</thriftExecutable>
           </configuration>
         </plugin>
-
         <!-- This plugin's configuration is used to store Eclipse M2E plugin
              settings only. It has no influence on the Maven build itself. The
              configuration below is required to resolve build errors reported by
              M2E plugin. -->
-
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
@@ -625,7 +613,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -638,7 +626,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -651,7 +639,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -665,18 +653,16 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
             </lifecycleMappingMetadata>
           </configuration>
         </plugin>
-
       </plugins>
     </pluginManagement>
   </build>
-
   <modules>
     <module>cascading2</module>
     <module>crunch</module>
@@ -690,5 +676,4 @@
     <module>pig-lucene</module>
     <module>examples</module>
   </modules>
-
 </project>

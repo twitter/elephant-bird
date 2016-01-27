@@ -1,7 +1,6 @@
 package com.twitter.elephantbird.thrift;
 
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TList;
 import org.apache.thrift.protocol.TMap;
 import org.apache.thrift.protocol.TProtocol;
@@ -15,10 +14,15 @@ import org.apache.thrift.transport.TTransport;
  *
  * Overwrites a few methods so that some malformed messages don't end up
  * taking excessively large amounts of cpu inside TProtocolUtil.skip().
+ *
+ * To obtain an instance of ThriftBinaryProtocol use {@link ThriftCompat#createBinaryProtocol(TTransport)}.
+ * It will take care of cross version compatibility between thrift 0.7 and 0.9+ code.
+ *
+ * @see ThriftCompat
  */
-public class ThriftBinaryProtocol extends TBinaryProtocol {
+public class ThriftBinaryProtocol extends AbstractThriftBinaryProtocol {
 
-  public ThriftBinaryProtocol(TTransport trans) {
+  ThriftBinaryProtocol(TTransport trans) {
     super(trans);
   }
 
@@ -58,6 +62,7 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TMap readMapBegin() throws TException {
     TMap map = super.readMapBegin();
+    checkContainerSize(map.size);
     checkContainerElemType(map.keyType);
     checkContainerElemType(map.valueType);
     return map;
@@ -66,6 +71,7 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TList readListBegin() throws TException {
     TList list = super.readListBegin();
+    checkContainerSize(list.size);
     checkContainerElemType(list.elemType);
     return list;
   }
@@ -73,10 +79,12 @@ public class ThriftBinaryProtocol extends TBinaryProtocol {
   @Override
   public TSet readSetBegin() throws TException {
     TSet set = super.readSetBegin();
+    checkContainerSize(set.size);
     checkContainerElemType(set.elemType);
     return set;
   }
 
+  @SuppressWarnings("serial")
   public static class Factory implements TProtocolFactory {
 
     public TProtocol getProtocol(TTransport trans) {

@@ -4,14 +4,12 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.10-SNAPSHOT</version>
+    <version>4.13-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-
   <artifactId>elephant-bird-hive</artifactId>
   <name>Elephant Bird Hive</name>
   <description>Hive utilities.</description>
-
   <repositories>
     <!-- hcatalog artifact hosted by Twitter -->
     <repository>
@@ -26,7 +24,6 @@
       </snapshots>
     </repository>
   </repositories>
-
   <dependencies>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
