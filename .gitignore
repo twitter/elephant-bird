@@ -2,6 +2,7 @@
 *.ipr
 *.iws
 *.tmproj
+*.swp
 *~
 .DS_Store
 .classpath
