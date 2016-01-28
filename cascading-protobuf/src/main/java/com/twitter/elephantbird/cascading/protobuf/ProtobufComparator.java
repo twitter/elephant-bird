@@ -1,4 +1,4 @@
-package com.twitter.elephantbird.cascading3.io.protobuf;
+package com.twitter.elephantbird.cascading.protobuf;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

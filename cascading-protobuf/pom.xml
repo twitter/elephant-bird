@@ -7,9 +7,9 @@
     <version>4.13-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-  <artifactId>elephant-bird-cascading3</artifactId>
-  <name>Elephant Bird Cascading3</name>
-  <description>Cascading utilities.</description>
+  <artifactId>elephant-bird-cascading-protobuf</artifactId>
+  <name>Elephant Bird Cascading Protobuf</name>
+  <description>Cascading Protobuf utilities.</description>
   <repositories>
     <repository>
       <id>conjars.org</id>
@@ -18,16 +18,9 @@
   </repositories>
   <dependencies>
     <dependency>
-      <groupId>com.twitter.elephantbird</groupId>
-      <artifactId>elephant-bird-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>${protobuf.version}</version>
     </dependency>
     <dependency>
       <groupId>cascading</groupId>
@@ -36,8 +29,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
     </dependency>
   </dependencies>
 </project>
