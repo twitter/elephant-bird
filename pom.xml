@@ -673,6 +673,7 @@
   <modules>
     <module>cascading2</module>
     <module>cascading3</module>
+    <module>cascading-protobuf</module>
     <module>crunch</module>
     <module>core</module>
     <module>hadoop-compat</module>
