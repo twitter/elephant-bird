@@ -1,6 +1,8 @@
 package com.twitter.elephantbird.util;
 
 import com.twitter.elephantbird.mapreduce.input.combine.CompositeInputSplit;
+import com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -30,14 +32,25 @@ import org.slf4j.LoggerFactory;
 public class SplitUtil {
   private static final Logger LOG = LoggerFactory.getLogger(SplitUtil.class);
 
-  public static final  String COMBINE_SPLIT_SIZE = "elephantbird.combine.split.size";
+  public static final String COMBINE_SPLIT_SIZE = "elephantbird.combine.split.size";
 
   private static long getCombinedSplitSize(Configuration conf) throws IOException {
+    // Try for EB specific configuration
     long splitSize = conf.getLong(COMBINE_SPLIT_SIZE, -1);
-    if (splitSize == -1) {
-      splitSize = FileSystem.get(conf).getDefaultBlockSize(new Path("."));
+    if (splitSize != -1) {
+      return splitSize;
     }
-    return splitSize;
+    
+    // Try for CombineFileInputFormat specific configuration
+    splitSize = conf.getLong(
+        DelegateCombineFileInputFormat.CFIF_MAX_SPLIT_SIZE_KEY,
+        DelegateCombineFileInputFormat.CFIF_MAX_SPLIT_SIZE_DEFAULT);
+    if (splitSize != DelegateCombineFileInputFormat.CFIF_MAX_SPLIT_SIZE_DEFAULT) {
+      return splitSize;
+    }
+    
+    // Try for a block size
+    return FileSystem.get(conf).getDefaultBlockSize(new Path("."));
   }
 
   private static class Node {

@@ -4,9 +4,11 @@ import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
 import com.twitter.elephantbird.util.HadoopCompat;
 import com.twitter.elephantbird.util.HadoopUtils;
 import com.twitter.elephantbird.util.SplitUtil;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.slf4j.Logger;
@@ -32,11 +34,33 @@ public class DelegateCombineFileInputFormat<K, V> extends FileInputFormat<K, V> 
   public static final String USE_COMBINED_INPUT_FORMAT = "elephantbird.use.combine.input.format";
   public static final String COMBINED_INPUT_FORMAT_DELEGATE = "elephantbird.combine.input.format.delegate";
 
+  // Config values from CombineFileInputFormat 
+  public static final String CFIF_MAX_SPLIT_SIZE_KEY = "mapreduce.input.fileinputformat.split.maxsize";
+  public static final long CFIF_MAX_SPLIT_SIZE_DEFAULT = -1;
+  public static final String CFIF_MIN_SPLIT_SIZE_NODE_KEY = CombineFileInputFormat.SPLIT_MINSIZE_PERNODE;
+  public static final long CFIF_MIN_SPLIT_SIZE_NODE_DEFAULT = -1;
+  public static final String CFIF_MIN_SPLIT_SIZE_RACK_KEY = CombineFileInputFormat.SPLIT_MINSIZE_PERRACK;
+  public static final long CFIF_MIN_SPLIT_SIZE_RACK_DEFAULT = -1;
+  
   public static void setUseCombinedInputFormat(Configuration conf) {
     conf.setBoolean(USE_COMBINED_INPUT_FORMAT, true);
+    
+    // Copy values from CFIF's key to Elephantbird's key so SplitUtil can find them
+    // SplitUtil has no notion of minSplitSizeNode or minSplitSizeRack so ignore for now
+    long cfifMaxSplitSize = conf.getLong(
+        CFIF_MAX_SPLIT_SIZE_KEY, CFIF_MAX_SPLIT_SIZE_DEFAULT);
+    if (cfifMaxSplitSize != CFIF_MAX_SPLIT_SIZE_DEFAULT) {
+      long splitUtilSplitSize = conf.getLong(SplitUtil.COMBINE_SPLIT_SIZE, -1);
+      if (splitUtilSplitSize != -1) {
+        LOG.warn("Overwriting configuration value " + splitUtilSplitSize + " at key "
+            + SplitUtil.COMBINE_SPLIT_SIZE + " with value " + cfifMaxSplitSize
+            + " from key " + CFIF_MAX_SPLIT_SIZE_KEY);
+      }
+      conf.setLong(SplitUtil.COMBINE_SPLIT_SIZE, cfifMaxSplitSize);
+    }
   }
 
-  // This sets configures the delegate, though it does not configure DelegateCombineFileInputFormat.
+  // This configures the delegate, though it does not configure DelegateCombineFileInputFormat.
   public static void setCombinedInputFormatDelegate(Configuration conf, Class<? extends InputFormat> clazz) {
     HadoopUtils.setClassConf(conf, COMBINED_INPUT_FORMAT_DELEGATE, clazz);
   }
@@ -46,6 +70,7 @@ public class DelegateCombineFileInputFormat<K, V> extends FileInputFormat<K, V> 
   private long minSplitSizeNode;
   private long minSplitSizeRack;
 
+  // This configures both the delegate and DelegateCombineFileInputFormat.
   public static void setDelegateInputFormat(JobConf conf, Class<? extends InputFormat> inputFormat) {
     DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
     setCombinedInputFormatDelegate(conf, inputFormat);
