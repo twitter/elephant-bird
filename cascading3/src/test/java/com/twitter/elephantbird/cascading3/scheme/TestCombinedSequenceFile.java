@@ -40,9 +40,9 @@ public class TestCombinedSequenceFile {
         conf.get(DelegateCombineFileInputFormat.COMBINED_INPUT_FORMAT_DELEGATE)
     );
     assertEquals(
-        "DeprecatedInputFormatWrapper should wrap Delegate combiner",
+	"Delegate combiner should be set without any deprecated wrapper", 
         "com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat",
-        conf.get(DeprecatedInputFormatWrapper.CLASS_CONF_KEY)
+        conf.get("mapreduce.inputformat.class")
     );
   }
 

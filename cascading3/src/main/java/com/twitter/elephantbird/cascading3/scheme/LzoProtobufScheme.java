@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapreduce.OutputFormat;
 
 import com.google.protobuf.Message;
 
@@ -41,12 +42,12 @@ public class LzoProtobufScheme<M extends Message> extends
   @Override
   public void sinkConfInit(FlowProcess<? extends Configuration> hfp, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
     LzoProtobufBlockOutputFormat.setClassConf(protoClass, conf);
-    DeprecatedOutputFormatWrapper.setOutputFormat(LzoProtobufBlockOutputFormat.class, conf);
+    conf.setClass("mapreduce.outputformat.class", LzoProtobufBlockOutputFormat.class, OutputFormat.class);
   }
 
   @Override
   public void sourceConfInit(FlowProcess<? extends Configuration> hfp, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
     MultiInputFormat.setClassConf(protoClass, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MultiInputFormat.class);
   }
 }

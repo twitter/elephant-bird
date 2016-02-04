@@ -71,7 +71,7 @@ public class CombinedSequenceFile extends SequenceFile {
     // with the MapReduceInputFormatWrapper, then wrap the DelegateCombineFileInputFormat
     // again with DeprecatedInputFormatWrapper to make it compatible with Cascading.
     MapReduceInputFormatWrapper.setWrappedInputFormat(SequenceFileInputFormat.class, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MapReduceInputFormatWrapper.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MapReduceInputFormatWrapper.class);
   }
 
   @Override

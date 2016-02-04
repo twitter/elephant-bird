@@ -116,6 +116,11 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-cascading-protobuf</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-core</artifactId>
         <version>${project.version}</version>
       </dependency>

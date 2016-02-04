@@ -21,6 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapreduce.OutputFormat;
 
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
@@ -44,12 +45,12 @@ public class LzoByteArrayScheme extends LzoBinaryScheme<byte[], RawBytesWritable
       Tap<Configuration, RecordReader, OutputCollector> tap,
       Configuration conf) {
     MultiInputFormat.setClassConf(byte[].class, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MultiInputFormat.class);
   }
 
   @Override public void sinkConfInit(FlowProcess<? extends Configuration> fp,
       Tap<Configuration, RecordReader, OutputCollector> tap,
       Configuration conf) {
-    DeprecatedOutputFormatWrapper.setOutputFormat(LzoBinaryBlockOutputFormat.class, conf);
+    conf.setClass("mapreduce.outputformat.class", LzoBinaryBlockOutputFormat.class, OutputFormat.class);
   }
 }

@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapreduce.OutputFormat;
 
 import com.twitter.elephantbird.mapred.output.DeprecatedOutputFormatWrapper;
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
@@ -36,7 +37,7 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   @Override
   public void sinkConfInit(FlowProcess<? extends Configuration> hfp, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
     LzoThriftBlockOutputFormat.setClassConf(thriftClass, conf);
-    DeprecatedOutputFormatWrapper.setOutputFormat(LzoThriftBlockOutputFormat.class, conf);
+    conf.setClass("mapreduce.outputformat.class", LzoThriftBlockOutputFormat.class, OutputFormat.class);
   }
 
   protected ThriftWritable<M> prepareBinaryWritable() {
@@ -47,6 +48,6 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   @Override
   public void sourceConfInit(FlowProcess<? extends Configuration> hfp, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
     MultiInputFormat.setClassConf(thriftClass, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MultiInputFormat.class);
   }
 }
