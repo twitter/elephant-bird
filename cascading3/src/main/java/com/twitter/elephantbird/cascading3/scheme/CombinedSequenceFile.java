@@ -66,10 +66,10 @@ public class CombinedSequenceFile extends SequenceFile {
 
     updateJobConfForLocalSettings(conf);
 
-    // Since the EB combiner works over the mapreduce API while Cascading is on the mapred API,
+    // both EB combiner and Cascading3 work over the mapreduce API
+    // however, SequenceFileInputFormat is in the mapred API.
     // in order to use the EB combiner we must wrap the mapred SequenceFileInputFormat
-    // with the MapReduceInputFormatWrapper, then wrap the DelegateCombineFileInputFormat
-    // again with DeprecatedInputFormatWrapper to make it compatible with Cascading.
+    // with the MapReduceInputFormatWrapper and then wrap it in the DelegateCombineFileInputFormat
     MapReduceInputFormatWrapper.setWrappedInputFormat(SequenceFileInputFormat.class, conf);
     DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MapReduceInputFormatWrapper.class);
   }

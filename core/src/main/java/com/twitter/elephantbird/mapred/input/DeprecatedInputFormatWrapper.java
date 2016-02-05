@@ -76,8 +76,8 @@ public class DeprecatedInputFormatWrapper<K, V> implements org.apache.hadoop.map
 
 	public static void setInputFormat(Class<?> realInputFormatClass, JobConf jobConf,
 			Class<? extends DeprecatedInputFormatValueCopier<?>> valueCopyClass) {
- 		jobConf.setInputFormat(DeprecatedInputFormatWrapper.class); 
- 		HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass); 
+		jobConf.setInputFormat(DeprecatedInputFormatWrapper.class);
+		HadoopUtils.setClassConf(jobConf, CLASS_CONF_KEY, realInputFormatClass);
 		HadoopUtils.setClassConf(jobConf, VALUE_COPY_CONF_KEY, valueCopyClass);
 	}
 
