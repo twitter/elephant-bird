@@ -25,6 +25,7 @@
     <dependency>
       <groupId>cascading</groupId>
       <artifactId>cascading-hadoop</artifactId>
+      <!-- This module is api compatible with both cascading 2 and 3. We leave it to the consumers to provide it.-->
       <version>${cascading3.version}</version>
       <scope>provided</scope>
     </dependency>
