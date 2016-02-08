@@ -7,8 +7,8 @@
     <version>4.13-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-  <artifactId>elephant-bird-cascading2</artifactId>
-  <name>Elephant Bird Cascading2</name>
+  <artifactId>elephant-bird-cascading3</artifactId>
+  <name>Elephant Bird Cascading3</name>
   <description>Cascading utilities.</description>
   <repositories>
     <repository>
@@ -32,7 +32,7 @@
     <dependency>
       <groupId>cascading</groupId>
       <artifactId>cascading-hadoop</artifactId>
-      <version>${cascading2.version}</version>
+      <version>${cascading3.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

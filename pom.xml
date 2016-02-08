@@ -86,6 +86,8 @@
     <hadoop-lzo.version>0.4.19</hadoop-lzo.version>
     <thrift.version>0.7.0</thrift.version>
     <thrift.executable>thrift</thrift.executable>
+    <cascading2.version>2.5.2</cascading2.version>
+    <cascading3.version>3.0.2</cascading3.version>
   </properties>
   <repositories>
     <repository>
@@ -105,6 +107,16 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>elephant-bird-cascading2</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-cascading3</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>elephant-bird-cascading-protobuf</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -665,6 +677,8 @@
   </build>
   <modules>
     <module>cascading2</module>
+    <module>cascading3</module>
+    <module>cascading-protobuf</module>
     <module>crunch</module>
     <module>core</module>
     <module>hadoop-compat</module>

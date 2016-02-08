@@ -46,8 +46,13 @@ public class DelegateCombineFileInputFormat<K, V> extends FileInputFormat<K, V> 
   private long minSplitSizeNode;
   private long minSplitSizeRack;
 
-  public static void setDelegateInputFormat(JobConf conf, Class<? extends InputFormat> inputFormat) {
-    DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
+  public static void setDelegateInputFormat(JobConf jobConf, Class<? extends InputFormat> inputFormat) {
+    DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, jobConf);
+    setCombinedInputFormatDelegate(jobConf, inputFormat);
+  }
+
+  public static void setDelegateInputFormatHadoop2(Configuration conf, Class<? extends InputFormat> inputFormat) {
+    conf.setClass("mapreduce.inputformat.class", DelegateCombineFileInputFormat.class, InputFormat.class); 
     setCombinedInputFormatDelegate(conf, inputFormat);
   }
 
