@@ -71,7 +71,7 @@ public class CombinedSequenceFile extends SequenceFile {
     // in order to use the EB combiner we must wrap the mapred SequenceFileInputFormat
     // with the MapReduceInputFormatWrapper and then wrap it in the DelegateCombineFileInputFormat
     MapReduceInputFormatWrapper.setWrappedInputFormat(SequenceFileInputFormat.class, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MapReduceInputFormatWrapper.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MapReduceInputFormatWrapper.class);
   }
 
   @Override

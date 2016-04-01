@@ -48,6 +48,6 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   @Override
   public void sourceConfInit(FlowProcess<? extends Configuration> hfp, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
     MultiInputFormat.setClassConf(thriftClass, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MultiInputFormat.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
   }
 }

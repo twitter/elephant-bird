@@ -45,7 +45,7 @@ public class LzoByteArrayScheme extends LzoBinaryScheme<byte[], RawBytesWritable
       Tap<Configuration, RecordReader, OutputCollector> tap,
       Configuration conf) {
     MultiInputFormat.setClassConf(byte[].class, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MultiInputFormat.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
   }
 
   @Override public void sinkConfInit(FlowProcess<? extends Configuration> fp,
