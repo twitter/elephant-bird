@@ -42,7 +42,7 @@ public class LzoProtobufScheme<M extends Message> extends
   @Override
   public void sinkConfInit(FlowProcess<? extends Configuration> hfp, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
     LzoProtobufBlockOutputFormat.setClassConf(protoClass, conf);
-    conf.setClass("mapreduce.outputformat.class", LzoProtobufBlockOutputFormat.class, OutputFormat.class);
+    DeprecatedOutputFormatWrapper.setOutputFormat(LzoProtobufBlockOutputFormat.class, conf);
   }
 
   @Override

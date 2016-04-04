@@ -51,6 +51,6 @@ public class LzoByteArrayScheme extends LzoBinaryScheme<byte[], RawBytesWritable
   @Override public void sinkConfInit(FlowProcess<? extends Configuration> fp,
       Tap<Configuration, RecordReader, OutputCollector> tap,
       Configuration conf) {
-    conf.setClass("mapreduce.outputformat.class", LzoBinaryBlockOutputFormat.class, OutputFormat.class);
+    DeprecatedOutputFormatWrapper.setOutputFormat(LzoBinaryBlockOutputFormat.class, conf);
   }
 }
