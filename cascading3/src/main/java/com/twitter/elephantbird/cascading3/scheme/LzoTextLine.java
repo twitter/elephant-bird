@@ -1,7 +1,7 @@
 package com.twitter.elephantbird.cascading3.scheme;
 
+import com.twitter.elephantbird.mapred.input.DeprecatedInputFormatWrapper;
 import com.twitter.elephantbird.mapreduce.input.LzoTextInputFormat;
-import com.twitter.elephantbird.mapreduce.input.combine.DelegateCombineFileInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
@@ -49,7 +49,7 @@ public class LzoTextLine extends TextLine {
 
   @Override
   public void sourceConfInit(FlowProcess<? extends Configuration> flowProcess, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf ) {
-    conf.setClass("mapreduce.inputformat.class", LzoTextInputFormat.class, InputFormat.class);
+    DeprecatedInputFormatWrapper.setInputFormat(LzoTextInputFormat.class, conf);
   }
 
   @Override
