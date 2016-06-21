@@ -51,8 +51,13 @@ public class DelegateCombineFileInputFormat<K, V> extends FileInputFormat<K, V> 
     setCombinedInputFormatDelegate(jobConf, inputFormat);
   }
 
+  public static void setDelegateInputFormat(Configuration conf, Class<? extends InputFormat> inputFormat) {
+    DeprecatedInputFormatWrapper.setInputFormat(DelegateCombineFileInputFormat.class, conf);
+    setCombinedInputFormatDelegate(conf, inputFormat);
+  }
+
   public static void setDelegateInputFormatHadoop2(Configuration conf, Class<? extends InputFormat> inputFormat) {
-    conf.setClass("mapreduce.inputformat.class", DelegateCombineFileInputFormat.class, InputFormat.class); 
+    conf.setClass("mapreduce.inputformat.class", DelegateCombineFileInputFormat.class, InputFormat.class);
     setCombinedInputFormatDelegate(conf, inputFormat);
   }
 
