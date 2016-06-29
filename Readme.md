@@ -53,7 +53,7 @@ As a result these dependencies are not transitively Elephant-Bird modules. Pleas
 
 ### Hadoop Input and Output Formats
 
-Elephant-Bird provides input and output formats for working with working with a variety of plaintext formats stored in LZO compressed files.
+Elephant-Bird provides input and output formats for working with a variety of plaintext formats stored in LZO compressed files.
 
 * JSON data
 * Line-based data (TextInputFormat but for LZO)
