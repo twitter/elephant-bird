@@ -38,7 +38,7 @@ import com.twitter.elephantbird.util.HadoopUtils;
  */
 @SuppressWarnings("deprecation")
 public class DeprecatedOutputFormatWrapper<K, V>
-                      implements org.apache.hadoop.mapred.OutputFormat<K, V> {
+    extends org.apache.hadoop.mapred.FileOutputFormat<K, V> {
 
   protected OutputFormat<K, V> realOutputFormat;
 
