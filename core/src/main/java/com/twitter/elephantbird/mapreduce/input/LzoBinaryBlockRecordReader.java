@@ -136,8 +136,13 @@ public class LzoBinaryBlockRecordReader<M, W extends BinaryWritable<M>>
         // As a consequence of this, next split reader skips at least one byte
         // (i.e. skips either partial or full record at the beginning).
       }
-      byte[] byteArray = reader_.readNextProtoBytes();
-
+      byte[] byteArray = null;
+      try {
+        byteArray = reader_.readNextProtoBytes();
+      } catch (IOException ioe){
+        // catch IOE, rather than throw  it
+        LOG.error("Error reading split, skip it. ", ioe);
+      }
       if(byteArray == null) {
         return false;
       }
