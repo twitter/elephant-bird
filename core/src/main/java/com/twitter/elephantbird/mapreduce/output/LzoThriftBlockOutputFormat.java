@@ -2,6 +2,7 @@ package com.twitter.elephantbird.mapreduce.output;
 
 import java.io.IOException;
 
+import com.twitter.elephantbird.mapreduce.io.BinaryBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftBlockWriter;
 import com.twitter.elephantbird.mapreduce.io.ThriftWritable;
 import com.twitter.elephantbird.util.HadoopCompat;
@@ -42,10 +43,13 @@ public class LzoThriftBlockOutputFormat<M extends TBase<?, ?>>
 
   public RecordWriter<M, ThriftWritable<M>> getRecordWriter(TaskAttemptContext job)
       throws IOException, InterruptedException {
+    Configuration conf = HadoopCompat.getConfiguration(job);
     if (typeRef_ == null) {
       typeRef_ = ThriftUtils.getTypeRef(HadoopCompat.getConfiguration(job), LzoThriftBlockOutputFormat.class);
     }
+    int numRecordsPerBlock = BinaryBlockWriter.getNumRecordsPerBlock(conf);
+
     return new LzoBinaryBlockRecordWriter<M, ThriftWritable<M>>(
-        new ThriftBlockWriter<M>(getOutputStream(job), typeRef_.getRawClass()));
+        new ThriftBlockWriter<M>(getOutputStream(job), typeRef_.getRawClass(), numRecordsPerBlock));
   }
 }

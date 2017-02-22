@@ -9,11 +9,14 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import com.twitter.elephantbird.util.Protobufs;
 
+import org.apache.hadoop.conf.Configuration;
+
 /**
  * A class to write blocks of serialized objects.
  */
 public class BinaryBlockWriter<M> {
   protected static final int DEFAULT_NUM_RECORDS_PER_BLOCK = 100;
+  public static final String NUM_RECORDS_PER_BLOCK = "elephantbird.num.records.per.block";
 
   private final OutputStream out_;
   private final int numRecordsPerBlock_;
@@ -22,7 +25,11 @@ public class BinaryBlockWriter<M> {
   private int numRecordsWritten_ = 0;
   private List<ByteString> protoBlobs_;
 
-  protected BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> binaryConverter, int numRecordsPerBlock) {
+  public static int getNumRecordsPerBlock(Configuration conf) {
+    return conf.getInt(NUM_RECORDS_PER_BLOCK, DEFAULT_NUM_RECORDS_PER_BLOCK);
+  }
+
+  public BinaryBlockWriter(OutputStream out, Class<M> protoClass, BinaryConverter<M> binaryConverter, int numRecordsPerBlock) {
     out_ = out;
     numRecordsPerBlock_ = numRecordsPerBlock;
     innerClass_ = protoClass;
