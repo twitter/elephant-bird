@@ -8,7 +8,7 @@
   </parent>
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
-  <version>4.15-SNAPSHOT</version>
+  <version>4.15</version>
   <packaging>pom</packaging>
   <name>Elephant Bird</name>
   <url>https://github.com/twitter/elephant-bird</url>
