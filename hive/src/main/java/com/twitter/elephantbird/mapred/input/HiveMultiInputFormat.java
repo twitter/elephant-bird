@@ -60,6 +60,9 @@ public class HiveMultiInputFormat
       InputJobInfo inputJobInfo = (InputJobInfo) HCatUtil.deserialize(
           job.get(HCatConstants.HCAT_KEY_JOB_INFO));
       properties = inputJobInfo.getTableInfo().getStorerInfo().getProperties();
+    } else if (job.get(Constants.SERIALIZATION_CLASS, null) != null) {
+      // Running as an Presto query.
+      thriftClassName = job.get(Constants.SERIALIZATION_CLASS);
     }
 
     if (properties != null) {
