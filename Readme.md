@@ -1,136 +1,183 @@
-# Elephant Bird #
+# Elephant Bird [![Build Status](https://secure.travis-ci.org/twitter/elephant-bird.png)](http://travis-ci.org/twitter/elephant-bird)
 
-Version: 1.2.1
+## About
 
-#### Twitter's library of [LZO](http://www.github.com/kevinweil/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day. ####
+Elephant Bird is Twitter's open source library of [LZO](https://github.com/twitter/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day.
 
-### To Use ###
+Join the conversation about Elephant-Bird on the [developer mailing list](https://groups.google.com/forum/?fromgroups#!forum/elephantbird-dev).
 
-1. git clone
-2. ant
-3. check out javadoc, etc.
-4. build examples: cd examples && ant;
+## License
 
-Note: for any of the LZO-based code, make sure that the native LZO libraries are on your `java.library.path`.  Generally this is done by setting `JAVA_LIBRARY_PATH` in
-`pig-env.sh` or `hadoop-env.sh`.  You can also add lines like
-<code><pre>
+[Apache License, Version 2.0](http://apache.org/licenses/LICENSE-2.0).
+
+## Quickstart
+
+1. Make sure you have [Protocol Buffers](http://code.google.com/apis/protocolbuffers/) installed. Please see **Version compatibility** section below.
+1. Make sure you have [Apache Thrift](http://thrift.apache.org) installed. Please see **Version compatibility** section below.
+1. Get the code: `git clone git://github.com/twitter/elephant-bird.git`
+1. Build the jar: `mvn package`
+1. Explore what's available: `mvn javadoc:javadoc`
+
+Note: For any of the LZO-based code, make sure that the native LZO libraries are on your `java.library.path`.  Generally this is done by setting `JAVA_LIBRARY_PATH` in `pig-env.sh` or `hadoop-env.sh`.  You can also add lines like
+
+```
 PIG_OPTS=-Djava.library.path=/path/to/my/libgplcompression/dir
-</pre></code>
+```
+
 to `pig-env.sh`. See the instructions for [Hadoop-LZO](http://www.github.com/kevinweil/hadoop-lzo) for more details.
 
-There are a few simple examples that use the input formats.  Note how the protocol buffer-based
-formats work, and also note that the examples build file uses the custom codegen stuff.  See below for
-more about that.
+There are a few simple examples that use the input formats. Note how the Protocol Buffer and Thrift
+classes are passed to input formats through configuration.
 
-### Version compatibility ###
+## Maven repository
 
-1. Protocol Buffers 2.3
-2. Pig 0.6 (not compatible with 0.7+)
-3. HBase 0.90
-4. Hive 0.7 (with HIVE-1616)
-5. Thrift 0.5
+Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.sonatype.org/) [releases repository](https://oss.sonatype.org/content/repositories/releases/) and promoted from there to [Maven Central](http://search.maven.org/). From time to time we may also deploy snapshot releases to the Sonatype OSS [snapshots repository](https://oss.sonatype.org/content/repositories/snapshots/).
 
+## Version compatibility
 
-#### Building Without Protocol Buffers ####
+1. Hadoop 20.2x, 1.x, 2.x
+1. Pig 0.8+
+1. Protocol Buffers 2.5.0, 2.4.1, 2.3.0 (default build version is 2.4.1 can be changed with `-Dprotobuf.version=2.3.0`)
+1. Hive 0.7 (with HIVE-1616)
+1. Thrift 0.5.0, 0.6.0, 0.7.0, greater versions than 0.9 are provided via thrift9 maven profile
+1. Mahout 0.6
+1. Cascading2 (as the API is evolving, see libraries.properties for the currently supported version)
+1. Crunch 0.8.1+
 
-If you don't want to build elephant-bird with protobuf support or you don't have protobuf >= 2.3 available 
-(fedora for instance only provides 2.2), you can have ant exclude all classes that rely on protobuf by using ant noproto target
+### Runtime Dependencies
 
-for the default target this would be:
-<code><pre>ant noproto release-jar</pre></code>
+Elephant-Bird defines majority of its depenendencies in maven [provided scope](http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Scope).
+As a result these dependencies are not transitively Elephant-Bird modules. Please see [wiki page](https://github.com/kevinweil/elephant-bird/wiki/Build-and-Runtime-Dependencies) for more information.
 
-### License ###
+## Contents
 
-Apache licensed.
+### Hadoop Input and Output Formats
 
-### Contents ###
+Elephant-Bird provides input and output formats for working with a variety of plaintext formats stored in LZO compressed files.
 
-##### LZO-based Hadoop Input Formats #####
 * JSON data
-* Line-based data (TextInputFormat but for LZO; also available in deprecated 0.18 format)
+* Line-based data (TextInputFormat but for LZO)
 * [W3C logs](http://www.w3.org/TR/WD-logfile.html)
-* Serialized protocol buffers in one of three flavors
-    * Block-based (via codegen, see below; also available in deprecated 0.18 format)
-    * Block-based, into generic bytes.
-    * Line-based, base64 encoded (via codegen, see below)
-* Same as protocol buffers, but Thrift.
 
-    
-##### LZO-based Hadoop Writables #####
-* Protocol buffer writables (via codegen, see below)
+Additionally, protocol buffers and thrift messages can be stored in a variety of file formats.
 
-##### LZO-based Hadoop OutputFormats #####
-* Serialized protocol buffers in one of two flavors
-    * Block-based (via codegen, see below)
-    * Line-based, base64 encoded (via codegen, see below)
+* Block-based, into generic bytes
+* Line-based, base64 encoded
+* SequenceFile
+* RCFile
 
-##### LZO-based LoadFuncs for Pig #####
-* JSON data
-* Regex-based loaders
-* Sampling loaders for LZO
-* Text loaders (TextLoader equivalent but for LZO)
-* Tokenized loaders (PigStorage equivalent but for LZO)
-* [W3C logs](http://www.w3.org/TR/WD-logfile.html)
-* Serialized protocol buffers in one of two flavors
-    * Block-based (via codegen, see below)
-    * Line-based, base64 encoded (via codegen, see below)
+### Hadoop API wrappers
 
-##### LZO-based StoreFuncs for Pig #####
-* Tokenized storage (PigStorage equivalent but for LZO)
-* Serialized protocol buffers in one flavor
-    * Line-based, base64 encoded (via codegen, see below)
-    
-##### Utilities #####
+Hadoop provides two API implementations: the the old-style `org.apache.hadoop.mapred` and new-style `org.apache.hadoop.mapreduce` packages. Elephant-Bird provides wrapper classes that allow unmodified usage of `mapreduce` input and output formats in contexts where the `mapred` interface is required.
+
+For more information, see [DeprecatedInputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/core/src/main/java/com/twitter/elephantbird/mapred/input/DeprecatedInputFormatWrapper.java) and [DeprecatedOutputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/core/src/main/java/com/twitter/elephantbird/mapred/output/DeprecatedOutputFormatWrapper.java)
+
+
+### Hadoop 2.x Support
+
+Elephant-bird published packages are tested with both Hadoop 1.x and 2.x.
+
+### Hadoop Writables
+* Elephant-Bird provides protocol buffer and thrift writables for directly working with these formats in map-reduce jobs.
+
+### Pig Support
+
+Loaders and storers are available for the input and output formats listed above. Additionally, pig-specific features include:
+
+* JSON loader (including nested structures)
+* Regex-based loader
+* Includes converter interface for turning Tuples into Writables and vice versa
+* Provides implementations to convert generic Writables, Thrift, Protobufs, and other specialized classes, such as [Apache Mahout](http://mahout.apache.org/)'s [VectorWritable](http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/math/VectorWritable.java).
+
+### Hive Support
+
+Elephant-Bird provides Hive support for reading thrift and protocol buffers. For more information, see [How to use Elephant Bird with Hive](https://github.com/kevinweil/elephant-bird/wiki/How-to-use-Elephant-Bird-with-Hive).
+
+### Lucene Integration
+
+Elephant-Bird provides hadoop Input/Output Formats and pig Load/Store Funcs for creating + searching lucene indexes. See [Elephant Bird Lucene](https://github.com/kevinweil/elephant-bird/wiki/Elephant-Bird-Lucene)
+
+### Utilities
 * Counters in Pig
-* Protocol buffer utilities
-* Conversions from protocol buffers to pig scripts
-* Reading and writing block-based protocol buffer format (see ProtobufBlockWriter)
+* Protocol Buffer utilities
+* Thrift utilities
+* Conversions from Protocol Buffers and Thrift messages to Pig tuples
+* Conversions from Thrift to Protocol Buffer's `DynamicMessage`
+* Reading and writing block-based Protocol Buffer format (see `ProtobufBlockWriter`)
 
-### Protobuf Codegen? ###
+### Protocol Buffer and Thrift compiler dependencies
 
-Yes. Most of the work with protobufs can be templatized via a `<M extends Message>` (where `Message`
-means `com.google.protobuf.Message`) but Hadoop works mainly via reflection.  [Java type erasure](http://java.sun.com/docs/books/tutorial/java/generics/erasure.html) prevents templated types from
-being instantiated properly via reflection, so our solution is to write the templatized class, and then
-generate code for derived classes that do little more than instantiate the type parameter.  This causes a slight
-proliferation of classes, but it only needs to be done during the build phase (don't check in generated code!)
-so in practice it isn't an issue.  It turns out this can be done for Hadoop, Pig, HBase, etc, and you can easily
-add your own classes to it.  The model we use here is file-based: essentially, you can configure it such that you
-generate some set of derived protobuf-related classes for each protocol buffer defined in a given file.  This distribution
-ships with classes
+Elephant Bird requires Protocol Buffer compiler at build time, as generated
+classes are used internally. Thrift compiler is required to generate classes used in tests.
+As these are native-code tools they must be installed on the build
+machine (java library dependencies are pulled from maven repositories during the build).
 
-In protobuf 2.3, Google introduced the notion of a [protocol buffer plugin](http://code.google.com/apis/protocolbuffers/docs/reference/cpp/google.protobuf.compiler.plugin.pb.html) that 
-lets you hook in to their code generation elegantly, with all the parsed metadata available.  We use this in 
-`com.twitter.elephantbird.proto.HadoopProtoCodeGenerator` to generate code for each protocol buffer.  The 
-`HadoopProtoCodeGenerator` expects as a first argument a yml file consisting of keys and lists of classnames.  For each
-protocol buffer file read in (say from `my_file.proto`), it looks up the basename (`my_file`) in the yml file.  
-If a corresponding list exists, it expects each element is a classname of a class deriving from `com.twitter.elephantbird.proto.ProtoCodeGenerator`.  These classes implement
-a method to set the filename, and a method to set the generated code contents of the file.  You can add your own by creating
-such a derived class and including it in the list of classnames for the protocol buffer file key.  That is, if you want
-to apply the code generators in `com.twitter.elephantbird.proto.codegen.ProtobufWritableGenerator` and 
-`com.twitter.elephantbird.proto.codegen.LzoProtobufBytesToPigTupleGenerator` to every protobuf in the
-file `my_file.proto`, then your config file should have a section that looks like
-<code><pre>
-my_file:
-  - com.twitter.elephantbird.proto.codegen.ProtobufWritableGenerator
-  - com.twitter.elephantbird.proto.codegen.LzoProtobufBytesToPigTupleGenerator
-</pre></code>
+## Working with Thrift and Protocol Buffers in Hadoop
 
-There are examples in the examples subdirectory showing how to integrate this code generation into a build, both for generating Java files pre-jar and for generating other types of files from protocol buffer definitions post-compile (there are examples that do this to generate [Pig](http://hadoop.apache.org/pig) loaders for a set of protocol buffers).  
+We provide InputFormats, OutputFormats, Pig Load / Store functions, Hive SerDes,
+and Writables for working with Thrift and Google Protocol Buffers.
+We haven't written up the docs yet, but look at `ProtobufMRExample.java`, `ThriftMRExample.java`, `people_phone_number_count.pig`, `people_phone_number_count_thrift.pig` under `examples` directory for reflection-based dynamic usage.
+We also provide utilities for generating Protobuf-specific Loaders, Input/Output Formats, etc, if for some reason you want to avoid
+the dynamic bits.
 
-### No, really, Protobuf codegen? ###
+## Hadoop SequenceFiles and Pig
 
-We recently revisited all the stuff described above and found ways to get around the codegen issue. We haven't written up the docs yet, but look at `ProtobufMRExample.java`, `ThriftMRExample.java`, `people_phone_number_count.pig`, `people_phone_number_count_thrift.pig` under `examples` directory for usage. It is not very different from using the specific code-generated classes.
+Reading and writing Hadoop SequenceFiles with Pig is supported via classes
+[SequenceFileLoader](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/load/SequenceFileLoader.java)
+and
+[SequenceFileStorage](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/store/SequenceFileStorage.java). These
+classes make use of a
+[WritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/WritableConverter.java)
+interface, allowing pluggable conversion of key and value instances to and from
+Pig data types.
 
-### Commit Back! ###
+Here's a short example: Suppose you have `SequenceFile<Text, LongWritable>` data
+sitting beneath path `input`. We can load that data with the following Pig
+script:
 
-Bug fixes, features, and documentation improvements are welcome!  Please fork and send me a pull request on github, and I will do my best to keep up.  If you make major changes, add yourself to the contributors list below.
+```
+REGISTER '/path/to/elephant-bird.jar';
 
-### Contributors ###
+%declare SEQFILE_LOADER 'com.twitter.elephantbird.pig.load.SequenceFileLoader';
+%declare TEXT_CONVERTER 'com.twitter.elephantbird.pig.util.TextConverter';
+%declare LONG_CONVERTER 'com.twitter.elephantbird.pig.util.LongWritableConverter';
 
-* Kevin Weil ([@kevinweil](http://twitter.com/kevinweil))
-* Dmitriy Ryaboy ([@squarecog](http://twitter.com/squarecog))
-* Chuang Liu ([@chuangl4](http://twitter.com/chuangl4))
-* Florian Liebert ([@floliebert](http://twitter.com/floliebert))
-* Ning Liang ([@ningliang](http://twitter.com/ningliang))
-* Johan Oskarsson ([@skr](http://twitter.com/skr))
-* Raghu Angadi ([@raghuangadi](http://twitter.com/raghuangadi))
+pairs = LOAD 'input' USING $SEQFILE_LOADER (
+  '-c $TEXT_CONVERTER', '-c $LONG_CONVERTER'
+) AS (key: chararray, value: long);
+```
+
+To store `{key: chararray, value: long}` data as `SequenceFile<Text, LongWritable>`, the following may be used:
+
+```
+%declare SEQFILE_STORAGE 'com.twitter.elephantbird.pig.store.SequenceFileStorage';
+
+STORE pairs INTO 'output' USING $SEQFILE_STORAGE (
+  '-c $TEXT_CONVERTER', '-c $LONG_CONVERTER'
+);
+```
+
+For details, please see Javadocs in the following classes:
+* [SequenceFileLoader](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/load/SequenceFileLoader.java)
+* [SequenceFileStorage](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/store/SequenceFileStorage.java)
+* [WritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/WritableConverter.java)
+* [GenericWritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/GenericWritableConverter.java)
+* [AbstractWritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/AbstractWritableConverter.java)
+
+## How To Contribute
+
+Bug fixes, features, and documentation improvements are welcome! Please fork the project and send us a pull request on github.
+
+Each new release since 2.1.3 has a *tag*. The latest version on master is what we are actively running on Twitter's hadoop clusters daily, over hundreds of terabytes of data.
+
+## Contributors
+
+Major contributors are listed below. Lots of others have helped too, thanks to all of them!
+See git logs for credits.
+
+* Kevin Weil ([@kevinweil](https://twitter.com/kevinweil))
+* Dmitriy Ryaboy ([@squarecog](https://twitter.com/squarecog))
+* Raghu Angadi ([@raghuangadi](https://twitter.com/raghuangadi))
+* Andy Schlaikjer ([@sagemintblue](https://twitter.com/sagemintblue))
+* Travis Crawford ([@tc](https://twitter.com/tc))
+* Johan Oskarsson ([@skr](https://twitter.com/skr))

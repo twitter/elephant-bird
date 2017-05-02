@@ -1,0 +1,39 @@
+language: java
+
+before_install:
+# An attempt to fix the buffer overflow in the pig tests
+# /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/libnet.so(Java_java_net_Inet4AddressImpl_getLocalHostName+0x190)[
+# https://github.com/travis-ci/travis-ci/issues/1484
+  - echo "127.0.0.1 " `hostname` | sudo tee /etc/hosts
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq protobuf-compiler
+  - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev
+  - git clone https://git-wip-us.apache.org/repos/asf/thrift.git
+  - cd thrift
+  - git checkout $THRIFT_TAG
+  - ./bootstrap.sh
+  - ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-erlang
+  - sudo make install
+  - cd ..
+  - sudo apt-get -qq install lzop liblzo2-dev # libzo2-dev for compiling hadoop-lzo
+  - git clone git://github.com/twitter/hadoop-lzo.git # for native libgplcompression
+  - cd hadoop-lzo
+  - git checkout master
+  - mvn compile
+  - mv target/native/Linux-* ../hadoop-lzo-native
+  - cd ..
+
+install: true
+
+matrix:
+  include:
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.7.0 THRIFT_PROFILE=-Pthrift7
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.7.0 THRIFT_PROFILE=-Pthrift7 HADOOP_PROFILE=-Phadoop2
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.9.1 THRIFT_PROFILE=-Pthrift9
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.9.1 THRIFT_PROFILE=-Pthrift9 HADOOP_PROFILE=-Phadoop2
+
+script: "mvn test -Dtest.library.path=$PWD/hadoop-lzo-native/lib -Drequire.lzo.tests=true $HADOOP_PROFILE $THRIFT_PROFILE"
