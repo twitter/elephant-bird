@@ -122,7 +122,7 @@ public class ProtobufDeserializerTest {
     assertEquals(protobufOI.getTypeName(),
         "struct<person:array<"
             + "struct<name:string,id:int,email:string,"
-            + "phone:array<struct<number:string,type:string>>>>,byteData:binary>");
+            + "phone:array<struct<number:string,type:string>>>>,bytedata:binary>");
   }
 
   @Test

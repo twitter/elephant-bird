@@ -34,7 +34,7 @@ public final class ProtobufStructObjectInspector extends SettableStructObjectIns
 
     @Override
     public String getFieldName() {
-      return fieldDescriptor.getName();
+      return fieldDescriptor.getName().toLowerCase();
     }
 
     @Override
