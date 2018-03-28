@@ -135,7 +135,7 @@ function installNativeThrift {
     fi
 
     if [ ! -d $THRIFT9_PATH ]; then
-      git checkout 0.9.1
+      git checkout 0.10.0
       ./bootstrap.sh
       ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --prefix=$THRIFT9_PATH JAVA_PREFIX=$THRIFT9_PATH/lib/
       make install
@@ -206,8 +206,8 @@ case "$COMMAND" in
     installHadoopLzo
     installProtobuf
 
-    mvn clean test $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE
-    mvn clean test $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE
+    mvn clean test $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE -X
+    mvn clean test $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE -X
     ;;
 "install")
     echo "Will install current version"

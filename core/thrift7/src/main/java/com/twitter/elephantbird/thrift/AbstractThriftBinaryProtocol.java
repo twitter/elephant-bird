@@ -19,6 +19,11 @@ abstract class AbstractThriftBinaryProtocol extends TBinaryProtocol {
     super(trans, strictRead, strictWrite);
   }
 
+  @SuppressWarnings("unused")
+  public AbstractThriftBinaryProtocol(TTransport trans, long stringLengthLimit, long containerLengthLimit) {
+    super(trans);
+  }
+
   protected void resetAndInitialize(TBinaryProtocol protocol, int newLength) {
     protocol.reset();
     protocol.setReadLength(newLength);

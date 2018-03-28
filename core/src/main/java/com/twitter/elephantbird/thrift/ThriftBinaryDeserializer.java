@@ -26,10 +26,6 @@ import org.apache.thrift.transport.TMemoryInputTransport;
  */
 public class ThriftBinaryDeserializer extends AbstractThriftBinaryDeserializer {
 
-  // use protocol and transport directly instead of using ones in TDeserializer
-  private final TMemoryInputTransport trans = new TMemoryInputTransport();
-  private final TBinaryProtocol protocol = new ThriftBinaryProtocol(trans);
-
   public ThriftBinaryDeserializer() {
     super(new ThriftBinaryProtocol.Factory());
   }
@@ -43,6 +39,11 @@ public class ThriftBinaryDeserializer extends AbstractThriftBinaryDeserializer {
    * Same as {@link #deserialize(TBase, byte[])}, but much more buffer copy friendly.
    */
   public void deserialize(TBase base, byte[] bytes, int offset, int len) throws TException {
+
+    // use protocol and transport directly instead of using ones in TDeserializer
+    TMemoryInputTransport trans = new TMemoryInputTransport();
+    TBinaryProtocol protocol = new ThriftBinaryProtocol(trans, bytes.length, bytes.length);
+
     resetAndInitialize(protocol, len);
     trans.reset(bytes, offset, len);
     base.read(protocol);
