@@ -49,7 +49,7 @@ public class ThriftBinaryDeserializer extends AbstractThriftBinaryDeserializer {
 
     // If incoming payload is larger than threshold then double the threshold and
     // re-initialize object. This generally should not happen.
-    if (bytes.length > lengthLimit) {
+    if (len > lengthLimit) {
       lengthLimit *= 2;
       protocol = new ThriftBinaryProtocol(trans, lengthLimit, lengthLimit);
     }
