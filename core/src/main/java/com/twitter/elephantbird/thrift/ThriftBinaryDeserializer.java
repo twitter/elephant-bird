@@ -29,6 +29,13 @@ public class ThriftBinaryDeserializer extends AbstractThriftBinaryDeserializer {
   public ThriftBinaryDeserializer() {
     super(new ThriftBinaryProtocol.Factory());
   }
+  // set the default limit of 100M to check against corruption. In reality no single record
+  // or container should hit this limit.
+  private long lengthLimit = 100*1024*1024;
+
+  // use protocol and transport directly instead of using ones in TDeserializer
+  private final TMemoryInputTransport trans = new TMemoryInputTransport();
+  private TBinaryProtocol protocol = new ThriftBinaryProtocol(trans, lengthLimit, lengthLimit);
 
   @Override
   public void deserialize(TBase base, byte[] bytes) throws TException {
@@ -40,9 +47,12 @@ public class ThriftBinaryDeserializer extends AbstractThriftBinaryDeserializer {
    */
   public void deserialize(TBase base, byte[] bytes, int offset, int len) throws TException {
 
-    // use protocol and transport directly instead of using ones in TDeserializer
-    TMemoryInputTransport trans = new TMemoryInputTransport();
-    TBinaryProtocol protocol = new ThriftBinaryProtocol(trans, bytes.length, bytes.length);
+    // If incoming payload is larger than threshold then double the threshold and
+    // re-initialize object. This generally should not happen.
+    if (bytes.length > lengthLimit) {
+      lengthLimit *= 2;
+      protocol = new ThriftBinaryProtocol(trans, lengthLimit, lengthLimit);
+    }
 
     resetAndInitialize(protocol, len);
     trans.reset(bytes, offset, len);
