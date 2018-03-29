@@ -30,14 +30,6 @@ case $key in
     -c|--command)
       COMMAND="$2"
       ;;
-    -t|--temp-dir)
-      TEMP_DIR="$2"
-      WORK_DIR=$TEMP_DIR/elephant-bird_release
-      THRIFT7_PATH="$TEMP_DIR/thrift7"
-      THRIFT9_PATH="$TEMP_DIR/thrift9"
-      HADOOP_LZO_PATH="$TEMP_DIR/hadoop-lzo-native"
-      PROTOBUF_PATH="$TEMP_DIR/protobuf"
-      ;;
     -r|--release-version)
       RELEASE_VERSION="$2"
       ;;
@@ -118,49 +110,37 @@ function prepareFromRemote {
 
 
 # Install deps required to build and run native thrift
-function installNativeThrift7 {
+function installNativeThrift {
   local CURR_DIR=$PWD
 
-  if [ ! -d $THRIFT7_PATH ]; then
+  if [ ! -d $THRIFT7_PATH ] || [ ! -d $THRIFT9_PATH ]; then
     cd $TEMP_DIR
     sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev
     git clone https://git-wip-us.apache.org/repos/asf/thrift.git
     cd thrift
 
-    git checkout 0.7.0
-    ./bootstrap.sh
-    ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --prefix=$THRIFT7_PATH JAVA_PREFIX=$THRIFT7_PATH/lib/
+    if [ ! -d $THRIFT7_PATH ]; then
+        git checkout 0.7.0
+        ./bootstrap.sh
+        ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --without-c_glib --without-php --without-go --prefix=$THRIFT7_PATH JAVA_PREFIX=$THRIFT7_PATH/lib/
 
-    # See https://issues.apache.org/jira/browse/THRIFT-1614 a solution would be to use two different versions of automake
-    # but this would be more complex. The other option is to change the include in thriftl.cc but I don't like that much either.
-    set +e
-    make install > /dev/null 2>&1
-    set -e
-    mv compiler/cpp/thrifty.hh compiler/cpp/thrifty.h
+        # See https://issues.apache.org/jira/browse/THRIFT-1614 a solution would be to use two different versions of automake
+        # but this would be more complex. The other option is to change the include in thriftl.cc but I don't like that much either.
+        set +e
+        make install > /dev/null 2>&1
+        set -e
+        mv compiler/cpp/thrifty.hh compiler/cpp/thrifty.h
 
-    make install
-    make clean
+        make install
+        make clean
+    fi
 
-    cd ..
-    rm -Rf thrift
-  fi
-
-  cd $CURR_DIR
-}
-
-function installNativeThrift9 {
-  local CURR_DIR=$PWD
-
-  if [ ! -d $THRIFT9_PATH ]; then
-    cd $TEMP_DIR
-    sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev
-    git clone https://git-wip-us.apache.org/repos/asf/thrift.git
-    cd thrift
-
-    git checkout 0.10.0
-    ./bootstrap.sh
-    ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --prefix=$THRIFT9_PATH JAVA_PREFIX=$THRIFT9_PATH/lib/
-    make install
+    if [ ! -d $THRIFT9_PATH ]; then
+        git checkout 0.10.0
+        ./bootstrap.sh
+        ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --without-c_glib --without-php --without-go --without-qt4 --without-qt5 --without-nodejs --prefix=$THRIFT9_PATH JAVA_PREFIX=$THRIFT9_PATH/lib/
+        make install
+    fi
 
     cd ..
     rm -Rf thrift
@@ -217,23 +197,25 @@ __MVN_THRIFT7="-Pthrift7 -Dthrift.executable=$THRIFT7_PATH/bin/thrift"
 __MVN_THRIFT9="-Pthrift9 -Dthrift.executable=$THRIFT9_PATH/bin/thrift"
 __MVN_HADOOP_LZO="-Dtest.library.path=$HADOOP_LZO_PATH/lib -Drequire.lzo.tests=true"
 __MVN_PROTOC_EXECUTABLE="-Dprotoc.executable=$PROTOBUF_PATH/bin/protoc"
+__MVN_HADOOP_PROFILE="-Phadoop2"
 
 case "$COMMAND" in
 "travis")
-    if [ $THRIFT_TAG == "0.7.0" ]; then
-        installNativeThrift7
-    else
-        installNativeThrift9
-    fi
+    installNativeThrift
     installHadoopLzo
     installProtobuf
+
+    mvn clean test $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE -X
+    mvn clean test $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE $__MVN_HADOOP_PROFILE -X
+
+    mvn clean test $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE -X
+    mvn clean test $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE $__MVN_HADOOP_PROFILE -X
     ;;
 "test")
     prepareFromLocal
     git checkout $BASE_BRANCH
 
-    installNativeThrift7
-    installNativeThrift9
+    installNativeThrift
     installHadoopLzo
     installProtobuf
 
@@ -245,8 +227,7 @@ case "$COMMAND" in
     prepareFromLocal
     git checkout $BASE_BRANCH
 
-    installNativeThrift7
-    installNativeThrift9
+    installNativeThrift
     installHadoopLzo
     installProtobuf
 
@@ -258,8 +239,7 @@ case "$COMMAND" in
     prepareFromLocal
     git checkout $BASE_BRANCH
 
-    installNativeThrift7
-    installNativeThrift9
+    installNativeThrift
     installHadoopLzo
     installProtobuf
 
@@ -282,8 +262,7 @@ case "$COMMAND" in
     # We want to make the release from the initial branch, here we are in the working copy, not the original directory
     git checkout $BASE_BRANCH
 
-    installNativeThrift7
-    installNativeThrift9
+    installNativeThrift
     installHadoopLzo
     installProtobuf
 
