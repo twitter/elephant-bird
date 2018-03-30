@@ -8,6 +8,15 @@ before_install:
   - sudo apt-get update -qq
 
 install: true
-jdk: openjdk7
+matrix:
+  include:
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.7.0
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.7.0 HADOOP_PROFILE=-Phadoop2
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.10.0
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.10.0 HADOOP_PROFILE=-Phadoop2
 
 script: "./release.sh -c travis"
