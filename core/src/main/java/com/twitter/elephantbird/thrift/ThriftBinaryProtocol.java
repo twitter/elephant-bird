@@ -26,6 +26,10 @@ public class ThriftBinaryProtocol extends AbstractThriftBinaryProtocol {
     super(trans);
   }
 
+  ThriftBinaryProtocol(TTransport trans, long stringLengthLimit, long containerLengthLimit) {
+    super(trans, stringLengthLimit, containerLengthLimit);
+  }
+
   /**
    * Ensures that an element type in a for container (List, Set, Map) is
    * a valid container.

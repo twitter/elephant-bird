@@ -15,6 +15,10 @@ abstract class AbstractThriftBinaryProtocol extends TBinaryProtocol {
     super(trans);
   }
 
+  public AbstractThriftBinaryProtocol(TTransport trans, long stringLengthLimit, long containerLengthLimit) {
+    super(trans, stringLengthLimit, containerLengthLimit);
+  }
+
   /**
    * Check if the container size is valid.
    */
