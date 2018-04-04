@@ -17,6 +17,7 @@ import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TType;
 
+import com.google.common.base.CaseFormat;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -135,7 +136,7 @@ public class ThriftUtils {
     String suffix = // uppercase first letter
         fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
 
-    // look for getFieldName() or isFieldName()
+    // look for getField_name() or isField_name()
 
     for(String prefix : new String[]{"get", "is"}) {
       try {
@@ -145,7 +146,17 @@ public class ThriftUtils {
       }
     }
 
-    // look for bean style accessors get_fieldName and is_fieldName
+    // look for getFieldName or isFieldName
+    String camelSuffix = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, fieldName);
+    for(String prefix : new String[]{"get", "is"}) {
+      try {
+        Method method = containingClass.getDeclaredMethod(prefix + camelSuffix);
+        return method.getGenericReturnType();
+      } catch (NoSuchMethodException e) {
+      }
+    }
+
+    // look for bean style accessors get_field_name and is_field_name
 
     for(String prefix : new String[]{"get_", "is_"}) {
       try {
