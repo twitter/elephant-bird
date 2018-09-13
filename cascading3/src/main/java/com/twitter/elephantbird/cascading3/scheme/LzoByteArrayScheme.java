@@ -45,12 +45,12 @@ public class LzoByteArrayScheme extends LzoBinaryScheme<byte[], RawBytesWritable
       Tap<Configuration, RecordReader, OutputCollector> tap,
       Configuration conf) {
     MultiInputFormat.setClassConf(byte[].class, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MultiInputFormat.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
   }
 
   @Override public void sinkConfInit(FlowProcess<? extends Configuration> fp,
       Tap<Configuration, RecordReader, OutputCollector> tap,
       Configuration conf) {
-    conf.setClass("mapreduce.outputformat.class", LzoBinaryBlockOutputFormat.class, OutputFormat.class);
+    DeprecatedOutputFormatWrapper.setOutputFormat(LzoBinaryBlockOutputFormat.class, conf);
   }
 }

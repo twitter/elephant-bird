@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.twitter.elephantbird</groupId>
     <artifactId>elephant-bird</artifactId>
-    <version>4.14-SNAPSHOT</version>
+    <version>4.17-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
   <artifactId>elephant-bird-pig</artifactId>
@@ -55,8 +55,8 @@
     <plugins>
       <!-- thrift -->
       <plugin>
-        <groupId>org.apache.thrift.tools</groupId>
-        <artifactId>maven-thrift-plugin</artifactId>
+        <groupId>org.apache.thrift</groupId>
+        <artifactId>thrift-maven-plugin</artifactId>
         <executions>
           <execution>
             <id>thrift-test-sources</id>

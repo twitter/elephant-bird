@@ -37,7 +37,7 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   @Override
   public void sinkConfInit(FlowProcess<? extends Configuration> hfp, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
     LzoThriftBlockOutputFormat.setClassConf(thriftClass, conf);
-    conf.setClass("mapreduce.outputformat.class", LzoThriftBlockOutputFormat.class, OutputFormat.class);
+    DeprecatedOutputFormatWrapper.setOutputFormat(LzoThriftBlockOutputFormat.class, conf);
   }
 
   protected ThriftWritable<M> prepareBinaryWritable() {
@@ -48,6 +48,6 @@ public class LzoThriftScheme<M extends TBase<?,?>> extends
   @Override
   public void sourceConfInit(FlowProcess<? extends Configuration> hfp, Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
     MultiInputFormat.setClassConf(thriftClass, conf);
-    DelegateCombineFileInputFormat.setDelegateInputFormatHadoop2(conf, MultiInputFormat.class);
+    DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MultiInputFormat.class);
   }
 }

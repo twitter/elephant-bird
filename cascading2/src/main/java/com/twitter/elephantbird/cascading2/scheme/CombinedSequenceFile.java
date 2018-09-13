@@ -39,7 +39,7 @@ public class CombinedSequenceFile extends SequenceFile {
   public CombinedSequenceFile(Fields fields) { super(fields); }
 
   // We can allow overriding the compression settings for just this scheme here
-  private void updateJobConfForLocalSettings(JobConf conf) {
+  private static void updateJobConfForLocalSettings(JobConf conf) {
     String localSetCompressionEnabled = conf.get(COMPRESS_ENABLE);
     if(localSetCompressionEnabled != null) {
       conf.set(MR_COMPRESS_ENABLE, localSetCompressionEnabled);
@@ -56,13 +56,7 @@ public class CombinedSequenceFile extends SequenceFile {
     }
   }
 
-  @Override
-  public void sourceConfInit(
-      FlowProcess<JobConf> flowProcess,
-      Tap<JobConf, RecordReader, OutputCollector> tap,
-      JobConf conf ) {
-    super.sourceConfInit(flowProcess, tap, conf);
-
+  public static void sourceConfInit(JobConf conf) {
     updateJobConfForLocalSettings(conf);
 
     // Since the EB combiner works over the mapreduce API while Cascading is on the mapred API,
@@ -71,6 +65,16 @@ public class CombinedSequenceFile extends SequenceFile {
     // again with DeprecatedInputFormatWrapper to make it compatible with Cascading.
     MapReduceInputFormatWrapper.setWrappedInputFormat(SequenceFileInputFormat.class, conf);
     DelegateCombineFileInputFormat.setDelegateInputFormat(conf, MapReduceInputFormatWrapper.class);
+  }
+
+  @Override
+  public void sourceConfInit(
+      FlowProcess<JobConf> flowProcess,
+      Tap<JobConf, RecordReader, OutputCollector> tap,
+      JobConf conf ) {
+    super.sourceConfInit(flowProcess, tap, conf);
+
+    sourceConfInit(conf);
   }
 
   @Override

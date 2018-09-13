@@ -8,7 +8,7 @@
   </parent>
   <groupId>com.twitter.elephantbird</groupId>
   <artifactId>elephant-bird</artifactId>
-  <version>4.14-SNAPSHOT</version>
+  <version>4.17-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Elephant Bird</name>
   <url>https://github.com/twitter/elephant-bird</url>
@@ -84,7 +84,7 @@
     <protobuf.version>2.4.1</protobuf.version>
     <protoc.executable>protoc</protoc.executable>
     <hadoop-lzo.version>0.4.19</hadoop-lzo.version>
-    <thrift.version>0.7.0</thrift.version>
+    <thrift.version>0.10.0</thrift.version>
     <thrift.executable>thrift</thrift.executable>
     <cascading2.version>2.5.2</cascading2.version>
     <cascading3.version>3.0.2</cascading3.version>
@@ -424,17 +424,17 @@
     </profile>
     <profile>
       <id>thrift7</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <properties>
         <thrift.version>0.7.0</thrift.version>
       </properties>
     </profile>
     <profile>
       <id>thrift9</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
-        <thrift.version>0.9.1</thrift.version>
+        <thrift.version>0.10.0</thrift.version>
       </properties>
     </profile>
   </profiles>
@@ -597,9 +597,9 @@
         </plugin>
         <!-- thrift -->
         <plugin>
-          <groupId>org.apache.thrift.tools</groupId>
-          <artifactId>maven-thrift-plugin</artifactId>
-          <version>0.1.10</version>
+          <groupId>org.apache.thrift</groupId>
+          <artifactId>thrift-maven-plugin</artifactId>
+          <version>0.10.0</version>
           <configuration>
             <thriftExecutable>${thrift.executable}</thriftExecutable>
           </configuration>
@@ -656,9 +656,9 @@
                 </pluginExecution>
                 <pluginExecution>
                   <pluginExecutionFilter>
-                    <groupId>org.apache.thrift.tools</groupId>
-                    <artifactId>maven-thrift-plugin</artifactId>
-                    <versionRange>[0.1.10,)</versionRange>
+                    <groupId>org.apache.thrift</groupId>
+                    <artifactId>thrift-maven-plugin</artifactId>
+                    <versionRange>[0.10.0,)</versionRange>
                     <goals>
                       <goal>compile</goal>
                       <goal>testCompile</goal>

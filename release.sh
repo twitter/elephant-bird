@@ -8,17 +8,18 @@ sudo apt-get -qq install xmlstarlet maven
 # Global default vars used in this script
 ######################################################################################
 BASE_DIR=$PWD
-WORK_DIR=/tmp/elephant-bird_release
+TEMP_DIR=$(mktemp -d)
+WORK_DIR=$TEMP_DIR/elephant-bird_release
 COMMAND="release"
 ACTUAL_VERSION=$(xmlstarlet sel -t -v "/_:project/_:version" pom.xml)
 RELEASE_VERSION=$(echo $ACTUAL_VERSION|sed 's/-SNAPSHOT//')
 BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 DIRTY_SCM=false
 GIT_REPO=git@github.com:twitter/elephant-bird.git
-THRIFT7_PATH="/tmp/thrift7"
-THRIFT9_PATH="/tmp/thrift9"
-HADOOP_LZO_PATH="/tmp/hadoop-lzo-native"
-PROTOBUF_PATH="/tmp/protobuf"
+THRIFT7_PATH="$TEMP_DIR/thrift7"
+THRIFT9_PATH="$TEMP_DIR/thrift9"
+HADOOP_LZO_PATH="$TEMP_DIR/hadoop-lzo-native"
+PROTOBUF_PATH="$TEMP_DIR/protobuf"
 
 ######################################################################################
 
@@ -42,7 +43,7 @@ case $key in
       echo "Unknown parameter $key"
       echo "Usage: ./release.sh [OPTION]
 -c,--comand commandName
-    possible values test|install|deploy|release
+    possible values travis|test|install|deploy|release
 -r,--release-version versionNumber
     will be used to deploy the artifacts and make the release branch
 -n,--next-version versionNumber
@@ -109,41 +110,45 @@ function prepareFromRemote {
 
 
 # Install deps required to build and run native thrift
-function installNativeThrift {
-  local CURR_DIR=$PWD
-
-  if [ ! -d $THRIFT7_PATH ] || [ ! -d $THRIFT9_PATH ]; then
-    cd /tmp
+function gitCloneThrift {
+    cd $TEMP_DIR
     sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev
     git clone https://git-wip-us.apache.org/repos/asf/thrift.git
     cd thrift
+}
 
-    if [ ! -d $THRIFT7_PATH ]; then
-      git checkout 0.7.0
-      ./bootstrap.sh
-      ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --prefix=$THRIFT7_PATH JAVA_PREFIX=$THRIFT7_PATH/lib/
+function installThrift7 {
+    git checkout 0.7.0
+    ./bootstrap.sh
+    ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --without-c_glib --without-php --without-go --prefix=$THRIFT7_PATH JAVA_PREFIX=$THRIFT7_PATH/lib/
 
-      # See https://issues.apache.org/jira/browse/THRIFT-1614 a solution would be to use two different versions of automake
-      # but this would be more complex. The other option is to change the include in thriftl.cc but I don't like that much either.
-      set +e
-      make install > /dev/null 2>&1
-      set -e
-      mv compiler/cpp/thrifty.hh compiler/cpp/thrifty.h
+    # See https://issues.apache.org/jira/browse/THRIFT-1614 a solution would be to use two different versions of automake
+    # but this would be more complex. The other option is to change the include in thriftl.cc but I don't like that much either.
+    set +e
+    make install > /dev/null 2>&1
+    set -e
+    mv compiler/cpp/thrifty.hh compiler/cpp/thrifty.h
 
-      make install
-      make clean
-    fi
+    make install
+    make clean
+}
 
-    if [ ! -d $THRIFT9_PATH ]; then
-      git checkout 0.9.1
-      ./bootstrap.sh
-      ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --prefix=$THRIFT9_PATH JAVA_PREFIX=$THRIFT9_PATH/lib/
-      make install
-    fi
+function installThrift9 {
+    git checkout 0.10.0
+    ./bootstrap.sh
+    ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --without-c_glib --without-php --without-go --without-qt4 --without-qt5 --without-nodejs --prefix=$THRIFT9_PATH JAVA_PREFIX=$THRIFT9_PATH/lib/
+    make install
+}
 
-    cd ..
-    rm -Rf thrift
-  fi
+function installNativeThrift {
+  local CURR_DIR=$PWD
+
+  gitCloneThrift
+  installThrift7
+  installThrift9
+
+  cd ..
+  rm -Rf thrift
 
   cd $CURR_DIR
 }
@@ -152,7 +157,7 @@ function installProtobuf {
   local CURR_DIR=$PWD
 
   if [ ! -d $PROTOBUF_PATH ]; then
-    cd /tmp
+    cd $TEMP_DIR
     wget https://github.com/google/protobuf/releases/download/v2.4.1/protobuf-2.4.1.tar.gz -O - | tar -xz
     cd protobuf-2.4.1
     ./configure --prefix=$PROTOBUF_PATH
@@ -175,7 +180,7 @@ function installHadoopLzo {
       read JAVA_HOME
     fi
 
-    cd /tmp
+    cd $TEMP_DIR
     sudo apt-get -qq install lzop liblzo2-dev
     git clone git://github.com/twitter/hadoop-lzo.git
     cd hadoop-lzo
@@ -198,6 +203,34 @@ __MVN_HADOOP_LZO="-Dtest.library.path=$HADOOP_LZO_PATH/lib -Drequire.lzo.tests=t
 __MVN_PROTOC_EXECUTABLE="-Dprotoc.executable=$PROTOBUF_PATH/bin/protoc"
 
 case "$COMMAND" in
+"travis")
+
+    CURR_DIR_THRIFT=$PWD
+    gitCloneThrift
+    if [ $THRIFT_TAG == "0.7.0" ]; then
+        installThrift7
+    else
+        installThrift9
+    fi
+    cd $CURR_DIR_THRIFT
+
+    installHadoopLzo
+    installProtobuf
+
+    if [ $THRIFT_TAG == "0.7.0" ]; then
+        if [ -z $HADOOP_PROFILE ]; then
+            mvn clean test $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE $HADOOP_PROFILE
+        else
+            mvn clean test $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE
+        fi
+    else
+        if [ -z $HADOOP_PROFILE ]; then
+            mvn clean test $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE $HADOOP_PROFILE
+        else
+            mvn clean test $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE
+        fi
+    fi
+    ;;
 "test")
     prepareFromLocal
     git checkout $BASE_BRANCH
@@ -206,8 +239,8 @@ case "$COMMAND" in
     installHadoopLzo
     installProtobuf
 
-    mvn clean test $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE
-    mvn clean test $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE
+    mvn clean test $__MVN_THRIFT7 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE -X
+    mvn clean test $__MVN_THRIFT9 $__MVN_HADOOP_LZO $__MVN_PROTOC_EXECUTABLE -X
     ;;
 "install")
     echo "Will install current version"
@@ -242,7 +275,7 @@ case "$COMMAND" in
     echo "Will run full release including: release branch, deploy artifacts and update current branch to next version"
 
     checkNoUncommitedChanges
-  
+
     # Ensure our copy is fresh
     git pull
 
@@ -284,4 +317,4 @@ case "$COMMAND" in
 esac
 
 # Cleaning after us (in case of an error we want the src to remain so we can debug things)
-rm -Rf /tmp/elephant-bird_release
+rm -Rf $TEMP_DIR
