@@ -13,7 +13,7 @@ import static junit.framework.Assert.assertEquals;
  * Tests for Strings.
  *
  * Largely taken from the defunct rogueweb project at
- * <link>http://code.google.com/p/rogueweb/</link>
+ * <link>https://code.google.com/p/rogueweb/</link>
  * Original author Anthony Eden.
  */
 public class TestStrings {

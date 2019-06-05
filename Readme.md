@@ -1,19 +1,19 @@
-# Elephant Bird [![Build Status](https://secure.travis-ci.org/twitter/elephant-bird.png)](http://travis-ci.org/twitter/elephant-bird)
+# Elephant Bird [![Build Status](https://secure.travis-ci.org/twitter/elephant-bird.png)](https://travis-ci.org/twitter/elephant-bird)
 
 ## About
 
-Elephant Bird is Twitter's open source library of [LZO](https://github.com/twitter/hadoop-lzo), [Thrift](http://thrift.apache.org/), and/or [Protocol Buffer](http://code.google.com/p/protobuf)-related [Hadoop](http://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](http://pig.apache.org/) LoadFuncs, [Hive](http://hadoop.apache.org/hive) SerDe, [HBase](http://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day.
+Elephant Bird is Twitter's open source library of [LZO](https://github.com/twitter/hadoop-lzo), [Thrift](https://thrift.apache.org/), and/or [Protocol Buffer](https://code.google.com/p/protobuf)-related [Hadoop](https://hadoop.apache.org) InputFormats, OutputFormats, Writables, [Pig](https://pig.apache.org/) LoadFuncs, [Hive](https://hadoop.apache.org/hive) SerDe, [HBase](https://hadoop.apache.org/hbase) miscellanea, etc. The majority of these are in production at Twitter running over data every day.
 
 Join the conversation about Elephant-Bird on the [developer mailing list](https://groups.google.com/forum/?fromgroups#!forum/elephantbird-dev).
 
 ## License
 
-[Apache License, Version 2.0](http://apache.org/licenses/LICENSE-2.0).
+[Apache License, Version 2.0](https://apache.org/licenses/LICENSE-2.0).
 
 ## Quickstart
 
-1. Make sure you have [Protocol Buffers](http://code.google.com/apis/protocolbuffers/) installed. Please see **Version compatibility** section below.
-1. Make sure you have [Apache Thrift](http://thrift.apache.org) installed. Please see **Version compatibility** section below.
+1. Make sure you have [Protocol Buffers](https://code.google.com/apis/protocolbuffers/) installed. Please see **Version compatibility** section below.
+1. Make sure you have [Apache Thrift](https://thrift.apache.org) installed. Please see **Version compatibility** section below.
 1. Get the code: `git clone git://github.com/twitter/elephant-bird.git`
 1. Build the jar: `mvn package`
 1. Explore what's available: `mvn javadoc:javadoc`
@@ -24,14 +24,14 @@ Note: For any of the LZO-based code, make sure that the native LZO libraries are
 PIG_OPTS=-Djava.library.path=/path/to/my/libgplcompression/dir
 ```
 
-to `pig-env.sh`. See the instructions for [Hadoop-LZO](http://www.github.com/kevinweil/hadoop-lzo) for more details.
+to `pig-env.sh`. See the instructions for [Hadoop-LZO](https://www.github.com/kevinweil/hadoop-lzo) for more details.
 
 There are a few simple examples that use the input formats. Note how the Protocol Buffer and Thrift
 classes are passed to input formats through configuration.
 
 ## Maven repository
 
-Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.sonatype.org/) [releases repository](https://oss.sonatype.org/content/repositories/releases/) and promoted from there to [Maven Central](http://search.maven.org/). From time to time we may also deploy snapshot releases to the Sonatype OSS [snapshots repository](https://oss.sonatype.org/content/repositories/snapshots/).
+Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.sonatype.org/) [releases repository](https://oss.sonatype.org/content/repositories/releases/) and promoted from there to [Maven Central](https://search.maven.org/). From time to time we may also deploy snapshot releases to the Sonatype OSS [snapshots repository](https://oss.sonatype.org/content/repositories/snapshots/).
 
 ## Version compatibility
 
@@ -46,7 +46,7 @@ Elephant Bird release artifacts are published to the [Sonatype OSS](https://oss.
 
 ### Runtime Dependencies
 
-Elephant-Bird defines majority of its depenendencies in maven [provided scope](http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Scope).
+Elephant-Bird defines majority of its depenendencies in maven [provided scope](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Scope).
 As a result these dependencies are not transitively Elephant-Bird modules. Please see [wiki page](https://github.com/kevinweil/elephant-bird/wiki/Build-and-Runtime-Dependencies) for more information.
 
 ## Contents
@@ -57,7 +57,7 @@ Elephant-Bird provides input and output formats for working with a variety of pl
 
 * JSON data
 * Line-based data (TextInputFormat but for LZO)
-* [W3C logs](http://www.w3.org/TR/WD-logfile.html)
+* [W3C logs](https://www.w3.org/TR/WD-logfile.html)
 
 Additionally, protocol buffers and thrift messages can be stored in a variety of file formats.
 
@@ -87,7 +87,7 @@ Loaders and storers are available for the input and output formats listed above.
 * JSON loader (including nested structures)
 * Regex-based loader
 * Includes converter interface for turning Tuples into Writables and vice versa
-* Provides implementations to convert generic Writables, Thrift, Protobufs, and other specialized classes, such as [Apache Mahout](http://mahout.apache.org/)'s [VectorWritable](http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/math/VectorWritable.java).
+* Provides implementations to convert generic Writables, Thrift, Protobufs, and other specialized classes, such as [Apache Mahout](https://mahout.apache.org/)'s [VectorWritable](https://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/math/VectorWritable.java).
 
 ### Hive Support
 

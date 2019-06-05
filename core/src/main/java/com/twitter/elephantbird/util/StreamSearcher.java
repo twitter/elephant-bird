@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 /**
  * An efficient stream searching class based on the Knuth-Morris-Pratt algorithm.
- * For more on the algorithm works see: http://www.inf.fh-flensburg.de/lang/algorithmen/pattern/kmpen.htm.
+ * For more on the algorithm works see: https://www.inf.fh-flensburg.de/lang/algorithmen/pattern/kmpen.htm.
  */
 public class StreamSearcher {
 
@@ -71,7 +71,7 @@ public class StreamSearcher {
    * Builds up a table of longest "borders" for each prefix of the pattern to find. This table is stored internally
    * and aids in implementation of the Knuth-Moore-Pratt string search.
    * <p>
-   * For more information, see: http://www.inf.fh-flensburg.de/lang/algorithmen/pattern/kmpen.htm.
+   * For more information, see: https://www.inf.fh-flensburg.de/lang/algorithmen/pattern/kmpen.htm.
    */
   protected void preProcess() {
     int i = 0;
