@@ -9,14 +9,14 @@ import java.lang.reflect.Type;
  * Represents a generic type {@code T}.
  *
  * Neil Gafter's "Super Type Token" implementation. Taken from
- * <a href="http://gafter.blogspot.com/2006/12/super-type-tokens.html">here</a> and
- * <a href="http://gafter.blogspot.com/2007/05/limitation-of-super-type-tokens.html">here</a>.
+ * <a href="https://gafter.blogspot.com/2006/12/super-type-tokens.html">here</a> and
+ * <a href="https://gafter.blogspot.com/2007/05/limitation-of-super-type-tokens.html">here</a>.
  *
  * The class is abstract so that the user is required to create a subclass, typically an anonymous one via
  * TypeRef<MyClass> typeRef = new TypeRef<MyClass>(){};
  * Note the {} at the end, which makes this an anonymous subclass.  Then calling getGenericSuperclass
  * in the constructor returns the class in this file, from which we can inspect the type parameter.
- * See <a href="http://gafter.blogspot.com/2004/09/puzzling-through-erasure-answer.html">here</a> for
+ * See <a href="https://gafter.blogspot.com/2004/09/puzzling-through-erasure-answer.html">here</a> for
  * more about type erasure in Java.
  */
 public abstract class TypeRef<T> {

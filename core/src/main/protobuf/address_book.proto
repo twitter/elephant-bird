@@ -1,7 +1,7 @@
 package com.twitter.data.proto.tutorial;
 
 // The sample protocol buffer file that Google uses in their examples at
-// http://code.google.com/p/protobuf.
+// https://code.google.com/p/protobuf.
 // Used in this project for tests and examples.
 
 option java_outer_classname = "AddressBookProtos";
