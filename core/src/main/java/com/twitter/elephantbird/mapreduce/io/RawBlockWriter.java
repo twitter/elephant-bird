@@ -11,4 +11,9 @@ public class RawBlockWriter extends BinaryBlockWriter<byte[]> {
     super(out, byte[].class,
         new IdentityBinaryConverter(), DEFAULT_NUM_RECORDS_PER_BLOCK);
   }
+
+  public RawBlockWriter(OutputStream out, int numRecordsPerBlock) {
+    super(out, byte[].class,
+        new IdentityBinaryConverter(), numRecordsPerBlock);
+  }
 }

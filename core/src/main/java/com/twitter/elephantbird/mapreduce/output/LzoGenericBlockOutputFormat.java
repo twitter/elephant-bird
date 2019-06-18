@@ -50,8 +50,9 @@ public class LzoGenericBlockOutputFormat<M> extends LzoOutputFormat<M, GenericWr
     }
 
     BinaryConverter<?> converter = converterProvider.getConverter(conf);
+    int numRecordsPerBlock = BinaryBlockWriter.getNumRecordsPerBlock(conf);
 
     return new LzoBinaryBlockRecordWriter<M, GenericWritable<M>>(new BinaryBlockWriter(
-        getOutputStream(job), valueClass, converter));
+        getOutputStream(job), valueClass, converter, numRecordsPerBlock));
   }
 }
