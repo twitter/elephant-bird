@@ -3,6 +3,9 @@ package com.twitter.elephantbird.mapred.input;
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat;
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable;
 import com.twitter.elephantbird.util.TypeRef;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.plan.PartitionDesc;
@@ -22,6 +25,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
+
+import static com.hadoop.compression.lzo.LzoIndex.LZO_INDEX_SUFFIX;
+import static com.hadoop.compression.lzo.LzoInputFormatCommon.isLzoFile;
 
 /**
  * Hive-specific wrapper around {@link MultiInputFormat}. This is necessary to set the
@@ -87,5 +93,19 @@ public class HiveMultiInputFormat
       Reporter reporter) throws IOException {
     initialize((FileSplit) split, job);
     return super.getRecordReader(split, job, reporter);
+  }
+
+  @Override
+  public boolean isSplitable(FileSystem fs, Path filename) {
+    if (isLzoFile(filename.toString())) {
+      Path indexFile = filename.suffix(LZO_INDEX_SUFFIX);
+      try {
+        return fs.exists(indexFile);
+      }
+      catch (IOException e) {
+        return false;
+      }
+    }
+    return super.isSplitable(fs, filename);
   }
 }
