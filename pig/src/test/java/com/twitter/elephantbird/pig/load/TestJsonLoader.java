@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.pig.load;
 
 import com.twitter.elephantbird.pig.util.PigTestUtil;
+
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.json.simple.parser.JSONParser;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -146,6 +148,33 @@ public class TestJsonLoader {
     }
     
     Assert.assertEquals(1, count); // expect one tuple
+  }
+  @Test
+  public void testInValidRecord() throws IOException {
+    File tempFile = File.createTempFile("json", null);
+	tempFile.deleteOnExit();
+
+	FileWriter writer = new FileWriter(tempFile);
+	String json = "{\"a\": 3,\"b\": 1}"
+	    		      + "{\"a\"= 3,\"b\": 1}";
+	writer.write(json);
+	writer.close();
+
+	    // extract hashtags from it
+	PigServer pigServer = PigTestUtil.makePigServer();
+	logAndRegisterQuery(pigServer, "data = load '" + tempFile.getAbsolutePath()
+	        + "' using com.twitter.elephantbird.pig.load.JsonLoader('-invalidRecord') as (json: map[]);");
+	logAndRegisterQuery(pigServer, "split data into good_data IF json#'_error_string' is null,bad_data IF json#'_error_string' !='';");
+	Iterator<Tuple> tuples = pigServer.openIterator("bad_data");
+
+	int count = 0;
+	while(tuples.hasNext()) {
+      Tuple t = tuples.next();
+	  Assert.assertEquals(HashMap.class, t.get(0).getClass());
+	  count++;
+    }
+	    
+	Assert.assertEquals(1, count); // expect one tuple
   }
 
   private void logAndRegisterQuery(PigServer pigServer, String query) throws IOException {
