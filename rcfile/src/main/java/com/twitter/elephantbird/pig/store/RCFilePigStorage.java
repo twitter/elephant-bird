@@ -207,8 +207,8 @@ public class RCFilePigStorage extends PigStorage {
       StorageUtil.putField(byteStream, t.get(i));
       colValRefs[i].set(byteStream.getData(),
                         startPos,
-                        byteStream.getCount() - startPos);
-       startPos = byteStream.getCount();
+                        byteStream.getLength() - startPos);
+       startPos = byteStream.getLength();
     }
 
     try {
