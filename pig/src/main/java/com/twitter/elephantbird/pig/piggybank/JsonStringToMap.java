@@ -1,6 +1,7 @@
 package com.twitter.elephantbird.pig.piggybank;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Map;
 
 import org.apache.pig.EvalFunc;
@@ -9,12 +10,14 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.util.Utils;
 import org.apache.pig.parser.ParserException;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.JsonTokenId;
 import com.google.common.collect.Maps;
 import com.twitter.elephantbird.pig.util.PigCounterHelper;
 
@@ -24,7 +27,7 @@ import com.twitter.elephantbird.pig.util.PigCounterHelper;
  */
 public class JsonStringToMap extends EvalFunc<Map<String, String>> {
   private static final Logger LOG = LoggerFactory.getLogger(JsonStringToMap.class);
-  private final JSONParser jsonParser = new JSONParser();
+  private static final JsonFactory jsonFactory = new JsonFactory();
   private final PigCounterHelper counterHelper = new PigCounterHelper();
 
   @Override
@@ -57,22 +60,73 @@ public class JsonStringToMap extends EvalFunc<Map<String, String>> {
     }
   }
 
-  protected Map<String, String> parseStringToMap(String line) {
-    try {
-      Map<String, String> values = Maps.newHashMap();
-      JSONObject jsonObj = (JSONObject) jsonParser.parse(line);
-      for (Object key : jsonObj.keySet()) {
-        Object value = jsonObj.get(key);
-        values.put(key.toString(), value != null ? value.toString() : null);
-      }
-      return values;
-    } catch (ParseException e) {
-      LOG.warn("Could not json-decode string: " + line, e);
-      return null;
-    } catch (NumberFormatException e) {
-      LOG.warn("Very big number exceeds the scale of long: " + line, e);
-      return null;
+  protected Map<String, String> parseStringToMap(String line) throws IOException {
+    JsonParser jsonParser = jsonFactory.createParser(line);
+    jsonParser.nextToken();
+    return walkJsonObject(jsonParser);
+  }
+  private Map<String, String> walkJsonObject(JsonParser jsonParser) throws IOException {
+    Map<String, String> map = Maps.newHashMap();
+    for (String key = jsonParser.nextFieldName(); key != null; key = jsonParser.nextFieldName()) {
+      String value = jsonToString(jsonParser);
+      map.put(key, value);
     }
+    return map;
   }
 
+  public String jsonToString(JsonParser jsonParser) throws IOException {
+    StringWriter sw = new StringWriter();
+    JsonGenerator jsonGenerator = jsonFactory.createGenerator(sw);
+    int level = 0;
+
+    do {
+      JsonToken token = jsonParser.nextToken();
+      switch (token.id()) {
+        case JsonTokenId.ID_START_OBJECT:
+          level++;
+          jsonGenerator.writeStartObject();
+          break;
+        case JsonTokenId.ID_END_OBJECT:
+          level--;
+          jsonGenerator.writeEndObject();
+          break;
+        case JsonTokenId.ID_START_ARRAY:
+          level++;
+          jsonGenerator.writeStartArray();
+          break;
+        case JsonTokenId.ID_END_ARRAY:
+          level--;
+          jsonGenerator.writeEndArray();
+          break;
+        case JsonTokenId.ID_FIELD_NAME:
+          jsonGenerator.writeFieldName(jsonParser.getText());
+          break;
+        case JsonTokenId.ID_STRING:
+          jsonGenerator.writeString(jsonParser.getText());
+          break;
+        case JsonTokenId.ID_NUMBER_INT:
+          jsonGenerator.writeNumber(jsonParser.getText());
+          break;
+        case JsonTokenId.ID_NUMBER_FLOAT:
+          jsonGenerator.writeNumber(jsonParser.getText());
+          break;
+        case JsonTokenId.ID_TRUE:
+          jsonGenerator.writeBoolean(true);
+          break;
+        case JsonTokenId.ID_FALSE:
+          jsonGenerator.writeBoolean(false);
+          break;
+        case JsonTokenId.ID_NULL:
+          jsonGenerator.writeNull();
+          break;
+        case JsonTokenId.ID_EMBEDDED_OBJECT:
+          jsonGenerator.writeObject(jsonParser.getEmbeddedObject());
+          break;
+        default:
+          throw new IOException("Cno");
+      }
+    } while (level > 0);
+    jsonGenerator.close();
+    return sw.toString();
+  }
 }

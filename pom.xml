@@ -318,6 +318,11 @@
         <version>1.8.8</version>
         <scope>provided</scope>
       </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>2.7.8</version>
+      </dependency>
       <!-- hive -->
       <dependency>
         <groupId>org.apache.hive</groupId>

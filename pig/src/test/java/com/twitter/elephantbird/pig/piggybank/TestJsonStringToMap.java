@@ -37,7 +37,7 @@ public class TestJsonStringToMap {
     Tuple input = tupleFactory_.newTuple(Arrays.asList("{\"name\": \"value\", \"number\": 2}"));
     Map<String, String> result = udf_.exec(input);
     assertTrue("It should return a Map", result instanceof Map<?, ?>);
-    assertEquals("value", result.get("name"));
+    assertEquals("\"value\"", result.get("name"));
     assertEquals("It is expected to return numbers as strings", "2", result.get("number"));
   }
 
@@ -76,7 +76,7 @@ public class TestJsonStringToMap {
       assertEquals(2, t.size());
       Map<?, ?> actual = (Map<?, ?>) t.get(1);
       assertNotNull(actual);
-      Map<String, String> expected = ImmutableMap.<String, String> of("name", "bob", "number", "2");
+      Map<String, String> expected = ImmutableMap.<String, String> of("name", "\"bob\"", "number", "2");
       assertEquals(expected.size(), actual.size());
       for (Map.Entry<String, String> e : expected.entrySet()) {
         assertEquals(e.getValue(), actual.get(e.getKey()));
