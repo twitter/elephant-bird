@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.twitter.elephantbird.util.HadoopCompat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -72,6 +73,29 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
 
   private final Map<Path,LzoSplitStatus> splitStatusMap
       = new HashMap<Path,LzoSplitStatus>();
+
+  private static final String USE_LZO_INDEX_FILES_KEY = "elephantbird.use.lzo.index.files";
+
+  private static Boolean useLzoIndexFiles(JobContext context) {
+    return context.getConfiguration().getBoolean(USE_LZO_INDEX_FILES_KEY, true);
+  }
+
+  /**
+   * Enable or disable using index files for LZO inputs.  Using index files allows multiple splits
+   * to be created for a single LZO file, at the cost of having to read a file for each LZO file
+   * in the input path.
+   *
+   * Consider disabling this when the input path contains more files than there will be mappers to
+   * significantly decrease the time it takes to compute splits.
+   *
+   * @param config
+   *          The job configuration
+   * @param useLzoIndexFiles
+   *          True to enable using LZO index files, False to disable.
+   */
+  public static void setUseLzoIndexFiles(Configuration config, Boolean useLzoIndexFiles) {
+    config.setBoolean(USE_LZO_INDEX_FILES_KEY, useLzoIndexFiles);
+  }
 
   @Override
   protected List<FileStatus> listStatus(JobContext job) throws IOException {
@@ -141,6 +165,10 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
      * this.getSplit(). Right now, FileInputFormat splits across the
      * blocks and this.getSplits() adjusts the positions.
      */
+
+    if (!useLzoIndexFiles(context))
+      return false;
+
     LzoSplitStatus lzoSplitStatus = splitStatusMap.get(filename);
     return lzoSplitStatus != null && lzoSplitStatus.lzoIndexFileStatus != null;
   }
@@ -148,6 +176,15 @@ public abstract class LzoInputFormat<K, V> extends FileInputFormat<K, V> {
   private List<InputSplit> getSplitsInternal(JobContext job)
       throws IOException {
     List<InputSplit> defaultSplits = super.getSplits(job);
+
+    /*
+     * If using LZO index files is disabled, just return the default splits.
+     * isSplittable always returns false if LZO indexes are disabled, so we can guarantee
+     * the splits are the entire file.
+     */
+    if (!useLzoIndexFiles(job)) {
+      return defaultSplits;
+    }
 
     // Find new starts and ends of the file splits that align with the lzo blocks.
     List<InputSplit> result = new ArrayList<InputSplit>();

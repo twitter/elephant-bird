@@ -126,10 +126,29 @@ public class TestLzoTextInputFormat {
     runTest(false, OUTPUT_SMALL, true);
   }
 
+  @Test
+  public void testIgnoreIndex() throws NoSuchAlgorithmException, IOException, InterruptedException {
+    runTest(true, OUTPUT_BIG, false, false);
+    runTest(true, OUTPUT_SMALL, false, false);
+  }
+
+  @Test
+  public void testCombineAndIgnoreIndex() throws NoSuchAlgorithmException, IOException,
+          InterruptedException {
+    runTest(true, OUTPUT_BIG, true, false);
+    runTest(true, OUTPUT_SMALL, true, false);
+  }
+
   private void runTest(boolean testWithIndex, int charsToOutput) throws IOException,
           NoSuchAlgorithmException, InterruptedException {
     runTest(testWithIndex, charsToOutput, false);
   }
+
+  private void runTest(boolean testWithIndex, int charsToOutput, boolean combineSplits)
+      throws IOException, NoSuchAlgorithmException, InterruptedException {
+    runTest(testWithIndex, charsToOutput, combineSplits, true);
+  }
+
 
   /**
    * Generate random data, compress it, index and md5 hash the data.
@@ -141,8 +160,8 @@ public class TestLzoTextInputFormat {
    * @throws NoSuchAlgorithmException
    * @throws InterruptedException
    */
-  private void runTest(boolean testWithIndex, int charsToOutput, boolean combineSplits) throws IOException,
-      NoSuchAlgorithmException, InterruptedException {
+  private void runTest(boolean testWithIndex, int charsToOutput, boolean combineSplits,
+      boolean useIndexes) throws IOException, NoSuchAlgorithmException, InterruptedException {
 
     Configuration conf = new Configuration();
     conf.setLong("fs.local.block.size", charsToOutput / 2);
@@ -182,10 +201,11 @@ public class TestLzoTextInputFormat {
     }
 
     TextInputFormat.setInputPaths(job, outputDir_);
+    LzoInputFormat.setUseLzoIndexFiles(job.getConfiguration(), useIndexes);
 
     List<InputSplit> is = inputFormat.getSplits(job);
     //verify we have the right number of lzo chunks
-    if (testWithIndex && OUTPUT_BIG == charsToOutput) {
+    if (testWithIndex && OUTPUT_BIG == charsToOutput && useIndexes) {
       assertEquals(3, is.size());
     } else {
       assertEquals(1, is.size());
