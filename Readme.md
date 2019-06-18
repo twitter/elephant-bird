@@ -70,7 +70,7 @@ Additionally, protocol buffers and thrift messages can be stored in a variety of
 
 Hadoop provides two API implementations: the the old-style `org.apache.hadoop.mapred` and new-style `org.apache.hadoop.mapreduce` packages. Elephant-Bird provides wrapper classes that allow unmodified usage of `mapreduce` input and output formats in contexts where the `mapred` interface is required.
 
-For more information, see [DeprecatedInputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/core/src/main/java/com/twitter/elephantbird/mapred/input/DeprecatedInputFormatWrapper.java) and [DeprecatedOutputFormatWrapper.java](https://github.com/kevinweil/elephant-bird/blob/master/core/src/main/java/com/twitter/elephantbird/mapred/output/DeprecatedOutputFormatWrapper.java)
+For more information, see [DeprecatedInputFormatWrapper.java](https://github.com/twitter/elephant-bird/blob/master/core/src/main/java/com/twitter/elephantbird/mapred/input/DeprecatedInputFormatWrapper.java) and [DeprecatedOutputFormatWrapper.java](https://github.com/twitter/elephant-bird/blob/master/core/src/main/java/com/twitter/elephantbird/mapred/output/DeprecatedOutputFormatWrapper.java)
 
 
 ### Hadoop 2.x Support
@@ -91,11 +91,11 @@ Loaders and storers are available for the input and output formats listed above.
 
 ### Hive Support
 
-Elephant-Bird provides Hive support for reading thrift and protocol buffers. For more information, see [How to use Elephant Bird with Hive](https://github.com/kevinweil/elephant-bird/wiki/How-to-use-Elephant-Bird-with-Hive).
+Elephant-Bird provides Hive support for reading thrift and protocol buffers. For more information, see [How to use Elephant Bird with Hive](https://github.com/twitter/elephant-bird/wiki/How-to-use-Elephant-Bird-with-Hive).
 
 ### Lucene Integration
 
-Elephant-Bird provides hadoop Input/Output Formats and pig Load/Store Funcs for creating + searching lucene indexes. See [Elephant Bird Lucene](https://github.com/kevinweil/elephant-bird/wiki/Elephant-Bird-Lucene)
+Elephant-Bird provides hadoop Input/Output Formats and pig Load/Store Funcs for creating + searching lucene indexes. See [Elephant Bird Lucene](https://github.com/twitter/elephant-bird/wiki/Elephant-Bird-Lucene)
 
 ### Utilities
 * Counters in Pig
@@ -123,11 +123,11 @@ the dynamic bits.
 ## Hadoop SequenceFiles and Pig
 
 Reading and writing Hadoop SequenceFiles with Pig is supported via classes
-[SequenceFileLoader](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/load/SequenceFileLoader.java)
+[SequenceFileLoader](https://github.com/twitter/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/load/SequenceFileLoader.java)
 and
-[SequenceFileStorage](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/store/SequenceFileStorage.java). These
+[SequenceFileStorage](https://github.com/twitter/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/store/SequenceFileStorage.java). These
 classes make use of a
-[WritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/WritableConverter.java)
+[WritableConverter](https://github.com/twitter/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/WritableConverter.java)
 interface, allowing pluggable conversion of key and value instances to and from
 Pig data types.
 
@@ -158,11 +158,11 @@ STORE pairs INTO 'output' USING $SEQFILE_STORAGE (
 ```
 
 For details, please see Javadocs in the following classes:
-* [SequenceFileLoader](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/load/SequenceFileLoader.java)
-* [SequenceFileStorage](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/store/SequenceFileStorage.java)
-* [WritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/WritableConverter.java)
-* [GenericWritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/GenericWritableConverter.java)
-* [AbstractWritableConverter](https://github.com/kevinweil/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/AbstractWritableConverter.java)
+* [SequenceFileLoader](https://github.com/twitter/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/load/SequenceFileLoader.java)
+* [SequenceFileStorage](https://github.com/twitter/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/store/SequenceFileStorage.java)
+* [WritableConverter](https://github.com/twitter/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/WritableConverter.java)
+* [GenericWritableConverter](https://github.com/twitter/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/GenericWritableConverter.java)
+* [AbstractWritableConverter](https://github.com/twitter/elephant-bird/blob/master/pig/src/main/java/com/twitter/elephantbird/pig/util/AbstractWritableConverter.java)
 
 ## How To Contribute
 
