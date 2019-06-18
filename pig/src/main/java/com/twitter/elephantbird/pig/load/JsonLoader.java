@@ -1,6 +1,8 @@
 package com.twitter.elephantbird.pig.load;
 
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -25,8 +27,7 @@ import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Map;
+import com.google.common.collect.Maps;
 
 /**
  * Decodes each line as JSON passes the resulting map of values
@@ -46,6 +47,7 @@ public class JsonLoader extends LzoBaseLoadFunc {
   private static final TupleFactory tupleFactory = TupleFactory.getInstance();
   
   public static final String NESTED_LOAD_KEY = "elephantbird.jsonloader.nestedLoad";
+  public static final String INCLUDE_STRING_KEY = "elephantbird.jsonloader.includeString";
   
   private final static Options validOptions_ = new Options();
   private final static CommandLineParser parser_ = new GnuParser();
@@ -62,12 +64,14 @@ public class JsonLoader extends LzoBaseLoadFunc {
 
   private String inputFormatClassName;
   private boolean isNestedLoadEnabled = false;
+  private boolean isIncludeStringEnabled = false;
   
   private static void populateValidOptions() {
     validOptions_.addOption("nestedLoad", false, "Enables loading of " +
         "nested JSON structures");
     validOptions_.addOption("inputFormat", true, "The input format class name" +
         " used by this loader instance");
+    validOptions_.addOption("includeString", false, "Include the raw JSON string");
   }
 
   public JsonLoader() {
@@ -85,6 +89,8 @@ public class JsonLoader extends LzoBaseLoadFunc {
    * and JSON arrays are loaded as Bags.
    * <li>-inputFormat=className The input format class name used
    * by this loader instance.
+   * <li>-includeString==(true|false) Include the raw JSON string. When
+   * enabled, the string is included as the second element in the tuple.</li>
    * </ul>
    */
   public JsonLoader(String optString) {
@@ -95,10 +101,11 @@ public class JsonLoader extends LzoBaseLoadFunc {
       configuredOptions_ = parser_.parse(validOptions_, optsArr);
     } catch (org.apache.commons.cli.ParseException e) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp( "[-nestedLoad] [-inputFormat]", validOptions_ );
+        formatter.printHelp( "[-nestedLoad] [-inputFormat] [-includeString]", validOptions_ );
         throw new RuntimeException(e);
     }
     isNestedLoadEnabled = configuredOptions_.hasOption("nestedLoad");
+    isIncludeStringEnabled = configuredOptions_.hasOption("includeString");
     
     if (configuredOptions_.getOptionValue("inputFormat") != null) {
       this.inputFormatClassName = configuredOptions_.getOptionValue("inputFormat");
@@ -122,6 +129,8 @@ public class JsonLoader extends LzoBaseLoadFunc {
     // nested load can be enabled through a pig property
     if ("true".equals(jobConf.get(NESTED_LOAD_KEY)))
       isNestedLoadEnabled = true;
+    if ("true".equals(jobConf.get(INCLUDE_STRING_KEY)))
+      isIncludeStringEnabled = true;
     try {
       while (reader.nextKeyValue()) {
         Text value = (Text) reader.getCurrentValue();
@@ -157,7 +166,11 @@ public class JsonLoader extends LzoBaseLoadFunc {
     try {
       JSONObject jsonObj = (JSONObject) jsonParser.parse(line);
       if (jsonObj != null) {
-        return tupleFactory.newTuple(walkJson(jsonObj));
+        final Map<String, Object> walkJson = walkJson(jsonObj);
+        if (isIncludeStringEnabled) {
+          return tupleFactory.newTuple(Arrays.<Object>asList(walkJson, line));
+        }
+        return tupleFactory.newTuple(walkJson);
       } else {
         // JSONParser#parse(String) may return a null reference, e.g. when
         // the input parameter is the string "null".  A single line with
