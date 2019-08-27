@@ -599,7 +599,7 @@
         <plugin>
           <groupId>org.apache.thrift</groupId>
           <artifactId>thrift-maven-plugin</artifactId>
-          <version>0.12.0</version>
+          <version>0.10.0</version>
           <configuration>
             <thriftExecutable>${thrift.executable}</thriftExecutable>
           </configuration>
@@ -658,7 +658,7 @@
                   <pluginExecutionFilter>
                     <groupId>org.apache.thrift</groupId>
                     <artifactId>thrift-maven-plugin</artifactId>
-                    <versionRange>[0.12.0,)</versionRange>
+                    <versionRange>[0.10.0,)</versionRange>
                     <goals>
                       <goal>compile</goal>
                       <goal>testCompile</goal>
