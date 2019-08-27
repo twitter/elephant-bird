@@ -10,13 +10,13 @@ before_install:
 install: true
 matrix:
   include:
-    - jdk: openjdk9
+    - jdk: openjdk8
       env: THRIFT_TAG=0.7.0
-    - jdk: openjdk9
+    - jdk: openjdk8
       env: THRIFT_TAG=0.7.0 HADOOP_PROFILE=-Phadoop2
-    - jdk: openjdk9
+    - jdk: openjdk8
       env: THRIFT_TAG=0.12.0
-    - jdk: openjdk9
+    - jdk: openjdk8
       env: THRIFT_TAG=0.12.0 HADOOP_PROFILE=-Phadoop2
 
 script: "./release.sh -c travis"
