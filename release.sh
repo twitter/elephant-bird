@@ -17,7 +17,7 @@ BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 DIRTY_SCM=false
 GIT_REPO=git@github.com:twitter/elephant-bird.git
 THRIFT7_PATH="$TEMP_DIR/thrift7"
-THRIFT9_PATH="$TEMP_DIR/thrift9"
+THRIFT9_PATH="$TEMP_DIR/thrift12"
 HADOOP_LZO_PATH="$TEMP_DIR/hadoop-lzo-native"
 PROTOBUF_PATH="$TEMP_DIR/protobuf"
 
@@ -134,7 +134,7 @@ function installThrift7 {
 }
 
 function installThrift9 {
-    git checkout 0.10.0
+    git checkout 0.12.0
     ./bootstrap.sh
     ./configure --disable-gen-erl --disable-gen-hs --without-ruby --without-haskell --without-python --without-erlang --without-c_glib --without-php --without-go --without-qt4 --without-qt5 --without-nodejs --prefix=$THRIFT9_PATH JAVA_PREFIX=$THRIFT9_PATH/lib/
     make install
@@ -198,7 +198,7 @@ function installHadoopLzo {
 #######################################################################################################################
 
 __MVN_THRIFT7="-Pthrift7 -Dthrift.executable=$THRIFT7_PATH/bin/thrift"
-__MVN_THRIFT9="-Pthrift9 -Dthrift.executable=$THRIFT9_PATH/bin/thrift"
+__MVN_THRIFT9="-Pthrift12 -Dthrift.executable=$THRIFT9_PATH/bin/thrift"
 __MVN_HADOOP_LZO="-Dtest.library.path=$HADOOP_LZO_PATH/lib -Drequire.lzo.tests=true"
 __MVN_PROTOC_EXECUTABLE="-Dprotoc.executable=$PROTOBUF_PATH/bin/protoc"
 
