@@ -20,3 +20,7 @@ matrix:
       env: THRIFT_TAG=0.10.0 HADOOP_PROFILE=-Phadoop2
 
 script: "./release.sh -c travis"
+
+cache:
+  directories:
+  - $HOME/.m2
