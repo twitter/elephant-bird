@@ -309,7 +309,7 @@
       <dependency>
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
-        <version>1.6</version>
+        <version>1.6.2</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
