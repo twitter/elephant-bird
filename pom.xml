@@ -76,7 +76,7 @@
     <apache.pig.version>0.11.1</apache.pig.version>
     <apache.pig.classifier/>
     <apache.crunch.hadoop1.version>0.8.2</apache.crunch.hadoop1.version>
-    <apache.crunch.version>${apache.crunch.hadoop1.version}</apache.crunch.version>
+    <apache.crunch.version>0.15.0</apache.crunch.version>
     <apache.crunch.hadoop2.version>0.8.2-hadoop2</apache.crunch.hadoop2.version>
     <apache.hive.version>0.8.0</apache.hive.version>
     <apache.mahout.version>0.6</apache.mahout.version>
@@ -417,9 +417,7 @@
           ${apache.hadoop2.version}
         </specific.hadoop.version>
         <apache.pig.classifier>h2</apache.pig.classifier>
-        <apache.crunch.version>
-          ${apache.crunch.hadoop2.version}
-        </apache.crunch.version>
+        <apache.crunch.version>0.15.0</apache.crunch.version>
       </properties>
     </profile>
     <profile>
