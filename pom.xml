@@ -72,7 +72,7 @@
     <!-- for hadoop1 profile -->
     <apache.hadoop2.version>2.0.3-alpha</apache.hadoop2.version>
     <!-- for hadoop2 profile -->
-    <specific.hadoop.version>${apache.hadoop1.version}</specific.hadoop.version>
+    <specific.hadoop.version>1.2.1</specific.hadoop.version>
     <apache.pig.version>0.11.1</apache.pig.version>
     <apache.pig.classifier/>
     <apache.crunch.hadoop1.version>0.8.2</apache.crunch.hadoop1.version>
@@ -413,9 +413,7 @@
     <profile>
       <id>hadoop2</id>
       <properties>
-        <specific.hadoop.version>
-          ${apache.hadoop2.version}
-        </specific.hadoop.version>
+        <specific.hadoop.version>1.2.1</specific.hadoop.version>
         <apache.pig.classifier>h2</apache.pig.classifier>
         <apache.crunch.version>
           ${apache.crunch.hadoop2.version}
