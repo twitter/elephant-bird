@@ -303,7 +303,7 @@
       <dependency>
         <groupId>org.antlr</groupId>
         <artifactId>antlr</artifactId>
-        <version>3.4</version>
+        <version>3.5.3</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
