@@ -1,0 +1,22 @@
+language: java
+
+before_install:
+# An attempt to fix the buffer overflow in the pig tests
+# /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/libnet.so(Java_java_net_Inet4AddressImpl_getLocalHostName+0x190)[
+# https://github.com/travis-ci/travis-ci/issues/1484
+  - echo "127.0.0.1 " `hostname` | sudo tee /etc/hosts
+  - sudo apt-get update -qq
+
+install: true
+matrix:
+  include:
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.7.0
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.7.0 HADOOP_PROFILE=-Phadoop2
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.10.0
+    - jdk: openjdk7
+      env: THRIFT_TAG=0.10.0 HADOOP_PROFILE=-Phadoop2
+
+script: "./release.sh -c travis"

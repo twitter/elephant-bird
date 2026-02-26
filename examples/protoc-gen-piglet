@@ -1,2 +1,0 @@
-for f in ../dist/elephant-bird-*.jar; do JAR=$f; done
-/usr/bin/java -cp ../lib/*:$JAR:dist/elephant-bird-examples-1.0.jar com.twitter.elephantbird.proto.HadoopProtoCodeGenerator config-piglet.yml -
